@@ -262,7 +262,7 @@
       const portPill=pill(l.portLfd,l.portDaysLeft,l.portState);
       const outsidePill=pill(l.outsideLfd,l.outsideDaysLeft,l.outsideState);
       return `<tr><td><button class="p1v2-link" data-timeline="${i}">${escP(getCn(r))}</button></td><td>${escP(getVessel(r))}</td><td>${escP(st.text)}</td><td>${portPill}</td><td>${outsidePill}</td><td>${l.demDays?'<span class="p1v2-pill bad">'+l.demDays+'d · 
-    }).join('')||'<tr><td colspan="7" class="p1v2-empty">No containers available.</td></tr>';
+    }).join('')||'<tr><td colspan="8" class="p1v2-empty">No containers available.</td></tr>';
     $('p1v2Body').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{if(currentUser?.role==='Viewer')return alert('Read-only access.');openModal(Number(b.dataset.edit));});
     $('p1v2Body').querySelectorAll('[data-timeline],[data-time]').forEach(b=>b.onclick=()=>openTimeline(Number(b.dataset.timeline||b.dataset.time)));
   }
