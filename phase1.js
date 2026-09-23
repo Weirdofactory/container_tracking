@@ -82,7 +82,42 @@
     return out;
   }
 
+  function ensureStyles1() {
+    if (p1('p1Phase1Styles')) return;
+    const st = document.createElement('style');
+    st.id = 'p1Phase1Styles';
+    st.textContent = `
+      .p1-panel{margin:18px auto 40px;max-width:1500px;padding:0 18px 30px;box-sizing:border-box}
+      .p1-panel-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
+      .p1-panel-head h2{margin:2px 0 4px;font-size:25px}.p1-panel-head p{margin:0;color:var(--text-muted);font-size:12px}
+      .p1-eyebrow{font-size:9px;font-weight:900;letter-spacing:.14em;color:var(--primary);text-transform:uppercase}
+      .p1-actions{display:flex;gap:8px}.p1-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:12px}
+      .p1-kpi{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:13px 14px;box-shadow:var(--shadow-sm)}
+      .p1-kpi span{font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase}.p1-kpi strong{display:block;font-size:25px;margin-top:5px}
+      .p1-kpi.danger{border-top:3px solid var(--danger)}.p1-kpi.warning{border-top:3px solid var(--warning)}
+      .p1-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}.p1-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:var(--shadow-sm);overflow:hidden}
+      .p1-card-title{font-size:12px;font-weight:900;margin-bottom:10px}.p1-ex-row{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid var(--border);font-size:11px}
+      .p1-ex-row:last-child{border-bottom:0}.p1-ex-row b{font-family:'JetBrains Mono',monospace}.p1-table-wrap{overflow:auto}.p1-table{width:100%;border-collapse:collapse;font-size:11px;min-width:850px}
+      .p1-table th{text-align:left;color:var(--text-muted);font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:8px;border-bottom:1px solid var(--border)}.p1-table td{padding:9px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+      .p1-link{border:0;background:none;color:var(--primary);font-weight:900;cursor:pointer;padding:0}.p1-status{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:900;border:1px solid transparent}
+      .p1-status.good{color:var(--success);background:var(--success-bg)}.p1-status.warn{color:#b45309;background:var(--warning-bg)}.p1-status.bad{color:var(--danger);background:var(--danger-bg)}button.p1-status{cursor:pointer}.p1-empty{padding:14px;color:var(--text-muted);font-size:11px}
+      .p1-modal{position:fixed !important;inset:0 !important;background:rgba(2,6,23,.58);backdrop-filter:blur(4px);display:none !important;align-items:center;justify-content:center;z-index:10050;padding:18px;box-sizing:border-box}
+      .p1-modal.open{display:flex !important}.p1-modal-box{width:min(760px,96vw);max-height:90vh;overflow:auto;background:var(--bg-surface);border:1px solid var(--border);border-radius:15px;box-shadow:var(--shadow-lg);padding:18px;box-sizing:border-box}
+      .p1-modal-box.p1-small{width:min(520px,96vw)}.p1-modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px}.p1-modal-head h3{margin:3px 0 0;font-size:18px}
+      .p1-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.p1-meta span{font-size:10px;background:var(--bg-muted);border:1px solid var(--border);border-radius:7px;padding:5px 8px}
+      .p1-timeline{position:relative;padding:4px 0 4px 22px}.p1-timeline:before{content:'';position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:var(--border)}
+      .p1-event{position:relative;display:flex;gap:12px;padding:10px 0}.p1-dot{position:absolute;left:-22px;width:16px;height:16px;border-radius:50%;background:var(--bg-surface);border:2px solid var(--border);font-size:8px;display:flex;align-items:center;justify-content:center;color:var(--text-muted)}
+      .p1-event.done .p1-dot{background:var(--success);border-color:var(--success);color:#fff}.p1-event strong{display:block;font-size:11px}.p1-event small{display:block;margin-top:2px;color:var(--text-muted);font-size:10px}
+      .p1-form{display:grid;grid-template-columns:1fr 1fr;gap:11px}.p1-form label{font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase}.p1-form label:last-child{grid-column:1/-1}
+      .p1-form input,.p1-form select,.p1-form textarea{display:block;width:100%;box-sizing:border-box;margin-top:5px;border:1px solid var(--border);background:var(--bg-muted);color:var(--text-main);border-radius:7px;padding:8px;font:inherit}.p1-form textarea{min-height:90px;resize:vertical}
+      .p1-modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+      @media(max-width:900px){.p1-kpis{grid-template-columns:repeat(2,1fr)}.p1-grid{grid-template-columns:1fr}.p1-panel-head{flex-direction:column}.p1-actions{width:100%}.p1-form{grid-template-columns:1fr}.p1-form label:last-child{grid-column:auto}}
+    `;
+    document.head.appendChild(st);
+  }
+
   function ensureUI1() {
+    ensureStyles1();
     if (!p1('p1ControlTower')) {
       const main=p1('opsDashboardView');
       const section=document.createElement('section'); section.id='p1ControlTower'; section.className='p1-panel'; section.style.display='none';
@@ -94,13 +129,13 @@
       main.parentNode.insertBefore(section, main.nextSibling);
     }
     if (!p1('p1TimelineModal')) {
-      document.body.insertAdjacentHTML('beforeend', `<div class="p1-modal" id="p1TimelineModal"><div class="p1-modal-box"><div class="p1-modal-head"><div><div class="p1-eyebrow">CONTAINER TIMELINE</div><h3 id="p1TimelineTitle">Container</h3></div><button class="btn btn-ghost" id="p1TimelineClose">✕</button></div><div id="p1TimelineBody"></div></div></div>`);
+      document.body.insertAdjacentHTML('beforeend', `<div class="p1-modal" id="p1TimelineModal" style="display:none"><div class="p1-modal-box"><div class="p1-modal-head"><div><div class="p1-eyebrow">CONTAINER TIMELINE</div><h3 id="p1TimelineTitle">Container</h3></div><button class="btn btn-ghost" id="p1TimelineClose">✕</button></div><div id="p1TimelineBody"></div></div></div>`);
     }
     if (!p1('p1CsnModal')) {
-      document.body.insertAdjacentHTML('beforeend', `<div class="p1-modal" id="p1CsnModal"><div class="p1-modal-box p1-small"><div class="p1-modal-head"><div><div class="p1-eyebrow">SCMTR / CSN CONTROL</div><h3 id="p1CsnTitle">CSN</h3></div><button class="btn btn-ghost" id="p1CsnClose">✕</button></div><div class="p1-form"><label>Status<select id="p1CsnStatus"><option>NOT FILED</option><option>PENDING</option><option>ACCEPTED</option><option>REJECTED</option><option>WRONG DETAILS</option><option>AMENDMENT</option></select></label><label>Filed Date<input type="date" id="p1CsnFiled"></label><label>Response Date<input type="date" id="p1CsnResponse"></label><label>Remarks<textarea id="p1CsnRemarks"></textarea></label></div><div class="p1-modal-foot"><button class="btn" id="p1CsnCancel">Cancel</button><button class="btn btn-primary" id="p1CsnSave">Save CSN Status</button></div></div></div>`);
+      document.body.insertAdjacentHTML('beforeend', `<div class="p1-modal" id="p1CsnModal" style="display:none"><div class="p1-modal-box p1-small"><div class="p1-modal-head"><div><div class="p1-eyebrow">SCMTR / CSN CONTROL</div><h3 id="p1CsnTitle">CSN</h3></div><button class="btn btn-ghost" id="p1CsnClose">✕</button></div><div class="p1-form"><label>Status<select id="p1CsnStatus"><option>NOT FILED</option><option>PENDING</option><option>ACCEPTED</option><option>REJECTED</option><option>WRONG DETAILS</option><option>AMENDMENT</option></select></label><label>Filed Date<input type="date" id="p1CsnFiled"></label><label>Response Date<input type="date" id="p1CsnResponse"></label><label>Remarks<textarea id="p1CsnRemarks"></textarea></label></div><div class="p1-modal-foot"><button class="btn" id="p1CsnCancel">Cancel</button><button class="btn btn-primary" id="p1CsnSave">Save CSN Status</button></div></div></div>`);
     }
     if (!p1('p1ConfigModal')) {
-      document.body.insertAdjacentHTML('beforeend', `<div class="p1-modal" id="p1ConfigModal"><div class="p1-modal-box p1-small"><div class="p1-modal-head"><div><div class="p1-eyebrow">LFD ENGINE</div><h3>Rules & Rates</h3></div><button class="btn btn-ghost" id="p1CfgClose">✕</button></div><div class="p1-form"><label>Terminal Free Days<input type="number" id="p1CfgFree" min="0"></label><label>Warning Threshold<input type="number" id="p1CfgWarn" min="0"></label><label>Critical Threshold<input type="number" id="p1CfgCrit" min="0"></label><label>20ft Demurrage / Day (USD)<input type="number" id="p1Cfg20" min="0"></label><label>40ft Demurrage / Day (USD)<input type="number" id="p1Cfg40" min="0"></label></div><div class="p1-modal-foot"><button class="btn" id="p1CfgCancel">Cancel</button><button class="btn btn-primary" id="p1CfgSave">Save Rules</button></div></div></div>`);
+      document.body.insertAdjacentHTML('beforeend', `<div class="p1-modal" id="p1ConfigModal" style="display:none"><div class="p1-modal-box p1-small"><div class="p1-modal-head"><div><div class="p1-eyebrow">LFD ENGINE</div><h3>Rules & Rates</h3></div><button class="btn btn-ghost" id="p1CfgClose">✕</button></div><div class="p1-form"><label>Terminal Free Days<input type="number" id="p1CfgFree" min="0"></label><label>Warning Threshold<input type="number" id="p1CfgWarn" min="0"></label><label>Critical Threshold<input type="number" id="p1CfgCrit" min="0"></label><label>20ft Demurrage / Day (USD)<input type="number" id="p1Cfg20" min="0"></label><label>40ft Demurrage / Day (USD)<input type="number" id="p1Cfg40" min="0"></label></div><div class="p1-modal-foot"><button class="btn" id="p1CfgCancel">Cancel</button><button class="btn btn-primary" id="p1CfgSave">Save Rules</button></div></div></div>`);
     }
     const ops=p1('opsControls');
     if (ops && !p1('p1TowerBtn')) { const b=document.createElement('button'); b.id='p1TowerBtn'; b.className='btn btn-primary'; b.textContent='🎯 Control Tower'; b.addEventListener('click',()=>toggleTower1(true)); ops.insertBefore(b,ops.firstChild); }
@@ -144,25 +179,25 @@
     const r=rows[i]; if(!r) return; const cn=cntr1(r); p1('p1TimelineTitle').textContent=cn;
     const events=[['Vessel Departed','ETD'],['Vessel Arrived','ETA'],['Port In','PORT IN'],['Port Out','PORT OUT'],['CFS In','CFS IN'],['Destuffing','DESTUFFING DATE'],['Empty Return','CONTAINER RETURN DATE']];
     p1('p1TimelineBody').innerHTML=`<div class="p1-meta"><span>${esc1(vessel1(r))}</span><span>Gateway: ${esc1(getField(r,['GATEWAY PORT'])||'—')}</span><span>CFS: ${esc1(getField(r,['CFS NAME'])||'—')}</span></div><div class="p1-timeline">${events.map(([label,key])=>{const v=getField(r,[key]); return `<div class="p1-event ${v?'done':''}"><div class="p1-dot">${v?'✓':'•'}</div><div><strong>${label}</strong><small>${v?fmt1(v):'Pending'}</small></div></div>`}).join('')}</div>`;
-    p1('p1TimelineModal').classList.add('open');
+    p1('p1TimelineModal').style.display='flex'; p1('p1TimelineModal').classList.add('open');
   }
 
   let csnIndex=-1;
-  function openCsn1(i){ const r=rows[i]; if(!r) return; csnIndex=i; p1('p1CsnTitle').textContent=`${cntr1(r)} · CSN`; p1('p1CsnStatus').value=csnInfo1(r).key; p1('p1CsnFiled').value=getField(r,['CSN FILED DATE']); p1('p1CsnResponse').value=getField(r,['CSN RESPONSE DATE']); p1('p1CsnRemarks').value=getField(r,['CSN REMARKS']); p1('p1CsnModal').classList.add('open'); }
-  function saveCsn1(){ if(csnIndex<0) return; const r=rows[csnIndex]; r['CSN STATUS']=p1('p1CsnStatus').value; r['CSN FILED DATE']=p1('p1CsnFiled').value; r['CSN RESPONSE DATE']=p1('p1CsnResponse').value; r['CSN REMARKS']=p1('p1CsnRemarks').value.trim(); try{localStorage.setItem('containerRows',JSON.stringify(rows));}catch{} if(typeof saveAndRefresh==='function') saveAndRefresh(); p1('p1CsnModal').classList.remove('open'); renderTower1(); if(typeof toast==='function') toast('CSN status updated'); }
-  function openCfg1(){const c=cfg1(); p1('p1CfgFree').value=c.terminalFreeDays;p1('p1CfgWarn').value=c.warningDays;p1('p1CfgCrit').value=c.criticalDays;p1('p1Cfg20').value=c.demRate20;p1('p1Cfg40').value=c.demRate40;p1('p1ConfigModal').classList.add('open');}
-  function saveCfg1(){saveCfg1Local();p1('p1ConfigModal').classList.remove('open');renderTower1();if(typeof toast==='function')toast('LFD rules saved');}
+  function openCsn1(i){ const r=rows[i]; if(!r) return; csnIndex=i; p1('p1CsnTitle').textContent=`${cntr1(r)} · CSN`; p1('p1CsnStatus').value=csnInfo1(r).key; p1('p1CsnFiled').value=getField(r,['CSN FILED DATE']); p1('p1CsnResponse').value=getField(r,['CSN RESPONSE DATE']); p1('p1CsnRemarks').value=getField(r,['CSN REMARKS']); p1('p1CsnModal').style.display='flex'; p1('p1CsnModal').classList.add('open'); }
+  function saveCsn1(){ if(csnIndex<0) return; const r=rows[csnIndex]; r['CSN STATUS']=p1('p1CsnStatus').value; r['CSN FILED DATE']=p1('p1CsnFiled').value; r['CSN RESPONSE DATE']=p1('p1CsnResponse').value; r['CSN REMARKS']=p1('p1CsnRemarks').value.trim(); try{localStorage.setItem('containerRows',JSON.stringify(rows));}catch{} if(typeof saveAndRefresh==='function') saveAndRefresh(); p1('p1CsnModal').classList.remove('open'); p1('p1CsnModal').style.display='none'; renderTower1(); if(typeof toast==='function') toast('CSN status updated'); }
+  function openCfg1(){const c=cfg1(); p1('p1CfgFree').value=c.terminalFreeDays;p1('p1CfgWarn').value=c.warningDays;p1('p1CfgCrit').value=c.criticalDays;p1('p1Cfg20').value=c.demRate20;p1('p1Cfg40').value=c.demRate40;p1('p1ConfigModal').style.display='flex'; p1('p1ConfigModal').classList.add('open');}
+  function saveCfg1(){saveCfg1Local();p1('p1ConfigModal').classList.remove('open'); p1('p1ConfigModal').style.display='none';renderTower1();if(typeof toast==='function')toast('LFD rules saved');}
   function saveCfg1Local(){persistCfg1({terminalFreeDays:Number(p1('p1CfgFree').value||0),warningDays:Number(p1('p1CfgWarn').value||0),criticalDays:Number(p1('p1CfgCrit').value||0),demRate20:Number(p1('p1Cfg20').value||0),demRate40:Number(p1('p1Cfg40').value||0)});}
 
   function hook1(){
     ensureUI1();
     p1('p1RefreshBtn').onclick=renderTower1; p1('p1ConfigBtn').onclick=openCfg1;
-    p1('p1TimelineClose').onclick=()=>p1('p1TimelineModal').classList.remove('open');
-    p1('p1CsnClose').onclick=p1('p1CsnCancel').onclick=()=>p1('p1CsnModal').classList.remove('open');
+    p1('p1TimelineClose').onclick=()=>{p1('p1TimelineModal').classList.remove('open');p1('p1TimelineModal').style.display='none';};
+    p1('p1CsnClose').onclick=p1('p1CsnCancel').onclick=()=>{p1('p1CsnModal').classList.remove('open');p1('p1CsnModal').style.display='none';};
     p1('p1CsnSave').onclick=saveCsn1;
-    p1('p1CfgClose').onclick=p1('p1CfgCancel').onclick=()=>p1('p1ConfigModal').classList.remove('open');
+    p1('p1CfgClose').onclick=p1('p1CfgCancel').onclick=()=>{p1('p1ConfigModal').classList.remove('open');p1('p1ConfigModal').style.display='none';};
     p1('p1CfgSave').onclick=saveCfg1;
-    window.addEventListener('keydown',e=>{if(e.key==='Escape'){['p1TimelineModal','p1CsnModal','p1ConfigModal'].forEach(id=>p1(id)?.classList.remove('open'));}});
+    window.addEventListener('keydown',e=>{if(e.key==='Escape'){['p1TimelineModal','p1CsnModal','p1ConfigModal'].forEach(id=>{const el=p1(id);if(el){el.classList.remove('open');el.style.display='none';}});}});
   }
 
   // Wrap renderUI so the control tower stays synchronized after edits/imports.
