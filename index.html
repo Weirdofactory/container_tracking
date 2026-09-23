@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./style.css?v=20260923-02">
 </head>
 <body>
 
@@ -93,6 +93,12 @@
     <div class="kpi-card" style="border-top-color:var(--danger);"><small>Destuffing Pending</small><strong id="kDestuffingPending" style="color:var(--danger)">0</strong></div>
     <div class="kpi-card total-cost-kpi"><small>Total Financial Exposure</small><strong id="kTotalExposure" style="color:var(--corporate-pink)">₹0</strong></div>
   </div>
+  <div id="opsQuickNav" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 14px;padding:12px 14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);">
+    <div style="font-size:9px;font-weight:900;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;margin-right:4px;">OPERATIONS</div>
+    <button class="btn btn-primary" type="button" onclick="window.openControlTower ? window.openControlTower() : alert('Control Tower module is still loading. Please refresh once.')">🎯 Control Tower</button>
+    <button class="btn btn-ghost" type="button" onclick="window.openScmtrCentre ? window.openScmtrCentre() : alert('SCMTR / CSN module is still loading. Please refresh once.')">📑 SCMTR / CSN</button>
+    <button class="btn btn-ghost" type="button" onclick="window.openLfdRules ? window.openLfdRules() : alert('LFD module is still loading. Please refresh once.')">⏱️ LFD & Demurrage</button>
+  </div>
   <div class="control-tray">
     <div class="control-tray-top">
       <div class="filter-inputs">
@@ -137,8 +143,8 @@
 
 <div class="toast-popup" id="toast"></div>
 
-<script src="./app.js"></script>
-<script src="./phase1.js"></script>
-<script src="./phase2.js"></script>
+<script src="./app.js?v=20260923-02"></script>
+<script src="./phase1.js?v=20260923-02"></script>
+<script src="./phase2.js?v=20260923-02"></script>
 </body>
 </html>
