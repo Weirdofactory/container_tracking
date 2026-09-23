@@ -13,13 +13,12 @@ const USD_TO_INR = 84;
 let activeCurrency = localStorage.getItem("gml_curr") || "INR";
 
 const COLS = [
-  'CONTAINER NO.', 'TYPE', 'MBL NO', 'LINER', 'GATEWAY PORT', 'CFS NAME', 'PORT FREE DAYS',
-  'CSN STATUS', 'CSN FILED DATE', 'CSN RESPONSE', 'CSN REMARKS', 
+  'CONTAINER NO.', 'TYPE', 'MBL NO', 'LINER', 'GATEWAY PORT', 'CFS NAME', 
   'POL', 'ETD', 'FREE DAYS', 'SEAL NO.', 'VESSEL & VOY', 
   'ETA', 'SPLIT DATE', 'INWARD DATE', 'PORT IN', 'PORT OUT', 'CFS IN', 'TRUCK NO.', 
   'DRIVER CONTACT', 'PLANNING', 'DESTUFFING DATE', 'CONTAINER RETURN DATE', 'REMARKS'
 ];
-const DATE_COLS = new Set(['ETD', 'ETA', 'SPLIT DATE', 'INWARD DATE', 'PORT IN', 'PORT OUT', 'CFS IN', 'DESTUFFING DATE', 'CONTAINER RETURN DATE', 'CSN FILED DATE']);
+const DATE_COLS = new Set(['ETD', 'ETA', 'SPLIT DATE', 'INWARD DATE', 'PORT IN', 'PORT OUT', 'CFS IN', 'DESTUFFING DATE', 'CONTAINER RETURN DATE']);
 
 const DEFAULT_ROWS = [
   {
@@ -397,7 +396,7 @@ function calculateStandardFees(r) {
   let demDays = 0, demOverdue = false, demCostUSD = 0, portDwell = 0;
   let detDays = 0, detOverdue = false, detCostUSD = 0, totalEquipmentDays = 0;
 
-  const portFreeDays = Math.max(0, parseInt(getField(r, ['PORT FREE DAYS']) || '3', 10) || 3);
+  const portFreeDays = 3;
   let terminalLFD = null;
   let terminalDaysLeft = null;
 
@@ -1133,8 +1132,6 @@ function getFilteredRows() {
     if (activeQuickFilter === "demurrage" && (completed || !fees.demOverdue)) return false;
     if (activeQuickFilter === "detention" && (completed || !fees.detOverdue)) return false;
     if (activeQuickFilter === "critical_lfd" && (completed || ((fees.terminalDaysLeft > 2 || fees.terminalDaysLeft === null) && (fees.detentionDaysLeft > 2 || fees.detentionDaysLeft === null)))) return false;
-    if (activeQuickFilter === "csn_exception" && !["NOT FILED","REJECTED","WRONG DETAILS","AMENDMENT","PENDING"].includes(getCsnStatus(r))) return false;
-    if (activeQuickFilter === "exceptions" && !getExceptionItems(r).length) return false;
 
     return true;
   });
@@ -1695,18 +1692,6 @@ function openModal(idx = -1) {
       `;
     }
     
-    if (c === 'CSN STATUS') {
-      const cur = getCsnStatus(r);
-      return `
-        <div>
-          <label style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">CSN Status</label>
-          <select id="modal_CSN_STATUS" class="select" style="width:100%; margin-top:4px;" data-field="${c}">
-            ${CSN_STATUSES.map(s => `<option value="${esc(s)}" ${cur === s ? 'selected' : ''}>${s || 'Not Updated'}</option>`).join("")}
-          </select>
-        </div>
-      `;
-    }
-
     const domId = `modal_${c.replace(/[^a-zA-Z0-9]/g, '_')}`;
     const isDate = DATE_COLS.has(c);
     
@@ -1909,7 +1894,7 @@ function processExcelFile(file) {
       const wb = XLSX.read(data, {type: 'array', cellDates: true});
       let imported = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: ""});
       
-      const incomingRows = imported.map(r => {
+      rows = imported.map(r => {
         const out = {};
         Object.keys(r).forEach(k => {
           let val = r[k];
@@ -1924,56 +1909,26 @@ function processExcelFile(file) {
         if (!out["MBL NO"] && (out["MBL"] || out["MASTER BL"])) {
           out["MBL NO"] = out["MBL"] || out["MASTER BL"];
         }
-        if (!out["LINER"] && out["LINE"]) out["LINER"] = out["LINE"];
+        if (!out["LINER"] && out["LINE"]) {
+          out["LINER"] = out["LINE"];
+        }
         if (!out["VESSEL & VOY"] && (out["VESSEL"] || out["VESSEL NAME"])) {
           out["VESSEL & VOY"] = out["VESSEL"] || out["VESSEL NAME"];
         }
-        if (!out["CFS NAME"] && out["CFS"]) out["CFS NAME"] = out["CFS"];
+        if (!out["CFS NAME"] && out["CFS"]) {
+          out["CFS NAME"] = out["CFS"];
+        }
         if (!out["TRUCK NO."] && (out["TRUCK NO"] || out["VEHICLE NO"])) {
           out["TRUCK NO."] = formatTruckNo(out["TRUCK NO"] || out["VEHICLE NO"]);
         }
         if (!out["LINER"] && out["MBL NO"]) out["LINER"] = detectLinerFromMBL(out["MBL NO"]);
-        if (!out["CSN STATUS"]) out["CSN STATUS"] = "";
         return out;
-      }).filter(r => getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]));
-
-      // Merge by container number instead of replacing the whole database.
-      // Existing operational/CSN fields are retained when the incoming sheet leaves them blank.
-      const byContainer = new Map();
-      rows.forEach((r, i) => {
-        const key = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]).trim().toUpperCase();
-        if (key) byContainer.set(key, { ...r, __index: i });
       });
 
-      let added = 0, updated = 0, unchanged = 0;
-      incomingRows.forEach(incoming => {
-        const key = getField(incoming, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]).trim().toUpperCase();
-        incoming["CONTAINER NO."] = key;
-        const existing = byContainer.get(key);
-        if (!existing) {
-          rows.unshift(incoming);
-          byContainer.set(key, { ...incoming, __index: 0 });
-          // indices of previous entries shift; rebuild below
-          added++;
-        } else {
-          const current = rows.find(r => getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]).trim().toUpperCase() === key);
-          let changed = false;
-          Object.keys(incoming).forEach(k => {
-            const val = incoming[k];
-            if (val !== "" && String(current[k] ?? "") !== String(val)) {
-              current[k] = val;
-              changed = true;
-            }
-          });
-          if (changed) updated++; else unchanged++;
-        }
-      });
-
-      logAuditEvent("EXCEL_AUTO_SYNC", "ALL", "CONTAINER DATA", "N/A",
-        `${added} added, ${updated} updated, ${unchanged} unchanged`);
+      logAuditEvent("BULK_EXCEL_IMPORT", "ALL", "SHEET_DATA", "N/A", `${rows.length} units imported`);
       populateFilters();
       saveAndRefresh();
-      toast(`Excel sync complete: ${added} added • ${updated} updated • ${unchanged} unchanged`);
+      toast(`Imported ${rows.length} records!`);
     } catch(err) {
       alert("Invalid Excel File.");
     } finally {
@@ -2042,199 +1997,3 @@ if (scannedCntr) {
   el("publicSearchInput").value = scannedCntr;
   performPublicSearch();
 }
-
-
-/* ============================================================
-   PHASE 1 — CONTAINER CONTROL TOWER
-   HBL/cargo intentionally excluded.
-   ============================================================ */
-const CSN_STATUSES = ["", "NOT FILED", "PENDING", "ACCEPTED", "REJECTED", "WRONG DETAILS", "AMENDMENT"];
-const towerEsc = v => esc(v ?? "—");
-
-function getCsnStatus(r) {
-  return String(getField(r, ["CSN STATUS"]) || "").trim().toUpperCase();
-}
-
-function getContainerNo(r) {
-  return getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "—";
-}
-
-function getExceptionItems(r) {
-  const issues = [];
-  const fees = calculateStandardFees(r);
-  const status = getStatus(r);
-  const csn = getCsnStatus(r);
-  const today = new Date().toISOString().slice(0,10);
-
-  if (["NOT FILED", "REJECTED", "WRONG DETAILS", "AMENDMENT"].includes(csn)) {
-    issues.push({key:"csn", label:`CSN ${csn}`, severity:"danger"});
-  } else if (csn === "PENDING") {
-    issues.push({key:"csn", label:"CSN Pending", severity:"warn"});
-  }
-
-  if (fees.terminalDaysLeft !== null && !fees.isCompleted) {
-    if (fees.terminalDaysLeft <= 0) issues.push({key:"dem", label:"LFD Today / Expired", severity:"danger"});
-    else if (fees.terminalDaysLeft <= 2) issues.push({key:"lfd", label:`LFD in ${fees.terminalDaysLeft}d`, severity:"warn"});
-  }
-  if (fees.demOverdue) issues.push({key:"dem", label:`Demurrage ${fees.demDays}d`, severity:"danger"});
-  if (fees.detOverdue) issues.push({key:"det", label:`Detention ${fees.detDays}d`, severity:"danger"});
-
-  const eta = getField(r, ["ETA"]);
-  if (eta && eta < today && !getField(r, ["PORT IN"]) && !fees.isCompleted) {
-    issues.push({key:"arrival", label:"ETA Passed / Port In Pending", severity:"warn"});
-  }
-  if (String(getField(r, ["REMARKS"]) || "").toUpperCase().match(/DELAY|ROLL/)) {
-    issues.push({key:"delay", label:"Delayed / Rolled", severity:"warn"});
-  }
-  if (getField(r, ["PORT IN"]) && !getField(r, ["PORT OUT"]) && !fees.isCompleted) {
-    issues.push({key:"portout", label:"Port Out Pending", severity:"warn"});
-  }
-  if (getField(r, ["PORT OUT"]) && !getField(r, ["CFS IN"]) && !fees.isCompleted) {
-    issues.push({key:"cfs", label:"CFS In Pending", severity:"warn"});
-  }
-  if (getField(r, ["CFS IN"]) && !getField(r, ["DESTUFFING DATE"]) && !fees.isCompleted) {
-    issues.push({key:"destuff", label:"Destuffing Pending", severity:"warn"});
-  }
-  if (getField(r, ["DESTUFFING DATE"]) && !getField(r, ["CONTAINER RETURN DATE"]) && !fees.isCompleted) {
-    issues.push({key:"return", label:"Empty Return Pending", severity:"warn"});
-  }
-  return issues;
-}
-
-function getContainerTimeline(r) {
-  return [
-    ["Vessel Departed", getField(r, ["ETD"])],
-    ["Vessel Arrived", getField(r, ["ETA"])],
-    ["Port In", getField(r, ["PORT IN"])],
-    ["Port Out", getField(r, ["PORT OUT"])],
-    ["CFS In", getField(r, ["CFS IN"])],
-    ["Destuffing", getField(r, ["DESTUFFING DATE"])],
-    ["Empty Return", getField(r, ["CONTAINER RETURN DATE"])]
-  ];
-}
-
-function openControlTower() {
-  el("controlTowerModalBg").classList.add("open");
-  renderControlTower();
-}
-function closeControlTower() { el("controlTowerModalBg").classList.remove("open"); }
-
-function renderControlTower() {
-  const active = rows.filter(r => !calculateStandardFees(r).isCompleted);
-  const exceptions = rows.flatMap((r,i) => getExceptionItems(r).map(x => ({...x, r, i})));
-  const csn = exceptions.filter(x=>x.key==="csn").length;
-  const lfd = exceptions.filter(x=>x.key==="lfd").length;
-  const dem = exceptions.filter(x=>x.key==="dem").length;
-  const det = exceptions.filter(x=>x.key==="det").length;
-  const ops = exceptions.filter(x=>["portout","cfs","destuff","return","arrival","delay"].includes(x.key)).length;
-
-  el("towerKpis").innerHTML = [
-    ["🔴","CSN",csn,"danger"],["🟠","LFD ≤ 2d",lfd,"warn"],["🔴","Demurrage",dem,"danger"],
-    ["🔴","Detention",det,"danger"],["⚠️","Ops Exceptions",ops,"warn"],["📦","Active Containers",active.length,"ok"]
-  ].map(([icon,label,val,cls])=>`<div class="tower-kpi" onclick="towerFilter('${label}')"><small>${icon} ${label}</small><strong class="${cls}">${val}</strong></div>`).join("");
-
-  el("towerQueueCount").textContent = exceptions.length;
-  const grouped = new Map();
-  exceptions.forEach(x => {
-    const key = `${x.i}:${x.label}`;
-    if (!grouped.has(key)) grouped.set(key,x);
-  });
-  const queue = [...grouped.values()].sort((a,b)=> (a.severity==="danger"?0:1)-(b.severity==="danger"?0:1)).slice(0,60);
-  el("towerQueue").innerHTML = queue.length ? queue.map(x => {
-    const r=x.r, fees=calculateStandardFees(r);
-    return `<div class="tower-row">
-      <div><div class="tower-cntr">${towerEsc(getContainerNo(r))}</div><div class="tower-meta">${towerEsc(getField(r,["LINER"]))} • ${towerEsc(getField(r,["VESSEL & VOY"]))}</div></div>
-      <div><div class="tower-issue">${towerEsc(x.label)}</div><div class="tower-meta">CFS: ${towerEsc(getField(r,["CFS NAME"]))} • Port: ${towerEsc(getField(r,["GATEWAY PORT"]))}</div></div>
-      <div class="tower-meta">${fees.terminalLFD !== "—" ? "LFD "+towerEsc(fees.terminalLFD) : "LFD —"}</div>
-      <button class="btn btn-ghost" onclick="openContainerFromTower(${x.i})">Open</button>
-    </div>`;
-  }).join("") : `<div style="padding:30px;text-align:center;color:var(--text-muted);font-size:12px;">🎉 No exceptions right now.</div>`;
-
-  const sample = active.slice(0,6);
-  el("towerTimeline").innerHTML = sample.length ? sample.map((r,i)=>`
-    <div style="padding:12px 14px;border-bottom:1px solid var(--border);">
-      <div style="font-weight:900;font-family:'JetBrains Mono';font-size:11px;">${towerEsc(getContainerNo(r))}</div>
-      <div class="tower-meta" style="margin:3px 0 5px;">${towerEsc(getField(r,["VESSEL & VOY"]))}</div>
-      <div class="tower-timeline">${getContainerTimeline(r).map(([label,date])=>`
-        <div class="timeline-step ${date ? 'done' : ''}">
-          <strong>${label}</strong> ${date ? `<span class="tower-meta">• ${formatDate(date)}</span>` : '<span class="tower-meta">• Pending</span>'}
-        </div>`).join("")}</div>
-    </div>`).join("") : `<div style="padding:30px;text-align:center;color:var(--text-muted);">No active containers.</div>`;
-}
-
-function towerFilter(label) {
-  closeControlTower();
-  if (label === "CSN") activeQuickFilter = "csn_exception";
-  else if (label === "LFD ≤ 2d") activeQuickFilter = "critical_lfd";
-  else if (label === "Demurrage") activeQuickFilter = "demurrage";
-  else if (label === "Detention") activeQuickFilter = "detention";
-  else activeQuickFilter = "exceptions";
-  document.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));
-  renderUI();
-}
-
-function openContainerFromTower(idx) {
-  closeControlTower();
-  openModal(idx);
-}
-
-function openCustomerDashboard() {
-  el("customerDashboardModalBg").classList.add("open");
-  el("customerContainerSearch").value = el("publicSearchInput")?.value || "";
-  renderCustomerDashboard(el("customerContainerSearch").value);
-}
-function closeCustomerDashboard(){ el("customerDashboardModalBg").classList.remove("open"); }
-
-function renderCustomerDashboard(query="") {
-  const q=String(query||"").trim().toLowerCase().replace(/[^a-z0-9]/g,"");
-  const matches = q ? rows.filter(r => {
-    const vals=[getContainerNo(r),getField(r,["MBL NO","MBL","MASTER BL"])].join(" ").toLowerCase().replace(/[^a-z0-9]/g,"");
-    return vals.includes(q);
-  }) : [];
-  if(!matches.length){
-    el("customerDashboardBody").innerHTML=`<div style="padding:35px;text-align:center;color:var(--text-muted);">Enter a container or MBL number to view its operational status.</div>`;
-    return;
-  }
-  el("customerDashboardBody").innerHTML=matches.slice(0,10).map(r=>{
-    const f=calculateStandardFees(r), csn=getCsnStatus(r), issues=getExceptionItems(r);
-    const tl=getContainerTimeline(r);
-    return `<div class="customer-card" style="margin-bottom:10px;">
-      <div class="customer-card-head">
-        <div><div style="font-size:16px;font-weight:900;font-family:'JetBrains Mono';">${towerEsc(getContainerNo(r))}</div>
-        <div class="tower-meta">${towerEsc(getField(r,["VESSEL & VOY"]))} • ${towerEsc(getField(r,["LINER"]))}</div></div>
-        <span class="tower-pill ${issues.some(x=>x.severity==="danger")?'danger':issues.length?'warn':'ok'}">${issues[0]?.label || 'On Track'}</span>
-      </div>
-      <div class="customer-facts">
-        <div class="customer-fact"><small>Gateway</small><strong>${towerEsc(getField(r,["GATEWAY PORT"]))}</strong></div>
-        <div class="customer-fact"><small>CFS</small><strong>${towerEsc(getField(r,["CFS NAME"]))}</strong></div>
-        <div class="customer-fact"><small>ETA</small><strong>${towerEsc(formatDate(getField(r,["ETA"])))}</strong></div>
-        <div class="customer-fact"><small>LFD</small><strong>${towerEsc(f.terminalLFD)} ${f.terminalDaysLeft!==null?`(${f.terminalDaysLeft}d)`:''}</strong></div>
-        <div class="customer-fact"><small>CSN</small><strong>${towerEsc(csn || "Not Updated")}</strong></div>
-        <div class="customer-fact"><small>CFS In</small><strong>${towerEsc(formatDate(getField(r,["CFS IN"])))}</strong></div>
-        <div class="customer-fact"><small>Destuffing</small><strong>${towerEsc(formatDate(getField(r,["DESTUFFING DATE"])))}</strong></div>
-        <div class="customer-fact"><small>Empty Return</small><strong>${towerEsc(formatDate(getField(r,["CONTAINER RETURN DATE"])))}</strong></div>
-      </div>
-      <div class="tower-timeline">${tl.map(([label,date])=>`<div class="timeline-step ${date?'done':''}"><strong>${label}</strong> <span class="tower-meta">• ${date?formatDate(date):'Pending'}</span></div>`).join("")}</div>
-    </div>`;
-  }).join("");
-}
-
-function bindPhase1Events(){
-  el("controlTowerBtn")?.addEventListener("click",openControlTower);
-  el("controlTowerClose")?.addEventListener("click",closeControlTower);
-  el("towerRefreshBtn")?.addEventListener("click",renderControlTower);
-  el("publicCustomerViewBtn")?.addEventListener("click",openCustomerDashboard);
-  el("customerDashboardClose")?.addEventListener("click",closeCustomerDashboard);
-  el("customerContainerSearchBtn")?.addEventListener("click",()=>renderCustomerDashboard(el("customerContainerSearch").value));
-  el("customerContainerSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter")renderCustomerDashboard(e.target.value);});
-}
-bindPhase1Events();
-
-// Add safe defaults to existing rows without changing their business data.
-rows.forEach(r => {
-  if (r["PORT FREE DAYS"] === undefined) r["PORT FREE DAYS"] = "3";
-  if (r["CSN STATUS"] === undefined) r["CSN STATUS"] = "";
-  if (r["CSN FILED DATE"] === undefined) r["CSN FILED DATE"] = "";
-  if (r["CSN RESPONSE"] === undefined) r["CSN RESPONSE"] = "";
-  if (r["CSN REMARKS"] === undefined) r["CSN REMARKS"] = "";
-});

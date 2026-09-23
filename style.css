@@ -360,47 +360,5 @@ body { background-color: var(--bg-app); color: var(--text-main); font-family: 'P
   .btn { display: none !important; }
 }
 
-/* === Phase 1 Container Control Tower === */
-.control-tower-dialog { width:min(1180px, 96vw); max-width:none; }
-.customer-dialog { width:min(900px, 94vw); max-width:none; }
-.control-tower-body { padding:18px; max-height:78vh; overflow:auto; }
-.tower-toolbar { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:14px; }
-.tower-title { font-size:16px; font-weight:900; color:var(--text-main); }
-.tower-subtitle { font-size:11px; color:var(--text-muted); margin-top:3px; }
-.tower-kpis { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:10px; margin-bottom:14px; }
-.tower-kpi { border:1px solid var(--border); border-radius:12px; padding:12px; background:var(--surface); cursor:pointer; }
-.tower-kpi:hover { border-color:#38bdf8; transform:translateY(-1px); }
-.tower-kpi small { display:block; font-size:9px; text-transform:uppercase; color:var(--text-muted); font-weight:900; }
-.tower-kpi strong { display:block; font-size:24px; margin-top:3px; }
-.tower-grid { display:grid; grid-template-columns:1.2fr .8fr; gap:14px; }
-.tower-panel { border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--surface); }
-.tower-panel-head { padding:11px 13px; border-bottom:1px solid var(--border); font-weight:900; display:flex; justify-content:space-between; }
-.tower-row { padding:11px 13px; border-bottom:1px solid var(--border); display:grid; grid-template-columns:1.1fr 1.4fr .9fr auto; gap:10px; align-items:center; }
-.tower-row:last-child { border-bottom:0; }
-.tower-cntr { font-family:'JetBrains Mono',monospace; font-weight:900; }
-.tower-issue { font-size:11px; font-weight:800; }
-.tower-meta { font-size:10px; color:var(--text-muted); }
-.tower-pill { display:inline-flex; padding:4px 7px; border-radius:999px; font-size:9px; font-weight:900; white-space:nowrap; }
-.tower-pill.danger { background:var(--danger-bg); color:var(--danger); }
-.tower-pill.warn { background:var(--warning-bg); color:var(--warning); }
-.tower-pill.ok { background:var(--success-bg); color:var(--success); }
-.tower-timeline { position:relative; padding:12px 16px 12px 30px; }
-.timeline-step { position:relative; padding:7px 0 7px 16px; border-left:2px solid var(--border); font-size:10px; }
-.timeline-step:before { content:""; position:absolute; width:8px; height:8px; border-radius:50%; background:#94a3b8; left:-5px; top:12px; }
-.timeline-step.done { border-left-color:#10b981; }
-.timeline-step.done:before { background:#10b981; }
-.timeline-step.current:before { background:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.15); }
-.customer-search-row { display:flex; gap:8px; }
-.customer-note { margin:8px 0 14px; font-size:10px; color:var(--text-muted); }
-.customer-card { border:1px solid var(--border); border-radius:12px; padding:15px; }
-.customer-card-head { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-.customer-facts { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:12px 0; }
-.customer-fact { background:var(--surface-2); padding:9px; border-radius:8px; }
-.customer-fact small { display:block; color:var(--text-muted); font-size:9px; text-transform:uppercase; font-weight:800; }
-.customer-fact strong { display:block; margin-top:2px; font-size:11px; }
-@media(max-width:900px){
-  .tower-kpis{grid-template-columns:repeat(2,1fr)}
-  .tower-grid{grid-template-columns:1fr}
-  .tower-row{grid-template-columns:1fr 1fr}
-  .customer-facts{grid-template-columns:repeat(2,1fr)}
-}
+/* ===== Container Control Tower / Phase 1 ===== */
+.p1-panel{margin:18px auto 40px;max-width:1500px;padding:0 18px 30px}.p1-panel-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}.p1-panel-head h2{margin:2px 0 4px;font-size:25px}.p1-panel-head p{margin:0;color:var(--text-muted);font-size:12px}.p1-eyebrow{font-size:9px;font-weight:900;letter-spacing:.14em;color:var(--primary);text-transform:uppercase}.p1-actions{display:flex;gap:8px}.p1-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:12px}.p1-kpi{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:13px 14px;box-shadow:var(--shadow-sm)}.p1-kpi span{font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase}.p1-kpi strong{display:block;font-size:25px;margin-top:5px}.p1-kpi.danger{border-top:3px solid var(--danger)}.p1-kpi.warning{border-top:3px solid var(--warning)}.p1-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}.p1-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:var(--shadow-sm);overflow:hidden}.p1-card-title{font-size:12px;font-weight:900;margin-bottom:10px}.p1-ex-row{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid var(--border);font-size:11px}.p1-ex-row:last-child{border-bottom:0}.p1-ex-row b{font-family:'JetBrains Mono',monospace}.p1-table-wrap{overflow:auto}.p1-table{width:100%;border-collapse:collapse;font-size:11px;min-width:850px}.p1-table th{text-align:left;color:var(--text-muted);font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:8px;border-bottom:1px solid var(--border)}.p1-table td{padding:9px 8px;border-bottom:1px solid var(--border);vertical-align:middle}.p1-link{border:0;background:none;color:var(--primary);font-weight:900;cursor:pointer;padding:0}.p1-status{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:900;border:1px solid transparent}.p1-status.good{color:var(--success);background:var(--success-bg)}.p1-status.warn{color:#b45309;background:var(--warning-bg)}.p1-status.bad{color:var(--danger);background:var(--danger-bg)}button.p1-status{cursor:pointer}.p1-empty{padding:14px;color:var(--text-muted);font-size:11px}.p1-modal{position:fixed;inset:0;background:rgba(2,6,23,.58);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:10050;padding:18px}.p1-modal.open{display:flex}.p1-modal-box{width:min(760px,96vw);max-height:90vh;overflow:auto;background:var(--bg-surface);border:1px solid var(--border);border-radius:15px;box-shadow:var(--shadow-lg);padding:18px}.p1-modal-box.p1-small{width:min(520px,96vw)}.p1-modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px}.p1-modal-head h3{margin:3px 0 0;font-size:18px}.p1-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.p1-meta span{font-size:10px;background:var(--bg-muted);border:1px solid var(--border);border-radius:7px;padding:5px 8px}.p1-timeline{position:relative;padding:4px 0 4px 22px}.p1-timeline:before{content:'';position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:var(--border)}.p1-event{position:relative;display:flex;gap:12px;padding:10px 0}.p1-dot{position:absolute;left:-22px;width:16px;height:16px;border-radius:50%;background:var(--bg-surface);border:2px solid var(--border);font-size:8px;display:flex;align-items:center;justify-content:center;color:var(--text-muted)}.p1-event.done .p1-dot{background:var(--success);border-color:var(--success);color:#fff}.p1-event strong{display:block;font-size:11px}.p1-event small{display:block;margin-top:2px;color:var(--text-muted);font-size:10px}.p1-form{display:grid;grid-template-columns:1fr 1fr;gap:11px}.p1-form label{font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase}.p1-form label:last-child{grid-column:1/-1}.p1-form input,.p1-form select,.p1-form textarea{display:block;width:100%;box-sizing:border-box;margin-top:5px;border:1px solid var(--border);background:var(--bg-muted);color:var(--text-main);border-radius:7px;padding:8px;font:inherit}.p1-form textarea{min-height:90px;resize:vertical}.p1-modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}@media(max-width:900px){.p1-kpis{grid-template-columns:repeat(2,1fr)}.p1-grid{grid-template-columns:1fr}.p1-panel-head{flex-direction:column}.p1-actions{width:100%}.p1-form{grid-template-columns:1fr}.p1-form label:last-child{grid-column:auto}}
