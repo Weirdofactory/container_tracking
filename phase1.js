@@ -221,11 +221,23 @@
   function showTower(show) {
     ensureUI();
     const tower=$('p1v2Tower'), main=$('opsDashboardView');
+    if(!tower || !main) return;
     tower.style.display=show?'block':'none';
     main.style.display=show?'none':'block';
     if(show){ renderTower(); window.scrollTo({top:0,behavior:'smooth'}); }
-    else renderUI();
+    else if(typeof renderUI==='function') renderUI();
   }
+
+  window.openControlTower = () => showTower(true);
+  window.openScmtrCentre = () => {
+    ensureUI();
+    renderCsn();
+    $('p1v2CsnModal')?.classList.add('open');
+  };
+  window.openLfdRules = () => {
+    ensureUI();
+    openLfd();
+  };
 
   function renderTower() {
     ensureUI();
@@ -367,8 +379,9 @@
     window.renderUI=function(){baseRender.apply(this,arguments);if($('p1v2Tower')&&$('p1v2Tower').style.display!=='none')renderTower();};
   }
 
-  document.addEventListener('DOMContentLoaded',bind);
-  if(document.readyState!=='loading')bind();
+  ensureUI();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind,{once:true});
+  else bind();
 })();
 +Math.round(l.cost)+'</span>':'—'}</td><td>${escP(next)}</td><td><button class="btn btn-primary" data-edit="${i}">✏️ Edit</button> <button class="btn btn-ghost" data-time="${i}">Timeline</button></td></tr>`;
     }).join('')||'<tr><td colspan="7" class="p1v2-empty">No containers available.</td></tr>';
@@ -421,17 +434,33 @@
 
   function openLfd(){
     const c=config();
-    $('p1v2Free').value=c.terminalFreeDays;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;
+    $('p1v2Free').value=c.terminalFreeDays;
+    $('p1v2DetFree').value=c.detentionFreeDays;
+    $('p1v2Warn').value=c.warningDays;
+    $('p1v2Crit').value=c.criticalDays;
+    $('p1v2R20').value=c.demRate20;
+    $('p1v2R40').value=c.demRate40;
     $('p1v2LfdModal').classList.add('open');
   }
   function saveLfd(){
-    saveConfig({terminalFreeDays:Number($('p1v2Free').value||0),warningDays:Number($('p1v2Warn').value||0),criticalDays:Number($('p1v2Crit').value||0),demRate20:Number($('p1v2R20').value||0),demRate40:Number($('p1v2R40').value||0)});
-    $('p1v2LfdModal').classList.remove('open');renderTower();if(typeof toast==='function')toast('LFD rules saved');
+    saveConfig({
+      terminalFreeDays:Number($('p1v2Free').value||0),
+      detentionFreeDays:Number($('p1v2DetFree').value||0),
+      warningDays:Number($('p1v2Warn').value||0),
+      criticalDays:Number($('p1v2Crit').value||0),
+      demRate20:Number($('p1v2R20').value||0),
+      demRate40:Number($('p1v2R40').value||0)
+    });
+    $('p1v2LfdModal').classList.remove('open');
+    renderTower();
+    if(typeof toast==='function')toast('Port & outside-port LFD rules saved');
   }
 
   function bind(){
     ensureUI();
-    $('p1v2TowerBtn').onclick=()=>showTower(true);
+    if($('p1v2TowerBtn')) $('p1v2TowerBtn').onclick=window.openControlTower;
+    if($('headerCsnBtn')) $('headerCsnBtn').onclick=window.openScmtrCentre;
+    if($('headerLfdBtn')) $('headerLfdBtn').onclick=window.openLfdRules;
     $('p1v2Back').onclick=()=>showTower(false);
     $('p1v2Refresh').onclick=renderTower;
     $('p1v2All').onclick=()=>{ const main=$('opsDashboardView'); $('p1v2Tower').style.display='none'; main.style.display='block'; renderUI(); };
