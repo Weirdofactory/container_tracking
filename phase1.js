@@ -7,6 +7,7 @@
   const KEY = 'gml_phase1_config_v2';
   const DEFAULTS = {
     terminalFreeDays: 3,
+    detentionFreeDays: 14,
     warningDays: 4,
     criticalDays: 2,
     demRate20: 100,
@@ -35,21 +36,56 @@
   function lfd(r) {
     const c=config();
     const portIn=dateVal(getField(r,['PORT IN']));
-    if(!portIn) return {state:'unknown',lfd:null,daysLeft:null,demDays:0,cost:0,label:'Not started'};
-    const lfdDate=new Date(portIn);
-    lfdDate.setDate(lfdDate.getDate()+Number(c.terminalFreeDays||0));
     const portOut=dateVal(getField(r,['PORT OUT']));
-    const end=portOut||today();
-    const dwell=Math.max(0,dayDiff(portIn,end));
-    const demDays=Math.max(0,dwell-Number(c.terminalFreeDays||0));
+    const returned=dateVal(getField(r,['CONTAINER RETURN DATE','EMPTY RETURN DATE']));
+    const terminalDays=Number(c.terminalFreeDays||0);
+    const detentionDays=Number(getField(r,['FREE DAYS'])||c.detentionFreeDays||0);
+
+    // Two separate clocks:
+    // 1) Port / inside-port LFD starts at Port In and ends when Port Out occurs.
+    // 2) Outside-port / detention LFD starts at Port Out and ends when the empty is returned.
     const size=String(getField(r,['TYPE','SIZE'])||'').toUpperCase();
     const rate=size.includes('20')?Number(c.demRate20):Number(c.demRate40);
-    const daysLeft=dayDiff(today(),lfdDate);
-    let state='safe';
-    if(daysLeft<0) state='overdue';
-    else if(daysLeft<=Number(c.criticalDays)) state='critical';
-    else if(daysLeft<=Number(c.warningDays)) state='warning';
-    return {lfd:lfdDate,daysLeft,state,demDays,cost:demDays*rate,label:daysLeft<0?Math.abs(daysLeft)+'d overdue':daysLeft+'d left'};
+
+    let portLfd=null, portDaysLeft=null, portState='unknown', demDays=0, demCost=0;
+    if(portIn){
+      portLfd=new Date(portIn);
+      portLfd.setDate(portLfd.getDate()+terminalDays);
+      if(portOut){
+        const dwell=Math.max(0,dayDiff(portIn,portOut));
+        demDays=Math.max(0,dwell-terminalDays);
+        demCost=demDays*rate;
+        portState=demDays>0?'overdue':'complete';
+        portDaysLeft=dayDiff(portOut,portLfd);
+      }else{
+        portDaysLeft=dayDiff(today(),portLfd);
+        portState=portDaysLeft<0?'overdue':portDaysLeft<=Number(c.criticalDays)?'critical':portDaysLeft<=Number(c.warningDays)?'warning':'safe';
+      }
+    }
+
+    let outsideLfd=null, outsideDaysLeft=null, outsideState='unknown';
+    if(portOut){
+      outsideLfd=new Date(portOut);
+      outsideLfd.setDate(outsideLfd.getDate()+detentionDays);
+      if(returned){
+        outsideDaysLeft=dayDiff(returned,outsideLfd);
+        outsideState='complete';
+      }else{
+        outsideDaysLeft=dayDiff(today(),outsideLfd);
+        outsideState=outsideDaysLeft<0?'overdue':outsideDaysLeft<=Number(c.criticalDays)?'critical':outsideDaysLeft<=Number(c.warningDays)?'warning':'safe';
+      }
+    }
+
+    const activeState=returned?'complete':(!portOut?portState:outsideState);
+    const activeDaysLeft=returned?null:(!portOut?portDaysLeft:outsideDaysLeft);
+    const activeLfd=returned?null:(!portOut?portLfd:outsideLfd);
+    const label=returned?'Completed':activeDaysLeft===null?'Not started':activeDaysLeft<0?Math.abs(activeDaysLeft)+'d overdue':activeDaysLeft+'d left';
+
+    return {
+      lfd:activeLfd, daysLeft:activeDaysLeft, state:activeState, label,
+      portLfd, portDaysLeft, portState, outsideLfd, outsideDaysLeft, outsideState,
+      demDays, cost:demCost, detentionDays, returned:!!returned
+    };
   }
 
   function csn(r) {
@@ -68,10 +104,17 @@
     if(c.key==='NOT FILED'||c.key==='REJECTED'||c.key==='WRONG DETAILS') out.push({label:'CSN '+c.label,sev:'bad',key:'CSN'});
     else if(c.key==='PENDING'||c.key==='AMENDMENT') out.push({label:'CSN '+c.label,sev:'warn',key:'CSN'});
     const l=lfd(r);
-    if(l.demDays>0) out.push({label:'Demurrage '+l.demDays+'d',sev:'bad',key:'DEM'});
-    else if(l.state==='overdue') out.push({label:'LFD Expired',sev:'bad',key:'LFD'});
-    else if(l.state==='critical') out.push({label:l.daysLeft===0?'LFD Today':'LFD '+l.daysLeft+'d',sev:'bad',key:'LFD'});
-    else if(l.state==='warning') out.push({label:'LFD '+l.daysLeft+'d',sev:'warn',key:'LFD'});
+    // A returned container has completed both LFD clocks; never raise an LFD exception for it.
+    if(!l.returned){
+      if(l.portState==='overdue' && l.demDays>0) out.push({label:'Port LFD / Demurrage '+l.demDays+'d',sev:'bad',key:'DEM'});
+      else if(l.portState==='overdue') out.push({label:'Port LFD Expired',sev:'bad',key:'LFD_PORT'});
+      else if(l.portState==='critical') out.push({label:l.portDaysLeft===0?'Port LFD Today':'Port LFD '+l.portDaysLeft+'d',sev:'bad',key:'LFD_PORT'});
+      else if(l.portState==='warning') out.push({label:'Port LFD '+l.portDaysLeft+'d',sev:'warn',key:'LFD_PORT'});
+
+      if(l.outsideState==='overdue') out.push({label:'Outside Port LFD / Detention Expired',sev:'bad',key:'LFD_OUTSIDE'});
+      else if(l.outsideState==='critical') out.push({label:l.outsideDaysLeft===0?'Outside Port LFD Today':'Outside Port LFD '+l.outsideDaysLeft+'d',sev:'bad',key:'LFD_OUTSIDE'});
+      else if(l.outsideState==='warning') out.push({label:'Outside Port LFD '+l.outsideDaysLeft+'d',sev:'warn',key:'LFD_OUTSIDE'});
+    }
     const eta=dateVal(getField(r,['ETA']));
     const portIn=dateVal(getField(r,['PORT IN']));
     const cfs=dateVal(getField(r,['CFS IN']));
@@ -154,7 +197,7 @@
           <div class="p1v2-card"><div class="p1v2-title"><span>🚨 Operational Exceptions</span><span style="font-size:9px;color:var(--text-muted)">CSN excluded from this list</span></div><div class="p1v2-list" id="p1v2Exceptions"></div></div>
           <div class="p1v2-card"><div class="p1v2-title"><span>📦 Movement Pipeline</span><span style="font-size:9px;color:var(--text-muted)">Container milestones</span></div><div class="p1v2-list" id="p1v2Pipeline"></div></div>
         </div>
-        <div class="p1v2-card"><div class="p1v2-title"><span>⚠️ Containers Requiring Action</span><button class="btn btn-ghost" id="p1v2All">Show All</button></div><div class="p1v2-table-wrap"><table class="p1v2-table"><thead><tr><th>Container</th><th>Vessel</th><th>Status</th><th>LFD</th><th>Demurrage</th><th>Next Action</th><th>Actions</th></tr></thead><tbody id="p1v2Body"></tbody></table></div></div>`;
+        <div class="p1v2-card"><div class="p1v2-title"><span>⚠️ Containers Requiring Action</span><button class="btn btn-ghost" id="p1v2All">Show All</button></div><div class="p1v2-table-wrap"><table class="p1v2-table"><thead><tr><th>Container</th><th>Vessel</th><th>Status</th><th>Port LFD</th><th>Outside Port LFD</th><th>Demurrage</th><th>Next Action</th><th>Actions</th></tr></thead><tbody id="p1v2Body"></tbody></table></div></div>`;
       $('opsDashboardView').parentNode.insertBefore(section,$('opsDashboardView').nextSibling);
     }
     if(!$('p1v2Timeline')) {
@@ -167,7 +210,7 @@
       document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2CsnEdit"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">CSN RECORD</div><h2 id="p1v2CsnEditTitle">Container</h2></div><button class="btn btn-ghost" id="p1v2CsnEditX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Status<select id="p1v2CsnStatus"><option>NOT FILED</option><option>PENDING</option><option>ACCEPTED</option><option>REJECTED</option><option>WRONG DETAILS</option><option>AMENDMENT</option></select></label><label>Filed Date<input type="date" id="p1v2CsnFiled"></label><label>Response Date<input type="date" id="p1v2CsnResponse"></label><label class="full">Remarks<textarea id="p1v2CsnRemarks"></textarea></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2CsnCancel">Cancel</button><button class="btn btn-primary" id="p1v2CsnSave">Save CSN</button></div></div></div>`);
     }
     if(!$('p1v2LfdModal')) {
-      document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2LfdModal"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">LFD ENGINE</div><h2>Rules & Rates</h2></div><button class="btn btn-ghost" id="p1v2LfdX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Terminal Free Days<input type="number" id="p1v2Free" min="0"></label><label>Warning Threshold<input type="number" id="p1v2Warn" min="0"></label><label>Critical Threshold<input type="number" id="p1v2Crit" min="0"></label><label>20ft Demurrage / Day (USD)<input type="number" id="p1v2R20" min="0"></label><label>40ft Demurrage / Day (USD)<input type="number" id="p1v2R40" min="0"></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2LfdCancel">Cancel</button><button class="btn btn-primary" id="p1v2LfdSave">Save Rules</button></div></div></div>`);
+      document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2LfdModal"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">LFD ENGINE</div><h2>Port & Outside-Port Rules</h2></div><button class="btn btn-ghost" id="p1v2LfdX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Port / Terminal Free Days<input type="number" id="p1v2Free" min="0"></label><label>Outside Port / Detention Free Days<input type="number" id="p1v2DetFree" min="0"></label><label>Warning Threshold<input type="number" id="p1v2Warn" min="0"></label><label>Critical Threshold<input type="number" id="p1v2Crit" min="0"></label><label>20ft Demurrage / Day (USD)<input type="number" id="p1v2R20" min="0"></label><label>40ft Demurrage / Day (USD)<input type="number" id="p1v2R40" min="0"></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2LfdCancel">Cancel</button><button class="btn btn-primary" id="p1v2LfdSave">Save Rules</button></div></div></div>`);
     }
     if(!$('p1v2TowerBtn')) {
       const b=document.createElement('button'); b.id='p1v2TowerBtn'; b.className='btn btn-primary'; b.textContent='🎯 Control Tower'; b.onclick=()=>showTower(true);
@@ -210,9 +253,122 @@
     $('p1v2Body').innerHTML=display.map(({r,i,ex})=>{
       const l=lfd(r), st=getStatus(r);
       const next=ex[0]?.label||'Monitor';
-      const lfdText=l.lfd?fmt(l.lfd.toISOString().slice(0,10)):'—';
-      const lfdClass=l.state==='safe'?'good':l.state==='warning'?'warn':'bad';
-      return `<tr><td><button class="p1v2-link" data-timeline="${i}">${escP(getCn(r))}</button></td><td>${escP(getVessel(r))}</td><td>${escP(st.text)}</td><td><span class="p1v2-pill ${lfdClass}">${lfdText}${l.daysLeft!==null?' · '+escP(l.label):''}</span></td><td>${l.demDays?'<span class="p1v2-pill bad">'+l.demDays+'d · $'+Math.round(l.cost)+'</span>':'—'}</td><td>${escP(next)}</td><td><button class="btn btn-primary" data-edit="${i}">✏️ Edit</button> <button class="btn btn-ghost" data-time="${i}">Timeline</button></td></tr>`;
+      const pill=(date,days,state,label,doneText='Completed')=>{
+        if(!date && state==='unknown') return '<span class="p1v2-pill">—</span>';
+        const cls=state==='safe'?'good':state==='warning'?'warn':state==='complete'?'good':'bad';
+        const text=state==='complete'?doneText:(date?fmt(date.toISOString().slice(0,10)):'—');
+        return '<span class="p1v2-pill '+cls+'">'+text+(days!==null&&days!==undefined?' · '+escP(days<0?Math.abs(days)+'d overdue':days+'d left'):'')+'</span>';
+      };
+      const portPill=pill(l.portLfd,l.portDaysLeft,l.portState);
+      const outsidePill=pill(l.outsideLfd,l.outsideDaysLeft,l.outsideState);
+      return `<tr><td><button class="p1v2-link" data-timeline="${i}">${escP(getCn(r))}</button></td><td>${escP(getVessel(r))}</td><td>${escP(st.text)}</td><td>${portPill}</td><td>${outsidePill}</td><td>${l.demDays?'<span class="p1v2-pill bad">'+l.demDays+'d · 
+    }).join('')||'<tr><td colspan="8" class="p1v2-empty">No containers available.</td></tr>';
+    $('p1v2Body').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{if(currentUser?.role==='Viewer')return alert('Read-only access.');openModal(Number(b.dataset.edit));});
+    $('p1v2Body').querySelectorAll('[data-timeline],[data-time]').forEach(b=>b.onclick=()=>openTimeline(Number(b.dataset.timeline||b.dataset.time)));
+  }
+
+  function renderCsn() {
+    const all=rows||[];
+    const counts={ 'NOT FILED':0,PENDING:0,ACCEPTED:0,REJECTED:0,'WRONG DETAILS':0,AMENDMENT:0 };
+    all.forEach(r=>{const k=csn(r).key;counts[k]=(counts[k]||0)+1;});
+    const q=($('p1v2CsnSearch')?.value||'').toLowerCase().trim();
+    const f=$('p1v2CsnFilter')?.value||'';
+    const list=all.map((r,i)=>({r,i})).filter(({r})=>{const qv=(getCn(r)+' '+getVessel(r)).toLowerCase();return(!q||qv.includes(q))&&(!f||csn(r).key===f);});
+    const cards=Object.entries(counts).map(([k,v])=>`<div class="p1v2-csn-card"><small>${k}</small><b>${v}</b></div>`).join('');
+    $('p1v2CsnBody').innerHTML=`<div class="p1v2-cards">${cards}</div><div class="p1v2-toolbar"><input id="p1v2CsnSearch" class="input" placeholder="Search container or vessel..." value="${escP(q)}"><select id="p1v2CsnFilter"><option value="">All CSN Status</option>${Object.keys(counts).map(k=>`<option value="${escP(k)}" ${f===k?'selected':''}>${escP(k)}</option>`).join('')}</select></div><div class="p1v2-table-wrap"><table class="p1v2-table"><thead><tr><th>Container</th><th>Vessel / Voyage</th><th>CSN Status</th><th>Filed</th><th>Response</th><th>Remarks</th><th>Action</th></tr></thead><tbody>${list.map(({r,i})=>{const c=csn(r);return `<tr><td><b>${escP(getCn(r))}</b></td><td>${escP(getVessel(r))}</td><td><span class="p1v2-pill ${c.cls}">${escP(c.label)}</span></td><td>${escP(fmt(getField(r,['CSN FILED DATE'])))}</td><td>${escP(fmt(getField(r,['CSN RESPONSE DATE'])))}</td><td>${escP(getField(r,['CSN REMARKS'])||'—')}</td><td><button class="btn btn-primary" data-csn-edit="${i}">✏️ Edit CSN</button></td></tr>`}).join('')||'<tr><td colspan="7" class="p1v2-empty">No matching records.</td></tr>'}</tbody></table></div>`;
+    $('p1v2CsnSearch').oninput=renderCsn;$('p1v2CsnFilter').onchange=renderCsn;
+    $('p1v2CsnBody').querySelectorAll('[data-csn-edit]').forEach(b=>b.onclick=()=>openCsnEdit(Number(b.dataset.csnEdit)));
+  }
+
+  let csnIdx=-1;
+  function openCsnEdit(i){
+    const r=rows[i];if(!r)return;csnIdx=i;
+    $('p1v2CsnEditTitle').textContent=getCn(r)+' · CSN';
+    $('p1v2CsnStatus').value=csn(r).key;
+    $('p1v2CsnFiled').value=getField(r,['CSN FILED DATE']);
+    $('p1v2CsnResponse').value=getField(r,['CSN RESPONSE DATE']);
+    $('p1v2CsnRemarks').value=getField(r,['CSN REMARKS']);
+    $('p1v2CsnEdit').classList.add('open');
+  }
+  function saveCsn(){
+    if(csnIdx<0)return;
+    if(currentUser?.role==='Viewer')return alert('Read-only access.');
+    const r=rows[csnIdx];
+    const fields=[['CSN STATUS',$('p1v2CsnStatus').value],['CSN FILED DATE',$('p1v2CsnFiled').value],['CSN RESPONSE DATE',$('p1v2CsnResponse').value],['CSN REMARKS',$('p1v2CsnRemarks').value.trim()]];
+    fields.forEach(([k,v])=>{const old=r[k]||'';r[k]=v;if(old!==v&&typeof logAuditEvent==='function')logAuditEvent('CSN_UPDATE',getCn(r),k,old,v);});
+    if(typeof saveAndRefresh==='function')saveAndRefresh();else localStorage.setItem('containerRows',JSON.stringify(rows));
+    $('p1v2CsnEdit').classList.remove('open');renderCsn();renderTower();
+    if(typeof toast==='function')toast('CSN record updated');
+  }
+
+  function openTimeline(i){
+    const r=rows[i];if(!r)return;
+    $('p1v2TimelineTitle').textContent=getCn(r);
+    const events=[['Vessel Departed','ETD'],['Vessel Arrived','ETA'],['Port In','PORT IN'],['Port Out','PORT OUT'],['CFS In','CFS IN'],['Destuffing','DESTUFFING DATE'],['Empty Return','CONTAINER RETURN DATE']];
+    $('p1v2TimelineBody').innerHTML=`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px"><span class="p1v2-pill good">${escP(getVessel(r))}</span><span class="p1v2-pill">${escP(getField(r,['GATEWAY PORT'])||'—')}</span><span class="p1v2-pill">${escP(getField(r,['CFS NAME'])||'—')}</span></div><div class="p1v2-timeline">${events.map(([label,key])=>{const v=getField(r,[key]);return `<div class="p1v2-event ${v?'done':''}"><span class="p1v2-dot"></span><b>${label}</b><small>${v?fmt(v):'Pending'}</small></div>`}).join('')}</div><div class="p1v2-foot" style="margin:18px -18px -18px"><button class="btn btn-primary" id="p1v2TimelineEdit">✏️ Edit Container</button></div>`;
+    $('p1v2TimelineEdit').onclick=()=>{ $('p1v2Timeline').classList.remove('open'); if(currentUser?.role!=='Viewer')openModal(i); };
+    $('p1v2Timeline').classList.add('open');
+  }
+
+  function openLfd(){
+    const c=config();
+    $('p1v2Free').value=c.terminalFreeDays;$('p1v2DetFree').value=c.detentionFreeDays;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;
+    $('p1v2LfdModal').classList.add('open');
+  }
+  function saveLfd(){
+    saveConfig({terminalFreeDays:Number($('p1v2Free').value||0),detentionFreeDays:Number($('p1v2DetFree').value||0),warningDays:Number($('p1v2Warn').value||0),criticalDays:Number($('p1v2Crit').value||0),demRate20:Number($('p1v2R20').value||0),demRate40:Number($('p1v2R40').value||0)});
+    $('p1v2LfdModal').classList.remove('open');renderTower();if(typeof toast==='function')toast('LFD rules saved');
+  }
+
+  function bind(){
+    ensureUI();
+    $('p1v2TowerBtn').onclick=()=>showTower(true);
+    $('p1v2Back').onclick=()=>showTower(false);
+    $('p1v2Refresh').onclick=renderTower;
+    $('p1v2All').onclick=()=>{ const main=$('opsDashboardView'); $('p1v2Tower').style.display='none'; main.style.display='block'; renderUI(); };
+    $('p1v2Csn').onclick=()=>{renderCsn();$('p1v2CsnModal').classList.add('open');};
+    $('p1v2Lfd').onclick=openLfd;
+    $('p1v2TimelineX').onclick=()=>$('p1v2Timeline').classList.remove('open');
+    $('p1v2CsnX').onclick=()=>$('p1v2CsnModal').classList.remove('open');
+    $('p1v2CsnEditX').onclick=()=>$('p1v2CsnEdit').classList.remove('open');
+    $('p1v2CsnCancel').onclick=()=>$('p1v2CsnEdit').classList.remove('open');
+    $('p1v2CsnSave').onclick=saveCsn;
+    $('p1v2LfdX').onclick=()=>$('p1v2LfdModal').classList.remove('open');
+    $('p1v2LfdCancel').onclick=()=>$('p1v2LfdModal').classList.remove('open');
+    $('p1v2LfdSave').onclick=saveLfd;
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.p1v2-modal.open').forEach(x=>x.classList.remove('open'));});
+  }
+
+  // Keep staff navigation on the staff operations page. The public landing page is customer-only.
+  const baseAccessState=window.setAccessState;
+  if(typeof baseAccessState==='function'){
+    window.setAccessState=function(isStaff){
+      baseAccessState.apply(this,arguments);
+      const tower=$('p1v2Tower');
+      if(tower && !isStaff) tower.style.display='none';
+      if(tower && isStaff) { tower.style.display='none'; $('opsDashboardView').style.display='block'; }
+    };
+  }
+  window.resetToLanding=function(){
+    if(currentUser){
+      if($('p1v2Tower')) $('p1v2Tower').style.display='none';
+      $('opsDashboardView').style.display='block';
+      if(typeof renderUI==='function') renderUI();
+    }else if(typeof setAccessState==='function'){
+      setAccessState(false);
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  const baseRender=window.renderUI;
+  if(typeof baseRender==='function'){
+    window.renderUI=function(){baseRender.apply(this,arguments);if($('p1v2Tower')&&$('p1v2Tower').style.display!=='none')renderTower();};
+  }
+
+  document.addEventListener('DOMContentLoaded',bind);
+  if(document.readyState!=='loading')bind();
+})();
++Math.round(l.cost)+'</span>':'—'}</td><td>${escP(next)}</td><td><button class="btn btn-primary" data-edit="${i}">✏️ Edit</button> <button class="btn btn-ghost" data-time="${i}">Timeline</button></td></tr>`;
     }).join('')||'<tr><td colspan="7" class="p1v2-empty">No containers available.</td></tr>';
     $('p1v2Body').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{if(currentUser?.role==='Viewer')return alert('Read-only access.');openModal(Number(b.dataset.edit));});
     $('p1v2Body').querySelectorAll('[data-timeline],[data-time]').forEach(b=>b.onclick=()=>openTimeline(Number(b.dataset.timeline||b.dataset.time)));
