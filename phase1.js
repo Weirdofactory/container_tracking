@@ -87,6 +87,7 @@
     const st = document.createElement('style');
     st.id = 'p1Phase1Styles';
     st.textContent = `
+      .p1-subtitle{margin:5px 0 0;color:var(--text-muted);font-size:11px}.p1-csn-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin-bottom:12px}.p1-csn-kpi{padding:11px;border:1px solid var(--border);border-radius:10px;background:var(--bg-muted)}.p1-csn-kpi span{display:block;font-size:9px;font-weight:900;color:var(--text-muted)}.p1-csn-kpi strong{display:block;font-size:20px;margin-top:3px}.p1-csn-kpi.good{border-top:3px solid var(--success)}.p1-csn-kpi.warn{border-top:3px solid var(--warning)}.p1-csn-kpi.bad{border-top:3px solid var(--danger)}.p1-csn-toolbar{display:flex;gap:8px;margin-bottom:12px}.p1-csn-toolbar .input{flex:1}.p1-csn-toolbar .select{width:220px}.p1-edit-btn{font-size:10px;padding:5px 8px}.p1-card-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}@media(max-width:900px){.p1-csn-kpis{grid-template-columns:repeat(2,1fr)}.p1-csn-toolbar{flex-direction:column}.p1-csn-toolbar .select{width:100%}}
       .p1-panel{margin:18px auto 40px;max-width:1500px;padding:0 18px 30px;box-sizing:border-box}
       .p1-panel-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
       .p1-panel-head h2{margin:2px 0 4px;font-size:25px}.p1-panel-head p{margin:0;color:var(--text-muted);font-size:12px}
@@ -122,10 +123,10 @@
       const main=p1('opsDashboardView');
       const section=document.createElement('section'); section.id='p1ControlTower'; section.className='p1-panel'; section.style.display='none';
       section.innerHTML=`
-        <div class="p1-panel-head"><div><div class="p1-eyebrow">CONTAINER OPERATIONS</div><h2>🎯 Control Tower</h2><p>Exceptions and milestones that need action today.</p></div><div class="p1-actions"><button class="btn btn-ghost" id="p1ConfigBtn">⚙️ LFD Settings</button><button class="btn btn-primary" id="p1RefreshBtn">↻ Refresh</button></div></div>
+        <div class="p1-panel-head"><div><div class="p1-eyebrow">CONTAINER OPERATIONS</div><h2>🎯 Control Tower</h2><p>Exceptions and milestones that need action today.</p></div><div class="p1-actions"><button class="btn btn-ghost" id="p1ConfigBtn">⚙️ LFD Settings</button><button class="btn btn-primary" id="p1RefreshBtn">↻ Refresh</button><button class="btn" id="p1CsnOpenBtn">📑 CSN Control Centre</button></div></div>
         <div class="p1-kpis" id="p1Kpis"></div>
         <div class="p1-grid"><div class="p1-card"><div class="p1-card-title">🚨 Action Required</div><div id="p1Exceptions"></div></div><div class="p1-card"><div class="p1-card-title">📊 CSN Status</div><div id="p1CsnStats"></div></div></div>
-        <div class="p1-card"><div class="p1-card-title">📦 Container Overview</div><div class="p1-table-wrap"><table class="p1-table"><thead><tr><th>Container</th><th>Vessel</th><th>CSN</th><th>LFD</th><th>Demurrage</th><th>Next Action</th></tr></thead><tbody id="p1TableBody"></tbody></table></div></div>`;
+        <div class="p1-card"><div class="p1-card-title">📦 Container Overview</div><div class="p1-table-wrap"><table class="p1-table"><thead><tr><th>Container</th><th>Vessel</th><th>CSN</th><th>LFD</th><th>Demurrage</th><th>Next Action</th><th>Action</th></tr></thead><tbody id="p1TableBody"></tbody></table></div></div>`;
       main.parentNode.insertBefore(section, main.nextSibling);
     }
     if (!p1('p1TimelineModal')) {
@@ -134,13 +135,16 @@
     if (!p1('p1CsnModal')) {
       document.body.insertAdjacentHTML('beforeend', `<div class="p1-modal" id="p1CsnModal" style="display:none"><div class="p1-modal-box p1-small"><div class="p1-modal-head"><div><div class="p1-eyebrow">SCMTR / CSN CONTROL</div><h3 id="p1CsnTitle">CSN</h3></div><button class="btn btn-ghost" id="p1CsnClose">✕</button></div><div class="p1-form"><label>Status<select id="p1CsnStatus"><option>NOT FILED</option><option>PENDING</option><option>ACCEPTED</option><option>REJECTED</option><option>WRONG DETAILS</option><option>AMENDMENT</option></select></label><label>Filed Date<input type="date" id="p1CsnFiled"></label><label>Response Date<input type="date" id="p1CsnResponse"></label><label>Remarks<textarea id="p1CsnRemarks"></textarea></label></div><div class="p1-modal-foot"><button class="btn" id="p1CsnCancel">Cancel</button><button class="btn btn-primary" id="p1CsnSave">Save CSN Status</button></div></div></div>`);
     }
+    if (!p1('p1CsnDashboardModal')) {
+      document.body.insertAdjacentHTML('beforeend', `<div class="p1-modal" id="p1CsnDashboardModal" style="display:none"><div class="p1-modal-box" style="width:min(1050px,97vw)"><div class="p1-modal-head"><div><div class="p1-eyebrow">COMPLIANCE CONTROL</div><h3>SCMTR / CSN Control Centre</h3><p class="p1-subtitle">Monitor CSN filing status and open a record to edit its filing details.</p></div><button class="btn btn-ghost" id="p1CsnDashClose">✕</button></div><div id="p1CsnDashBody"></div></div></div>`);
+    }
     if (!p1('p1ConfigModal')) {
       document.body.insertAdjacentHTML('beforeend', `<div class="p1-modal" id="p1ConfigModal" style="display:none"><div class="p1-modal-box p1-small"><div class="p1-modal-head"><div><div class="p1-eyebrow">LFD ENGINE</div><h3>Rules & Rates</h3></div><button class="btn btn-ghost" id="p1CfgClose">✕</button></div><div class="p1-form"><label>Terminal Free Days<input type="number" id="p1CfgFree" min="0"></label><label>Warning Threshold<input type="number" id="p1CfgWarn" min="0"></label><label>Critical Threshold<input type="number" id="p1CfgCrit" min="0"></label><label>20ft Demurrage / Day (USD)<input type="number" id="p1Cfg20" min="0"></label><label>40ft Demurrage / Day (USD)<input type="number" id="p1Cfg40" min="0"></label></div><div class="p1-modal-foot"><button class="btn" id="p1CfgCancel">Cancel</button><button class="btn btn-primary" id="p1CfgSave">Save Rules</button></div></div></div>`);
     }
     const ops=p1('opsControls');
     if (ops && !p1('p1TowerBtn')) { const b=document.createElement('button'); b.id='p1TowerBtn'; b.className='btn btn-primary'; b.textContent='🎯 Control Tower'; b.addEventListener('click',()=>toggleTower1(true)); ops.insertBefore(b,ops.firstChild); }
     const menu=p1('opsMenuDropdown');
-    if(menu && !p1('p1CsnMenuBtn')) { const b=document.createElement('button'); b.id='p1CsnMenuBtn'; b.className='dropdown-item'; b.textContent='📑 SCMTR / CSN Control'; b.addEventListener('click',()=>toggleTower1(true)); menu.insertBefore(b,menu.firstChild); }
+    if(menu && !p1('p1CsnMenuBtn')) { const b=document.createElement('button'); b.id='p1CsnMenuBtn'; b.className='dropdown-item'; b.textContent='📑 SCMTR / CSN Control'; b.addEventListener('click',()=>openCsnDashboard1()); menu.insertBefore(b,menu.firstChild); }
   }
 
   function toggleTower1(show) {
@@ -169,12 +173,26 @@
       const l=lfdInfo1(r), c=csnInfo1(r), e=exceptions1(r);
       const action=e[0]?.label || 'No immediate action';
       const lfd=l.lfd?fmt1(l.lfd.toISOString().slice(0,10)):'—';
-      return `<tr><td><button class="p1-link" data-timeline="${i}">${esc1(cntr1(r))}</button></td><td>${esc1(vessel1(r))}</td><td><button class="p1-status ${c.cls}" data-csn="${i}">${esc1(c.label)}</button></td><td><span class="p1-status ${l.state==='safe'?'good':l.state==='warning'?'warn':'bad'}">${lfd}${l.daysLeft!==null?` · ${esc1(l.label)}`:''}</span></td><td>${l.overdue?`<span class="p1-status bad">${l.demDays}d · $${Math.round(l.demCost)}</span>`:'—'}</td><td>${esc1(action)}</td></tr>`;
+      return `<tr><td><button class="p1-link" data-timeline="${i}">${esc1(cntr1(r))}</button></td><td>${esc1(vessel1(r))}</td><td><button class="p1-status ${c.cls}" data-csn="${i}">${esc1(c.label)}</button></td><td><span class="p1-status ${l.state==='safe'?'good':l.state==='warning'?'warn':'bad'}">${lfd}${l.daysLeft!==null?` · ${esc1(l.label)}`:''}</span></td><td>${l.overdue?`<span class="p1-status bad">${l.demDays}d · $${Math.round(l.demCost)}</span>`:'—'}</td><td>${esc1(action)}</td><td><button class="btn btn-ghost p1-edit-btn" data-edit="${i}">✏️ Edit</button></td></tr>`;
     }).join('') || `<tr><td colspan="6" class="p1-empty">No containers available.</td></tr>`;
     p1('p1TableBody').querySelectorAll('[data-timeline]').forEach(b=>b.addEventListener('click',()=>openTimeline1(Number(b.dataset.timeline))));
     p1('p1TableBody').querySelectorAll('[data-csn]').forEach(b=>b.addEventListener('click',()=>openCsn1(Number(b.dataset.csn))));
+    p1('p1TableBody').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>{ if(typeof openModal==='function') openModal(Number(b.dataset.edit)); }));
   }
 
+  function renderCsnDashboard1(){
+    const all=rows || [];
+    const counts={"NOT FILED":0,"PENDING":0,"ACCEPTED":0,"REJECTED":0,"WRONG DETAILS":0,"AMENDMENT":0};
+    all.forEach(r=>{const k=csnInfo1(r).key; counts[k]=(counts[k]||0)+1;});
+    const cards=Object.entries(counts).map(([k,v])=>`<div class="p1-csn-kpi ${['ACCEPTED'].includes(k)?'good':['NOT FILED','REJECTED','WRONG DETAILS'].includes(k)?'bad':'warn'}"><span>${esc1(k)}</span><strong>${v}</strong></div>`).join('');
+    const q=(p1('p1CsnSearch')?.value||'').toLowerCase().trim();
+    const status=p1('p1CsnFilter')?.value||'';
+    const filtered=all.map((r,i)=>({r,i})).filter(({r})=>{const cn=cntr1(r).toLowerCase(); const v=vessel1(r).toLowerCase(); const c=csnInfo1(r).key; return (!q||cn.includes(q)||v.includes(q))&&(!status||c===status);});
+    p1('p1CsnDashBody').innerHTML=`<div class="p1-csn-kpis">${cards}</div><div class="p1-csn-toolbar"><input id="p1CsnSearch" class="input" placeholder="Search container or vessel..." value="${esc1(q)}"><select id="p1CsnFilter" class="select"><option value="">All CSN Status</option>${Object.keys(counts).map(k=>`<option ${status===k?'selected':''}>${esc1(k)}</option>`).join('')}</select></div><div class="p1-table-wrap"><table class="p1-table p1-csn-table"><thead><tr><th>Container</th><th>Vessel / Voyage</th><th>Status</th><th>Filed</th><th>Response</th><th>Remarks</th><th>Action</th></tr></thead><tbody>${filtered.map(({r,i})=>{const c=csnInfo1(r); return `<tr><td><b>${esc1(cntr1(r))}</b></td><td>${esc1(vessel1(r))}</td><td><span class="p1-status ${c.cls}">${esc1(c.label)}</span></td><td>${esc1(fmt1(getField(r,['CSN FILED DATE'])))}</td><td>${esc1(fmt1(getField(r,['CSN RESPONSE DATE'])))}</td><td>${esc1(getField(r,['CSN REMARKS'])||'—')}</td><td><button class="btn btn-primary p1-csn-edit" data-edit-csn="${i}">Edit CSN</button></td></tr>`}).join('')||'<tr><td colspan="7" class="p1-empty">No matching CSN records.</td></tr>'}</tbody></table></div>`;
+    p1('p1CsnSearch').oninput=renderCsnDashboard1; p1('p1CsnFilter').onchange=renderCsnDashboard1;
+    p1('p1CsnDashBody').querySelectorAll('[data-edit-csn]').forEach(b=>b.addEventListener('click',()=>openCsn1(Number(b.dataset.editCsn))));
+  }
+  function openCsnDashboard1(){ ensureUI1(); renderCsnDashboard1(); p1('p1CsnDashboardModal').style.display='flex'; p1('p1CsnDashboardModal').classList.add('open'); }
   function openTimeline1(i) {
     const r=rows[i]; if(!r) return; const cn=cntr1(r); p1('p1TimelineTitle').textContent=cn;
     const events=[['Vessel Departed','ETD'],['Vessel Arrived','ETA'],['Port In','PORT IN'],['Port Out','PORT OUT'],['CFS In','CFS IN'],['Destuffing','DESTUFFING DATE'],['Empty Return','CONTAINER RETURN DATE']];
@@ -191,13 +209,14 @@
 
   function hook1(){
     ensureUI1();
-    p1('p1RefreshBtn').onclick=renderTower1; p1('p1ConfigBtn').onclick=openCfg1;
+    p1('p1RefreshBtn').onclick=renderTower1; p1('p1ConfigBtn').onclick=openCfg1; p1('p1CsnOpenBtn').onclick=openCsnDashboard1;
     p1('p1TimelineClose').onclick=()=>{p1('p1TimelineModal').classList.remove('open');p1('p1TimelineModal').style.display='none';};
     p1('p1CsnClose').onclick=p1('p1CsnCancel').onclick=()=>{p1('p1CsnModal').classList.remove('open');p1('p1CsnModal').style.display='none';};
     p1('p1CsnSave').onclick=saveCsn1;
+    p1('p1CsnDashClose').onclick=()=>{p1('p1CsnDashboardModal').classList.remove('open');p1('p1CsnDashboardModal').style.display='none';};
     p1('p1CfgClose').onclick=p1('p1CfgCancel').onclick=()=>{p1('p1ConfigModal').classList.remove('open');p1('p1ConfigModal').style.display='none';};
     p1('p1CfgSave').onclick=saveCfg1;
-    window.addEventListener('keydown',e=>{if(e.key==='Escape'){['p1TimelineModal','p1CsnModal','p1ConfigModal'].forEach(id=>{const el=p1(id);if(el){el.classList.remove('open');el.style.display='none';}});}});
+    window.addEventListener('keydown',e=>{if(e.key==='Escape'){['p1TimelineModal','p1CsnModal','p1ConfigModal','p1CsnDashboardModal'].forEach(id=>{const el=p1(id);if(el){el.classList.remove('open');el.style.display='none';}});}});
   }
 
   // Wrap renderUI so the control tower stays synchronized after edits/imports.

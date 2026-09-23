@@ -80,7 +80,13 @@ const el = id => document.getElementById(id);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 function resetToLanding() {
-  setAccessState(false);
+  // The public landing page is customer-only. Staff users should always
+  // return to the staff operations dashboard when they click the brand/home.
+  if (currentUser) {
+    setAccessState(true);
+  } else {
+    setAccessState(false);
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -888,9 +894,10 @@ function performPublicSearch() {
     }
 
     container.innerHTML = `
-      <div style="padding:16px 22px; border-bottom:1px solid var(--border); background:var(--bg-elevated);">
-        <div style="font-size:9px; font-weight:900; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em;">CUSTOMER STATUS</div>
-        <div style="font-size:18px; font-weight:900; margin-top:3px;">Shipment Status & Timeline</div>
+      <div class="public-status-header">
+        <div style="font-size:9px; font-weight:900; color:var(--accent); text-transform:uppercase; letter-spacing:.12em;">CUSTOMER STATUS</div>
+        <div style="font-size:22px; font-weight:900; margin-top:4px;">Shipment Status & Timeline</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">A simple operational view of your container movement.</div>
       </div>
       ${publicSearchResults.map((r, i) => {
       const st = getStatus(r);
@@ -904,10 +911,10 @@ function performPublicSearch() {
 
       return `
         <div class="cascade-item" style="animation-delay: ${i * 100}ms">
-          <div style="background:var(--bg-elevated); padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div class="public-container-head">
             <div>
               <div style="font-size:9.5px; font-weight:800; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em;">Container Number</div>
-              <div style="font-size:22px; font-weight:900; font-family:'JetBrains Mono'; color:var(--accent); margin-top:2px;">${esc(cntr)}</div>
+              <div class="public-container-number">${esc(cntr)}</div>
             </div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <button class="btn btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="copyText('${publicUrl}')" title="Copy Public Tracking Link">🔗 Copy Link</button>
@@ -915,6 +922,12 @@ function performPublicSearch() {
               <button class="btn" style="border-radius:20px; font-size:11px; padding:6px 14px;" onclick="openRouteMap('${esc(originPort)}', '${esc(destPort)}', '${esc(vessel)}')">🗺️ Route Map</button>
               <span class="public-badge ${st.class === 'completed' ? 'completed' : ''}">${st.text}</span>
             </div>
+          </div>
+          <div class="public-detail-grid">
+            <div class="public-detail"><small>Vessel / Voyage</small><strong>${esc(vessel || '—')}</strong></div>
+            <div class="public-detail"><small>ETA</small><strong>${esc(formatDate(getField(r,['ETA'])) || '—')}</strong></div>
+            <div class="public-detail"><small>Gateway Port</small><strong>${esc(gwPort || '—')}</strong></div>
+            <div class="public-detail"><small>CFS</small><strong>${esc(getField(r,['CFS NAME','CFS']) || '—')}</strong></div>
           </div>
           ${publicTimelineHtml}
         </div>
