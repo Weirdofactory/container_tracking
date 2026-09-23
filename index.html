@@ -24,13 +24,9 @@
       <div class="brand-logo-icon">⚓</div>
       <div class="brand-title">Container Tracking Suite</div>
     </div>
-    
     <div class="header-tools">
       <div id="opsControls" style="display:none; align-items:center; gap:8px;">
-        <div class="header-segment">
-          <button class="btn btn-primary action-editor-only" id="addBtn">+ Container</button>
-        </div>
-
+        <div class="header-segment"><button class="btn btn-primary action-editor-only" id="addBtn">+ Container</button></div>
         <div class="nav-dropdown">
           <button class="btn" id="opsMenuBtn">⚡ Ops Menu ▾</button>
           <div class="nav-dropdown-content" id="opsMenuDropdown">
@@ -40,16 +36,11 @@
             <button class="dropdown-item" id="openAnalyticsBtn">📊 Turnaround Stats</button>
           </div>
         </div>
-
         <div class="header-segment">
           <button class="btn btn-ghost" id="exportBtn" title="Export to Excel">📤 Export</button>
-          <label class="btn btn-ghost action-editor-only" style="cursor:pointer" title="Import from Excel">
-            📂 Import<input id="excelInput" type="file" accept=".xlsx,.xls,.csv" style="display:none">
-          </label>
+          <label class="btn btn-ghost action-editor-only" style="cursor:pointer" title="Import from Excel">📂 Import<input id="excelInput" type="file" accept=".xlsx,.xls,.csv" style="display:none"></label>
         </div>
-
         <div class="header-divider"></div>
-
         <div class="header-segment">
           <button class="btn btn-ghost" id="currencyToggleBtn" style="font-family:'JetBrains Mono'; padding:4px 8px;">💱 INR</button>
           <button class="btn btn-ghost" id="themeBtn" style="padding:4px 8px;">☀️</button>
@@ -57,7 +48,6 @@
           <button class="btn btn-danger" id="logoutBtn" style="padding:4px 8px;" title="Logout">🔒</button>
         </div>
       </div>
-
       <div id="publicControls" style="display:flex; align-items:center; gap:8px;">
         <button class="btn btn-ghost" id="publicThemeBtn" style="padding:6px 10px;">☀️</button>
         <button class="btn btn-primary" id="loginBtn">🔐 Staff Portal Login</button>
@@ -76,17 +66,10 @@
         <div class="hero-trust-row"><span>✓ Live status view</span><span>✓ Timeline milestones</span><span>✓ No login required</span></div>
       </div>
       <div class="hero-widget-card">
-        <div class="widget-tabs-header">
-          <div class="widget-tab-active">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-            Customer Shipment Status
-          </div>
-        </div>
+        <div class="widget-tabs-header"><div class="widget-tab-active">📍 Customer Shipment Status</div></div>
         <div class="widget-body">
           <label>Container Number <span>*</span></label>
-          <div class="widget-input-wrapper">
-            <input type="text" id="publicSearchInput" placeholder="E.g. SKHU9422886, IAAU1753030">
-          </div>
+          <div class="widget-input-wrapper"><input type="text" id="publicSearchInput" placeholder="E.g. SKHU9422886, IAAU1753030"></div>
           <div class="widget-helper-text">Enter a container number to view the latest shipment status and timeline.</div>
           <button class="btn-track-action" id="publicSearchBtn">Track Shipment Now</button>
         </div>
@@ -101,311 +84,56 @@
     <div class="kpi-card active-kpi"><small>Active Shipments</small><strong id="kActive">0</strong></div>
     <div class="kpi-card destuffed-kpi"><small>Returned (Done)</small><strong id="kCompleted" style="color:var(--success)">0</strong></div>
     <div class="kpi-card port-kpi"><small>Port In Awaiting</small><strong id="kPortInPending" style="color:var(--warning)">0</strong></div>
-    <div class="kpi-card" style="border-top-color: #f97316;"><small>Port Out Pending</small><strong id="kPortOutPending" style="color:#f97316">0</strong></div>
-    <div class="kpi-card" style="border-top-color: var(--danger);"><small>Destuffing Pending</small><strong id="kDestuffingPending" style="color:var(--danger)">0</strong></div>
+    <div class="kpi-card" style="border-top-color:#f97316;"><small>Port Out Pending</small><strong id="kPortOutPending" style="color:#f97316">0</strong></div>
+    <div class="kpi-card" style="border-top-color:var(--danger);"><small>Destuffing Pending</small><strong id="kDestuffingPending" style="color:var(--danger)">0</strong></div>
     <div class="kpi-card total-cost-kpi"><small>Total Financial Exposure</small><strong id="kTotalExposure" style="color:var(--corporate-pink)">₹0</strong></div>
   </div>
-
   <div class="control-tray">
     <div class="control-tray-top">
       <div class="filter-inputs">
-        <div class="search-input-wrapper">
-          <span class="search-input-icon">🔍</span>
-          <input id="search" class="input" placeholder="Search container, vessel, seal, truck...">
-        </div>
+        <div class="search-input-wrapper"><span class="search-input-icon">🔍</span><input id="search" class="input" placeholder="Search container, vessel, seal, truck..."></div>
         <button class="btn" onclick="openDrawer()">⚙️ Deep Filters</button>
       </div>
-
-      <div class="view-selector">
-        <button class="view-btn active" data-view="cards">Cards</button>
-        <button class="view-btn" data-view="sheet">Table</button>
-        <button class="view-btn" data-view="kanban">Pipeline</button>
-      </div>
+      <div class="view-selector"><button class="view-btn active" data-view="cards">Cards</button><button class="view-btn" data-view="sheet">Table</button><button class="view-btn" data-view="kanban">Pipeline</button></div>
     </div>
-
-    <div class="control-tray-bottom">
-      <div class="quick-chips-wrapper">
-        <span class="chip" data-filter="all">All</span>
-        <span class="chip active" data-filter="active">Active Only</span>
-        <span class="chip" data-filter="today">Arriving Today</span>
-        <span class="chip" data-filter="demurrage">Demurrage (Port)</span>
-        <span class="chip" data-filter="detention">Detention (Outside)</span>
-        <span class="chip" data-filter="critical_lfd">⚠️ LFD Critical (&le; 2d)</span>
-        <span class="chip" data-filter="delayed">Delayed / Rolled</span>
-        <span class="chip" data-filter="completed">Archive (Returned)</span>
-      </div>
-    </div>
+    <div class="control-tray-bottom"><div class="quick-chips-wrapper">
+      <span class="chip" data-filter="all">All</span><span class="chip active" data-filter="active">Active Only</span><span class="chip" data-filter="today">Arriving Today</span><span class="chip" data-filter="demurrage">Demurrage (Port)</span><span class="chip" data-filter="detention">Detention (Outside)</span><span class="chip" data-filter="critical_lfd">⚠️ LFD Critical (&le; 2d)</span><span class="chip" data-filter="delayed">Delayed / Rolled</span><span class="chip" data-filter="completed">Archive (Returned)</span>
+    </div></div>
   </div>
-
   <section id="cardsView" class="cards-layout fade-in"></section>
-
-  <section id="sheetView" class="sheet-box fade-in" style="display:none;">
-    <table class="sheet-table">
-      <thead>
-        <tr>
-          <th width="35"><input type="checkbox" id="sheetSelectAll"></th>
-          <th onclick="sortSheet('CONTAINER NO.')">Container No. ↕</th>
-          <th onclick="sortSheet('TYPE')">Type ↕</th>
-          <th onclick="sortSheet('MBL NO')">MBL No ↕</th>
-          <th onclick="sortSheet('LINER')">Liner ↕</th>
-          <th onclick="sortSheet('GATEWAY PORT')">Port ↕</th>
-          <th onclick="sortSheet('PORT IN')">Port In ↕</th>
-          <th onclick="sortSheet('PORT OUT')">Port Out ↕</th>
-          <th onclick="sortSheet('CFS NAME')">CFS Depot ↕</th>
-          <th onclick="sortSheet('TRUCK NO.')">Truck No. ↕</th>
-          <th onclick="sortSheet('DESTUFFING DATE')">Destuffed ↕</th>
-          <th onclick="sortSheet('CONTAINER RETURN DATE')">Empty Return ↕</th>
-          <th>Terminal LFD</th>
-          <th>Detention LFD</th>
-          <th>Exposure</th>
-          <th>Remarks</th>
-          <th width="80">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="sheetTableBody"></tbody>
-    </table>
-    <!-- Pagination Footer -->
-    <div id="paginationWrapper"></div>
-  </section>
-
+  <section id="sheetView" class="sheet-box fade-in" style="display:none;"><table class="sheet-table"><thead><tr><th width="35"><input type="checkbox" id="sheetSelectAll"></th><th>Container No.</th><th>Type</th><th>MBL No</th><th>Liner</th><th>Port</th><th>Port In</th><th>Port Out</th><th>CFS Depot</th><th>Truck No.</th><th>Destuffed</th><th>Empty Return</th><th>Terminal LFD</th><th>Detention LFD</th><th>Exposure</th><th>Remarks</th><th width="80">Actions</th></tr></thead><tbody id="sheetTableBody"></tbody></table><div id="paginationWrapper"></div></section>
   <section id="kanbanView" class="kanban-layout fade-in" style="display:none;"></section>
 </main>
 
-<!-- Slide-Out Filter Drawer -->
 <div class="drawer-overlay" id="filterDrawerOverlay" onclick="closeDrawer()"></div>
-<div class="filter-drawer" id="filterDrawer">
-  <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
-    <h3 style="margin:0; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px;">⚙️ Advanced Filters</h3>
-    <button class="btn btn-ghost" style="padding:4px 8px;" onclick="closeDrawer()">✕</button>
-  </div>
-  <div style="display:flex; flex-direction:column; gap:6px;">
-    <div>
-      <label>Vessel</label>
-      <select id="vesselFilter" class="select"></select>
-    </div>
-    <div>
-      <label>Gateway Port</label>
-      <select id="gatewayFilter" class="select">
-        <option value="">All Ports</option>
-        <option value="CITPL">CITPL (PSA)</option>
-        <option value="CCTL">CCTL (DP World)</option>
-        <option value="Kattupalli">Kattupalli Port</option>
-        <option value="Ennore">Ennore Port</option>
-      </select>
-    </div>
-    <div>
-      <label>CFS Depot</label>
-      <select id="cfsFilter" class="select"></select>
-    </div>
-  </div>
-</div>
+<div class="filter-drawer" id="filterDrawer"><div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:16px;"><h3 style="margin:0;font-size:14px;font-weight:800;">⚙️ Advanced Filters</h3><button class="btn btn-ghost" style="padding:4px 8px;" onclick="closeDrawer()">✕</button></div><div style="display:flex;flex-direction:column;gap:6px;"><div><label>Vessel</label><select id="vesselFilter" class="select"></select></div><div><label>Gateway Port</label><select id="gatewayFilter" class="select"><option value="">All Ports</option><option value="CITPL">CITPL (PSA)</option><option value="CCTL">CCTL (DP World)</option><option value="Kattupalli">Kattupalli Port</option><option value="Ennore">Ennore Port</option></select></div><div><label>CFS Depot</label><select id="cfsFilter" class="select"></select></div></div></div>
 
-<!-- Drag & Drop Import Overlay -->
-<div id="dragDropOverlay" class="drawer-overlay" style="z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white; font-size:20px; font-weight:800; background:rgba(2,132,199,0.9); backdrop-filter:blur(6px);">
-  <div style="font-size:64px; margin-bottom:16px;">📥</div>
-  Drop Excel File to Import
-  <div style="font-size:12px; font-weight:600; margin-top:8px; opacity:0.8;">Updates records automatically</div>
-</div>
+<div id="dragDropOverlay" class="drawer-overlay" style="z-index:9999;flex-direction:column;align-items:center;justify-content:center;color:white;font-size:20px;font-weight:800;background:rgba(2,132,199,.9);backdrop-filter:blur(6px);"><div style="font-size:64px;margin-bottom:16px;">📥</div>Drop Excel File to Import<div style="font-size:12px;font-weight:600;margin-top:8px;opacity:.8;">Updates records automatically</div></div>
 
-<!-- Floating Action Bar (FAB) -->
-<div id="floatingActionBar" class="floating-action-bar">
-  <span id="selectionNotice" style="font-size:11.5px; font-weight:800; color:var(--text-main); padding:0 8px;">0 selected</span>
-  <div style="width:1px; height:20px; background:var(--border);"></div>
-  <button class="btn btn-emerald" id="bulkPhotoBtn">📷 Snapshot (<span id="btnSelectCount">0</span>)</button>
-  <button class="btn btn-purple" id="bulkWhatsAppBtn">💬 Broadcast</button>
-  <button class="btn action-editor-only" id="bulkDestuffBtn" style="background:var(--danger-bg); color:var(--danger); border-color:transparent;">✅ Destuff Today</button>
-  <div style="width:1px; height:20px; background:var(--border); margin-left:4px;"></div>
-  <button class="btn btn-ghost" id="clearSelectionBtn" style="padding:4px 8px; border-radius:50%;" title="Clear Selection">✕</button>
-</div>
+<div id="floatingActionBar" class="floating-action-bar"><span id="selectionNotice" style="font-size:11.5px;font-weight:800;color:var(--text-main);padding:0 8px;">0 selected</span><div style="width:1px;height:20px;background:var(--border);"></div><button class="btn btn-emerald" id="bulkPhotoBtn">📷 Snapshot (<span id="btnSelectCount">0</span>)</button><button class="btn btn-purple" id="bulkWhatsAppBtn">💬 Broadcast</button><button class="btn action-editor-only" id="bulkDestuffBtn" style="background:var(--danger-bg);color:var(--danger);border-color:transparent;">✅ Destuff Today</button><div style="width:1px;height:20px;background:var(--border);margin-left:4px;"></div><button class="btn btn-ghost" id="clearSelectionBtn" style="padding:4px 8px;border-radius:50%;" title="Clear Selection">✕</button></div>
 
-<!-- Undo Toast -->
-<div class="undo-toast" id="undoToast">
-  <span>Container deleted permanently.</span>
-  <button class="undo-btn" onclick="undoDelete()">Undo Action</button>
-</div>
+<div class="undo-toast" id="undoToast"><span>Container deleted permanently.</span><button class="undo-btn" onclick="undoDelete()">Undo Action</button></div>
 
-<!-- Modals -->
-<div class="modal-bg" id="whatsappComposerModalBg">
-  <div class="modal-dialog" style="max-width:540px;">
-    <div class="modal-header">
-      <span>💬 WhatsApp Message Composer</span>
-      <button class="btn btn-ghost" id="whatsappComposerClose">✕</button>
-    </div>
-    <div class="modal-body">
-      <div style="font-size:11px; color:var(--text-muted);">Formatted text ready for WhatsApp threads:</div>
-      <textarea id="whatsappComposerText" class="input" style="width:100%; height:220px; font-family:'JetBrains Mono'; font-size:11.5px; line-height:1.5; resize:vertical; padding:10px;"></textarea>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" id="copyComposerTextBtn">📋 Copy Message</button>
-      <a id="openDirectWhatsAppBtn" href="#" target="_blank" class="btn btn-primary">Open in WhatsApp ↗</a>
-    </div>
-  </div>
-</div>
+<div class="modal-bg" id="whatsappComposerModalBg"><div class="modal-dialog" style="max-width:540px;"><div class="modal-header"><span>💬 WhatsApp Message Composer</span><button class="btn btn-ghost" id="whatsappComposerClose">✕</button></div><div class="modal-body"><div style="font-size:11px;color:var(--text-muted);">Formatted text ready for WhatsApp threads:</div><textarea id="whatsappComposerText" class="input" style="width:100%;height:220px;font-family:'JetBrains Mono';font-size:11.5px;line-height:1.5;resize:vertical;padding:10px;"></textarea></div><div class="modal-footer"><button class="btn" id="copyComposerTextBtn">📋 Copy Message</button><a id="openDirectWhatsAppBtn" href="#" target="_blank" class="btn btn-primary">Open in WhatsApp ↗</a></div></div></div>
 
-<div class="modal-bg" id="auditModalBg">
-  <div class="modal-dialog" style="width:840px; max-width:95vw;">
-    <div class="modal-header">
-      <span>📜 Activity & Change Audit Trail</span>
-      <button class="btn btn-ghost" id="auditClose">✕</button>
-    </div>
-    <div class="modal-body" style="padding:16px; background:var(--bg-elevated);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px;">
-        <input type="text" id="auditSearchInput" class="input" placeholder="Filter audit logs..." style="flex:1;">
-        <button class="btn btn-ghost" id="exportAuditBtn">📤 Export CSV</button>
-        <button class="btn btn-danger" id="clearAuditBtn" style="display:none;">Clear Logs</button>
-      </div>
-      <div style="max-height:400px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; background:var(--bg-surface);">
-        <table style="width:100%; border-collapse:collapse; font-size:11px;">
-          <thead style="position:sticky; top:0; background:var(--bg-elevated); border-bottom:1px solid var(--border); z-index:5;">
-            <tr style="text-align:left; color:var(--text-muted); font-size:9.5px; text-transform:uppercase;">
-              <th style="padding:8px 10px;">Timestamp</th>
-              <th style="padding:8px 10px;">Operator</th>
-              <th style="padding:8px 10px;">Action</th>
-              <th style="padding:8px 10px;">Unit</th>
-              <th style="padding:8px 10px;">Field</th>
-              <th style="padding:8px 10px;">Change</th>
-            </tr>
-          </thead>
-          <tbody id="auditTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="modal-bg" id="auditModalBg"><div class="modal-dialog" style="width:840px;max-width:95vw;"><div class="modal-header"><span>📜 Activity & Change Audit Trail</span><button class="btn btn-ghost" id="auditClose">✕</button></div><div class="modal-body" style="padding:16px;background:var(--bg-elevated);"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;"><input type="text" id="auditSearchInput" class="input" placeholder="Filter audit logs..." style="flex:1;"><button class="btn btn-ghost" id="exportAuditBtn">📤 Export CSV</button><button class="btn btn-danger" id="clearAuditBtn" style="display:none;">Clear Logs</button></div><div style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead style="position:sticky;top:0;background:var(--bg-elevated);border-bottom:1px solid var(--border);z-index:5;"><tr style="text-align:left;color:var(--text-muted);font-size:9.5px;text-transform:uppercase;"><th style="padding:8px 10px;">Timestamp</th><th style="padding:8px 10px;">Operator</th><th style="padding:8px 10px;">Action</th><th style="padding:8px 10px;">Unit</th><th style="padding:8px 10px;">Field</th><th style="padding:8px 10px;">Change</th></tr></thead><tbody id="auditTableBody"></tbody></table></div></div></div></div>
 
-<div class="modal-bg" id="mapModalBg">
-  <div class="modal-dialog" style="width:840px; max-width:95vw;">
-    <div class="modal-header">
-      <span id="mapModalTitle">Voyage Tracker</span>
-      <button class="btn btn-ghost" id="mapCloseBtn">✕</button>
-    </div>
-    <div class="modal-body" style="padding:0; background:#0b1329;">
-      <div id="leafletMap" style="width:100%; height:380px; background:#0b1329;"></div>
-      <div style="padding:10px 16px; font-size:11px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-elevated);">
-        <div><strong id="mapVesselText">Vessel Route</strong></div>
-        <a id="vesselFinderExternalBtn" href="https://www.vesselfinder.com/" target="_blank" class="btn btn-primary" style="padding:4px 10px; font-size:11px;">Open Live AIS ↗</a>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="modal-bg" id="mapModalBg"><div class="modal-dialog" style="width:840px;max-width:95vw;"><div class="modal-header"><span id="mapModalTitle">Voyage Tracker</span><button class="btn btn-ghost" id="mapCloseBtn">✕</button></div><div class="modal-body" style="padding:0;background:#0b1329;"><div id="leafletMap" style="width:100%;height:380px;background:#0b1329;"></div><div style="padding:10px 16px;font-size:11px;display:flex;justify-content:space-between;align-items:center;background:var(--bg-elevated);"><div><strong id="mapVesselText">Vessel Route</strong></div><a id="vesselFinderExternalBtn" href="https://www.vesselfinder.com/" target="_blank" class="btn btn-primary" style="padding:4px 10px;font-size:11px;">Open Live AIS ↗</a></div></div></div></div>
 
-<div class="modal-bg" id="loginModalBg">
-  <div class="modal-dialog" style="max-width:380px;">
-    <div class="modal-header">
-      <span>🔐 Staff Portal Login</span>
-      <button class="btn btn-ghost" id="loginClose">✕</button>
-    </div>
-    <div class="modal-body" style="padding:20px;">
-      <div>
-        <label style="font-size:10.5px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Access Code</label>
-        <input type="password" id="loginCodeInput" class="input" style="width:100%; margin-top:6px; font-family:'JetBrains Mono'; font-weight:800; font-size:15px; letter-spacing:0.1em; text-align:center; height:40px;" placeholder="••••••••">
-      </div>
-      <div style="font-size:11px; color:var(--text-muted); text-align:center; margin-top:8px;">
-        Please enter your authorized access code.
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" id="loginCancel">Cancel</button>
-      <button class="btn btn-primary" id="loginSubmit">Sign In</button>
-    </div>
-  </div>
-</div>
+<div class="modal-bg" id="loginModalBg"><div class="modal-dialog" style="max-width:380px;"><div class="modal-header"><span>🔐 Staff Portal Login</span><button class="btn btn-ghost" id="loginClose">✕</button></div><div class="modal-body" style="padding:20px;"><div><label style="font-size:10.5px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;">Access Code</label><input type="password" id="loginCodeInput" class="input" style="width:100%;margin-top:6px;font-family:'JetBrains Mono';font-weight:800;font-size:15px;letter-spacing:.1em;text-align:center;height:40px;" placeholder="••••••••"></div><div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;">Please enter your authorized access code.</div></div><div class="modal-footer"><button class="btn" id="loginCancel">Cancel</button><button class="btn btn-primary" id="loginSubmit">Sign In</button></div></div></div>
 
-<div class="modal-bg" id="modalBg">
-  <div class="modal-dialog">
-    <div class="modal-header">
-      <span id="modalTitle">Container Details</span>
-      <button class="btn btn-ghost" id="modalClose">✕</button>
-    </div>
-    <div class="modal-body" id="modalForm" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
-    <div class="modal-footer">
-      <button class="btn" id="modalCancel">Cancel</button>
-      <button class="btn btn-primary" id="modalSave">Save & Sync</button>
-    </div>
-  </div>
-</div>
+<div class="modal-bg" id="modalBg"><div class="modal-dialog"><div class="modal-header"><span id="modalTitle">Container Details</span><button class="btn btn-ghost" id="modalClose">✕</button></div><div class="modal-body" id="modalForm" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div><div class="modal-footer"><button class="btn" id="modalCancel">Cancel</button><button class="btn btn-primary" id="modalSave">Save & Sync</button></div></div></div>
 
-<div class="modal-bg" id="vesselModalBg">
-  <div class="modal-dialog" style="max-width:420px;">
-    <div class="modal-header">
-      <span>Bulk Update Vessel Schedule</span>
-      <button class="btn btn-ghost" id="vesselModalClose">✕</button>
-    </div>
-    <div class="modal-body">
-      <div>
-        <label style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Select Vessel</label>
-        <select id="targetVesselSelect" class="select" style="width:100%; margin-top:4px;"></select>
-      </div>
-      <div>
-        <label style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Field</label>
-        <select id="targetFieldSelect" class="select" style="width:100%; margin-top:4px;">
-          <option value="GATEWAY PORT">Port</option>
-          <option value="POL">POL</option>
-          <option value="ETD">ETD</option>
-          <option value="ETA">ETA</option>
-          <option value="INWARD DATE">Inward Date</option>
-          <option value="PORT IN">Port In</option>
-          <option value="PORT OUT">Port Out</option>
-          <option value="CFS IN">CFS In</option>
-          <option value="TRUCK NO.">Truck No.</option>
-          <option value="DESTUFFING DATE">Destuffing Date</option>
-          <option value="CONTAINER RETURN DATE">Container Return Date</option>
-          <option value="CFS NAME">CFS Name</option>
-          <option value="LINER">Liner</option>
-        </select>
-      </div>
-      <div>
-        <label style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">New Date or Value</label>
-        <input type="text" id="targetNewValue" class="input" style="width:100%; margin-top:4px;" placeholder="YYYY-MM-DD or Text">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" id="vesselModalCancel">Cancel</button>
-      <button class="btn btn-primary" id="vesselModalSave">Apply Bulk Update</button>
-    </div>
-  </div>
-</div>
+<div class="modal-bg" id="vesselModalBg"><div class="modal-dialog" style="max-width:420px;"><div class="modal-header"><span>Bulk Update Vessel Schedule</span><button class="btn btn-ghost" id="vesselModalClose">✕</button></div><div class="modal-body"><div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Select Vessel</label><select id="targetVesselSelect" class="select" style="width:100%;margin-top:4px;"></select></div><div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Field</label><select id="targetFieldSelect" class="select" style="width:100%;margin-top:4px;"><option value="GATEWAY PORT">Port</option><option value="POL">POL</option><option value="ETD">ETD</option><option value="ETA">ETA</option><option value="INWARD DATE">Inward Date</option><option value="PORT IN">Port In</option><option value="PORT OUT">Port Out</option><option value="CFS IN">CFS In</option><option value="TRUCK NO.">Truck No.</option><option value="DESTUFFING DATE">Destuffing Date</option><option value="CONTAINER RETURN DATE">Container Return Date</option><option value="CFS NAME">CFS Name</option><option value="LINER">Liner</option></select></div><div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">New Date or Value</label><input type="text" id="targetNewValue" class="input" style="width:100%;margin-top:4px;" placeholder="YYYY-MM-DD or Text"></div></div><div class="modal-footer"><button class="btn" id="vesselModalCancel">Cancel</button><button class="btn btn-primary" id="vesselModalSave">Apply Bulk Update</button></div></div></div>
 
-<div class="modal-bg" id="emailModalBg">
-  <div class="modal-dialog" style="width:540px;">
-    <div class="modal-header">
-      <span>✉️ Automated Client Notification</span>
-      <button class="btn btn-ghost" id="emailModalClose">✕</button>
-    </div>
-    <div class="modal-body">
-      <div>
-        <label style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Recipient Email</label>
-        <input type="email" id="emailRecipient" class="input" style="width:100%; margin-top:4px;" placeholder="client@company.com">
-      </div>
-      <div>
-        <label style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Subject</label>
-        <input type="text" id="emailSubject" class="input" style="width:100%; margin-top:4px;">
-      </div>
-      <div>
-        <label style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Body Text</label>
-        <textarea id="emailBody" class="input" style="width:100%; height:130px; margin-top:4px; font-family:'JetBrains Mono'; font-size:11px; resize:vertical; padding:8px;"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" id="copyEmailBtn">📋 Copy Body</button>
-      <a id="sendMailtoBtn" href="#" class="btn btn-primary">Open in Mail App ↗</a>
-    </div>
-  </div>
-</div>
+<div class="modal-bg" id="emailModalBg"><div class="modal-dialog" style="width:540px;"><div class="modal-header"><span>✉️ Automated Client Notification</span><button class="btn btn-ghost" id="emailModalClose">✕</button></div><div class="modal-body"><div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Recipient Email</label><input type="email" id="emailRecipient" class="input" style="width:100%;margin-top:4px;" placeholder="client@company.com"></div><div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Subject</label><input type="text" id="emailSubject" class="input" style="width:100%;margin-top:4px;"></div><div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Body Text</label><textarea id="emailBody" class="input" style="width:100%;height:130px;margin-top:4px;font-family:'JetBrains Mono';font-size:11px;resize:vertical;padding:8px;"></textarea></div></div><div class="modal-footer"><button class="btn" id="copyEmailBtn">📋 Copy Body</button><a id="sendMailtoBtn" href="#" class="btn btn-primary">Open in Mail App ↗</a></div></div></div>
 
-<div class="modal-bg" id="analyticsModalBg">
-  <div class="modal-dialog" style="width:520px;">
-    <div class="modal-header">
-      <span>Turnaround & Terminal Statistics</span>
-      <button class="btn btn-ghost" id="analyticsModalClose">✕</button>
-    </div>
-    <div class="modal-body" id="analyticsBody"></div>
-  </div>
-</div>
+<div class="modal-bg" id="analyticsModalBg"><div class="modal-dialog" style="width:520px;"><div class="modal-header"><span>Turnaround & Terminal Statistics</span><button class="btn btn-ghost" id="analyticsModalClose">✕</button></div><div class="modal-body" id="analyticsBody"></div></div></div>
 
 <div class="toast-popup" id="toast"></div>
 
 <script src="./app.js"></script>
 <script src="./phase1.js"></script>
+<script src="./phase2.js"></script>
 </body>
 </html>
