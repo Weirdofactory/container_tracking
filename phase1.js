@@ -323,6 +323,8 @@
   function bind(){
     ensureUI();
     $('p1v2TowerBtn').onclick=()=>showTower(true);
+    if($('headerCsnBtn')) $('headerCsnBtn').onclick=()=>{renderCsn();$('p1v2CsnModal').classList.add('open');};
+    if($('headerLfdBtn')) $('headerLfdBtn').onclick=openLfd;
     $('p1v2Back').onclick=()=>showTower(false);
     $('p1v2Refresh').onclick=renderTower;
     $('p1v2All').onclick=()=>{ const main=$('opsDashboardView'); $('p1v2Tower').style.display='none'; main.style.display='block'; renderUI(); };
