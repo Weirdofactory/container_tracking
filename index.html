@@ -52,6 +52,7 @@
 
         <div class="header-segment">
           <button class="btn btn-ghost" id="currencyToggleBtn" style="font-family:'JetBrains Mono'; padding:4px 8px;">💱 INR</button>
+          <button class="btn btn-primary" id="controlTowerBtn" style="padding:4px 9px;">🎯 Control Tower</button>
           <button class="btn btn-ghost" id="themeBtn" style="padding:4px 8px;">☀️</button>
           <span id="userBadge" class="tag-badge" style="font-family:'JetBrains Mono'; font-weight:700;">Admin</span>
           <button class="btn btn-danger" id="logoutBtn" style="padding:4px 8px;" title="Logout">🔒</button>
@@ -83,6 +84,7 @@
           </div>
           <div class="widget-helper-text">Enter tracking numbers. Separate multiple identifiers with a comma or space.</div>
           <button class="btn-track-action" id="publicSearchBtn">Track Shipment Now</button>
+          <button class="btn btn-ghost" id="publicCustomerViewBtn" style="width:100%; margin-top:8px;">👤 Customer Status View</button>
         </div>
       </div>
     </div>
@@ -164,6 +166,55 @@
 
   <section id="kanbanView" class="kanban-layout fade-in" style="display:none;"></section>
 </main>
+
+
+<!-- Container Control Tower -->
+<div class="modal-bg" id="controlTowerModalBg">
+  <div class="modal-dialog control-tower-dialog">
+    <div class="modal-header">
+      <span>🎯 Container Operations Control Tower</span>
+      <button class="btn btn-ghost" id="controlTowerClose">✕</button>
+    </div>
+    <div class="control-tower-body">
+      <div class="tower-toolbar">
+        <div>
+          <div class="tower-title">Exceptions requiring attention</div>
+          <div class="tower-subtitle">Container-level view • HBL/cargo data intentionally excluded</div>
+        </div>
+        <button class="btn btn-ghost" id="towerRefreshBtn">↻ Refresh</button>
+      </div>
+      <div id="towerKpis" class="tower-kpis"></div>
+      <div class="tower-grid">
+        <section class="tower-panel">
+          <div class="tower-panel-head"><span>🚨 Action Queue</span><span id="towerQueueCount" class="tag-badge">0</span></div>
+          <div id="towerQueue"></div>
+        </section>
+        <section class="tower-panel">
+          <div class="tower-panel-head"><span>📍 Container Timeline</span></div>
+          <div id="towerTimeline"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Container-level customer dashboard -->
+<div class="modal-bg" id="customerDashboardModalBg">
+  <div class="modal-dialog customer-dialog">
+    <div class="modal-header">
+      <span>👤 Customer Container Status</span>
+      <button class="btn btn-ghost" id="customerDashboardClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="customer-search-row">
+        <input id="customerContainerSearch" class="input" placeholder="Enter container or MBL number">
+        <button class="btn btn-primary" id="customerContainerSearchBtn">Search</button>
+      </div>
+      <div class="customer-note">Read-only operational view. Internal financial exposure and internal remarks are hidden.</div>
+      <div id="customerDashboardBody"></div>
+    </div>
+  </div>
+</div>
 
 <!-- Slide-Out Filter Drawer -->
 <div class="drawer-overlay" id="filterDrawerOverlay" onclick="closeDrawer()"></div>
