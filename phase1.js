@@ -290,6 +290,27 @@
     document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.p1v2-modal.open').forEach(x=>x.classList.remove('open'));});
   }
 
+  // Keep staff navigation on the staff operations page. The public landing page is customer-only.
+  const baseAccessState=window.setAccessState;
+  if(typeof baseAccessState==='function'){
+    window.setAccessState=function(isStaff){
+      baseAccessState.apply(this,arguments);
+      const tower=$('p1v2Tower');
+      if(tower && !isStaff) tower.style.display='none';
+      if(tower && isStaff) { tower.style.display='none'; $('opsDashboardView').style.display='block'; }
+    };
+  }
+  window.resetToLanding=function(){
+    if(currentUser){
+      if($('p1v2Tower')) $('p1v2Tower').style.display='none';
+      $('opsDashboardView').style.display='block';
+      if(typeof renderUI==='function') renderUI();
+    }else if(typeof setAccessState==='function'){
+      setAccessState(false);
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
   const baseRender=window.renderUI;
   if(typeof baseRender==='function'){
     window.renderUI=function(){baseRender.apply(this,arguments);if($('p1v2Tower')&&$('p1v2Tower').style.display!=='none')renderTower();};
