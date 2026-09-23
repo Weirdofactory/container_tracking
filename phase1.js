@@ -379,9 +379,8 @@
     window.renderUI=function(){baseRender.apply(this,arguments);if($('p1v2Tower')&&$('p1v2Tower').style.display!=='none')renderTower();};
   }
 
-  ensureUI();
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind,{once:true});
-  else bind();
+  document.addEventListener('DOMContentLoaded',bind);
+  if(document.readyState!=='loading')bind();
 })();
 +Math.round(l.cost)+'</span>':'—'}</td><td>${escP(next)}</td><td><button class="btn btn-primary" data-edit="${i}">✏️ Edit</button> <button class="btn btn-ghost" data-time="${i}">Timeline</button></td></tr>`;
     }).join('')||'<tr><td colspan="7" class="p1v2-empty">No containers available.</td></tr>';
