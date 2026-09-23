@@ -265,16 +265,10 @@
     $('p1v2Body').innerHTML=display.map(({r,i,ex})=>{
       const l=lfd(r), st=getStatus(r);
       const next=ex[0]?.label||'Monitor';
-      const pill=(date,days,state,label,doneText='Completed')=>{
-        if(!date && state==='unknown') return '<span class="p1v2-pill">—</span>';
-        const cls=state==='safe'?'good':state==='warning'?'warn':state==='complete'?'good':'bad';
-        const text=state==='complete'?doneText:(date?fmt(date.toISOString().slice(0,10)):'—');
-        return '<span class="p1v2-pill '+cls+'">'+text+(days!==null&&days!==undefined?' · '+escP(days<0?Math.abs(days)+'d overdue':days+'d left'):'')+'</span>';
-      };
-      const portPill=pill(l.portLfd,l.portDaysLeft,l.portState);
-      const outsidePill=pill(l.outsideLfd,l.outsideDaysLeft,l.outsideState);
-      return `<tr><td><button class="p1v2-link" data-timeline="${i}">${escP(getCn(r))}</button></td><td>${escP(getVessel(r))}</td><td>${escP(st.text)}</td><td>${portPill}</td><td>${outsidePill}</td><td>${l.demDays?'<span class="p1v2-pill bad">'+l.demDays+'d · 
-    }).join('')||'<tr><td colspan="8" class="p1v2-empty">No containers available.</td></tr>';
+      const lfdText=l.lfd?fmt(l.lfd.toISOString().slice(0,10)):'—';
+      const lfdClass=l.state==='safe'?'good':l.state==='warning'?'warn':'bad';
+      return `<tr><td><button class="p1v2-link" data-timeline="${i}">${escP(getCn(r))}</button></td><td>${escP(getVessel(r))}</td><td>${escP(st.text)}</td><td><span class="p1v2-pill ${lfdClass}">${lfdText}${l.daysLeft!==null?' · '+escP(l.label):''}</span></td><td>${l.demDays?'<span class="p1v2-pill bad">'+l.demDays+'d · $'+Math.round(l.cost)+'</span>':'—'}</td><td>${escP(next)}</td><td><button class="btn btn-primary" data-edit="${i}">✏️ Edit</button> <button class="btn btn-ghost" data-time="${i}">Timeline</button></td></tr>`;
+    }).join('')||'<tr><td colspan="7" class="p1v2-empty">No containers available.</td></tr>';
     $('p1v2Body').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{if(currentUser?.role==='Viewer')return alert('Read-only access.');openModal(Number(b.dataset.edit));});
     $('p1v2Body').querySelectorAll('[data-timeline],[data-time]').forEach(b=>b.onclick=()=>openTimeline(Number(b.dataset.timeline||b.dataset.time)));
   }
@@ -334,9 +328,9 @@
 
   function bind(){
     ensureUI();
-    $('p1v2TowerBtn').onclick=()=>showTower(true);
-    if($('headerCsnBtn')) $('headerCsnBtn').onclick=()=>{renderCsn();$('p1v2CsnModal').classList.add('open');};
-    if($('headerLfdBtn')) $('headerLfdBtn').onclick=openLfd;
+    if($('p1v2TowerBtn')) $('p1v2TowerBtn').onclick=window.openControlTower;
+    if($('headerCsnBtn')) $('headerCsnBtn').onclick=window.openScmtrCentre;
+    if($('headerLfdBtn')) $('headerLfdBtn').onclick=window.openLfdRules;
     $('p1v2Back').onclick=()=>showTower(false);
     $('p1v2Refresh').onclick=renderTower;
     $('p1v2All').onclick=()=>{ const main=$('opsDashboardView'); $('p1v2Tower').style.display='none'; main.style.display='block'; renderUI(); };
@@ -379,7 +373,8 @@
     window.renderUI=function(){baseRender.apply(this,arguments);if($('p1v2Tower')&&$('p1v2Tower').style.display!=='none')renderTower();};
   }
 
-  document.addEventListener('DOMContentLoaded',bind);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind,{once:true});
+  else bind();
   if(document.readyState!=='loading')bind();
 })();
 +Math.round(l.cost)+'</span>':'—'}</td><td>${escP(next)}</td><td><button class="btn btn-primary" data-edit="${i}">✏️ Edit</button> <button class="btn btn-ghost" data-time="${i}">Timeline</button></td></tr>`;
@@ -433,33 +428,17 @@
 
   function openLfd(){
     const c=config();
-    $('p1v2Free').value=c.terminalFreeDays;
-    $('p1v2DetFree').value=c.detentionFreeDays;
-    $('p1v2Warn').value=c.warningDays;
-    $('p1v2Crit').value=c.criticalDays;
-    $('p1v2R20').value=c.demRate20;
-    $('p1v2R40').value=c.demRate40;
+    $('p1v2Free').value=c.terminalFreeDays;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;
     $('p1v2LfdModal').classList.add('open');
   }
   function saveLfd(){
-    saveConfig({
-      terminalFreeDays:Number($('p1v2Free').value||0),
-      detentionFreeDays:Number($('p1v2DetFree').value||0),
-      warningDays:Number($('p1v2Warn').value||0),
-      criticalDays:Number($('p1v2Crit').value||0),
-      demRate20:Number($('p1v2R20').value||0),
-      demRate40:Number($('p1v2R40').value||0)
-    });
-    $('p1v2LfdModal').classList.remove('open');
-    renderTower();
-    if(typeof toast==='function')toast('Port & outside-port LFD rules saved');
+    saveConfig({terminalFreeDays:Number($('p1v2Free').value||0),warningDays:Number($('p1v2Warn').value||0),criticalDays:Number($('p1v2Crit').value||0),demRate20:Number($('p1v2R20').value||0),demRate40:Number($('p1v2R40').value||0)});
+    $('p1v2LfdModal').classList.remove('open');renderTower();if(typeof toast==='function')toast('LFD rules saved');
   }
 
   function bind(){
     ensureUI();
-    if($('p1v2TowerBtn')) $('p1v2TowerBtn').onclick=window.openControlTower;
-    if($('headerCsnBtn')) $('headerCsnBtn').onclick=window.openScmtrCentre;
-    if($('headerLfdBtn')) $('headerLfdBtn').onclick=window.openLfdRules;
+    $('p1v2TowerBtn').onclick=()=>showTower(true);
     $('p1v2Back').onclick=()=>showTower(false);
     $('p1v2Refresh').onclick=renderTower;
     $('p1v2All').onclick=()=>{ const main=$('opsDashboardView'); $('p1v2Tower').style.display='none'; main.style.display='block'; renderUI(); };
