@@ -887,7 +887,12 @@ function performPublicSearch() {
       return;
     }
 
-    container.innerHTML = publicSearchResults.map((r, i) => {
+    container.innerHTML = `
+      <div style="padding:16px 22px; border-bottom:1px solid var(--border); background:var(--bg-elevated);">
+        <div style="font-size:9px; font-weight:900; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em;">CUSTOMER STATUS</div>
+        <div style="font-size:18px; font-weight:900; margin-top:3px;">Shipment Status & Timeline</div>
+      </div>
+      ${publicSearchResults.map((r, i) => {
       const st = getStatus(r);
       const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]);
       const originPort = getField(r, ["POL", "PORT OF LOADING"]) || "SHEKOU";
@@ -914,7 +919,8 @@ function performPublicSearch() {
           ${publicTimelineHtml}
         </div>
       `;
-    }).join("<hr style='border:0; border-top:1px solid var(--border);'>");
+    }).join("<hr style='border:0; border-top:1px solid var(--border);'>")}
+    `;
 
     // Trigger sequential timeline drawing
     setTimeout(() => {
