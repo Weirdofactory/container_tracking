@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20260924-12">
+<link rel="stylesheet" href="./style.css?v=20260924-13">
 </head>
 <body>
 
@@ -71,7 +71,7 @@
 
       <div id="publicControls" style="display:flex; align-items:center; gap:8px;">
         <button class="btn btn-ghost" id="publicThemeBtn" style="padding:6px 10px;">☀️</button>
-        <button class="btn btn-primary" id="loginBtn">🔐 Staff Portal Login</button>
+        <button class="btn btn-primary" id="loginBtn" onclick="document.getElementById('loginModalBg').classList.add('open'); document.getElementById('loginCodeInput')?.focus();">🔐 Staff Portal Login</button>
       </div>
     </div>
   </div>
@@ -92,7 +92,7 @@
           <label>Container Number <span>*</span></label>
           <div class="widget-input-wrapper"><input type="text" id="publicSearchInput" placeholder="E.g. SKHU9422886, IAAU1753030"></div>
           <div class="widget-helper-text">Enter a container number to view the latest shipment status and timeline.</div>
-          <button class="btn-track-action" id="publicSearchBtn">Track Shipment Now</button>
+          <button class="btn-track-action" id="publicSearchBtn" onclick="performPublicSearch()">Track Shipment Now</button>
         </div>
       </div>
     </div>
@@ -171,8 +171,8 @@
 
 <div class="toast-popup" id="toast"></div>
 
-<script src="./app.js?v=20260924-12"></script>
-<script src="./phase1.js?v=20260924-12"></script>
-<script src="./phase2.js?v=20260924-12"></script>
+<script src="./app.js?v=20260924-13"></script>
+<script src="./phase1.js?v=20260924-13"></script>
+<script src="./phase2.js?v=20260924-13"></script>
 </body>
 </html>
