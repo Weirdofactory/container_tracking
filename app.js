@@ -489,156 +489,167 @@ function calculateStandardFees(r) {
 
 function generateCleanManifestHtml(containersList) {
   const now = new Date();
-  const dateStr = now.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
-  const timeStr = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+  const generatedDate = now.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }).toUpperCase();
+  const generatedTime = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
 
-  const getMilestones = (r) => {
-    const steps = [
-      { key:"ETA", label:"Vessel ETA", date:getField(r, ["ETA"]) },
-      { key:"PORT IN", label:"Port In", date:getField(r, ["PORT IN"]) },
-      { key:"PORT OUT", label:"Port Out", date:getField(r, ["PORT OUT"]) },
-      { key:"CFS IN", label:"CFS In", date:getField(r, ["CFS IN"]) },
-      { key:"DESTUFFING DATE", label:"Destuffed", date:getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]) },
-      { key:"CONTAINER RETURN DATE", label:"Empty Return", date:getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]) }
-    ];
-    const completed = steps.filter(x => validDate(x.date) && x.key !== "ETA").length;
-    return { steps, completed, total: steps.length - 1 };
+  const cleanVessel = (value) => {
+    const raw = String(value || "—").trim();
+    return raw.replace(/\\s+V(?:OY)?(?:AGE)?\\.?\\s*$/i, "").trim() || raw;
   };
 
-  const prepared = containersList.map(r => {
-    const st = getStatus(r);
-    const fees = calculateStandardFees(r);
-    const milestones = getMilestones(r);
-    const completed = isFullyCompleted(r);
+  const splitVesselVoy = (value) => {
+    const raw = String(value || "").trim();
+    const m = raw.match(/^(.*?)(?:\\s+V(?:OY)?(?:AGE)?\\.?\\s*)([A-Z0-9-]+)$/i);
+    return m ? { vessel: m[1].trim(), voyage: m[2].trim() } : { vessel: raw || "—", voyage: "—" };
+  };
+
+  const eventFor = (label, date, detail, state) => ({
+    label, date: date || "", detail: detail || "", state: state || "pending"
+  });
+
+  const buildEvents = (r) => {
+    const vesselRaw = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+    const vessel = splitVesselVoy(vesselRaw);
+    const eta = getField(r, ["ETA"]);
+    const inward = getField(r, ["INWARD DATE"]);
+    const portIn = getField(r, ["PORT IN"]);
+    const portOut = getField(r, ["PORT OUT"]);
+    const cfsIn = getField(r, ["CFS IN"]);
+    const destuff = getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]);
+    const returned = getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]);
+    const cfs = getField(r, ["CFS NAME", "CFS"]) || "CFS";
+    const port = getGatewayPortInfo(r).name || "Gateway Port";
+    const pol = getField(r, ["POL", "PORT OF LOADING"]) || "—";
+
+    const events = [];
+    if (eta) events.push(eventFor("Vessel expected / arrived", eta, vessel.vessel, validDate(eta) ? "done" : "pending"));
+    if (inward) events.push(eventFor("Inward granted", inward, port, "done"));
+    if (portIn) events.push(eventFor("Container entered port", portIn, port, "done"));
+    if (portOut) events.push(eventFor("Cargo unloaded from container", portOut, port, "done"));
+    if (cfsIn) events.push(eventFor("Container received at CFS", cfsIn, cfs, "done"));
+    if (destuff) events.push(eventFor("Cargo destuffed", destuff, cfs, "done"));
+    if (returned) events.push(eventFor("Empty container returned", returned, "Return completed", "done"));
+
+    if (!events.length) {
+      events.push(eventFor("Shipment created", "", "Awaiting operational milestone", "current"));
+    } else if (!returned) {
+      events.push(eventFor("Next milestone", "", getNextMilestone(r), "current"));
+    }
+
+    return { events, vessel };
+  };
+
+  const renderContainer = (r, index) => {
     const container = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "—";
-    const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "—";
-    const port = getGatewayPortInfo(r).name || "Unverified";
-    const cfs = getField(r, ["CFS NAME", "CFS"]) || "—";
-    const liner = getField(r, ["LINER", "LINE"]) || detectLinerFromMBL(getField(r, ["MBL NO", "MBL", "MASTER BL"])) || "—";
     const type = getField(r, ["TYPE", "SIZE"]) || "—";
     const mbl = getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "—";
-    const seal = getField(r, ["SEAL NO.", "SEAL NO", "SEAL"]) || "—";
+    const liner = getField(r, ["LINER", "LINE"]) || detectLinerFromMBL(mbl) || "—";
     const pol = getField(r, ["POL", "PORT OF LOADING"]) || "—";
-    const etd = formatDate(getField(r, ["ETD"])) || "—";
-    const eta = formatDate(getField(r, ["ETA"])) || "—";
-    const truck = getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "—";
-    const remarks = String(r["REMARKS"] || "").trim();
-    const currentStatus = completed ? "COMPLETED" : (st.text || "IN PROGRESS").replace(/<[^>]+>/g, "");
-    const statusIsDone = completed || /RETURNED|COMPLETED|DESTUFF/i.test(st.text || "");
-    const statusBg = statusIsDone ? "#dcfce7" : /LFD|DEMURRAGE|DETENTION|OVERDUE|CRITICAL/i.test(st.text || "") ? "#fee2e2" : "#e0f2fe";
-    const statusColor = statusIsDone ? "#15803d" : /LFD|DEMURRAGE|DETENTION|OVERDUE|CRITICAL/i.test(st.text || "") ? "#b91c1c" : "#0369a1";
-    const terminalLfd = fees.terminalLFD ? formatDate(fees.terminalLFD) : "—";
-    const detentionLfd = fees.detentionLFD ? formatDate(fees.detentionLFD) : "—";
+    const pod = getGatewayPortInfo(r).name || "—";
+    const cfs = getField(r, ["CFS NAME", "CFS"]) || "—";
+    const etd = getField(r, ["ETD"]);
+    const eta = getField(r, ["ETA"]);
+    const vesselRaw = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+    const vessel = splitVesselVoy(vesselRaw);
+    const eventsData = buildEvents(r);
+    const st = getStatus(r);
+    const completed = isFullyCompleted(r);
+    const fees = calculateStandardFees(r);
     const exposure = Number(fees.totalCostUSD || 0);
-    const lfdDays = fees.terminalDaysLeft;
-    const detDays = fees.detentionDaysLeft;
 
-    const stageDefs = [
-      ["ETA", "Vessel", getField(r, ["ETA"])],
-      ["PORT IN", "Port In", getField(r, ["PORT IN"])],
-      ["PORT OUT", "Port Out", getField(r, ["PORT OUT"])],
-      ["CFS IN", "CFS In", getField(r, ["CFS IN"])],
-      ["DESTUFFING DATE", "Destuff", getField(r, ["DESTUFFING DATE", "DESTUFF DATE"])],
-      ["CONTAINER RETURN DATE", "Returned", getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"])]
-    ];
+    const routePoint = (title, value, icon) => `
+      <div style="flex:1;min-width:145px;padding:8px 12px 7px;border-right:1px solid #e5e7eb;">
+        <div style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;">${icon} ${title}</div>
+        <div style="font-size:9px;font-weight:900;color:#1f2937;margin-top:3px;text-transform:uppercase;">${esc(value || "—")}</div>
+      </div>
+    `;
 
-    const stageHtml = stageDefs.map(([key,label,date],idx) => {
-      const done = key !== "ETA" && validDate(date);
-      const isEta = key === "ETA";
-      const active = !done && ((idx === 0 && isEta) || stageDefs.slice(0,idx).some(x => validDate(x[2])));
-      const bg = done ? "#16a34a" : active ? "#0284c7" : "#cbd5e1";
+    const routeStrip = `
+      <div style="display:flex;align-items:stretch;background:#fff;border:1px solid #d1d5db;border-radius:5px;margin:10px 12px 0;overflow:hidden;">
+        ${routePoint("Place of Receipt", pol, "◼")}
+        <div style="display:flex;align-items:center;color:#374151;font-size:18px;font-weight:900;">›</div>
+        ${routePoint("Port of Loading", pol, "◼")}
+        <div style="display:flex;align-items:center;color:#374151;font-size:18px;font-weight:900;">›</div>
+        ${routePoint("Port of Discharge", pod, "◼")}
+        <div style="display:flex;align-items:center;color:#374151;font-size:18px;font-weight:900;">›</div>
+        ${routePoint("Place of Delivery", cfs, "◼")}
+      </div>
+    `;
+
+    const schedule = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 12px 12px;padding:7px 14px;background:#fff;border:1px solid #d1d5db;border-top:0;border-radius:0 0 5px 5px;">
+        <div><span style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;">Actual Departure</span><br><b style="font-size:8px;color:#374151;">${etd ? formatDate(etd).toUpperCase() : "PENDING"}</b></div>
+        <div><span style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;">Actual / Estimated Arrival</span><br><b style="font-size:8px;color:#374151;">${eta ? formatDate(eta).toUpperCase() : "PENDING"}</b></div>
+        <div><span style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;">Current Status</span><br><b style="font-size:8px;color:${completed ? "#15803d" : "#374151"};">${esc(completed ? "COMPLETED" : (st.text || "IN TRANSIT").replace(/<[^>]+>/g,"").toUpperCase())}</b></div>
+      </div>
+    `;
+
+    const timeline = eventsData.events.map((ev, i) => {
+      const isDone = ev.state === "done";
+      const isCurrent = ev.state === "current";
+      const dotBg = isDone ? "#44464a" : isCurrent ? "#0284c7" : "#cbd5e1";
+      const dateText = ev.date ? formatDate(ev.date).toUpperCase() : "PENDING";
       return `
-        <div style="flex:1;min-width:105px;position:relative;text-align:center;">
-          <div style="width:25px;height:25px;border-radius:50%;margin:0 auto 6px;background:${bg};color:#fff;font-size:12px;font-weight:900;line-height:25px;">${done ? "✓" : idx+1}</div>
-          <div style="font-size:9px;font-weight:900;color:#334155;text-transform:uppercase;">${label}</div>
-          <div style="font-size:8px;color:#64748b;margin-top:2px;font-family:'JetBrains Mono',monospace;">${date ? formatDate(date) : "Pending"}</div>
-          ${idx < stageDefs.length-1 ? '<div style="position:absolute;top:12px;left:calc(50% + 13px);right:calc(-50% + 13px);height:2px;background:#dbe3ea;"></div>' : ''}
+        <div style="display:flex;position:relative;min-height:58px;">
+          <div style="width:56px;position:relative;flex:0 0 56px;">
+            <div style="position:absolute;left:21px;top:0;width:18px;height:18px;border-radius:50%;background:${dotBg};box-shadow:0 0 0 1px rgba(0,0,0,.04);"></div>
+            ${i < eventsData.events.length-1 ? '<div style="position:absolute;left:29px;top:18px;bottom:-2px;width:1px;background:#d1d5db;"></div>' : ''}
+          </div>
+          <div style="padding:0 0 13px;flex:1;">
+            <div style="font-size:8px;font-weight:900;color:#555b63;text-transform:uppercase;letter-spacing:.02em;">${dateText} <span style="color:#111827;margin-left:8px;text-transform:none;">${esc(ev.detail || "")}</span></div>
+            <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.15;margin-top:3px;">${esc(ev.label)}</div>
+            <div style="font-size:8px;color:#7a7f87;text-transform:uppercase;margin-top:4px;">${isCurrent ? "NEXT ACTION" : isDone ? "MILESTONE RECORDED" : "PENDING"}</div>
+          </div>
         </div>
       `;
     }).join("");
 
-    return { r, container, vessel, port, cfs, liner, type, mbl, seal, pol, etd, eta, truck, remarks, currentStatus, statusBg, statusColor, terminalLfd, detentionLfd, exposure, lfdDays, detDays, stageHtml, milestones };
-  });
-
-  const totalExposure = prepared.reduce((n,x) => n + x.exposure, 0);
-  const completedCount = prepared.filter(x => isFullyCompleted(x.r)).length;
-  const activeCount = prepared.length - completedCount;
-  const attentionCount = prepared.filter(x => x.exposure > 0 || (x.lfdDays !== null && x.lfdDays <= 2) || (x.detDays !== null && x.detDays <= 2)).length;
-
-  const cardsHtml = prepared.map((x, idx) => `
-    <div style="background:#fff;border:1px solid #dbe3ea;border-radius:16px;overflow:hidden;margin-top:16px;box-shadow:0 6px 18px rgba(15,23,42,.06);">
-      <div style="padding:16px 18px;background:linear-gradient(135deg,#f8fbff 0%,#eef6ff 100%);border-bottom:1px solid #dbe3ea;display:flex;justify-content:space-between;gap:14px;align-items:flex-start;">
-        <div>
-          <div style="font-size:9px;font-weight:900;letter-spacing:.12em;color:#64748b;text-transform:uppercase;">CONTAINER ${String(idx+1).padStart(2,"0")}</div>
-          <div style="font-size:20px;font-weight:900;color:#0f172a;font-family:'JetBrains Mono',monospace;margin-top:2px;">${esc(x.container)}</div>
-          <div style="font-size:9px;font-weight:700;color:#64748b;margin-top:4px;">${esc(x.type)} • Seal ${esc(x.seal)}</div>
+    return `
+      <section style="width:100%;background:#fff;border:1px solid #d1d5db;border-radius:7px;overflow:hidden;margin-top:18px;box-shadow:0 2px 6px rgba(15,23,42,.08);">
+        <div style="background:#414246;color:#fff;padding:11px 14px;display:grid;grid-template-columns:1.4fr 1fr 1fr 92px;gap:14px;align-items:center;">
+          <div>
+            <div style="font-size:7px;opacity:.78;font-weight:800;">CURRENT VESSEL NAME | VOYAGE</div>
+            <div style="font-size:12px;font-weight:900;text-transform:uppercase;">${esc(vessel.vessel)} <span style="font-weight:700;opacity:.85;">| ${esc(vessel.voyage)}</span></div>
+          </div>
+          <div>
+            <div style="font-size:7px;opacity:.78;font-weight:800;">CARRIER NAME</div>
+            <div style="font-size:10px;font-weight:900;text-transform:uppercase;">${esc(liner)}</div>
+          </div>
+          <div>
+            <div style="font-size:7px;opacity:.78;font-weight:800;">CONTAINER</div>
+            <div style="font-size:10px;font-weight:900;font-family:'JetBrains Mono',monospace;">${esc(container)}</div>
+          </div>
+          <div style="background:#fff;color:#4b5563;border-radius:4px;padding:5px 7px;text-align:center;">
+            <div style="font-size:7px;font-weight:900;">${index+1} OF ${containersList.length}</div>
+            <div style="font-size:7px;margin-top:2px;">GML TRACKING</div>
+          </div>
         </div>
-        <div style="text-align:right;">
-          <span style="display:inline-block;padding:7px 11px;border-radius:999px;background:${x.statusBg};color:${x.statusColor};font-size:9px;font-weight:900;letter-spacing:.05em;">${esc(x.currentStatus)}</span>
-          <div style="font-size:8px;color:#64748b;margin-top:6px;">Status as of ${dateStr} ${timeStr}</div>
+        ${routeStrip}
+        ${schedule}
+        <div style="padding:5px 18px 20px;">
+          <div style="font-size:8px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin:3px 0 12px 38px;">SHIPMENT ACTIVITY</div>
+          ${timeline}
         </div>
-      </div>
-
-      <div style="padding:15px 18px 8px;">
-        <div style="display:flex;gap:0;align-items:flex-start;">${x.stageHtml}</div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:8px 18px 16px;">
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px;"><div style="font-size:8px;color:#64748b;font-weight:800;text-transform:uppercase;">Vessel / Voyage</div><div style="font-size:10px;font-weight:800;margin-top:4px;color:#0f172a;">${esc(x.vessel)}</div></div>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px;"><div style="font-size:8px;color:#64748b;font-weight:800;text-transform:uppercase;">Gateway Terminal</div><div style="font-size:10px;font-weight:900;margin-top:4px;color:#b45309;">${esc(x.port)}</div></div>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px;"><div style="font-size:8px;color:#64748b;font-weight:800;text-transform:uppercase;">CFS</div><div style="font-size:10px;font-weight:900;margin-top:4px;color:#0369a1;">${esc(x.cfs)}</div></div>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px;"><div style="font-size:8px;color:#64748b;font-weight:800;text-transform:uppercase;">Liner / MBL</div><div style="font-size:9px;font-weight:800;margin-top:4px;color:#0f172a;">${esc(x.liner)} • ${esc(x.mbl)}</div></div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:0 18px 16px;">
-        <div style="padding:10px;border-left:3px solid #0284c7;background:#f8fafc;"><div style="font-size:8px;color:#64748b;font-weight:800;">POL / ETD</div><div style="font-size:10px;font-weight:800;margin-top:3px;">${esc(x.pol)} • ${esc(x.etd)}</div></div>
-        <div style="padding:10px;border-left:3px solid #0ea5e9;background:#f8fafc;"><div style="font-size:8px;color:#64748b;font-weight:800;">ETA / PORT IN</div><div style="font-size:10px;font-weight:800;margin-top:3px;">${esc(x.eta)} • ${formatDate(getField(x.r, ["PORT IN"])) || "Pending"}</div></div>
-        <div style="padding:10px;border-left:3px solid #f59e0b;background:#f8fafc;"><div style="font-size:8px;color:#64748b;font-weight:800;">Terminal LFD</div><div style="font-size:10px;font-weight:900;margin-top:3px;color:${x.lfdDays !== null && x.lfdDays <= 2 ? "#b91c1c" : "#0f172a"};">${esc(x.terminalLfd)} ${x.lfdDays !== null ? "• "+x.lfdDays+"d" : ""}</div></div>
-        <div style="padding:10px;border-left:3px solid #8b5cf6;background:#f8fafc;"><div style="font-size:8px;color:#64748b;font-weight:800;">Detention LFD</div><div style="font-size:10px;font-weight:900;margin-top:3px;">${esc(x.detentionLfd)} ${x.detDays !== null ? "• "+x.detDays+"d" : ""}</div></div>
-      </div>
-
-      <div style="margin:0 18px 16px;padding:12px 14px;border-radius:10px;background:${x.exposure > 0 ? "#fff7ed" : "#f0fdf4"};border:1px solid ${x.exposure > 0 ? "#fed7aa" : "#bbf7d0"};display:flex;justify-content:space-between;align-items:center;gap:12px;">
-        <div><div style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;">Financial Exposure</div><div style="font-size:17px;font-weight:900;color:${x.exposure > 0 ? "#c2410c" : "#15803d"};margin-top:2px;">$${Math.round(x.exposure).toLocaleString()}</div></div>
-        <div style="text-align:right;"><div style="font-size:8px;color:#64748b;font-weight:800;">Truck / Vehicle</div><div style="font-size:10px;font-weight:800;color:#0f172a;">${esc(x.truck)}</div></div>
-      </div>
-
-      ${x.remarks ? `<div style="margin:0 18px 16px;padding:10px 12px;border-radius:8px;background:#f8fafc;border-left:3px solid #64748b;"><div style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;">Operational Remark</div><div style="font-size:10px;font-weight:700;color:#334155;margin-top:3px;">${esc(x.remarks)}</div></div>` : ""}
-    </div>
-  `).join("");
+        <div style="border-top:1px solid #e5e7eb;background:#f8fafc;padding:8px 14px;display:flex;justify-content:space-between;gap:10px;font-size:8px;color:#6b7280;">
+          <span>MBL: <b style="color:#374151;">${esc(mbl)}</b> • CFS: <b style="color:#374151;">${esc(cfs)}</b> • Type: <b style="color:#374151;">${esc(type)}</b></span>
+          <span>LFD Exposure: <b style="color:${exposure > 0 ? "#b91c1c" : "#15803d"};">$${Math.round(exposure).toLocaleString()}</b></span>
+        </div>
+      </section>
+    `;
+  };
 
   return `
-    <div id="manifestCaptureContainer" style="width:1080px;background:#f1f5f9;padding:30px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#0f172a;box-sizing:border-box;">
-      <div style="background:linear-gradient(135deg,#071b36 0%,#0b3a67 60%,#0284c7 100%);color:#fff;border-radius:18px;padding:24px 26px;box-shadow:0 10px 30px rgba(2,132,199,.18);">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;">
-          <div>
-            <div style="font-size:9px;font-weight:900;letter-spacing:.16em;opacity:.72;">GREENWICH MERIDIAN LOGISTICS</div>
-            <div style="font-size:25px;font-weight:900;letter-spacing:-.02em;margin-top:5px;">SHIPMENT STATUS REPORT</div>
-            <div style="font-size:10px;font-weight:600;opacity:.78;margin-top:5px;">Chennai Import Operations • Customer Update</div>
-          </div>
-          <div style="text-align:right;min-width:150px;">
-            <div style="font-size:8px;font-weight:800;opacity:.65;text-transform:uppercase;">Generated</div>
-            <div style="font-size:11px;font-weight:900;margin-top:4px;">${dateStr}</div>
-            <div style="font-size:9px;font-family:'JetBrains Mono',monospace;opacity:.78;">${timeStr}</div>
-          </div>
+    <div id="manifestCaptureContainer" style="width:814px;background:#f4f4f5;padding:8px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#111827;box-sizing:border-box;">
+      <div style="padding:8px 10px 5px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:8px;font-weight:900;color:#374151;letter-spacing:.12em;">GREENWICH MERIDIAN LOGISTICS</div>
+          <div style="font-size:8px;color:#6b7280;margin-top:2px;">Customer Shipment Visibility • Generated ${generatedDate} ${generatedTime}</div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px;">
-          <div style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px;"><div style="font-size:8px;opacity:.65;font-weight:800;">TOTAL CONTAINERS</div><div style="font-size:20px;font-weight:900;margin-top:2px;">${prepared.length}</div></div>
-          <div style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px;"><div style="font-size:8px;opacity:.65;font-weight:800;">ACTIVE</div><div style="font-size:20px;font-weight:900;margin-top:2px;">${activeCount}</div></div>
-          <div style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px;"><div style="font-size:8px;opacity:.65;font-weight:800;">COMPLETED</div><div style="font-size:20px;font-weight:900;margin-top:2px;">${completedCount}</div></div>
-          <div style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px;"><div style="font-size:8px;opacity:.65;font-weight:800;">ATTENTION</div><div style="font-size:20px;font-weight:900;margin-top:2px;">${attentionCount}</div></div>
-        </div>
+        <div style="font-size:8px;font-weight:900;color:#4b5563;">STATUS REPORT</div>
       </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;">
-        <div style="background:#fff;border:1px solid #dbe3ea;border-radius:12px;padding:13px 15px;"><div style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;">Portfolio Financial Exposure</div><div style="font-size:21px;font-weight:900;color:${totalExposure > 0 ? "#c2410c" : "#15803d"};margin-top:3px;">$${Math.round(totalExposure).toLocaleString()}</div><div style="font-size:8px;color:#94a3b8;margin-top:2px;">Current estimated demurrage / detention exposure</div></div>
-        <div style="background:#fff;border:1px solid #dbe3ea;border-radius:12px;padding:13px 15px;"><div style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;">Update Reference</div><div style="font-size:12px;font-weight:900;color:#0f172a;margin-top:5px;">${prepared.length === 1 ? esc(prepared[0].container) : "Bulk Shipment Update"}</div><div style="font-size:8px;color:#94a3b8;margin-top:2px;">Please quote container number for operational enquiries</div></div>
-      </div>
-
-      ${cardsHtml}
-
-      <div style="margin-top:18px;padding:13px 15px;background:#0f172a;color:#fff;border-radius:12px;display:flex;justify-content:space-between;gap:20px;align-items:center;">
-        <div><div style="font-size:9px;font-weight:900;">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</div><div style="font-size:8px;opacity:.65;margin-top:3px;">Customer shipment visibility • Chennai Operations Desk</div></div>
-        <div style="text-align:right;font-size:8px;opacity:.7;">For operational assistance: ${esc(COMPANY_CONFIG.supportEmail)}<br>Generated electronically from Container Tracking Suite</div>
+      ${containersList.map((r,i) => renderContainer(r,i)).join("")}
+      <div style="padding:10px 8px 4px;text-align:center;font-size:7px;color:#6b7280;">
+        For operational assistance: ${esc(COMPANY_CONFIG.supportEmail)} • Container Tracking Suite
       </div>
     </div>
   `;
