@@ -1117,6 +1117,57 @@ function getTerminalRoutingMaster() {
 function saveTerminalRoutingMaster(list) {
   localStorage.setItem(TERMINAL_ROUTING_MASTER_KEY, JSON.stringify(list));
 }
+// Chennai Port arrival schedule mapping.
+// Source: Chennai Port Authority expected-arrival vessel schedule.
+// CTB1-CTB4 = CCTL; SCB1-SCB3 = CITPL.
+const CHENNAI_ARRIVAL_VESSEL_TERMINALS = {
+  "SNL HAIKOU": "CCTL",
+  "KMTC DELHI": "CITPL",
+  "FENG HAI 98": "CCTL",
+  "OCEAN GRACE": "CCTL",
+  "OCEAN NETWORK": "CITPL",
+  "RCL AGENCIES": "CITPL",
+  "TS HOCHIMINH": "CCTL",
+  "INTERASIA PROGRESS": "CCTL",
+  "RACHA BHUM": "CITPL",
+  "WAN HAI 501": "CCTL",
+  "EASTERN LINER": "CCTL",
+  "TRANSWORLD GLOBAL": "CCTL",
+  "ARMITA INDIA": "CITPL",
+  "CMA CGM": "CITPL",
+  "COSCO SHIPPING": "CITPL",
+  "EVERGREEN SHIPPING": "CITPL",
+  "INTERASIA SHIPPING": "CCTL",
+  "WAN HAI": "CITPL",
+  "SITC PENANG": "CCTL",
+  "BLPL FAITH": "CCTL",
+  "TCI PRABHU": "CITPL",
+  "ARTABAZ": "CITPL",
+  "MYNY": "CITPL",
+  "TCI SURYA": "CITPL",
+  "XIN TIAN JIN": "CITPL",
+  "EVER BRAVE": "CITPL",
+  "JIN YU FU TONG": "CITPL",
+  "HAN HUI": "CCTL",
+  "HIRANYA BHUM": "CITPL",
+  "WAN HAI 366": "CCTL",
+  "INTERASIA HORIZON": "CCTL",
+  "INTERASIA CATALYST": "CITPL",
+  "SEASPAN SYDNEY": "CITPL",
+  "XIN WEN ZHOU": "CITPL"
+};
+
+function detectTerminalFromChennaiArrival(r) {
+  const raw = normalizeRoutingText(getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]));
+  if (!raw) return { key:"UNKNOWN", status:"UNVERIFIED", evidence:[] };
+  const entries = Object.entries(CHENNAI_ARRIVAL_VESSEL_TERMINALS)
+    .filter(([v]) => raw === normalizeRoutingText(v) || raw.startsWith(normalizeRoutingText(v) + " "));
+  const keys = [...new Set(entries.map(x => x[1]))];
+  if (keys.length === 1) return { key:keys[0], status:"CHENNAI_ARRIVAL", evidence:entries.map(x => x[0]) };
+  if (keys.length > 1) return { key:"UNKNOWN", status:"CONFLICT", evidence:entries.map(x => x[0]) };
+  return { key:"UNKNOWN", status:"UNVERIFIED", evidence:[] };
+}
+
 function detectTerminalFromVessel(r) {
   const mbl = getField(r, ["MBL NO", "MBL", "MASTER BL"]);
   const mappedCarrier = getField(r, ["LINER", "CARRIER", "SHIPPING LINE"]) || detectLinerFromMBL(mbl);
@@ -1150,6 +1201,12 @@ function getGatewayPortInfo(r) {
   // IMPORTANT: Never use the stored GATEWAY PORT value as an automatic
   // selector. Old/imported CCTL values may be stale. Terminal selection must
   // come from the carrier + vessel routing master.
+  const arrival = detectTerminalFromChennaiArrival(r);
+  if (arrival.key !== "UNKNOWN") {
+    return { name: names[arrival.key], url: urls[arrival.key], key: arrival.key,
+      detectionStatus: arrival.status, evidence: arrival.evidence };
+  }
+
   const route = detectTerminalFromVessel(r);
   if (route.key !== "UNKNOWN") {
     return { name: names[route.key], url: urls[route.key], key: route.key,
