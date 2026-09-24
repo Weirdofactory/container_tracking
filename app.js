@@ -1052,49 +1052,47 @@ function getCarrierTrackingUrl(r) {
   return `https://www.google.com/search?q=${encodeURIComponent(liner + ' tracking ' + ref)}`;
 }
 
-// Gateway/terminal detection is evidence-based. Never default an unknown
-// Chennai terminal to CCTL: a wrong terminal can cascade into tracking,
-// LFD and demurrage decisions.
-const GATEWAY_FIELD_ALIASES = [
-  "GATEWAY PORT", "GATEWAY", "TERMINAL", "TERMINAL NAME",
-  "POD TERMINAL", "DISCHARGE TERMINAL", "PORT TERMINAL",
-  "DESTINATION TERMINAL", "FINAL TERMINAL", "TERMINAL OPERATOR",
-  "PORT OF DISCHARGE", "POD", "DISCHARGE PORT", "DESTINATION PORT"
+// Terminal routing master: operationally the terminal is determined primarily
+// from carrier/liner + vessel/service. Container number is never used as the
+// primary terminal signal.
+const TERMINAL_ROUTING_MASTER_KEY = "gml_terminal_routing_master_v1";
+const DEFAULT_TERMINAL_ROUTING = [
+  // Add your live carrier/vessel mappings here or through the Staff Dashboard.
+  // { carrier: "MSC", vessel: "VESSEL NAME", terminal: "CITPL" }
 ];
 
-function detectGatewayPortEvidence(r) {
-  const evidence = [];
-  const values = [];
-  GATEWAY_FIELD_ALIASES.forEach(k => {
-    const v = getField(r, [k]);
-    if (v) values.push({ field: k, value: String(v) });
-  });
-  Object.entries(r || {}).forEach(([field, value]) => {
-    if (value !== null && value !== undefined && String(value).trim()) {
-      values.push({ field, value: String(value) });
-    }
-  });
+function normalizeRoutingText(v) {
+  return String(v || "").toUpperCase().replace(/[^A-Z0-9]+/g, " ").trim();
+}
+function getTerminalRoutingMaster() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(TERMINAL_ROUTING_MASTER_KEY) || "null");
+    return Array.isArray(saved) ? saved : [...DEFAULT_TERMINAL_ROUTING];
+  } catch(e) { return [...DEFAULT_TERMINAL_ROUTING]; }
+}
+function saveTerminalRoutingMaster(list) {
+  localStorage.setItem(TERMINAL_ROUTING_MASTER_KEY, JSON.stringify(list));
+}
+function detectTerminalFromVessel(r) {
+  const carrier = normalizeRoutingText(getField(r, ["LINER", "CARRIER", "SHIPPING LINE"]));
+  const vesselRaw = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+  const vessel = normalizeRoutingText(vesselRaw);
+  if (!carrier && !vessel) return { key: "UNKNOWN", status: "UNVERIFIED", evidence: [] };
 
-  values.forEach(({field, value}) => {
-    const v = value.toUpperCase();
-    if (/\b(CITPL|CHENNAI\s+INTERNATIONAL\s+TERMINAL|PSA\s+CHENNAI|PSA\s+CITPL)\b/.test(v))
-      evidence.push({ key: "CITPL", field, value });
-    if (/\b(CCTL|CHENNAI\s+CONTAINER\s+TERMINAL|DP\s*WORLD\s+CHENNAI|DP\s*WORLD\s+CCT)\b/.test(v))
-      evidence.push({ key: "CCTL", field, value });
-    if (/\b(KATTUPALLI|ADANI\s+KATTUPALLI)\b/.test(v))
-      evidence.push({ key: "Kattupalli", field, value });
-    if (/\b(ENNORE|KAMARAJAR\s+PORT)\b/.test(v))
-      evidence.push({ key: "Ennore", field, value });
+  const matches = getTerminalRoutingMaster().filter(m => {
+    const mc = normalizeRoutingText(m.carrier);
+    const mv = normalizeRoutingText(m.vessel);
+    if (mc && carrier !== mc) return false;
+    if (mv && !(vessel === mv || vessel.includes(mv) || mv.includes(vessel))) return false;
+    return ["CCTL","CITPL","Kattupalli","Ennore"].includes(m.terminal);
   });
-
-  const keys = [...new Set(evidence.map(x => x.key))];
-  if (keys.length === 1) return { key: keys[0], status: "AUTO", evidence };
-  if (keys.length > 1) return { key: "UNKNOWN", status: "CONFLICT", evidence };
+  const keys = [...new Set(matches.map(m => m.terminal))];
+  if (keys.length === 1) return { key: keys[0], status: "AUTO", evidence: matches };
+  if (keys.length > 1) return { key: "UNKNOWN", status: "CONFLICT", evidence: matches };
   return { key: "UNKNOWN", status: "UNVERIFIED", evidence: [] };
 }
 
 function getGatewayPortInfo(r) {
-  const detected = detectGatewayPortEvidence(r);
   const urls = {
     CCTL: "https://122.252.230.102/DPWCCTTracking/Index.php",
     CITPL: "https://cp.citpl.co.in/enquiry/ctrHist",
@@ -1103,19 +1101,31 @@ function getGatewayPortInfo(r) {
   };
   const names = { CCTL: "CCTL", CITPL: "CITPL", Kattupalli: "Kattupalli", Ennore: "Ennore" };
 
-  if (detected.key !== "UNKNOWN") {
-    return { name: names[detected.key], url: urls[detected.key], key: detected.key,
-      detectionStatus: detected.status, evidence: detected.evidence };
+  const route = detectTerminalFromVessel(r);
+  if (route.key !== "UNKNOWN") {
+    return { name: names[route.key], url: urls[route.key], key: route.key,
+      detectionStatus: route.status, evidence: route.evidence };
   }
+
+  // Existing explicit terminal information is retained as secondary evidence.
+  const explicit = String(getField(r, [
+    "GATEWAY PORT","GATEWAY","TERMINAL","TERMINAL NAME",
+    "POD TERMINAL","DISCHARGE TERMINAL","PORT TERMINAL",
+    "DESTINATION TERMINAL","FINAL TERMINAL","TERMINAL OPERATOR"
+  ]) || "").trim().toUpperCase();
+  if (explicit.includes("CITPL") || explicit.includes("PSA")) return { name:"CITPL", url:urls.CITPL, key:"CITPL", detectionStatus:"SOURCE_DATA", evidence:[explicit] };
+  if (explicit.includes("CCTL") || explicit.includes("DP WORLD") || explicit.includes("CHENNAI CONTAINER TERMINAL")) return { name:"CCTL", url:urls.CCTL, key:"CCTL", detectionStatus:"SOURCE_DATA", evidence:[explicit] };
+  if (explicit.includes("KATTUPALLI")) return { name:"Kattupalli", url:urls.Kattupalli, key:"Kattupalli", detectionStatus:"SOURCE_DATA", evidence:[explicit] };
+  if (explicit.includes("ENNORE") || explicit.includes("KAMARAJAR")) return { name:"Ennore", url:urls.Ennore, key:"Ennore", detectionStatus:"SOURCE_DATA", evidence:[explicit] };
 
   const manual = String(getField(r, ["GATEWAY PORT", "GATEWAY"]) || "").trim().toUpperCase();
-  if (["CCTL", "CITPL", "KATTUPALLI", "ENNORE"].includes(manual)) {
+  if (["CCTL","CITPL","KATTUPALLI","ENNORE"].includes(manual)) {
     const key = manual === "KATTUPALLI" ? "Kattupalli" : manual === "ENNORE" ? "Ennore" : manual;
-    return { name: names[key], url: urls[key], key, detectionStatus: "MANUAL", evidence: [] };
+    return { name:names[key], url:urls[key], key, detectionStatus:"MANUAL", evidence:[] };
   }
-
-  return { name: "Unverified", url: "", key: "UNKNOWN", detectionStatus: detected.status, evidence: detected.evidence };
+  return { name:"Unverified", url:"", key:"UNKNOWN", detectionStatus:route.status, evidence:route.evidence };
 }
+
 function getCfsDepotInfo(cfsName) {
   const name = (cfsName || "").toUpperCase();
   if (name.includes("ECCT")) return { name: "ECCT CFS", url: "http://ecctcfs.com/containerTrackAndTrace.jsp" };
