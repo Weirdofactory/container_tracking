@@ -140,15 +140,15 @@
       modal=document.createElement('div');
       modal.id='vesselMasterModal';
       modal.className='p1v2-modal';
-      modal.innerHTML=`<div class="p1v2-box"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">VESSEL INTELLIGENCE</div><h2>🚢 Vessel Master</h2><p>Latest vessel / voyage terminal resolution history</p></div><button class="btn btn-ghost" id="vmClose">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-toolbar"><input class="input" id="vmSearch" placeholder="Search vessel, voyage or terminal..."></div><div class="p1v2-table-wrap"><table class="p1v2-table"><thead><tr><th>Vessel</th><th>Voyage</th><th>Terminal</th><th>Source</th><th>Updated</th></tr></thead><tbody id="vmBody"></tbody></table></div></div></div>`;
+      modal.innerHTML=`<div class="p1v2-box"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">VESSEL INTELLIGENCE</div><h2>🚢 Vessel Master</h2><p>Latest vessel / voyage terminal resolution history</p></div><button class="btn btn-ghost" id="vmClose">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-toolbar"><input class="input" id="vmSearch" placeholder="Search vessel, voyage or terminal..."></div><div class="p1v2-table-wrap"><table class="p1v2-table"><thead><tr><th>Vessel</th><th>Voyage</th><th>Terminal</th><th>Berth</th><th>ETA</th><th>ETB</th><th>Source</th><th>Updated</th></tr></thead><tbody id="vmBody"></tbody></table></div></div></div>`;
       document.body.appendChild(modal);
       $('vmClose').onclick=()=>modal.classList.remove('open');
       $('vmSearch').oninput=renderVesselMaster;
     }
     function renderVesselMaster(){
       const q=String($('vmSearch')?.value||'').toUpperCase().trim();
-      const data=(typeof getVesselMaster==='function'?getVesselMaster():[]).filter(x=>(String(x.vessel||'')+' '+String(x.voyage||'')+' '+String(x.terminal||'')).toUpperCase().includes(q)).sort((a,b)=>new Date(b.updatedAt||0)-new Date(a.updatedAt||0));
-      $('vmBody').innerHTML=data.map(x=>`<tr><td><b>${escP(x.vessel||'—')}</b></td><td>${escP(x.voyage||'—')}</td><td><span class="p1v2-pill good">${escP(x.terminal||'—')}</span></td><td>${escP(x.source||'AUTO')}</td><td>${escP(x.updatedAt?new Date(x.updatedAt).toLocaleString('en-IN'):'—')}</td></tr>`).join('')||'<tr><td colspan="5" class="p1v2-empty">No vessel master records yet. Records appear when vessel terminal detection resolves.</td></tr>';
+      const master=(typeof getVesselMaster==='function'?getVesselMaster():[]); const berth=(typeof getBerthingRecords==='function'?getBerthingRecords():[]); const merged=master.map(x=>({...x,...(berth.find(b=>normalizeVesselKey(b.vessel)===normalizeVesselKey(x.vessel)&&String(b.voyage||'').toUpperCase()===String(x.voyage||'').toUpperCase())||{})})); berth.forEach(b=>{if(!merged.some(x=>normalizeVesselKey(x.vessel)===normalizeVesselKey(b.vessel)&&String(x.voyage||'').toUpperCase()===String(b.voyage||'').toUpperCase()))merged.push(b);}); const data=merged.filter(x=>(String(x.vessel||'')+' '+String(x.voyage||'')+' '+String(x.terminal||'')+' '+String(x.berth||'')).toUpperCase().includes(q)).sort((a,b)=>new Date(b.updatedAt||0)-new Date(a.updatedAt||0));
+      $('vmBody').innerHTML=data.map(x=>`<tr><td><b>${escP(x.vessel||'—')}</b></td><td>${escP(x.voyage||'—')}</td><td><span class="p1v2-pill good">${escP(x.terminal||'—')}</span></td><td>${escP(x.berth||'—')}</td><td>${escP(x.eta||'—')}</td><td>${escP(x.etb||'—')}</td><td>${escP(x.source||'AUTO')}</td><td>${escP(x.updatedAt?new Date(x.updatedAt).toLocaleString('en-IN'):'—')}</td></tr>`).join('')||'<tr><td colspan="8" class="p1v2-empty">No vessel master records yet. Records appear when vessel terminal detection resolves.</td></tr>';
     }
     modal.classList.add('open');
     renderVesselMaster();
