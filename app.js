@@ -2837,16 +2837,20 @@ function renderCards(items) {
             <val style="color:var(--warning)">${formatDate(getField(r, ["PORT IN"])) || "—"} / ${formatDate(getField(r, ["PORT OUT"])) || "—"}</val>
           </div>
           <div class="detail-item">
-            <label>Port Out LFD / Dwell</label>
-            <val style="${fees.demOverdue ? 'color:var(--danger)' : ''}">${fees.terminalLFD} (${fees.portDwell}d / Free 13d)</val>
+            <label>Inside-Port LFD / Dwell</label>
+            <val style="${fees.demOverdue ? 'color:var(--danger)' : ''}">${fees.terminalLFD} (${fees.portDwell}d / Free ${fees.portFreeDays}d)</val>
           </div>
           <div class="detail-item">
             <label>CFS Depot / Truck</label>
             <val style="color:var(--accent);">${esc(getField(r, ["CFS NAME", "CFS"]) || "—")} / <span class="clickable-copy" onclick="copyText('${esc(truckNo)}')"><span style="color:var(--text-main);">${esc(truckNo || "No Truck")}</span></span></val>
           </div>
           <div class="detail-item">
-            <label>Detention LFD / Dwell</label>
-            <val style="${fees.detOverdue ? 'color:var(--danger)' : ''}">${fees.detentionLFD} (${fees.totalEquipmentDays}d / Free ${esc(getField(r, ["FREE DAYS"]) || "14")}d)</val>
+            <label>Empty Return Validity / Countdown</label>
+            <val>${(() => {
+              const ev = getEmptyReturnValidity(r);
+              const c = ev.state === "overdue" ? "var(--danger)" : ev.state === "warning" || ev.state === "critical" ? "var(--warning)" : ev.state === "returned" ? "var(--success)" : "var(--text-main)";
+              return `<span style="color:${c};font-weight:800">${ev.date} · ${ev.label}</span>`;
+            })()}</val>
           </div>
         </div>
 
