@@ -3382,25 +3382,6 @@ function processExcelFile(file) {
 
 el("excelInput").addEventListener("change", e => processExcelFile(e.target.files[0]));
 
-// Drag & Drop Listeners
-const ddOverlay = el("dragDropOverlay");
-window.addEventListener("dragover", (e) => { 
-  e.preventDefault(); 
-  if(currentUser && currentUser.role !== "Viewer") ddOverlay.classList.add("open"); 
-});
-ddOverlay.addEventListener("dragleave", (e) => { 
-  e.preventDefault(); 
-  ddOverlay.classList.remove("open"); 
-});
-ddOverlay.addEventListener("drop", (e) => {
-  e.preventDefault();
-  if(e.dataTransfer.files[0] && e.dataTransfer.files[0].name.match(/\.(xlsx|xls|csv)$/i)) {
-    processExcelFile(e.dataTransfer.files[0]);
-  } else {
-    ddOverlay.classList.remove("open");
-  }
-});
-
 // Load storage with safety fallback
 try {
   const saved = localStorage.getItem("containerRows");
