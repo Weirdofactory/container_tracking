@@ -1184,7 +1184,20 @@ function getFilteredRows() {
     return true;
   });
 
-  if (sortField) {
+  // Default operations order: earliest ETA first. Containers without ETA
+  // are kept at the bottom so missing data never jumps ahead of scheduled cargo.
+  // Manual table sorting still overrides this when another sort field is selected.
+  if (sortField === "ETA") {
+    filtered.sort((a, b) => {
+      const da = parseLocalDate(getField(a.r, ["ETA"]));
+      const db = parseLocalDate(getField(b.r, ["ETA"]));
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      const diff = da.getTime() - db.getTime();
+      return sortAsc ? diff : -diff;
+    });
+  } else if (sortField) {
     filtered.sort((a, b) => {
       const vA = (a.r[sortField] || "").toLowerCase();
       const vB = (b.r[sortField] || "").toLowerCase();
