@@ -1794,7 +1794,8 @@ function openModal(idx = -1) {
   
   el("modalForm").innerHTML = COLS.map(c => {
     if (c === 'GATEWAY PORT') {
-      const info = getGatewayPortInfo(r);\n      const curKey = info.key; 
+      const info = getGatewayPortInfo(r);
+      const curKey = info.key; 
       return `
         <div>
           <label style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Gateway Port</label>
