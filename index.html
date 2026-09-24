@@ -14,45 +14,58 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20260923-07">
+<link rel="stylesheet" href="./style.css?v=20260923-08">
 </head>
 <body>
 
 <header class="nav-header">
-  <div class="nav-container">
+  <div class="nav-container nav-multilevel">
     <div class="brand-box" onclick="resetToLanding()">
       <div class="brand-logo-icon">⚓</div>
       <div class="brand-title">Container Tracking Suite</div>
     </div>
+
     <div class="header-tools">
-      <div id="opsControls" style="display:none; align-items:center; gap:8px;">
-        <div class="header-segment" style="display:flex;gap:6px;">
-          <button class="btn btn-primary" id="p1v2TowerBtn">🎯 Control Tower</button>
-          <button class="btn btn-ghost" id="headerCsnBtn">📑 SCMTR / CSN</button>
-          <button class="btn btn-ghost" id="headerLfdBtn">⏱️ LFD Rules</button>
-        </div>
-        <div class="header-segment"><button class="btn btn-primary action-editor-only" id="addBtn">+ Container</button></div>
-        <div class="nav-dropdown">
-          <button class="btn" id="opsMenuBtn">⚡ Ops Menu ▾</button>
-          <div class="nav-dropdown-content" id="opsMenuDropdown">
-            <button class="dropdown-item" id="openAuditLogBtn">📜 Audit Trail (<span id="auditCountBadge">0</span>)</button>
-            <button class="dropdown-item" id="dailyDispatchBtn">📋 Dispatch Table</button>
-            <button class="dropdown-item action-editor-only" id="vesselEditBtn">🚢 Bulk Vessel Update</button>
-            <button class="dropdown-item" id="openAnalyticsBtn">📊 Turnaround Stats</button>
+      <div id="opsControls" class="ops-controls-multilevel" style="display:none;">
+        <div class="header-top-row">
+          <div class="header-context">
+            <span class="header-kicker">OPERATIONS CONTROL</span>
+            <span class="header-context-sep">•</span>
+            <span class="header-context-text">Container Operations & Visibility</span>
+          </div>
+          <div class="header-utility">
+            <button class="btn btn-ghost" id="currencyToggleBtn" style="font-family:'JetBrains Mono'; padding:4px 8px;">💱 INR</button>
+            <button class="btn btn-ghost" id="themeBtn" style="padding:4px 8px;">☀️</button>
+            <span id="userBadge" class="tag-badge" style="font-family:'JetBrains Mono'; font-weight:700;">Admin</span>
+            <button class="btn btn-danger" id="logoutBtn" style="padding:4px 8px;" title="Logout">🔒</button>
           </div>
         </div>
-        <div class="header-segment">
-          <button class="btn btn-ghost" id="exportBtn" title="Export to Excel">📤 Export</button>
-          <label class="btn btn-ghost action-editor-only" style="cursor:pointer" title="Import from Excel">📂 Import<input id="excelInput" type="file" accept=".xlsx,.xls,.csv" style="display:none"></label>
-        </div>
-        <div class="header-divider"></div>
-        <div class="header-segment">
-          <button class="btn btn-ghost" id="currencyToggleBtn" style="font-family:'JetBrains Mono'; padding:4px 8px;">💱 INR</button>
-          <button class="btn btn-ghost" id="themeBtn" style="padding:4px 8px;">☀️</button>
-          <span id="userBadge" class="tag-badge" style="font-family:'JetBrains Mono'; font-weight:700;">Admin</span>
-          <button class="btn btn-danger" id="logoutBtn" style="padding:4px 8px;" title="Logout">🔒</button>
+
+        <div class="header-bottom-row">
+          <div class="header-segment ops-primary-nav">
+            <button class="btn btn-primary" id="p1v2TowerBtn">🎯 Control Tower</button>
+            <button class="btn btn-ghost" id="headerCsnBtn">📑 SCMTR / CSN</button>
+            <button class="btn btn-ghost" id="headerLfdBtn">⏱️ LFD Rules</button>
+          </div>
+          <div class="header-segment">
+            <button class="btn btn-primary action-editor-only" id="addBtn">+ Container</button>
+          </div>
+          <div class="nav-dropdown">
+            <button class="btn" id="opsMenuBtn">⚡ Ops Menu ▾</button>
+            <div class="nav-dropdown-content" id="opsMenuDropdown">
+              <button class="dropdown-item" id="openAuditLogBtn">📜 Audit Trail (<span id="auditCountBadge">0</span>)</button>
+              <button class="dropdown-item" id="dailyDispatchBtn">📋 Dispatch Table</button>
+              <button class="dropdown-item action-editor-only" id="vesselEditBtn">🚢 Bulk Vessel Update</button>
+              <button class="dropdown-item" id="openAnalyticsBtn">📊 Turnaround Stats</button>
+            </div>
+          </div>
+          <div class="header-segment">
+            <button class="btn btn-ghost" id="exportBtn" title="Export to Excel">📤 Export</button>
+            <label class="btn btn-ghost action-editor-only" style="cursor:pointer" title="Import from Excel">📂 Import<input id="excelInput" type="file" accept=".xlsx,.xls,.csv" style="display:none"></label>
+          </div>
         </div>
       </div>
+
       <div id="publicControls" style="display:flex; align-items:center; gap:8px;">
         <button class="btn btn-ghost" id="publicThemeBtn" style="padding:6px 10px;">☀️</button>
         <button class="btn btn-primary" id="loginBtn">🔐 Staff Portal Login</button>
@@ -137,8 +150,8 @@
 
 <div class="toast-popup" id="toast"></div>
 
-<script src="./app.js?v=20260923-07"></script>
-<script src="./phase1.js?v=20260923-07"></script>
-<script src="./phase2.js?v=20260923-07"></script>
+<script src="./app.js?v=20260923-08"></script>
+<script src="./phase1.js?v=20260923-08"></script>
+<script src="./phase2.js?v=20260923-08"></script>
 </body>
 </html>
