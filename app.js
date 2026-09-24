@@ -388,7 +388,7 @@ function validateISO6346(cntr) {
 
 function getLfdConfig() {
   const defaults = {
-    terminalFreeDays: 3,
+    terminalFreeDays: 13,
     detentionFreeDays: 14,
     warningDays: 4,
     criticalDays: 2,
@@ -398,7 +398,7 @@ function getLfdConfig() {
     detentionRate40: 150
   };
   try {
-    return Object.assign({}, defaults, JSON.parse(localStorage.getItem("gml_phase1_config_v2") || "{}"));
+    return Object.assign({}, defaults, JSON.parse(localStorage.getItem("gml_phase1_config_v2") || "{}"), { terminalFreeDays: 13 });
   } catch (e) {
     return defaults;
   }
