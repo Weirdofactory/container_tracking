@@ -3410,9 +3410,3 @@ document.querySelectorAll(".chip").forEach(c => {
 });
 renderUI();
 
-const urlParams = new URLSearchParams(window.location.search);
-const scannedCntr = urlParams.get("cntr");
-if (scannedCntr) {
-  el("publicSearchInput").value = scannedCntr;
-  performPublicSearch();
-}
