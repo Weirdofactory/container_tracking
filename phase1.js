@@ -6,7 +6,7 @@
 
   const KEY = 'gml_phase1_config_v2';
   const DEFAULTS = {
-    terminalFreeDays: 3,
+    terminalFreeDays: 13,
     detentionFreeDays: 14,
     warningDays: 4,
     criticalDays: 2,
@@ -30,7 +30,7 @@
   const dayDiff = (a,b) => Math.floor((b-a)/86400000);
 
   function config() {
-    try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(KEY) || '{}')); }
+    try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(KEY) || '{}'), { terminalFreeDays: 13 }); }
     catch { return Object.assign({}, DEFAULTS); }
   }
   function saveConfig(c) { localStorage.setItem(KEY, JSON.stringify(c)); }
@@ -241,7 +241,7 @@
       document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2CsnEdit"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">CSN RECORD</div><h2 id="p1v2CsnEditTitle">Container</h2></div><button class="btn btn-ghost" id="p1v2CsnEditX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Status<select id="p1v2CsnStatus"><option>NOT FILED</option><option>PENDING</option><option>ACCEPTED</option><option>REJECTED</option><option>WRONG DETAILS</option><option>AMENDMENT</option></select></label><label>Filed Date<input type="date" id="p1v2CsnFiled"></label><label>Response Date<input type="date" id="p1v2CsnResponse"></label><label class="full">Remarks<textarea id="p1v2CsnRemarks"></textarea></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2CsnCancel">Cancel</button><button class="btn btn-primary" id="p1v2CsnSave">Save CSN</button></div></div></div>`);
     }
     if(!$('p1v2LfdModal')) {
-      document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2LfdModal"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">LFD ENGINE</div><h2>Port & Outside-Port Rules</h2></div><button class="btn btn-ghost" id="p1v2LfdX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Port / Terminal Free Days<input type="number" id="p1v2Free" min="0"></label><label>Outside Port / Detention Free Days<input type="number" id="p1v2DetFree" min="0"></label><label>Warning Threshold<input type="number" id="p1v2Warn" min="0"></label><label>Critical Threshold<input type="number" id="p1v2Crit" min="0"></label><label>Inside-Port / 20ft Demurrage / Day (USD)<input type="number" id="p1v2R20" min="0"></label><label>Inside-Port / 40ft Demurrage / Day (USD)<input type="number" id="p1v2R40" min="0"></label><label>Outside-Port / 20ft Detention / Day (USD)<input type="number" id="p1v2DR20" min="0"></label><label>Outside-Port / 40ft Detention / Day (USD)<input type="number" id="p1v2DR40" min="0"></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2LfdCancel">Cancel</button><button class="btn btn-primary" id="p1v2LfdSave">Save Rules</button></div></div></div>`);
+      document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2LfdModal"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">LFD ENGINE</div><h2>Port & Outside-Port Rules</h2></div><button class="btn btn-ghost" id="p1v2LfdX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Port Out Free Days (Inward Date + 13 Days)<input type="number" id="p1v2Free" value="13" min="13" max="13" readonly></label><label>Outside Port / Detention Free Days<input type="number" id="p1v2DetFree" min="0"></label><label>Warning Threshold<input type="number" id="p1v2Warn" min="0"></label><label>Critical Threshold<input type="number" id="p1v2Crit" min="0"></label><label>Inside-Port / 20ft Demurrage / Day (USD)<input type="number" id="p1v2R20" min="0"></label><label>Inside-Port / 40ft Demurrage / Day (USD)<input type="number" id="p1v2R40" min="0"></label><label>Outside-Port / 20ft Detention / Day (USD)<input type="number" id="p1v2DR20" min="0"></label><label>Outside-Port / 40ft Detention / Day (USD)<input type="number" id="p1v2DR40" min="0"></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2LfdCancel">Cancel</button><button class="btn btn-primary" id="p1v2LfdSave">Save Rules</button></div></div></div>`);
     }
     if(!$('p1v2TowerBtn')) {
       const b=document.createElement('button'); b.id='p1v2TowerBtn'; b.className='btn btn-primary'; b.textContent='🎯 Control Tower'; b.onclick=()=>showTower(true);
@@ -349,11 +349,11 @@
 
   function openLfd(){
     const c=config();
-    $('p1v2Free').value=c.terminalFreeDays;$('p1v2DetFree').value=c.detentionFreeDays;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;$('p1v2DR20').value=c.detentionRate20;$('p1v2DR40').value=c.detentionRate40;
+    $('p1v2Free').value=13;$('p1v2DetFree').value=c.detentionFreeDays;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;$('p1v2DR20').value=c.detentionRate20;$('p1v2DR40').value=c.detentionRate40;
     $('p1v2LfdModal').classList.add('open');
   }
   function saveLfd(){
-    saveConfig({terminalFreeDays:Number($('p1v2Free').value||0),detentionFreeDays:Number($('p1v2DetFree').value||0),warningDays:Number($('p1v2Warn').value||0),criticalDays:Number($('p1v2Crit').value||0),demRate20:Number($('p1v2R20').value||0),demRate40:Number($('p1v2R40').value||0),detentionRate20:Number($('p1v2DR20').value||0),detentionRate40:Number($('p1v2DR40').value||0)});
+    saveConfig({terminalFreeDays:13,detentionFreeDays:Number($('p1v2DetFree').value||0),warningDays:Number($('p1v2Warn').value||0),criticalDays:Number($('p1v2Crit').value||0),demRate20:Number($('p1v2R20').value||0),demRate40:Number($('p1v2R40').value||0),detentionRate20:Number($('p1v2DR20').value||0),detentionRate40:Number($('p1v2DR40').value||0)});
     $('p1v2LfdModal').classList.remove('open');renderTower();if(typeof renderUI==='function')renderUI();if(typeof toast==='function')toast('LFD rules saved');
   }
 
