@@ -352,8 +352,7 @@
   }
   function saveLfd(){
     const terminalFreeDays=Math.max(0,Number($('p1v2Free').value||0));
-    const portOutFreeDays=Math.max(0,Number($('p1v2Free').value||0));
-    const cfg={terminalFreeDays,portOutFreeDays,warningDays:Math.max(0,Number($('p1v2Warn').value||0)),criticalDays:Math.max(0,Number($('p1v2Crit').value||0)),demRate20:Math.max(0,Number($('p1v2R20').value||0)),demRate40:Math.max(0,Number($('p1v2R40').value||0))};
+    const cfg={terminalFreeDays,warningDays:Math.max(0,Number($('p1v2Warn').value||0)),criticalDays:Math.max(0,Number($('p1v2Crit').value||0)),demRate20:Math.max(0,Number($('p1v2R20').value||0)),demRate40:Math.max(0,Number($('p1v2R40').value||0))};
     saveConfig(cfg);
     $('p1v2Free').value=terminalFreeDays;
     $('p1v2LfdModal').classList.remove('open');
