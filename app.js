@@ -1794,16 +1794,20 @@ function openModal(idx = -1) {
   
   el("modalForm").innerHTML = COLS.map(c => {
     if (c === 'GATEWAY PORT') {
-      const curKey = getGatewayPortInfo(r).key; 
+      const info = getGatewayPortInfo(r);\n      const curKey = info.key; 
       return `
         <div>
           <label style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Gateway Port</label>
           <select id="modal_GATEWAY_PORT" class="select" style="width:100%; margin-top:4px;" data-field="${c}">
-            <option value="CCTL" ${curKey === 'CCTL' ? 'selected' : ''}>CCTL (DP World)</option>
-            <option value="CITPL" ${curKey === 'CITPL' ? 'selected' : ''}>CITPL (PSA)</option>
-            <option value="Kattupalli" ${curKey === 'Kattupalli' ? 'selected' : ''}>Kattupalli Port</option>
-            <option value="Ennore" ${curKey === 'Ennore' ? 'selected' : ''}>Ennore Port</option>
+            <option value="" ${!["CCTL","CITPL","Kattupalli","Ennore"].includes(curKey) ? "selected" : ""}>AUTO — detect from shipment data</option>
+            <option value="CCTL" ${curKey === "CCTL" ? "selected" : ""}>CCTL (DP World)</option>
+            <option value="CITPL" ${curKey === "CITPL" ? "selected" : ""}>CITPL (PSA)</option>
+            <option value="Kattupalli" ${curKey === "Kattupalli" ? "selected" : ""}>Kattupalli Port</option>
+            <option value="Ennore" ${curKey === "Ennore" ? "selected" : ""}>Ennore Port</option>
           </select>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:4px;">
+            ${info.detectionStatus === "AUTO" ? "🟢 Automatically detected" : info.detectionStatus === "CONFLICT" ? "🟠 Conflicting terminal evidence" : "⚪ No reliable terminal evidence yet"}
+          </div>
         </div>
       `;
     }
