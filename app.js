@@ -629,10 +629,8 @@ function generateCleanManifestHtml(containersList) {
         <div style="padding:5px 18px 20px;">
           <div style="font-size:8px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin:3px 0 12px 38px;">SHIPMENT ACTIVITY</div>
           ${timeline}
-        </div>
-        <div style="border-top:1px solid #e5e7eb;background:#f8fafc;padding:8px 14px;display:flex;justify-content:space-between;gap:10px;font-size:8px;color:#6b7280;">
+        </div>        <div style="border-top:1px solid #e5e7eb;background:#f8fafc;padding:8px 14px;font-size:8px;color:#6b7280;">
           <span>MBL: <b style="color:#374151;">${esc(mbl)}</b> • CFS: <b style="color:#374151;">${esc(cfs)}</b> • Type: <b style="color:#374151;">${esc(type)}</b></span>
-          <span>LFD Exposure: <b style="color:${exposure > 0 ? "#b91c1c" : "#15803d"};">$${Math.round(exposure).toLocaleString()}</b></span>
         </div>
       </section>
     `;
