@@ -7,7 +7,6 @@
   const KEY = 'gml_phase1_config_v2';
   const DEFAULTS = {
     terminalFreeDays: 3,
-    portOutFreeDays: 13,
     detentionFreeDays: 14,
     warningDays: 4,
     criticalDays: 2,
@@ -45,7 +44,6 @@
     const emptyValidity=dateVal(getField(r,['EMPTY RETURN VALIDITY','EMPTY VALIDITY','EMPTY RETURN LAST DATE']));
     // Port Out free-day rule: configurable calendar days from Inward Date.
     const insidePortFreeDays=Math.max(0,Number(c.terminalFreeDays ?? 3));
-    const portOutFreeDays=Math.max(0,Number(c.portOutFreeDays ?? 13));
 
     // Two separate clocks:
     // 1) Port Out / inside-port LFD starts at Inward Date and gives 13 calendar days.
@@ -93,7 +91,7 @@
     return {
       lfd:activeLfd, daysLeft:activeDaysLeft, state:activeState, label,
       portLfd, portDaysLeft, portState, outsideLfd, outsideDaysLeft, outsideState,
-      demDays, cost:demCost, detentionDays, portOutFreeDays, detentionDaysOver, detentionCost, returned:!!returned, portRate, outsideRate
+      demDays, cost:demCost, detentionDays:0, detentionDaysOver, detentionCost, returned:!!returned, portRate, outsideRate
     };
   }
 
@@ -241,7 +239,7 @@
       document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2CsnEdit"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">CSN RECORD</div><h2 id="p1v2CsnEditTitle">Container</h2></div><button class="btn btn-ghost" id="p1v2CsnEditX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Status<select id="p1v2CsnStatus"><option>NOT FILED</option><option>PENDING</option><option>ACCEPTED</option><option>REJECTED</option><option>WRONG DETAILS</option><option>AMENDMENT</option></select></label><label>Filed Date<input type="date" id="p1v2CsnFiled"></label><label>Response Date<input type="date" id="p1v2CsnResponse"></label><label class="full">Remarks<textarea id="p1v2CsnRemarks"></textarea></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2CsnCancel">Cancel</button><button class="btn btn-primary" id="p1v2CsnSave">Save CSN</button></div></div></div>`);
     }
     if(!$('p1v2LfdModal')) {
-      document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2LfdModal"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">LFD ENGINE</div><h2>LFD & Empty Return Rules</h2></div><button class="btn btn-ghost" id="p1v2LfdX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Port Out Free Days (From Inward Date)<input type="number" id="p1v2Free" min="0"></label><label>Empty Return Validity<input type="text" value="Enter per container in Edit" readonly></label><label>Warning Threshold<input type="number" id="p1v2Warn" min="0"></label><label>Critical Threshold<input type="number" id="p1v2Crit" min="0"></label><label>Inside-Port / 20ft Demurrage / Day (USD)<input type="number" id="p1v2R20" min="0"></label><label>Inside-Port / 40ft Demurrage / Day (USD)<input type="number" id="p1v2R40" min="0"></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2LfdCancel">Cancel</button><button class="btn btn-primary" id="p1v2LfdSave">Save Rules</button></div></div></div>`);
+      document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2LfdModal"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">LFD ENGINE</div><h2>Inside-Port LFD & Empty Return Rules</h2></div><button class="btn btn-ghost" id="p1v2LfdX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Inside-Port Free Days (From Port In)<input type="number" id="p1v2Free" min="0"></label><label>Empty Return Validity<input type="text" value="Enter per container in Edit" readonly></label><label>Warning Threshold<input type="number" id="p1v2Warn" min="0"></label><label>Critical Threshold<input type="number" id="p1v2Crit" min="0"></label><label>Inside-Port / 20ft Demurrage / Day (USD)<input type="number" id="p1v2R20" min="0"></label><label>Inside-Port / 40ft Demurrage / Day (USD)<input type="number" id="p1v2R40" min="0"></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2LfdCancel">Cancel</button><button class="btn btn-primary" id="p1v2LfdSave">Save Rules</button></div></div></div>`);
     }
     if(!$('p1v2TowerBtn')) {
       const b=document.createElement('button'); b.id='p1v2TowerBtn'; b.className='btn btn-primary'; b.textContent='🎯 Control Tower'; b.onclick=()=>showTower(true);
@@ -349,7 +347,7 @@
 
   function openLfd(){
     const c=config();
-    $('p1v2Free').value=c.portOutFreeDays ?? 13;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;
+    $('p1v2Free').value=c.terminalFreeDays ?? 3;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;
     $('p1v2LfdModal').classList.add('open');
   }
   function saveLfd(){
@@ -361,7 +359,7 @@
     $('p1v2LfdModal').classList.remove('open');
     renderTower();
     if(typeof renderUI==='function')renderUI();
-    if(typeof toast==='function')toast('LFD rules saved — Empty Return Validity is maintained per container');
+    if(typeof toast==='function')toast('LFD rules saved — Port In + free days; Empty Return Validity per container');
   }
 
   function bind(){
