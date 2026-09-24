@@ -329,7 +329,7 @@
   }
   function saveLfd(){
     saveConfig({terminalFreeDays:Number($('p1v2Free').value||0),detentionFreeDays:Number($('p1v2DetFree').value||0),warningDays:Number($('p1v2Warn').value||0),criticalDays:Number($('p1v2Crit').value||0),demRate20:Number($('p1v2R20').value||0),demRate40:Number($('p1v2R40').value||0),detentionRate20:Number($('p1v2DR20').value||0),detentionRate40:Number($('p1v2DR40').value||0)});
-    $('p1v2LfdModal').classList.remove('open');renderTower();if(typeof toast==='function')toast('LFD rules saved');
+    $('p1v2LfdModal').classList.remove('open');renderTower();if(typeof renderUI==='function')renderUI();if(typeof toast==='function')toast('LFD rules saved');
   }
 
   function bind(){
