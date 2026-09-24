@@ -446,3 +446,46 @@ body { background-color: var(--bg-app); color: var(--text-main); font-family: 'P
   #opsControls{overflow-x:auto;padding-bottom:2px}
 }
 
+
+/* Final header spacing fix: keep brand completely clear of operations nav */
+.nav-container{
+  display:grid;
+  grid-template-columns:230px minmax(0,1fr);
+  align-items:center;
+  column-gap:18px;
+}
+.brand-box{
+  width:230px;
+  min-width:230px;
+  flex:none;
+  position:relative;
+  z-index:3;
+  background:var(--bg-surface);
+}
+.brand-title{
+  white-space:nowrap;
+  overflow:visible;
+  font-size:18px;
+}
+.header-tools{
+  width:100%;
+  min-width:0;
+  justify-content:flex-end;
+  position:relative;
+  z-index:2;
+}
+#opsControls{
+  width:100%;
+  min-width:0;
+  justify-content:flex-end;
+}
+@media (max-width:1200px){
+  .nav-container{grid-template-columns:205px minmax(0,1fr);column-gap:12px}
+  .brand-box{width:205px;min-width:205px}
+  .brand-title{font-size:16px}
+}
+@media (max-width:900px){
+  .nav-container{display:flex;overflow-x:auto}
+  .brand-box{width:auto;min-width:max-content}
+  .header-tools{width:auto;min-width:max-content}
+}
