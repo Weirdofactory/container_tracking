@@ -656,6 +656,7 @@ el("loginSubmit").addEventListener("click", async () => {
   }
 });
 
+el("terminalRoutingBtn")?.addEventListener("click", openTerminalRoutingMaster);
 el("logoutBtn").addEventListener("click", () => {
   currentUser = null;
   localStorage.removeItem("gml_auth_code_user");
@@ -812,6 +813,49 @@ function openEmailModal(idx) {
 el("emailModalClose").addEventListener("click", () => el("emailModalBg").classList.remove("open"));
 el("copyEmailBtn").addEventListener("click", () => copyText(el("emailBody").value));
 
+function openTerminalRoutingMaster() {
+  if (currentUser && currentUser.role === "Viewer") return alert("Read-only access.");
+  const list = getTerminalRoutingMaster();
+  const overlay = document.createElement("div");
+  overlay.id = "terminalRoutingOverlay";
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;";
+  overlay.innerHTML = `
+    <div style="background:var(--bg-card,#fff);width:min(900px,96vw);max-height:90vh;overflow:auto;border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div><h3 style="margin:0">🧭 Terminal Routing Master</h3><small style="color:var(--text-muted)">Primary rule: Carrier/Liner + Vessel/Service → Terminal</small></div>
+        <button class="btn btn-ghost" id="closeTerminalRouting">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1.5fr 150px auto;gap:7px;margin-bottom:10px;">
+        <input id="trCarrier" class="input" placeholder="Carrier / Liner">
+        <input id="trVessel" class="input" placeholder="Vessel / Service">
+        <select id="trTerminal" class="select"><option>CCTL</option><option>CITPL</option><option>Kattupalli</option><option>Ennore</option></select>
+        <button class="btn btn-primary" id="addTerminalRoute">+ Add</button>
+      </div>
+      <div id="terminalRoutingRows"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const render=()=> {
+    const current=getTerminalRoutingMaster();
+    overlay.querySelector("#terminalRoutingRows").innerHTML=current.length ? current.map((m,i)=>`
+      <div style="display:grid;grid-template-columns:1fr 1.5fr 150px auto;gap:7px;align-items:center;padding:8px;border-bottom:1px solid var(--border);">
+        <div>${esc(m.carrier||"ANY")}</div><div>${esc(m.vessel||"ANY")}</div><strong>${esc(m.terminal)}</strong>
+        <button class="btn btn-ghost" data-del="${i}">🗑️</button>
+      </div>`).join("") : '<div style="padding:20px;text-align:center;color:var(--text-muted)">No routing rules yet. Add your carrier/vessel mappings.</div>';
+    overlay.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const a=getTerminalRoutingMaster();a.splice(Number(b.dataset.del),1);saveTerminalRoutingMaster(a);render();});
+  };
+  overlay.querySelector("#closeTerminalRouting").onclick=()=>overlay.remove();
+  overlay.querySelector("#addTerminalRoute").onclick=()=>{
+    const carrier=overlay.querySelector("#trCarrier").value.trim();
+    const vessel=overlay.querySelector("#trVessel").value.trim();
+    const terminal=overlay.querySelector("#trTerminal").value;
+    if(!carrier && !vessel) return alert("Enter carrier or vessel/service.");
+    const a=getTerminalRoutingMaster();
+    a.push({carrier,vessel,terminal});
+    saveTerminalRoutingMaster(a); render();
+    toast("Terminal routing added");
+  };
+  render();
+}
 el("openAnalyticsBtn").addEventListener("click", () => {
   const completed = rows.filter(r => isFullyCompleted(r));
   let totalTransitDays = 0, countTransit = 0;
