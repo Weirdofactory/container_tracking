@@ -386,33 +386,54 @@ function validateISO6346(cntr) {
   return { isValid, message: isValid ? "Valid ISO 6346" : `Checksum error (Expected ${checkDigit})` };
 }
 
+function getLfdConfig() {
+  const defaults = {
+    terminalFreeDays: 3,
+    detentionFreeDays: 14,
+    warningDays: 4,
+    criticalDays: 2,
+    demRate20: 100,
+    demRate40: 225,
+    detentionRate20: 75,
+    detentionRate40: 150
+  };
+  try {
+    return Object.assign({}, defaults, JSON.parse(localStorage.getItem("gml_phase1_config_v2") || "{}"));
+  } catch (e) {
+    return defaults;
+  }
+}
+
 function calculateStandardFees(r) {
   const is20ft = (getField(r, ["TYPE", "SIZE"]) || "").includes("20");
-  const demRatePerDay = is20ft ? 100 : 225;
-  const detRatePerDay = is20ft ? 75 : 150;
+  const cfg = getLfdConfig();
+
+  // Inside-port / terminal clock
+  const demRatePerDay = is20ft ? Number(cfg.demRate20) : Number(cfg.demRate40);
+  // Outside-port / carrier detention clock
+  const detRatePerDay = is20ft ? Number(cfg.detentionRate20) : Number(cfg.detentionRate40);
 
   const portInDate = parseLocalDate(getField(r, ["PORT IN"]));
-  const inwardDate = parseLocalDate(getField(r, ["INWARD DATE", "INWARD"]));
-  const portOutDate = parseLocalDate(getField(r, ["PORT OUT", "CFS IN"]));
+  const portOutDate = parseLocalDate(getField(r, ["PORT OUT"]));
   const returnDate = parseLocalDate(getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]));
-  
+
   const today = new Date();
   const nowDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
   let demDays = 0, demOverdue = false, demCostUSD = 0, portDwell = 0;
   let detDays = 0, detOverdue = false, detCostUSD = 0, totalEquipmentDays = 0;
 
-  const portFreeDays = 3;
+  const portFreeDays = Number(cfg.terminalFreeDays || 0);
   let terminalLFD = null;
   let terminalDaysLeft = null;
 
   if (portInDate) {
     terminalLFD = new Date(portInDate);
     terminalLFD.setDate(terminalLFD.getDate() + portFreeDays);
-    terminalDaysLeft = Math.floor((terminalLFD - nowDay) / (1000 * 60 * 60 * 24));
+    terminalDaysLeft = Math.floor((terminalLFD - nowDay) / 86400000);
 
     const endPortDate = portOutDate || nowDay;
-    portDwell = Math.max(0, Math.floor((endPortDate - portInDate) / (1000 * 60 * 60 * 24)));
+    portDwell = Math.max(0, Math.floor((endPortDate - portInDate) / 86400000));
     if (portDwell > portFreeDays) {
       demOverdue = true;
       demDays = portDwell - portFreeDays;
@@ -420,17 +441,23 @@ function calculateStandardFees(r) {
     }
   }
 
-  const carrierFreeDays = parseInt(getField(r, ["FREE DAYS"]) || "14", 10);
+  // Outside-port detention starts only after Port Out and ends at Empty Return.
+  // Row-level FREE DAYS overrides the configured default when supplied.
+  const rawFreeDays = getField(r, ["FREE DAYS"]);
+  const carrierFreeDays = rawFreeDays !== "" && rawFreeDays != null
+    ? Math.max(0, parseInt(rawFreeDays, 10) || 0)
+    : Number(cfg.detentionFreeDays || 0);
+
   let detentionLFD = null;
   let detentionDaysLeft = null;
 
-  if (inwardDate) {
-    detentionLFD = new Date(inwardDate);
+  if (portOutDate) {
+    detentionLFD = new Date(portOutDate);
     detentionLFD.setDate(detentionLFD.getDate() + carrierFreeDays);
-    detentionDaysLeft = Math.floor((detentionLFD - nowDay) / (1000 * 60 * 60 * 24));
+    detentionDaysLeft = Math.floor((detentionLFD - nowDay) / 86400000);
 
     const endDetDate = returnDate || nowDay;
-    totalEquipmentDays = Math.max(0, Math.floor((endDetDate - inwardDate) / (1000 * 60 * 60 * 24)));
+    totalEquipmentDays = Math.max(0, Math.floor((endDetDate - portOutDate) / 86400000));
     if (totalEquipmentDays > carrierFreeDays && !isFullyCompleted(r)) {
       detOverdue = true;
       detDays = totalEquipmentDays - carrierFreeDays;
@@ -454,7 +481,9 @@ function calculateStandardFees(r) {
     totalCostUSD: demCostUSD + detCostUSD,
     isCompleted: isFullyCompleted(r),
     portFreeDays,
-    carrierFreeDays
+    carrierFreeDays,
+    demRatePerDay,
+    detRatePerDay
   };
 }
 
@@ -2004,9 +2033,9 @@ loadFromCloud();
 updateAuditBadge();
 checkActiveSession();
 
-activeQuickFilter = 'all';
+activeQuickFilter = 'active';
 document.querySelectorAll(".chip").forEach(c => {
-  c.classList.toggle("active", c.dataset.filter === 'all');
+  c.classList.toggle("active", c.dataset.filter === 'active');
 });
 renderUI();
 
