@@ -1118,7 +1118,9 @@ function saveTerminalRoutingMaster(list) {
   localStorage.setItem(TERMINAL_ROUTING_MASTER_KEY, JSON.stringify(list));
 }
 function detectTerminalFromVessel(r) {
-  const carrier = normalizeRoutingText(getField(r, ["LINER", "CARRIER", "SHIPPING LINE"]));
+  const mbl = getField(r, ["MBL NO", "MBL", "MASTER BL"]);
+  const mappedCarrier = getField(r, ["LINER", "CARRIER", "SHIPPING LINE"]) || detectLinerFromMBL(mbl);
+  const carrier = normalizeRoutingText(mappedCarrier);
   const vesselRaw = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
   const vessel = normalizeRoutingText(vesselRaw);
   if (!carrier && !vessel) return { key: "UNKNOWN", status: "UNVERIFIED", evidence: [] };
