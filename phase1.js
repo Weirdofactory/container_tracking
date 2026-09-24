@@ -37,27 +37,30 @@
 
   function lfd(r) {
     const c=config();
+    const inwardDate=dateVal(getField(r,['INWARD DATE']));
     const portIn=dateVal(getField(r,['PORT IN']));
     const portOut=dateVal(getField(r,['PORT OUT']));
     const returned=dateVal(getField(r,['CONTAINER RETURN DATE','EMPTY RETURN DATE']));
-    const terminalDays=Number(c.terminalFreeDays||0);
+    // Port Out free-day rule: 13 calendar days from Inward Date.
+    const portOutFreeDays=13;
     const detentionDays=Number(getField(r,['FREE DAYS'])||c.detentionFreeDays||0);
 
     // Two separate clocks:
-    // 1) Port / inside-port LFD starts at Port In and ends when Port Out occurs.
+    // 1) Port Out / inside-port LFD starts at Inward Date and gives 13 calendar days.
     // 2) Outside-port / detention LFD starts at Port Out and ends when the empty is returned.
     const size=String(getField(r,['TYPE','SIZE'])||'').toUpperCase();
     const portRate=size.includes('20')?Number(c.demRate20):Number(c.demRate40);
     const outsideRate=size.includes('20')?Number(c.detentionRate20):Number(c.detentionRate40);
 
     let portLfd=null, portDaysLeft=null, portState='unknown', demDays=0, demCost=0;
-    if(portIn){
-      portLfd=new Date(portIn);
-      portLfd.setDate(portLfd.getDate()+terminalDays);
+    if(inwardDate){
+      portLfd=new Date(inwardDate);
+      portLfd.setDate(portLfd.getDate()+portOutFreeDays);
+      const clockEnd=portOut || today();
+      const dwell=Math.max(0,dayDiff(inwardDate,clockEnd));
+      demDays=Math.max(0,dwell-portOutFreeDays);
+      demCost=demDays*portRate;
       if(portOut){
-        const dwell=Math.max(0,dayDiff(portIn,portOut));
-        demDays=Math.max(0,dwell-terminalDays);
-        demCost=demDays*rate;
         portState=demDays>0?'overdue':'complete';
         portDaysLeft=dayDiff(portOut,portLfd);
       }else{
@@ -90,7 +93,7 @@
     return {
       lfd:activeLfd, daysLeft:activeDaysLeft, state:activeState, label,
       portLfd, portDaysLeft, portState, outsideLfd, outsideDaysLeft, outsideState,
-      demDays, cost:demCost, detentionDays, detentionDaysOver, detentionCost, returned:!!returned, portRate, outsideRate
+      demDays, cost:demCost, detentionDays, portOutFreeDays, detentionDaysOver, detentionCost, returned:!!returned, portRate, outsideRate
     };
   }
 
