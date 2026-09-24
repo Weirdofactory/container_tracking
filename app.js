@@ -447,7 +447,7 @@ function calculateStandardFees(r) {
   // Chennai Port Out free-day rule:
   // LFD is calculated from INWARD DATE + 13 calendar days.
   // This is independent of the terminal configuration value.
-  const portFreeDays = Math.max(0, Number(cfg.portOutFreeDays ?? 13));
+  const portFreeDays = Math.max(0, Number(cfg.terminalFreeDays ?? 3));
   let terminalLFD = null;
   let terminalDaysLeft = null;
 
