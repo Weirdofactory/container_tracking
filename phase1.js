@@ -360,7 +360,8 @@
     if($('headerCsnBtn')) $('headerCsnBtn').onclick=window.openScmtrCentre;
     if($('headerLfdBtn')) $('headerLfdBtn').onclick=window.openLfdRules;
     $('p1v2Back').onclick=()=>showTower(false);
-    $('p1v2Refresh').onclick=renderTower;\n    $('p1v2VesselMaster').onclick=openVesselMaster;
+    $('p1v2Refresh').onclick=renderTower;
+    $('p1v2VesselMaster').onclick=openVesselMaster;
     $('p1v2All').onclick=()=>{ const main=$('opsDashboardView'); $('p1v2Tower').style.display='none'; main.style.display='block'; renderUI(); };
     $('p1v2Csn').onclick=()=>{renderCsn();$('p1v2CsnModal').classList.add('open');};
     $('p1v2Lfd').onclick=openLfd;
