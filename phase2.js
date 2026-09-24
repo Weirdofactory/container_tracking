@@ -34,6 +34,7 @@
     const detentionDays=Number(getField(r,['FREE DAYS'])||cfg.detentionFreeDays||0);
     const size=String(getField(r,['TYPE','SIZE'])||'').toUpperCase();
     const rate=size.includes('20')?Number(cfg.demRate20):Number(cfg.demRate40);
+    const outsideRate=size.includes('20')?Number(cfg.detentionRate20):Number(cfg.detentionRate40);
 
     let portLfd=null,portDaysLeft=null,portState='unknown',demDays=0,cost=0;
     if(portIn){
@@ -48,17 +49,20 @@
       }
     }
 
-    let outsideLfd=null,outsideDaysLeft=null,outsideState='unknown';
+    let outsideLfd=null,outsideDaysLeft=null,outsideState='unknown',detentionDaysOver=0,detentionCost=0;
     if(portOut){
       outsideLfd=new Date(portOut); outsideLfd.setDate(outsideLfd.getDate()+detentionDays);
       if(returned){
         outsideDaysLeft=Math.floor((outsideLfd-returned)/86400000); outsideState='complete';
       }else{
+        const outsideDwell=Math.max(0,Math.floor((today()-portOut)/86400000));
+        detentionDaysOver=Math.max(0,outsideDwell-detentionDays);
+        detentionCost=detentionDaysOver*outsideRate;
         outsideDaysLeft=Math.floor((outsideLfd-today())/86400000);
         outsideState=outsideDaysLeft<0?'overdue':outsideDaysLeft<=Number(cfg.criticalDays)?'critical':outsideDaysLeft<=Number(cfg.warningDays)?'warning':'safe';
       }
     }
-    return {returned:!!returned,portLfd,portDaysLeft,portState,outsideLfd,outsideDaysLeft,outsideState,demDays,cost};
+    return {returned:!!returned,portLfd,portDaysLeft,portState,outsideLfd,outsideDaysLeft,outsideState,demDays,cost,detentionDaysOver,detentionCost,portRate:rate,outsideRate};
   }
 
   function candidates(){
