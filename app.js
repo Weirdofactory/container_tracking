@@ -404,6 +404,12 @@ function getLfdConfig() {
   }
 }
 
+function formatDateLocalDateObj(d) {
+  if (!(d instanceof Date) || isNaN(d.getTime())) return "";
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${String(d.getDate()).padStart(2,"0")}-${months[d.getMonth()]}`;
+}
+
 function calculateStandardFees(r) {
   const is20ft = (getField(r, ["TYPE", "SIZE"]) || "").includes("20");
   const cfg = getLfdConfig();
@@ -474,9 +480,9 @@ function calculateStandardFees(r) {
     is20ft,
     portDwell,
     totalEquipmentDays,
-    terminalLFD: terminalLFD ? formatDate(terminalLFD.toISOString().slice(0,10)) : "—",
+    terminalLFD: terminalLFD ? formatDateLocalDateObj(terminalLFD) : "—",
     terminalDaysLeft,
-    detentionLFD: detentionLFD ? formatDate(detentionLFD.toISOString().slice(0,10)) : "—",
+    detentionLFD: detentionLFD ? formatDateLocalDateObj(detentionLFD) : "—",
     detentionDaysLeft,
     demOverdue,
     demDays,
