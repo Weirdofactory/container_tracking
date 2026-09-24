@@ -465,29 +465,15 @@ function calculateStandardFees(r) {
     }
   }
 
-  // Detention/free-time clock also starts from INWARD DATE.
-  // Row-level FREE DAYS overrides the configured default when supplied.
-  const rawFreeDays = getField(r, ["FREE DAYS"]);
-  const carrierFreeDays = rawFreeDays !== "" && rawFreeDays != null
-    ? Math.max(0, parseInt(rawFreeDays, 10) || 0)
-    : Number(cfg.detentionFreeDays || 0);
-
+  // Outside-port detention free-days logic has been replaced by
+  // per-container Empty Return Validity. No detention fee is calculated here.
   let detentionLFD = null;
   let detentionDaysLeft = null;
-
-  if (inwardDate) {
-    detentionLFD = new Date(inwardDate);
-    detentionLFD.setDate(detentionLFD.getDate() + carrierFreeDays);
-    detentionDaysLeft = Math.floor((detentionLFD - nowDay) / 86400000);
-
-    const endDetDate = returnDate || nowDay;
-    totalEquipmentDays = Math.max(0, Math.floor((endDetDate - inwardDate) / 86400000));
-    if (totalEquipmentDays > carrierFreeDays && !isFullyCompleted(r)) {
-      detOverdue = true;
-      detDays = totalEquipmentDays - carrierFreeDays;
-      detCostUSD = detDays * detRatePerDay;
-    }
-  }
+  let carrierFreeDays = 0;
+  totalEquipmentDays = 0;
+  detDays = 0;
+  detOverdue = false;
+  detCostUSD = 0;
 
   return {
     is20ft,
