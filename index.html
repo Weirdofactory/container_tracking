@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20260924-16">
+<link rel="stylesheet" href="./style.css?v=20260924-17">
 </head>
 <body>
 
@@ -118,6 +118,32 @@
   </section>
 </section>
 
+<style id="kpi-layout-override">
+#opsDashboardView .kpi-row{
+  display:grid !important;
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  gap:12px !important;
+  width:100% !important;
+  margin:0 0 20px !important;
+}
+#opsDashboardView .kpi-row > .kpi-card{
+  display:flex !important;
+  width:auto !important;
+  min-width:0 !important;
+  min-height:96px !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+}
+@media(max-width:1100px){
+  #opsDashboardView .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+}
+@media(max-width:700px){
+  #opsDashboardView .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+}
+@media(max-width:480px){
+  #opsDashboardView .kpi-row{grid-template-columns:1fr !important;}
+}
+</style>
 <main class="main-wrapper" id="opsDashboardView" style="display:none;">
   <div class="kpi-row">
     <div class="kpi-card active-kpi"><small>Active Shipments</small><strong id="kActive">0</strong></div>
@@ -213,8 +239,8 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20260924-16"></script>
-<script src="./phase1.js?v=20260924-16"></script>
-<script src="./phase2.js?v=20260924-16"></script>
+<script src="./app.js?v=20260924-17"></script>
+<script src="./phase1.js?v=20260924-17"></script>
+<script src="./phase2.js?v=20260924-17"></script>
 </body>
 </html>
