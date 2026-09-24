@@ -294,7 +294,7 @@ body { background-color: var(--bg-app); color: var(--text-main); font-family: 'P
 .warning .lfd-fill { background: var(--warning); }
 .danger .lfd-fill { background: var(--danger); }
 
-.badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; min-height: 76px; align-content: flex-start; box-sizing: border-box; }
+.badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; min-height: 0; align-content: flex-start; box-sizing: border-box; }
 .tag-badge { font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-muted); }
 .tag-badge.warning { background: var(--warning-bg); border-color: rgba(245, 158, 11, 0.25); color: var(--warning); }
 .tag-badge.danger { background: var(--danger-bg); border-color: rgba(239, 68, 68, 0.25); color: var(--danger); }
