@@ -594,37 +594,21 @@ function generateCleanManifestHtml(containersList) {
       </div>
     `;
 
+    const currentStatus = (completed ? "COMPLETED" : (st.text || "IN TRANSIT"))
+      .replace(/<[^>]+>/g, "")
+      .replace(/^[^A-Z0-9]+/i, "")
+      .toUpperCase();
+
     const schedule = `
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 12px 12px;padding:7px 14px;background:#fff;border:1px solid #d1d5db;border-top:0;border-radius:0 0 5px 5px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 12px 12px;padding:7px 14px;background:#fff;border:1px solid #d1d5db;border-top:0;border-radius:0 0 5px 5px;">
         <div><span style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;">Actual Departure</span><br><b style="font-size:8px;color:#374151;">${etd ? formatDate(etd).toUpperCase() : "PENDING"}</b></div>
         <div><span style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;">Actual / Estimated Arrival</span><br><b style="font-size:8px;color:#374151;">${eta ? formatDate(eta).toUpperCase() : "PENDING"}</b></div>
-        <div><span style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;">Current Status</span><br><b style="font-size:8px;color:${completed ? "#15803d" : "#374151"};">${esc(completed ? "COMPLETED" : (st.text || "IN TRANSIT").replace(/<[^>]+>/g,"").toUpperCase())}</b></div>
       </div>
     `;
 
-    const timeline = eventsData.events.map((ev, i) => {
-      const isDone = ev.state === "done";
-      const isCurrent = ev.state === "current";
-      const dotBg = isDone ? "#44464a" : isCurrent ? "#0284c7" : "#cbd5e1";
-      const dateText = ev.date ? formatDate(ev.date).toUpperCase() : "PENDING";
-      return `
-        <div style="display:flex;position:relative;min-height:58px;">
-          <div style="width:56px;position:relative;flex:0 0 56px;">
-            <div style="position:absolute;left:21px;top:0;width:18px;height:18px;border-radius:50%;background:${dotBg};box-shadow:0 0 0 1px rgba(0,0,0,.04);"></div>
-            ${i < eventsData.events.length-1 ? '<div style="position:absolute;left:29px;top:18px;bottom:-2px;width:1px;background:#d1d5db;"></div>' : ''}
-          </div>
-          <div style="padding:0 0 13px;flex:1;">
-            <div style="font-size:8px;font-weight:900;color:#555b63;text-transform:uppercase;letter-spacing:.02em;">${dateText} <span style="color:#111827;margin-left:8px;text-transform:none;">${esc(ev.detail || "")}</span></div>
-            <div style="font-size:14px;font-weight:900;color:#111827;line-height:1.15;margin-top:3px;">${esc(ev.label)}</div>
-            <div style="font-size:8px;color:#7a7f87;text-transform:uppercase;margin-top:4px;">${isCurrent ? "NEXT ACTION" : isDone ? "MILESTONE RECORDED" : "PENDING"}</div>
-          </div>
-        </div>
-      `;
-    }).join("");
-
     return `
       <section style="width:100%;background:#fff;border:1px solid #d1d5db;border-radius:7px;overflow:hidden;margin-top:18px;box-shadow:0 2px 6px rgba(15,23,42,.08);">
-        <div style="background:#414246;color:#fff;padding:11px 14px;display:grid;grid-template-columns:1.4fr 1fr 1fr 92px;gap:14px;align-items:center;">
+        <div style="background:#414246;color:#fff;padding:11px 14px;display:grid;grid-template-columns:1.35fr .85fr 1fr 1.05fr;gap:14px;align-items:center;">
           <div>
             <div style="font-size:7px;opacity:.78;font-weight:800;">CURRENT VESSEL NAME | VOYAGE</div>
             <div style="font-size:12px;font-weight:900;text-transform:uppercase;">${esc(vessel.vessel)} <span style="font-weight:700;opacity:.85;">| ${esc(vessel.voyage)}</span></div>
@@ -637,17 +621,14 @@ function generateCleanManifestHtml(containersList) {
             <div style="font-size:7px;opacity:.78;font-weight:800;">CONTAINER</div>
             <div style="font-size:10px;font-weight:900;font-family:'JetBrains Mono',monospace;">${esc(container)}</div>
           </div>
-          <div style="background:#fff;color:#4b5563;border-radius:4px;padding:5px 7px;text-align:center;">
-            <div style="font-size:7px;font-weight:900;">${index+1} OF ${containersList.length}</div>
-            <div style="font-size:7px;margin-top:2px;">GML TRACKING</div>
+          <div style="background:#fff;color:#374151;border-radius:4px;padding:6px 8px;text-align:center;">
+            <div style="font-size:7px;font-weight:900;color:#6b7280;">CURRENT STATUS</div>
+            <div style="font-size:10px;font-weight:900;margin-top:3px;color:${completed ? "#15803d" : "#111827"};">${esc(currentStatus)}</div>
           </div>
         </div>
         ${routeStrip}
         ${schedule}
-        <div style="padding:5px 18px 20px;">
-          <div style="font-size:8px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin:3px 0 12px 38px;">SHIPMENT ACTIVITY</div>
-          ${timeline}
-        </div>        <div style="border-top:1px solid #e5e7eb;background:#f8fafc;padding:8px 14px;font-size:8px;color:#6b7280;">
+        <div style="height:6px;"></div>        <div style="border-top:1px solid #e5e7eb;background:#f8fafc;padding:8px 14px;font-size:8px;color:#6b7280;">
           <span>MBL: <b style="color:#374151;">${esc(mbl)}</b> • CFS: <b style="color:#374151;">${esc(cfs)}</b> • Type: <b style="color:#374151;">${esc(type)}</b></span>
         </div>
       </section>
