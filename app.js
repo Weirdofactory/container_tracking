@@ -1210,7 +1210,13 @@ function getGatewayPortInfo(r) {
 
   // Preserve any existing terminal only as reference evidence; do NOT let it
   // silently become the selected terminal.
-  const existing = String(getField(r, ["GATEWAY PORT", "GATEWAY"]) || "").trim();
+  const existing = String(getField(r, ["GATEWAY PORT", "GATEWAY"]) || "").trim().toUpperCase();
+  const manualOverride = String(r.__terminalOverride || "").trim();
+  const overrideKey = manualOverride.toUpperCase();
+  if (["CCTL","CITPL","KATTUPALLI","ENNORE"].includes(overrideKey)) {
+    const key = overrideKey === "KATTUPALLI" ? "Kattupalli" : overrideKey === "ENNORE" ? "Ennore" : overrideKey;
+    return { name:names[key], url:urls[key], key, detectionStatus:"MANUAL_OVERRIDE", evidence:[{field:"Manual Override",value:key}] };
+  }
   return {
     name: "Unverified",
     url: "",
@@ -1231,6 +1237,7 @@ function setGatewayPort(idx, val) {
   if (currentUser && currentUser.role === "Viewer") return alert("Read-only access.");
   const old = rows[idx]["GATEWAY PORT"];
   rows[idx]["GATEWAY PORT"] = val;
+  rows[idx].__terminalOverride = val;
   logAuditEvent("PORT_CHANGE", getField(rows[idx], ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]), "GATEWAY PORT", old, val);
   lastEditedId = idx;
   saveAndRefresh();
