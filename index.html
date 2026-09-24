@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20260924-14">
+<link rel="stylesheet" href="./style.css?v=20260924-15">
 </head>
 <body>
 
@@ -171,8 +171,50 @@
 
 <div class="toast-popup" id="toast"></div>
 
-<script src="./app.js?v=20260924-14"></script>
-<script src="./phase1.js?v=20260924-14"></script>
-<script src="./phase2.js?v=20260924-14"></script>
+<script>
+/* Customer-safe boot fallback: keeps Track/Login usable even if an optional app module fails. */
+(function(){
+  const $=id=>document.getElementById(id);
+  window.openStaffLoginFallback=function(){
+    const m=$('loginModalBg'); if(m)m.classList.add('open');
+    setTimeout(()=>{const x=$('loginCodeInput');if(x)x.focus();},50);
+  };
+  window.performPublicSearchFallback=function(){
+    const input=$('publicSearchInput'), box=$('publicResultContainer');
+    if(!input||!box)return;
+    const q=String(input.value||'').trim().toUpperCase().replace(/\s+/g,'');
+    if(!q){box.innerHTML='<div class="public-empty">Please enter a Container Number.</div>';return;}
+    let rows=[];
+    try{rows=JSON.parse(localStorage.getItem('containerRows')||'[]');}catch(e){}
+    if(!Array.isArray(rows)||!rows.length) rows=[];
+    const hits=rows.filter(r=>String(r['CONTAINER NO.']||r['CONTAINER']||r['CONTAINER NO']||'').toUpperCase().replace(/\s+/g,'')===q);
+    if(!hits.length){box.innerHTML='<div class="public-empty">No shipment found for <b>'+q.replace(/[&<>"]/g,'')+'</b>.</div>';return;}
+    const r=hits[0], val=k=>String(r[k]||'—');
+    box.innerHTML='<div class="public-result-card"><div class="public-result-head"><div><small>CONTAINER</small><h3>'+val('CONTAINER NO.')+'</h3></div><span class="status-pill">Shipment Found</span></div><div class="public-result-grid"><div><small>Vessel / Voyage</small><b>'+val('VESSEL & VOY')+'</b></div><div><small>Gateway Port</small><b>'+val('GATEWAY PORT')+'</b></div><div><small>ETA</small><b>'+val('ETA')+'</b></div><div><small>CFS</small><b>'+val('CFS NAME')+'</b></div></div></div>';
+  };
+  const track=$('publicSearchBtn');
+  if(track) track.onclick=function(){ if(typeof window.performPublicSearch==='function') window.performPublicSearch(); else window.performPublicSearchFallback(); };
+  const login=$('loginBtn');
+  if(login) login.onclick=function(){window.openStaffLoginFallback();};
+  const submit=$('loginSubmit');
+  if(submit) submit.addEventListener('click',async function(){
+    if(typeof window.sb==='undefined' && typeof window.supabase==='undefined') return;
+    if(typeof window.executeSuccessfulLogin==='function') return;
+    const code=String(($('loginCodeInput')||{}).value||'').trim().toLowerCase();
+    if(!code)return;
+    const btn=submit; btn.disabled=true; btn.textContent='Verifying...';
+    try{
+      const client=window.sb || (window.supabase&&window.supabase.createClient('https://ykeucqritoexykqrggzz.supabase.co','sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ'));
+      const {data,error}=await client.from('user_roles').select('user_id, role, username').eq('access_code',code).single();
+      if(error||!data){alert('Invalid access code.');return;}
+      localStorage.setItem('gml_auth_code_user',JSON.stringify(data)); location.reload();
+    }catch(e){alert('Login service unavailable. Please try again.');}
+    finally{btn.disabled=false;btn.textContent='Sign In';}
+  },true);
+})();
+</script>
+<script src="./app.js?v=20260924-15"></script>
+<script src="./phase1.js?v=20260924-15"></script>
+<script src="./phase2.js?v=20260924-15"></script>
 </body>
 </html>
