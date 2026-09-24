@@ -662,7 +662,7 @@ function downloadMultipleStatusImage(containersList, titleRef = "Status_Report")
   const target = document.getElementById("manifestCaptureContainer");
 
   setTimeout(() => {
-    html2canvas(target, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
+    html2canvas(target, { scale: 2.5, useCORS: true, backgroundColor: "#f1f5f9", logging: false, imageTimeout: 15000 }).then(canvas => {
       document.body.removeChild(tempWrapper);
       document.body.removeChild(overlay);
       const link = document.createElement("a");
