@@ -1990,6 +1990,13 @@ el("modalSave").addEventListener("click", () => {
   if (destuff && rtn && rtn < destuff) return alert("Validation Error: Return Date cannot be before Destuffing Date.");
 
   item["CONTAINER NO."] = item["CONTAINER NO."].toUpperCase();
+  // Gateway Port selection in the edit modal is an explicit manual override.
+  // Choosing AUTO clears the override and returns control to berthing detection.
+  if (["CCTL","CITPL","Kattupalli","Ennore"].includes(item["GATEWAY PORT"])) {
+    item.__terminalOverride = item["GATEWAY PORT"];
+  } else {
+    delete item.__terminalOverride;
+  }
   if (!item["LINER"] && item["MBL NO"]) item["LINER"] = detectLinerFromMBL(item["MBL NO"]);
   item["TRUCK NO."] = formatTruckNo(item["TRUCK NO."]);
 
