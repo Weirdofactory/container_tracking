@@ -662,37 +662,71 @@ function generateCleanManifestHtml(containersList) {
 
 function downloadMultipleStatusImage(containersList, titleRef = "Status_Report") {
   if (!containersList || !containersList.length) return toast("No containers selected!");
+  if (typeof html2canvas !== "function") return toast("Photo engine is not loaded. Please refresh and try again.");
 
   const overlay = document.createElement("div");
   overlay.className = "skeleton-overlay";
-  overlay.innerHTML = "📸 Generating Snapshot...";
+  overlay.innerHTML = "📸 Preparing Status Photo...";
   document.body.appendChild(overlay);
 
   const tempWrapper = document.createElement("div");
   tempWrapper.style.position = "fixed";
-  tempWrapper.style.top = "-9999px";
-  tempWrapper.style.left = "-9999px";
+  tempWrapper.style.left = "0";
+  tempWrapper.style.top = "0";
+  tempWrapper.style.zIndex = "-1";
+  tempWrapper.style.pointerEvents = "none";
   tempWrapper.innerHTML = generateCleanManifestHtml(containersList);
   document.body.appendChild(tempWrapper);
 
-  const target = document.getElementById("manifestCaptureContainer");
+  const target = tempWrapper.querySelector("#manifestCaptureContainer");
+  if (!target) {
+    tempWrapper.remove();
+    overlay.remove();
+    return toast("Unable to prepare the status photo.");
+  }
 
-  setTimeout(() => {
-    html2canvas(target, { scale: 2.5, useCORS: true, backgroundColor: "#f1f5f9", logging: false, imageTimeout: 15000 }).then(canvas => {
-      document.body.removeChild(tempWrapper);
-      document.body.removeChild(overlay);
-      const link = document.createElement("a");
-      link.download = `Report_${titleRef}_${Date.now()}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-      toast("Report photo downloaded!");
-    }).catch(err => {
-      console.error(err);
-      if (tempWrapper.parentNode) document.body.removeChild(tempWrapper);
-      if (overlay.parentNode) document.body.removeChild(overlay);
-      toast("Failed to render photo.");
-    });
-  }, 100);
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      html2canvas(target, {
+        scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: "#f4f4f5",
+        logging: false,
+        imageTimeout: 15000,
+        removeContainer: true
+      }).then(canvas => {
+        const cleanup = () => {
+          if (tempWrapper.parentNode) tempWrapper.parentNode.removeChild(tempWrapper);
+          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        };
+        canvas.toBlob(blob => {
+          if (!blob) {
+            cleanup();
+            return toast("Could not create the photo file.");
+          }
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `GML_Status_${titleRef}_${Date.now()}.png`;
+          link.style.display = "none";
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            link.remove();
+            URL.revokeObjectURL(url);
+          }, 1500);
+          cleanup();
+          toast("Status photo downloaded successfully!");
+        }, "image/png", 1);
+      }).catch(err => {
+        console.error("Status photo render error:", err);
+        if (tempWrapper.parentNode) tempWrapper.parentNode.removeChild(tempWrapper);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        toast("Photo generation failed. Please try again.");
+      });
+    }, 250);
+  });
 }
 
 /* Staff Login Handlers */
