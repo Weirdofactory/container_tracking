@@ -70,14 +70,14 @@
     }
 
     let outsideLfd=null, outsideDaysLeft=null, outsideState='unknown', detentionDaysOver=0, detentionCost=0;
-    if(portOut){
-      outsideLfd=new Date(portOut);
+    if(inwardDate){
+      outsideLfd=new Date(inwardDate);
       outsideLfd.setDate(outsideLfd.getDate()+detentionDays);
       if(returned){
         outsideDaysLeft=dayDiff(returned,outsideLfd);
         outsideState='complete';
       }else{
-        const outsideDwell=Math.max(0,dayDiff(portOut,today()));
+        const outsideDwell=Math.max(0,dayDiff(inwardDate,today()));
         detentionDaysOver=Math.max(0,outsideDwell-detentionDays);
         detentionCost=detentionDaysOver*outsideRate;
         outsideDaysLeft=dayDiff(today(),outsideLfd);
