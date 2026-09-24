@@ -1720,8 +1720,8 @@ function renderCards(items) {
             <val style="color:var(--warning)">${formatDate(getField(r, ["PORT IN"])) || "—"} / ${formatDate(getField(r, ["PORT OUT"])) || "—"}</val>
           </div>
           <div class="detail-item">
-            <label>Terminal LFD / Dwell</label>
-            <val style="${fees.demOverdue ? 'color:var(--danger)' : ''}">${fees.terminalLFD} (${fees.portDwell}d / Free 3d)</val>
+            <label>Port Out LFD / Dwell</label>
+            <val style="${fees.demOverdue ? 'color:var(--danger)' : ''}">${fees.terminalLFD} (${fees.portDwell}d / Free 13d)</val>
           </div>
           <div class="detail-item">
             <label>CFS Depot / Truck</label>
@@ -1804,7 +1804,7 @@ function renderSheet(items) {
         <td data-label="Truck No"><input class="cell-input" style="width:90px; font-family:'JetBrains Mono';" value="${esc(getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "")}" placeholder="Vehicle" oninput="this.value=formatTruckNo(this.value)" onchange="inlineEdit(${i}, 'TRUCK NO.', this.value)" ${editableAttrText}></td>
         <td data-label="Destuffed"><input class="cell-input" type="date" value="${getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]) || ""}" onchange="inlineEdit(${i}, 'DESTUFFING DATE', this.value)" ${editableAttrText}></td>
         <td data-label="Empty Return"><input class="cell-input" type="date" value="${getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]) || ""}" onchange="inlineEdit(${i}, 'CONTAINER RETURN DATE', this.value)" ${editableAttrText}></td>
-        <td data-label="Terminal LFD" style="font-weight:700; color:${fees.demOverdue ? 'var(--danger)' : 'var(--text-muted)'};">${fees.terminalLFD}</td>
+        <td data-label="Port Out LFD" style="font-weight:700; color:${fees.demOverdue ? 'var(--danger)' : 'var(--text-muted)'};">${fees.terminalLFD}</td>
         <td data-label="Detention LFD" style="font-weight:700; color:${fees.detOverdue ? 'var(--danger)' : 'var(--text-muted)'};">${fees.detentionLFD}</td>
         <td data-label="Exposure" style="font-weight:800; font-family:'JetBrains Mono'; color:${fees.totalCostUSD > 0 ? 'var(--danger)' : 'var(--success)'};">${formatCurrency(fees.totalCostUSD)}</td>
         <td data-label="Remarks"><input class="cell-input" value="${esc(r["REMARKS"] || "")}" onchange="inlineEdit(${i}, 'REMARKS', this.value)" ${editableAttrText}></td>
