@@ -165,7 +165,7 @@ function toast(msg) {
 
 function parseLocalDate(str) {
   if (!str) return null;
-  const clean = String(str).trim().slice(0, 10);
+  const clean = String(str).trim().replace(/(\\d{1,2})-([A-Za-z]{3})-(\\d{4})/, "$3-$2-$1").slice(0, 10);
   const parts = clean.split("-").map(Number);
   if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
     return new Date(parts[0], parts[1] - 1, parts[2]);
