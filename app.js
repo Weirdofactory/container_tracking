@@ -1251,8 +1251,19 @@ function getGatewayPortInfo(r) {
 
   const route = detectTerminalFromVessel(r);
   if (route.key !== "UNKNOWN") {
+    const master = findVesselMasterMatch(r);
+    if (master && master.terminal !== route.key) {
+      return { name:names[route.key], url:urls[route.key], key:route.key,
+        detectionStatus:"CONFLICT", evidence:[{master:master.terminal}, ...route.evidence] };
+    }
+    upsertVesselMasterFromDetection(r, route);
     return { name: names[route.key], url: urls[route.key], key: route.key,
       detectionStatus: route.status, evidence: route.evidence };
+  }
+  const master = findVesselMasterMatch(r);
+  if (master && names[master.terminal]) {
+    return { name:names[master.terminal], url:urls[master.terminal], key:master.terminal,
+      detectionStatus:"VESSEL_MASTER", evidence:[master] };
   }
 
   // Preserve any existing terminal only as reference evidence; do NOT let it
