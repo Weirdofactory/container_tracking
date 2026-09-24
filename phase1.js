@@ -118,8 +118,8 @@
       else if(l.portState==='critical') out.push({label:l.portDaysLeft===0?'Port LFD Today':'Port LFD '+l.portDaysLeft+'d',sev:'bad',key:'LFD_PORT'});
       else if(l.portState==='warning') out.push({label:'Port LFD '+l.portDaysLeft+'d',sev:'warn',key:'LFD_PORT'});
 
-      if(l.outsideState==='overdue') out.push({label:'Outside Port LFD / Detention Expired',sev:'bad',key:'LFD_OUTSIDE'});
-      else if(l.outsideState==='critical') out.push({label:l.outsideDaysLeft===0?'Outside Port LFD Today':'Outside Port LFD '+l.outsideDaysLeft+'d',sev:'bad',key:'LFD_OUTSIDE'});
+      if(l.outsideState==='overdue') out.push({label:'Empty Return Validity Expired',sev:'bad',key:'LFD_OUTSIDE'});
+      else if(l.outsideState==='critical') out.push({label:l.outsideDaysLeft===0?'Empty Return Validity Today':'Empty Return Validity '+l.outsideDaysLeft+'d',sev:'bad',key:'LFD_OUTSIDE'});
       else if(l.outsideState==='warning') out.push({label:'Outside Port LFD '+l.outsideDaysLeft+'d',sev:'warn',key:'LFD_OUTSIDE'});
     }
     const eta=dateVal(getField(r,['ETA']));
@@ -239,7 +239,7 @@
       document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2CsnEdit"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">CSN RECORD</div><h2 id="p1v2CsnEditTitle">Container</h2></div><button class="btn btn-ghost" id="p1v2CsnEditX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Status<select id="p1v2CsnStatus"><option>NOT FILED</option><option>PENDING</option><option>ACCEPTED</option><option>REJECTED</option><option>WRONG DETAILS</option><option>AMENDMENT</option></select></label><label>Filed Date<input type="date" id="p1v2CsnFiled"></label><label>Response Date<input type="date" id="p1v2CsnResponse"></label><label class="full">Remarks<textarea id="p1v2CsnRemarks"></textarea></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2CsnCancel">Cancel</button><button class="btn btn-primary" id="p1v2CsnSave">Save CSN</button></div></div></div>`);
     }
     if(!$('p1v2LfdModal')) {
-      document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2LfdModal"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">LFD ENGINE</div><h2>LFD Rules — All Clocks From Inward Date</h2></div><button class="btn btn-ghost" id="p1v2LfdX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Port Out Free Days (From Inward Date)<input type="number" id="p1v2Free" min="0"></label><label>Empty Return Validity<input type="text" value="Enter per container in Edit" readonly></label><label>Warning Threshold<input type="number" id="p1v2Warn" min="0"></label><label>Critical Threshold<input type="number" id="p1v2Crit" min="0"></label><label>Inside-Port / 20ft Demurrage / Day (USD)<input type="number" id="p1v2R20" min="0"></label><label>Inside-Port / 40ft Demurrage / Day (USD)<input type="number" id="p1v2R40" min="0"></label><label>Outside-Port / 20ft Detention / Day (USD)<input type="number" id="p1v2DR20" min="0"></label><label>Outside-Port / 40ft Detention / Day (USD)<input type="number" id="p1v2DR40" min="0"></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2LfdCancel">Cancel</button><button class="btn btn-primary" id="p1v2LfdSave">Save Rules</button></div></div></div>`);
+      document.body.insertAdjacentHTML('beforeend',`<div class="p1v2-modal" id="p1v2LfdModal"><div class="p1v2-box small"><div class="p1v2-modal-head"><div><div class="p1v2-eyebrow">LFD ENGINE</div><h2>LFD & Empty Return Rules</h2></div><button class="btn btn-ghost" id="p1v2LfdX">✕</button></div><div class="p1v2-modal-body"><div class="p1v2-form"><label>Port Out Free Days (From Inward Date)<input type="number" id="p1v2Free" min="0"></label><label>Empty Return Validity<input type="text" value="Enter per container in Edit" readonly></label><label>Warning Threshold<input type="number" id="p1v2Warn" min="0"></label><label>Critical Threshold<input type="number" id="p1v2Crit" min="0"></label><label>Inside-Port / 20ft Demurrage / Day (USD)<input type="number" id="p1v2R20" min="0"></label><label>Inside-Port / 40ft Demurrage / Day (USD)<input type="number" id="p1v2R40" min="0"></label></div></div><div class="p1v2-foot"><button class="btn" id="p1v2LfdCancel">Cancel</button><button class="btn btn-primary" id="p1v2LfdSave">Save Rules</button></div></div></div>`);
     }
     if(!$('p1v2TowerBtn')) {
       const b=document.createElement('button'); b.id='p1v2TowerBtn'; b.className='btn btn-primary'; b.textContent='🎯 Control Tower'; b.onclick=()=>showTower(true);
@@ -347,18 +347,18 @@
 
   function openLfd(){
     const c=config();
-    $('p1v2Free').value=c.terminalFreeDays;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;$('p1v2DR20').value=c.detentionRate20;$('p1v2DR40').value=c.detentionRate40;
+    $('p1v2Free').value=c.terminalFreeDays;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;
     $('p1v2LfdModal').classList.add('open');
   }
   function saveLfd(){
     const terminalFreeDays=Math.max(0,Number($('p1v2Free').value||0));
-    const cfg={terminalFreeDays,warningDays:Math.max(0,Number($('p1v2Warn').value||0)),criticalDays:Math.max(0,Number($('p1v2Crit').value||0)),demRate20:Math.max(0,Number($('p1v2R20').value||0)),demRate40:Math.max(0,Number($('p1v2R40').value||0)),detentionRate20:Math.max(0,Number($('p1v2DR20').value||0)),detentionRate40:Math.max(0,Number($('p1v2DR40').value||0))};
+    const cfg={terminalFreeDays,warningDays:Math.max(0,Number($('p1v2Warn').value||0)),criticalDays:Math.max(0,Number($('p1v2Crit').value||0)),demRate20:Math.max(0,Number($('p1v2R20').value||0)),demRate40:Math.max(0,Number($('p1v2R40').value||0))};
     saveConfig(cfg);
     $('p1v2Free').value=terminalFreeDays;
     $('p1v2LfdModal').classList.remove('open');
     renderTower();
     if(typeof renderUI==='function')renderUI();
-    if(typeof toast==='function')toast('LFD rules saved — all free-time clocks start from Inward Date');
+    if(typeof toast==='function')toast('LFD rules saved — Empty Return Validity is maintained per container');
   }
 
   function bind(){
