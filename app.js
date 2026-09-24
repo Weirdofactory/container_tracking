@@ -16,9 +16,9 @@ const COLS = [
   'CONTAINER NO.', 'TYPE', 'MBL NO', 'LINER', 'GATEWAY PORT', 'CFS NAME', 
   'POL', 'ETD', 'FREE DAYS', 'SEAL NO.', 'VESSEL & VOY', 
   'ETA', 'SPLIT DATE', 'INWARD DATE', 'PORT IN', 'PORT OUT', 'CFS IN', 'TRUCK NO.', 
-  'DRIVER CONTACT', 'PLANNING', 'DESTUFFING DATE', 'CONTAINER RETURN DATE', 'REMARKS'
+  'DRIVER CONTACT', 'PLANNING', 'DESTUFFING DATE', 'EMPTY RETURN VALIDITY', 'CONTAINER RETURN DATE', 'REMARKS'
 ];
-const DATE_COLS = new Set(['ETD', 'ETA', 'SPLIT DATE', 'INWARD DATE', 'PORT IN', 'PORT OUT', 'CFS IN', 'DESTUFFING DATE', 'CONTAINER RETURN DATE']);
+const DATE_COLS = new Set(['ETD', 'ETA', 'SPLIT DATE', 'INWARD DATE', 'PORT IN', 'PORT OUT', 'CFS IN', 'DESTUFFING DATE', 'EMPTY RETURN VALIDITY', 'CONTAINER RETURN DATE']);
 
 const DEFAULT_ROWS = [
   {
@@ -408,6 +408,19 @@ function formatDateLocalDateObj(d) {
   if (!(d instanceof Date) || isNaN(d.getTime())) return "";
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${String(d.getDate()).padStart(2,"0")}-${months[d.getMonth()]}`;
+}
+
+function getEmptyReturnValidity(r) {
+  const validityRaw = getField(r, ["EMPTY RETURN VALIDITY", "EMPTY VALIDITY", "EMPTY RETURN LAST DATE"]);
+  const returnRaw = getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]);
+  const validityDate = parseLocalDate(validityRaw);
+  const returnDate = parseLocalDate(returnRaw);
+  const today = new Date();
+  const nowDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (returnDate) return { date: formatDateLocalDateObj(returnDate), daysLeft: null, state: "returned", label: "EMPTY RETURNED" };
+  if (!validityDate) return { date: "—", daysLeft: null, state: "not-set", label: "VALIDITY NOT SET" };
+  const daysLeft = Math.floor((validityDate - nowDay) / 86400000);
+  return { date: formatDateLocalDateObj(validityDate), daysLeft, state: daysLeft < 0 ? "overdue" : daysLeft <= 2 ? "critical" : daysLeft <= 4 ? "warning" : "safe", label: daysLeft < 0 ? Math.abs(daysLeft) + "d OVERDUE" : daysLeft + "d LEFT" };
 }
 
 function calculateStandardFees(r) {
@@ -1730,13 +1743,15 @@ function renderCards(items) {
             <val style="${fees.demOverdue ? 'color:var(--danger)' : ''}">${fees.terminalLFD} (${fees.portDwell}d / Free 13d)</val>
           </div>
           <div class="detail-item">
-            <label>CFS Depot / Truck</label>
-            <val style="color:var(--accent);">${esc(getField(r, ["CFS NAME", "CFS"]) || "—")} / <span class="clickable-copy" onclick="copyText('${esc(truckNo)}')"><span style="color:var(--text-main);">${esc(truckNo || "No Truck")}</span></span></val>
-          </div>
-          <div class="detail-item">
-            <label>Detention LFD / Dwell</label>
-            <val style="${fees.detOverdue ? 'color:var(--danger)' : ''}">${fees.detentionLFD} (${fees.totalEquipmentDays}d / Free ${esc(getField(r, ["FREE DAYS"]) || "14")}d from Inward)</val>
-          </div>
+            <label>EMPTY RETURN VALIDITY / COUNTDOWN</label>
+            <val>
+              ${(() => { 
+                const ev = getEmptyReturnValidity(r);
+                const c = ev.state === "overdue" ? "var(--danger)" : ev.state === "warning" || ev.state === "critical" ? "var(--warning)" : ev.state === "returned" ? "var(--success)" : "var(--text-main)";
+                return ev.date + " · " + ev.label;
+              })()}
+            </val>
+          </div>iv>
         </div>
 
         ${fees.totalCostUSD > 0 ? `
