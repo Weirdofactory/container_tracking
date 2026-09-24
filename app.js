@@ -533,7 +533,14 @@ function generateCleanManifestHtml(containersList) {
     if (!events.length) {
       events.push(eventFor("Shipment created", "", "Awaiting operational milestone", "current"));
     } else if (!returned) {
-      events.push(eventFor("Next milestone", "", getNextMilestone(r), "current"));
+      let next = "Awaiting next operational milestone";
+      if (!inward) next = "Awaiting inward / port processing";
+      else if (!portIn) next = "Awaiting Port In";
+      else if (!portOut) next = "Awaiting Port Out";
+      else if (!cfsIn) next = "Awaiting CFS In";
+      else if (!destuff) next = "Awaiting Destuffing";
+      else next = "Awaiting Empty Return";
+      events.push(eventFor("Next milestone", "", next, "current"));
     }
 
     return { events, vessel };
