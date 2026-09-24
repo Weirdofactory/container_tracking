@@ -296,7 +296,7 @@
     $('p1v2Body').innerHTML=display.map(({r,i,ex})=>{
       const l=lfd(r), st=getStatus(r);
       const next=ex[0]?.label||'Monitor';
-      const lfdText=l.lfd?fmt(l.lfd.toISOString().slice(0,10)):'—';
+      const lfdText=l.lfd?fmt(`${l.lfd.getFullYear()}-${String(l.lfd.getMonth()+1).padStart(2,'0')}-${String(l.lfd.getDate()).padStart(2,'0')}`):'—';
       const lfdClass=l.state==='safe'?'good':l.state==='warning'?'warn':'bad';
       return `<tr><td><button class="p1v2-link" data-timeline="${i}">${escP(getCn(r))}</button></td><td>${escP(getVessel(r))}</td><td>${escP(st.text)}</td><td><span class="p1v2-pill ${lfdClass}">${lfdText}${l.daysLeft!==null?' · '+escP(l.label):''}</span></td><td>${l.demDays?'<span class="p1v2-pill bad">'+l.demDays+'d · $'+Math.round(l.cost)+'</span>':'—'}</td><td>${escP(next)}</td><td><button class="btn btn-primary" data-edit="${i}">✏️ Edit</button> <button class="btn btn-ghost" data-time="${i}">Timeline</button></td></tr>`;
     }).join('')||'<tr><td colspan="7" class="p1v2-empty">No containers available.</td></tr>';
