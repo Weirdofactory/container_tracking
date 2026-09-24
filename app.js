@@ -489,86 +489,157 @@ function calculateStandardFees(r) {
 
 function generateCleanManifestHtml(containersList) {
   const now = new Date();
-  const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  const dateStr = now.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+  const timeStr = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
 
-  const rowsHtml = containersList.map(r => {
+  const getMilestones = (r) => {
+    const steps = [
+      { key:"ETA", label:"Vessel ETA", date:getField(r, ["ETA"]) },
+      { key:"PORT IN", label:"Port In", date:getField(r, ["PORT IN"]) },
+      { key:"PORT OUT", label:"Port Out", date:getField(r, ["PORT OUT"]) },
+      { key:"CFS IN", label:"CFS In", date:getField(r, ["CFS IN"]) },
+      { key:"DESTUFFING DATE", label:"Destuffed", date:getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]) },
+      { key:"CONTAINER RETURN DATE", label:"Empty Return", date:getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]) }
+    ];
+    const completed = steps.filter(x => validDate(x.date) && x.key !== "ETA").length;
+    return { steps, completed, total: steps.length - 1 };
+  };
+
+  const prepared = containersList.map(r => {
     const st = getStatus(r);
-    const liner = getField(r, ["LINER"]) || detectLinerFromMBL(getField(r, ["MBL NO", "MBL", "MASTER BL"])) || "—";
-    const port = getGatewayPortInfo(r).name;
+    const fees = calculateStandardFees(r);
+    const milestones = getMilestones(r);
+    const completed = isFullyCompleted(r);
+    const container = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "—";
+    const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "—";
+    const port = getGatewayPortInfo(r).name || "Unverified";
     const cfs = getField(r, ["CFS NAME", "CFS"]) || "—";
-    const vsl = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "—";
+    const liner = getField(r, ["LINER", "LINE"]) || detectLinerFromMBL(getField(r, ["MBL NO", "MBL", "MASTER BL"])) || "—";
+    const type = getField(r, ["TYPE", "SIZE"]) || "—";
+    const mbl = getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "—";
+    const seal = getField(r, ["SEAL NO.", "SEAL NO", "SEAL"]) || "—";
     const pol = getField(r, ["POL", "PORT OF LOADING"]) || "—";
-    const etd = formatDate(getField(r, ["ETD"]));
-    const eta = formatDate(getField(r, ["ETA"]));
-    const portIn = formatDate(getField(r, ["PORT IN"]));
-    const destuff = formatDate(getField(r, ["DESTUFFING DATE", "DESTUFF DATE"])) || "—";
-    const remarks = (r["REMARKS"] || "—").trim();
+    const etd = formatDate(getField(r, ["ETD"])) || "—";
+    const eta = formatDate(getField(r, ["ETA"])) || "—";
+    const truck = getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "—";
+    const remarks = String(r["REMARKS"] || "").trim();
+    const currentStatus = completed ? "COMPLETED" : (st.text || "IN PROGRESS").replace(/<[^>]+>/g, "");
+    const statusIsDone = completed || /RETURNED|COMPLETED|DESTUFF/i.test(st.text || "");
+    const statusBg = statusIsDone ? "#dcfce7" : /LFD|DEMURRAGE|DETENTION|OVERDUE|CRITICAL/i.test(st.text || "") ? "#fee2e2" : "#e0f2fe";
+    const statusColor = statusIsDone ? "#15803d" : /LFD|DEMURRAGE|DETENTION|OVERDUE|CRITICAL/i.test(st.text || "") ? "#b91c1c" : "#0369a1";
+    const terminalLfd = fees.terminalLFD ? formatDate(fees.terminalLFD) : "—";
+    const detentionLfd = fees.detentionLFD ? formatDate(fees.detentionLFD) : "—";
+    const exposure = Number(fees.totalCostUSD || 0);
+    const lfdDays = fees.terminalDaysLeft;
+    const detDays = fees.detentionDaysLeft;
 
-    let pillStyle = "background:#e0f2fe; color:#0284c7;";
-    if (st.text.includes("DE-STUFF") || st.text.includes("RETURNED")) {
-      pillStyle = "background:#dcfce7; color:#15803d;";
-    }
+    const stageDefs = [
+      ["ETA", "Vessel", getField(r, ["ETA"])],
+      ["PORT IN", "Port In", getField(r, ["PORT IN"])],
+      ["PORT OUT", "Port Out", getField(r, ["PORT OUT"])],
+      ["CFS IN", "CFS In", getField(r, ["CFS IN"])],
+      ["DESTUFFING DATE", "Destuff", getField(r, ["DESTUFFING DATE", "DESTUFF DATE"])],
+      ["CONTAINER RETURN DATE", "Returned", getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"])]
+    ];
 
-    return `
-      <tr style="border-bottom:1px solid #e2e8f0; font-size:11px;">
-        <td style="padding:10px 8px; font-weight:800; font-family:'JetBrains Mono', monospace; color:#0284c7;">
-          ${esc(getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]))}
-          <div style="font-size:9px; font-weight:700; color:#64748b;">${esc(getField(r, ["TYPE", "SIZE"]) || "40' DC")}</div>
-        </td>
-        <td style="padding:10px 8px; color:#0f172a; font-weight:600;">
-          <div style="font-family:'JetBrains Mono', monospace; font-weight:700;">${esc(getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "—")}</div>
-          <div style="font-size:9px; color:#64748b; text-transform:uppercase;">${esc(liner)}</div>
-        </td>
-        <td style="padding:10px 8px; font-weight:700; color:#0f172a;">${esc(vsl)}</td>
-        <td style="padding:10px 8px; font-weight:800; color:#b45309;">${esc(port)}</td>
-        <td style="padding:10px 8px; color:#0f172a; font-weight:600;">
-          <div>${esc(pol)}</div>
-          <div style="font-size:8.5px; color:#64748b;">${etd ? 'ETD: ' + etd : ''}</div>
-        </td>
-        <td style="padding:10px 8px; font-weight:800; color:#0284c7;">${esc(cfs)}</td>
-        <td style="padding:10px 8px; font-family:'JetBrains Mono', monospace; color:#0f172a; font-weight:600;">
-          ${eta || '—'} / <br><span style="color:#0284c7;">${portIn || '—'}</span>
-        </td>
-        <td style="padding:10px 8px; font-family:'JetBrains Mono', monospace; color:#0f172a; font-weight:700;">${destuff}</td>
-        <td style="padding:10px 8px; text-align:center;">
-          <span style="display:inline-block; padding:3px 6px; border-radius:4px; font-size:9px; font-weight:800; text-transform:uppercase; ${pillStyle}">
-            ${st.text}
-          </span>
-        </td>
-        <td style="padding:10px 8px; font-weight:700; font-size:9.5px; color:#475569;">${esc(remarks)}</td>
-      </tr>
-    `;
-  }).join("");
+    const stageHtml = stageDefs.map(([key,label,date],idx) => {
+      const done = key !== "ETA" && validDate(date);
+      const isEta = key === "ETA";
+      const active = !done && ((idx === 0 && isEta) || stageDefs.slice(0,idx).some(x => validDate(x[2])));
+      const bg = done ? "#16a34a" : active ? "#0284c7" : "#cbd5e1";
+      return `
+        <div style="flex:1;min-width:105px;position:relative;text-align:center;">
+          <div style="width:25px;height:25px;border-radius:50%;margin:0 auto 6px;background:${bg};color:#fff;font-size:12px;font-weight:900;line-height:25px;">${done ? "✓" : idx+1}</div>
+          <div style="font-size:9px;font-weight:900;color:#334155;text-transform:uppercase;">${label}</div>
+          <div style="font-size:8px;color:#64748b;margin-top:2px;font-family:'JetBrains Mono',monospace;">${date ? formatDate(date) : "Pending"}</div>
+          ${idx < stageDefs.length-1 ? '<div style="position:absolute;top:12px;left:calc(50% + 13px);right:calc(-50% + 13px);height:2px;background:#dbe3ea;"></div>' : ''}
+        </div>
+      `;
+    }).join("");
 
-  return `
-    <div id="manifestCaptureContainer" style="width:1100px; background:#ffffff; padding:28px; border:1px solid #cbd5e1; border-radius:10px; font-family:'Plus Jakarta Sans', sans-serif; color:#0f172a;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+    return { r, container, vessel, port, cfs, liner, type, mbl, seal, pol, etd, eta, truck, remarks, currentStatus, statusBg, statusColor, terminalLfd, detentionLfd, exposure, lfdDays, detDays, stageHtml, milestones };
+  });
+
+  const totalExposure = prepared.reduce((n,x) => n + x.exposure, 0);
+  const completedCount = prepared.filter(x => isFullyCompleted(x.r)).length;
+  const activeCount = prepared.length - completedCount;
+  const attentionCount = prepared.filter(x => x.exposure > 0 || (x.lfdDays !== null && x.lfdDays <= 2) || (x.detDays !== null && x.detDays <= 2)).length;
+
+  const cardsHtml = prepared.map((x, idx) => `
+    <div style="background:#fff;border:1px solid #dbe3ea;border-radius:16px;overflow:hidden;margin-top:16px;box-shadow:0 6px 18px rgba(15,23,42,.06);">
+      <div style="padding:16px 18px;background:linear-gradient(135deg,#f8fbff 0%,#eef6ff 100%);border-bottom:1px solid #dbe3ea;display:flex;justify-content:space-between;gap:14px;align-items:flex-start;">
         <div>
-          <h1 style="font-size:18px; font-weight:900; color:#091e42; margin:0;">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</h1>
-          <div style="font-size:11px; font-weight:700; color:#64748b;">Live Status Report • Chennai Operations Desk</div>
+          <div style="font-size:9px;font-weight:900;letter-spacing:.12em;color:#64748b;text-transform:uppercase;">CONTAINER ${String(idx+1).padStart(2,"0")}</div>
+          <div style="font-size:20px;font-weight:900;color:#0f172a;font-family:'JetBrains Mono',monospace;margin-top:2px;">${esc(x.container)}</div>
+          <div style="font-size:9px;font-weight:700;color:#64748b;margin-top:4px;">${esc(x.type)} • Seal ${esc(x.seal)}</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:12px; font-weight:800; color:#0284c7; font-family:'JetBrains Mono', monospace;">${dateStr}</div>
+          <span style="display:inline-block;padding:7px 11px;border-radius:999px;background:${x.statusBg};color:${x.statusColor};font-size:9px;font-weight:900;letter-spacing:.05em;">${esc(x.currentStatus)}</span>
+          <div style="font-size:8px;color:#64748b;margin-top:6px;">Status as of ${dateStr} ${timeStr}</div>
         </div>
       </div>
-      <div style="height:2px; background:#0f172a; margin-bottom:14px;"></div>
-      <table style="width:100%; border-collapse:collapse; text-align:left;">
-        <thead>
-          <tr style="background:#0f172a; color:#ffffff; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em;">
-            <th style="padding:8px;">CONTAINER NO</th>
-            <th style="padding:8px;">MBL / LINE</th>
-            <th style="padding:8px;">VESSEL</th>
-            <th style="padding:8px;">PORT</th>
-            <th style="padding:8px;">POL</th>
-            <th style="padding:8px;">CFS</th>
-            <th style="padding:8px;">ETA / PORT IN</th>
-            <th style="padding:8px;">DESTUFF</th>
-            <th style="padding:8px; text-align:center;">STATUS</th>
-            <th style="padding:8px;">REMARKS</th>
-          </tr>
-        </thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>
+
+      <div style="padding:15px 18px 8px;">
+        <div style="display:flex;gap:0;align-items:flex-start;">${x.stageHtml}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:8px 18px 16px;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px;"><div style="font-size:8px;color:#64748b;font-weight:800;text-transform:uppercase;">Vessel / Voyage</div><div style="font-size:10px;font-weight:800;margin-top:4px;color:#0f172a;">${esc(x.vessel)}</div></div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px;"><div style="font-size:8px;color:#64748b;font-weight:800;text-transform:uppercase;">Gateway Terminal</div><div style="font-size:10px;font-weight:900;margin-top:4px;color:#b45309;">${esc(x.port)}</div></div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px;"><div style="font-size:8px;color:#64748b;font-weight:800;text-transform:uppercase;">CFS</div><div style="font-size:10px;font-weight:900;margin-top:4px;color:#0369a1;">${esc(x.cfs)}</div></div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:9px;"><div style="font-size:8px;color:#64748b;font-weight:800;text-transform:uppercase;">Liner / MBL</div><div style="font-size:9px;font-weight:800;margin-top:4px;color:#0f172a;">${esc(x.liner)} • ${esc(x.mbl)}</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:0 18px 16px;">
+        <div style="padding:10px;border-left:3px solid #0284c7;background:#f8fafc;"><div style="font-size:8px;color:#64748b;font-weight:800;">POL / ETD</div><div style="font-size:10px;font-weight:800;margin-top:3px;">${esc(x.pol)} • ${esc(x.etd)}</div></div>
+        <div style="padding:10px;border-left:3px solid #0ea5e9;background:#f8fafc;"><div style="font-size:8px;color:#64748b;font-weight:800;">ETA / PORT IN</div><div style="font-size:10px;font-weight:800;margin-top:3px;">${esc(x.eta)} • ${formatDate(getField(x.r, ["PORT IN"])) || "Pending"}</div></div>
+        <div style="padding:10px;border-left:3px solid #f59e0b;background:#f8fafc;"><div style="font-size:8px;color:#64748b;font-weight:800;">Terminal LFD</div><div style="font-size:10px;font-weight:900;margin-top:3px;color:${x.lfdDays !== null && x.lfdDays <= 2 ? "#b91c1c" : "#0f172a"};">${esc(x.terminalLfd)} ${x.lfdDays !== null ? "• "+x.lfdDays+"d" : ""}</div></div>
+        <div style="padding:10px;border-left:3px solid #8b5cf6;background:#f8fafc;"><div style="font-size:8px;color:#64748b;font-weight:800;">Detention LFD</div><div style="font-size:10px;font-weight:900;margin-top:3px;">${esc(x.detentionLfd)} ${x.detDays !== null ? "• "+x.detDays+"d" : ""}</div></div>
+      </div>
+
+      <div style="margin:0 18px 16px;padding:12px 14px;border-radius:10px;background:${x.exposure > 0 ? "#fff7ed" : "#f0fdf4"};border:1px solid ${x.exposure > 0 ? "#fed7aa" : "#bbf7d0"};display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <div><div style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;">Financial Exposure</div><div style="font-size:17px;font-weight:900;color:${x.exposure > 0 ? "#c2410c" : "#15803d"};margin-top:2px;">$${Math.round(x.exposure).toLocaleString()}</div></div>
+        <div style="text-align:right;"><div style="font-size:8px;color:#64748b;font-weight:800;">Truck / Vehicle</div><div style="font-size:10px;font-weight:800;color:#0f172a;">${esc(x.truck)}</div></div>
+      </div>
+
+      ${x.remarks ? `<div style="margin:0 18px 16px;padding:10px 12px;border-radius:8px;background:#f8fafc;border-left:3px solid #64748b;"><div style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;">Operational Remark</div><div style="font-size:10px;font-weight:700;color:#334155;margin-top:3px;">${esc(x.remarks)}</div></div>` : ""}
+    </div>
+  `).join("");
+
+  return `
+    <div id="manifestCaptureContainer" style="width:1080px;background:#f1f5f9;padding:30px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#0f172a;box-sizing:border-box;">
+      <div style="background:linear-gradient(135deg,#071b36 0%,#0b3a67 60%,#0284c7 100%);color:#fff;border-radius:18px;padding:24px 26px;box-shadow:0 10px 30px rgba(2,132,199,.18);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;">
+          <div>
+            <div style="font-size:9px;font-weight:900;letter-spacing:.16em;opacity:.72;">GREENWICH MERIDIAN LOGISTICS</div>
+            <div style="font-size:25px;font-weight:900;letter-spacing:-.02em;margin-top:5px;">SHIPMENT STATUS REPORT</div>
+            <div style="font-size:10px;font-weight:600;opacity:.78;margin-top:5px;">Chennai Import Operations • Customer Update</div>
+          </div>
+          <div style="text-align:right;min-width:150px;">
+            <div style="font-size:8px;font-weight:800;opacity:.65;text-transform:uppercase;">Generated</div>
+            <div style="font-size:11px;font-weight:900;margin-top:4px;">${dateStr}</div>
+            <div style="font-size:9px;font-family:'JetBrains Mono',monospace;opacity:.78;">${timeStr}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px;">
+          <div style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px;"><div style="font-size:8px;opacity:.65;font-weight:800;">TOTAL CONTAINERS</div><div style="font-size:20px;font-weight:900;margin-top:2px;">${prepared.length}</div></div>
+          <div style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px;"><div style="font-size:8px;opacity:.65;font-weight:800;">ACTIVE</div><div style="font-size:20px;font-weight:900;margin-top:2px;">${activeCount}</div></div>
+          <div style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px;"><div style="font-size:8px;opacity:.65;font-weight:800;">COMPLETED</div><div style="font-size:20px;font-weight:900;margin-top:2px;">${completedCount}</div></div>
+          <div style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px;"><div style="font-size:8px;opacity:.65;font-weight:800;">ATTENTION</div><div style="font-size:20px;font-weight:900;margin-top:2px;">${attentionCount}</div></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;">
+        <div style="background:#fff;border:1px solid #dbe3ea;border-radius:12px;padding:13px 15px;"><div style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;">Portfolio Financial Exposure</div><div style="font-size:21px;font-weight:900;color:${totalExposure > 0 ? "#c2410c" : "#15803d"};margin-top:3px;">$${Math.round(totalExposure).toLocaleString()}</div><div style="font-size:8px;color:#94a3b8;margin-top:2px;">Current estimated demurrage / detention exposure</div></div>
+        <div style="background:#fff;border:1px solid #dbe3ea;border-radius:12px;padding:13px 15px;"><div style="font-size:8px;font-weight:900;color:#64748b;text-transform:uppercase;">Update Reference</div><div style="font-size:12px;font-weight:900;color:#0f172a;margin-top:5px;">${prepared.length === 1 ? esc(prepared[0].container) : "Bulk Shipment Update"}</div><div style="font-size:8px;color:#94a3b8;margin-top:2px;">Please quote container number for operational enquiries</div></div>
+      </div>
+
+      ${cardsHtml}
+
+      <div style="margin-top:18px;padding:13px 15px;background:#0f172a;color:#fff;border-radius:12px;display:flex;justify-content:space-between;gap:20px;align-items:center;">
+        <div><div style="font-size:9px;font-weight:900;">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</div><div style="font-size:8px;opacity:.65;margin-top:3px;">Customer shipment visibility • Chennai Operations Desk</div></div>
+        <div style="text-align:right;font-size:8px;opacity:.7;">For operational assistance: ${esc(COMPANY_CONFIG.supportEmail)}<br>Generated electronically from Container Tracking Suite</div>
+      </div>
     </div>
   `;
 }
