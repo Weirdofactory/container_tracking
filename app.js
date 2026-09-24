@@ -452,7 +452,7 @@ function calculateStandardFees(r) {
     }
   }
 
-  // Outside-port detention starts only after Port Out and ends at Empty Return.
+  // Detention/free-time clock also starts from INWARD DATE.
   // Row-level FREE DAYS overrides the configured default when supplied.
   const rawFreeDays = getField(r, ["FREE DAYS"]);
   const carrierFreeDays = rawFreeDays !== "" && rawFreeDays != null
@@ -462,13 +462,13 @@ function calculateStandardFees(r) {
   let detentionLFD = null;
   let detentionDaysLeft = null;
 
-  if (portOutDate) {
-    detentionLFD = new Date(portOutDate);
+  if (inwardDate) {
+    detentionLFD = new Date(inwardDate);
     detentionLFD.setDate(detentionLFD.getDate() + carrierFreeDays);
     detentionDaysLeft = Math.floor((detentionLFD - nowDay) / 86400000);
 
     const endDetDate = returnDate || nowDay;
-    totalEquipmentDays = Math.max(0, Math.floor((endDetDate - portOutDate) / 86400000));
+    totalEquipmentDays = Math.max(0, Math.floor((endDetDate - inwardDate) / 86400000));
     if (totalEquipmentDays > carrierFreeDays && !isFullyCompleted(r)) {
       detOverdue = true;
       detDays = totalEquipmentDays - carrierFreeDays;
