@@ -269,7 +269,7 @@ body { background-color: var(--bg-app); color: var(--text-main); font-family: 'P
 
 /* Cards Layout */
 .cards-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
-.card-box { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); gap: 12px; transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+.card-box { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: flex-start; box-shadow: var(--shadow-sm); gap: 12px; transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }\n.card-box > div:last-child { margin-top: auto; }
 .card-box:hover { border-color: var(--border-focus); transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .card-header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .card-title-group { display: flex; align-items: center; gap: 8px; }
