@@ -1735,7 +1735,7 @@ function renderCards(items) {
           </div>
           <div class="detail-item">
             <label>Detention LFD / Dwell</label>
-            <val style="${fees.detOverdue ? 'color:var(--danger)' : ''}">${fees.detentionLFD} (${fees.totalEquipmentDays}d / Free ${esc(getField(r, ["FREE DAYS"]) || "14")}d)</val>
+            <val style="${fees.detOverdue ? 'color:var(--danger)' : ''}">${fees.detentionLFD} (${fees.totalEquipmentDays}d / Free ${esc(getField(r, ["FREE DAYS"]) || "14")}d from Inward)</val>
           </div>
         </div>
 
