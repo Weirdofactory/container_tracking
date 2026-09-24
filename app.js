@@ -1145,29 +1145,25 @@ function getGatewayPortInfo(r) {
   };
   const names = { CCTL: "CCTL", CITPL: "CITPL", Kattupalli: "Kattupalli", Ennore: "Ennore" };
 
+  // IMPORTANT: Never use the stored GATEWAY PORT value as an automatic
+  // selector. Old/imported CCTL values may be stale. Terminal selection must
+  // come from the carrier + vessel routing master.
   const route = detectTerminalFromVessel(r);
   if (route.key !== "UNKNOWN") {
     return { name: names[route.key], url: urls[route.key], key: route.key,
       detectionStatus: route.status, evidence: route.evidence };
   }
 
-  // Existing explicit terminal information is retained as secondary evidence.
-  const explicit = String(getField(r, [
-    "GATEWAY PORT","GATEWAY","TERMINAL","TERMINAL NAME",
-    "POD TERMINAL","DISCHARGE TERMINAL","PORT TERMINAL",
-    "DESTINATION TERMINAL","FINAL TERMINAL","TERMINAL OPERATOR"
-  ]) || "").trim().toUpperCase();
-  if (explicit.includes("CITPL") || explicit.includes("PSA")) return { name:"CITPL", url:urls.CITPL, key:"CITPL", detectionStatus:"SOURCE_DATA", evidence:[explicit] };
-  if (explicit.includes("CCTL") || explicit.includes("DP WORLD") || explicit.includes("CHENNAI CONTAINER TERMINAL")) return { name:"CCTL", url:urls.CCTL, key:"CCTL", detectionStatus:"SOURCE_DATA", evidence:[explicit] };
-  if (explicit.includes("KATTUPALLI")) return { name:"Kattupalli", url:urls.Kattupalli, key:"Kattupalli", detectionStatus:"SOURCE_DATA", evidence:[explicit] };
-  if (explicit.includes("ENNORE") || explicit.includes("KAMARAJAR")) return { name:"Ennore", url:urls.Ennore, key:"Ennore", detectionStatus:"SOURCE_DATA", evidence:[explicit] };
-
-  const manual = String(getField(r, ["GATEWAY PORT", "GATEWAY"]) || "").trim().toUpperCase();
-  if (["CCTL","CITPL","KATTUPALLI","ENNORE"].includes(manual)) {
-    const key = manual === "KATTUPALLI" ? "Kattupalli" : manual === "ENNORE" ? "Ennore" : manual;
-    return { name:names[key], url:urls[key], key, detectionStatus:"MANUAL", evidence:[] };
-  }
-  return { name:"Unverified", url:"", key:"UNKNOWN", detectionStatus:route.status, evidence:route.evidence };
+  // Preserve any existing terminal only as reference evidence; do NOT let it
+  // silently become the selected terminal.
+  const existing = String(getField(r, ["GATEWAY PORT", "GATEWAY"]) || "").trim();
+  return {
+    name: "Unverified",
+    url: "",
+    key: "UNKNOWN",
+    detectionStatus: route.status,
+    evidence: existing ? [{ field: "Existing GATEWAY PORT", value: existing }] : []
+  };
 }
 
 function getCfsDepotInfo(cfsName) {
