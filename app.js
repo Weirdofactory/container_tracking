@@ -1740,18 +1740,18 @@ function renderCards(items) {
           </div>
           <div class="detail-item">
             <label>Port Out LFD / Dwell</label>
-            <val style="${fees.demOverdue ? 'color:var(--danger)' : ''}">${fees.terminalLFD} (${fees.portDwell}d / Free 13d)</val>
+            <val style="${fees.demOverdue ? 'color:var(--danger)' : ''}">${fees.terminalLFD} (${fees.portDwell}d / Free ${fees.portFreeDays}d)</val>
           </div>
           <div class="detail-item">
             <label>EMPTY RETURN VALIDITY / COUNTDOWN</label>
             <val>
-              ${(() => { 
+              ${(() => {
                 const ev = getEmptyReturnValidity(r);
                 const c = ev.state === "overdue" ? "var(--danger)" : ev.state === "warning" || ev.state === "critical" ? "var(--warning)" : ev.state === "returned" ? "var(--success)" : "var(--text-main)";
-                return ev.date + " · " + ev.label;
+                return `<span style="color:${c};font-weight:800">${ev.date} · ${ev.label}</span>`;
               })()}
             </val>
-          </div>iv>
+          </div>
         </div>
 
         ${fees.totalCostUSD > 0 ? `
