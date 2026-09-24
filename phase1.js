@@ -6,7 +6,8 @@
 
   const KEY = 'gml_phase1_config_v2';
   const DEFAULTS = {
-    terminalFreeDays: 13,
+    terminalFreeDays: 3,
+    portOutFreeDays: 13,
     detentionFreeDays: 14,
     warningDays: 4,
     criticalDays: 2,
@@ -43,7 +44,8 @@
     const returned=dateVal(getField(r,['CONTAINER RETURN DATE','EMPTY RETURN DATE']));
     const emptyValidity=dateVal(getField(r,['EMPTY RETURN VALIDITY','EMPTY VALIDITY','EMPTY RETURN LAST DATE']));
     // Port Out free-day rule: configurable calendar days from Inward Date.
-    const portOutFreeDays=Math.max(0,Number(c.terminalFreeDays ?? 13));
+    const insidePortFreeDays=Math.max(0,Number(c.terminalFreeDays ?? 3));
+    const portOutFreeDays=Math.max(0,Number(c.portOutFreeDays ?? 13));
 
     // Two separate clocks:
     // 1) Port Out / inside-port LFD starts at Inward Date and gives 13 calendar days.
@@ -53,12 +55,12 @@
     const outsideRate=size.includes('20')?Number(c.detentionRate20):Number(c.detentionRate40);
 
     let portLfd=null, portDaysLeft=null, portState='unknown', demDays=0, demCost=0;
-    if(inwardDate){
-      portLfd=new Date(inwardDate);
-      portLfd.setDate(portLfd.getDate()+portOutFreeDays);
+    if(portIn){
+      portLfd=new Date(portIn);
+      portLfd.setDate(portLfd.getDate()+insidePortFreeDays);
       const clockEnd=portOut || today();
-      const dwell=Math.max(0,dayDiff(inwardDate,clockEnd));
-      demDays=Math.max(0,dwell-portOutFreeDays);
+      const dwell=Math.max(0,dayDiff(portIn,clockEnd));
+      demDays=Math.max(0,dwell-insidePortFreeDays);
       demCost=demDays*portRate;
       if(portOut){
         portState=demDays>0?'overdue':'complete';
@@ -347,12 +349,13 @@
 
   function openLfd(){
     const c=config();
-    $('p1v2Free').value=c.terminalFreeDays;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;
+    $('p1v2Free').value=c.portOutFreeDays ?? 13;$('p1v2Warn').value=c.warningDays;$('p1v2Crit').value=c.criticalDays;$('p1v2R20').value=c.demRate20;$('p1v2R40').value=c.demRate40;
     $('p1v2LfdModal').classList.add('open');
   }
   function saveLfd(){
     const terminalFreeDays=Math.max(0,Number($('p1v2Free').value||0));
-    const cfg={terminalFreeDays,warningDays:Math.max(0,Number($('p1v2Warn').value||0)),criticalDays:Math.max(0,Number($('p1v2Crit').value||0)),demRate20:Math.max(0,Number($('p1v2R20').value||0)),demRate40:Math.max(0,Number($('p1v2R40').value||0))};
+    const portOutFreeDays=Math.max(0,Number($('p1v2Free').value||0));
+    const cfg={terminalFreeDays,portOutFreeDays,warningDays:Math.max(0,Number($('p1v2Warn').value||0)),criticalDays:Math.max(0,Number($('p1v2Crit').value||0)),demRate20:Math.max(0,Number($('p1v2R20').value||0)),demRate40:Math.max(0,Number($('p1v2R40').value||0))};
     saveConfig(cfg);
     $('p1v2Free').value=terminalFreeDays;
     $('p1v2LfdModal').classList.remove('open');
