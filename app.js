@@ -398,7 +398,7 @@ function getLfdConfig() {
     detentionRate40: 150
   };
   try {
-    return Object.assign({}, defaults, JSON.parse(localStorage.getItem("gml_phase1_config_v2") || "{}"), { terminalFreeDays: 13 });
+    return Object.assign({}, defaults, JSON.parse(localStorage.getItem("gml_phase1_config_v2") || "{}"));
   } catch (e) {
     return defaults;
   }
@@ -433,7 +433,7 @@ function calculateStandardFees(r) {
   // Chennai Port Out free-day rule:
   // LFD is calculated from INWARD DATE + 13 calendar days.
   // This is independent of the terminal configuration value.
-  const portFreeDays = 13;
+  const portFreeDays = Math.max(0, Number(cfg.terminalFreeDays ?? 13));
   let terminalLFD = null;
   let terminalDaysLeft = null;
 
