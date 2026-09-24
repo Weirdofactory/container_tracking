@@ -2829,8 +2829,8 @@ function renderCards(items) {
             <val style="color:var(--warning)">${formatDate(getField(r, ["PORT IN"])) || "—"} / ${formatDate(getField(r, ["PORT OUT"])) || "—"}</val>
           </div>
           <div class="detail-item">
-            <label>Terminal LFD / Dwell</label>
-            <val style="${fees.demOverdue ? 'color:var(--danger)' : ''}">${fees.terminalLFD} (${fees.portDwell}d / Free 3d)</val>
+            <label>Port Out LFD / Dwell</label>
+            <val style="${fees.demOverdue ? 'color:var(--danger)' : ''}">${fees.terminalLFD} (${fees.portDwell}d / Free 13d)</val>
           </div>
           <div class="detail-item">
             <label>CFS Depot / Truck</label>
