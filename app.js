@@ -388,7 +388,8 @@ function validateISO6346(cntr) {
 
 function getLfdConfig() {
   const defaults = {
-    terminalFreeDays: 13,
+    terminalFreeDays: 3,
+    portOutFreeDays: 13,
     detentionFreeDays: 14,
     warningDays: 4,
     criticalDays: 2,
@@ -446,21 +447,21 @@ function calculateStandardFees(r) {
   // Chennai Port Out free-day rule:
   // LFD is calculated from INWARD DATE + 13 calendar days.
   // This is independent of the terminal configuration value.
-  const portFreeDays = Math.max(0, Number(cfg.terminalFreeDays ?? 13));
+  const portFreeDays = Math.max(0, Number(cfg.portOutFreeDays ?? 13));
   let terminalLFD = null;
   let terminalDaysLeft = null;
 
-  if (inwardDate) {
-    terminalLFD = new Date(inwardDate);
-    terminalLFD.setDate(terminalLFD.getDate() + 13);
+  if (portInDate) {
+    terminalLFD = new Date(portInDate);
+    terminalLFD.setDate(terminalLFD.getDate() + Number(cfg.terminalFreeDays ?? 3));
     terminalDaysLeft = Math.floor((terminalLFD - nowDay) / 86400000);
 
     const endPortDate = portOutDate || nowDay;
-    const portClockStart = inwardDate;
-    portDwell = Math.max(0, Math.floor((endPortDate - portClockStart) / 86400000));
-    if (portDwell > 13) {
+    portDwell = Math.max(0, Math.floor((endPortDate - portInDate) / 86400000));
+    const insideFreeDays = Number(cfg.terminalFreeDays ?? 3);
+    if (portDwell > insideFreeDays) {
       demOverdue = true;
-      demDays = portDwell - 13;
+      demDays = portDwell - insideFreeDays;
       demCostUSD = demDays * demRatePerDay;
     }
   }
