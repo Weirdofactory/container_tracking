@@ -1184,6 +1184,53 @@ function detectTerminalFromVessel(r) {
   return { key: "UNKNOWN", status: "UNVERIFIED", evidence: [] };
 }
 
+// Vessel Master: keeps the latest resolved terminal call at vessel/voyage level.
+const VESSEL_MASTER_KEY = "gml_vessel_master_v1";
+function normalizeVesselKey(v) {
+  return normalizeRoutingText(String(v || "").replace(/\\b(V\s*\d+[A-Z]?)\\b/gi, ""));
+}
+function getVesselMaster() {
+  try {
+    const v = JSON.parse(localStorage.getItem(VESSEL_MASTER_KEY) || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch(e) { return []; }
+}
+function saveVesselMaster(v) {
+  localStorage.setItem(VESSEL_MASTER_KEY, JSON.stringify(v));
+}
+function getVesselVoyageParts(r) {
+  const raw = String(getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "").trim();
+  const m = raw.match(/^(.*?)(?:\\s+V(?:OY)?[\\s-]*)?([0-9]{3,4}[A-Z])$/i);
+  return {
+    raw,
+    vessel: (m ? m[1] : raw).trim(),
+    voyage: (m ? m[2] : "").toUpperCase()
+  };
+}
+function findVesselMasterMatch(r) {
+  const {vessel,voyage}=getVesselVoyageParts(r);
+  const vk=normalizeVesselKey(vessel);
+  if (!vk) return null;
+  const matches=getVesselMaster().filter(x => {
+    const xv=normalizeVesselKey(x.vessel);
+    if (!xv || !(vk===xv || vk.includes(xv) || xv.includes(vk))) return false;
+    return !x.voyage || !voyage || String(x.voyage).toUpperCase()===voyage;
+  });
+  if (!matches.length) return null;
+  return matches.sort((a,b)=>(new Date(b.updatedAt||0))-(new Date(a.updatedAt||0)))[0];
+}
+function upsertVesselMasterFromDetection(r, info) {
+  if (!info || !info.key || info.key==="UNKNOWN" || info.detectionStatus==="MANUAL_OVERRIDE") return;
+  const {vessel,voyage}=getVesselVoyageParts(r);
+  if (!vessel) return;
+  const list=getVesselMaster();
+  const vk=normalizeVesselKey(vessel);
+  const idx=list.findIndex(x => normalizeVesselKey(x.vessel)===vk && String(x.voyage||"").toUpperCase()===voyage);
+  const entry={vessel,voyage,terminal:info.key,source:info.detectionStatus,updatedAt:new Date().toISOString()};
+  if(idx>=0) list[idx]={...list[idx],...entry}; else list.push(entry);
+  saveVesselMaster(list);
+}
+
 function getGatewayPortInfo(r) {
   const urls = {
     CCTL: "https://122.252.230.102/DPWCCTTracking/Index.php",
