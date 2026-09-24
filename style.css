@@ -375,3 +375,74 @@ body { background-color: var(--bg-app); color: var(--text-main); font-family: 'P
 .public-result-card .timeline-stepper{border-top:1px solid var(--border);padding:28px 18px}
 @media(max-width:968px){.public-hero-container{gap:26px}.public-hero-copy{text-align:center}.public-hero-copy h1{font-size:38px}.public-hero-copy p{margin-left:auto;margin-right:auto}.hero-trust-row{justify-content:center}.public-result-card .public-detail-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.public-result-card .public-detail-grid{grid-template-columns:1fr}.public-result-card .public-container-number{font-size:21px}}
+
+
+/* Header refinement — compact, single-line operations navigation */
+.nav-header{
+  padding:8px 20px;
+}
+.nav-container{
+  max-width:1600px;
+  gap:16px;
+}
+.brand-box{
+  flex:0 0 auto;
+  min-width:max-content;
+  gap:10px;
+}
+.brand-title{
+  white-space:nowrap;
+  font-size:18px;
+  line-height:1;
+}
+.header-tools{
+  flex:1 1 auto;
+  min-width:0;
+  justify-content:flex-end;
+  gap:6px;
+}
+#opsControls{
+  flex:1 1 auto;
+  min-width:0;
+  justify-content:flex-end;
+  gap:6px !important;
+  flex-wrap:nowrap;
+}
+#opsControls .header-segment{
+  flex:0 0 auto;
+}
+#opsControls .header-segment:first-child{
+  padding:3px;
+  gap:2px;
+}
+#opsControls .header-segment:first-child .btn{
+  padding:7px 11px;
+}
+#opsControls .header-divider{
+  margin:0 2px;
+}
+#opsControls .header-segment:last-child{
+  gap:3px;
+}
+#userBadge{
+  max-width:150px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+@media (max-width:1200px){
+  .brand-title{font-size:16px}
+  #opsControls .header-segment:first-child .btn{
+    padding:7px 8px;
+    font-size:11px;
+  }
+  #opsControls .header-segment:first-child .btn{
+    gap:4px;
+  }
+}
+@media (max-width:980px){
+  .nav-container{align-items:flex-start}
+  .brand-title{white-space:normal;max-width:150px;line-height:1.1}
+  #opsControls{overflow-x:auto;padding-bottom:2px}
+}
+
