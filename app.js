@@ -413,6 +413,7 @@ function calculateStandardFees(r) {
   // Outside-port / carrier detention clock
   const detRatePerDay = is20ft ? Number(cfg.detentionRate20) : Number(cfg.detentionRate40);
 
+  const inwardDate = parseLocalDate(getField(r, ["INWARD DATE"]));
   const portInDate = parseLocalDate(getField(r, ["PORT IN"]));
   const portOutDate = parseLocalDate(getField(r, ["PORT OUT"]));
   const returnDate = parseLocalDate(getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]));
@@ -423,20 +424,24 @@ function calculateStandardFees(r) {
   let demDays = 0, demOverdue = false, demCostUSD = 0, portDwell = 0;
   let detDays = 0, detOverdue = false, detCostUSD = 0, totalEquipmentDays = 0;
 
-  const portFreeDays = Number(cfg.terminalFreeDays || 0);
+  // Chennai Port Out free-day rule:
+  // LFD is calculated from INWARD DATE + 13 calendar days.
+  // This is independent of the terminal configuration value.
+  const portFreeDays = 13;
   let terminalLFD = null;
   let terminalDaysLeft = null;
 
-  if (portInDate) {
-    terminalLFD = new Date(portInDate);
-    terminalLFD.setDate(terminalLFD.getDate() + portFreeDays);
+  if (inwardDate) {
+    terminalLFD = new Date(inwardDate);
+    terminalLFD.setDate(terminalLFD.getDate() + 13);
     terminalDaysLeft = Math.floor((terminalLFD - nowDay) / 86400000);
 
     const endPortDate = portOutDate || nowDay;
-    portDwell = Math.max(0, Math.floor((endPortDate - portInDate) / 86400000));
-    if (portDwell > portFreeDays) {
+    const portClockStart = inwardDate;
+    portDwell = Math.max(0, Math.floor((endPortDate - portClockStart) / 86400000));
+    if (portDwell > 13) {
       demOverdue = true;
-      demDays = portDwell - portFreeDays;
+      demDays = portDwell - 13;
       demCostUSD = demDays * demRatePerDay;
     }
   }
