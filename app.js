@@ -1052,15 +1052,70 @@ function getCarrierTrackingUrl(r) {
   return `https://www.google.com/search?q=${encodeURIComponent(liner + ' tracking ' + ref)}`;
 }
 
-function getGatewayPortInfo(r) {
-  const portField = (getField(r, ["GATEWAY PORT", "GATEWAY"]) || "").toUpperCase();
-  if (portField.includes("CITPL") || portField.includes("PSA")) return { name: "CITPL", url: "https://cp.citpl.co.in/enquiry/ctrHist", key: "CITPL" };
-  if (portField.includes("CCTL") || portField.includes("DP")) return { name: "CCTL", url: "https://122.252.230.102/DPWCCTTracking/Index.php", key: "CCTL" };
-  if (portField.includes("KATTUPALLI")) return { name: "Kattupalli", url: "https://www.adaniports.com/", key: "Kattupalli" };
-  if (portField.includes("ENNORE")) return { name: "Ennore", url: "https://timetocargo.com/", key: "Ennore" };
-  return { name: "CCTL", url: "https://122.252.230.102/DPWCCTTracking/Index.php", key: "CCTL" };
+// Gateway/terminal detection is evidence-based. Never default an unknown
+// Chennai terminal to CCTL: a wrong terminal can cascade into tracking,
+// LFD and demurrage decisions.
+const GATEWAY_FIELD_ALIASES = [
+  "GATEWAY PORT", "GATEWAY", "TERMINAL", "TERMINAL NAME",
+  "POD TERMINAL", "DISCHARGE TERMINAL", "PORT TERMINAL",
+  "DESTINATION TERMINAL", "FINAL TERMINAL", "TERMINAL OPERATOR",
+  "PORT OF DISCHARGE", "POD", "DISCHARGE PORT", "DESTINATION PORT"
+];
+
+function detectGatewayPortEvidence(r) {
+  const evidence = [];
+  const values = [];
+  GATEWAY_FIELD_ALIASES.forEach(k => {
+    const v = getField(r, [k]);
+    if (v) values.push({ field: k, value: String(v) });
+  });
+  Object.entries(r || {}).forEach(([field, value]) => {
+    if (value !== null && value !== undefined && String(value).trim()) {
+      values.push({ field, value: String(value) });
+    }
+  });
+
+  values.forEach(({field, value}) => {
+    const v = value.toUpperCase();
+    if (/\b(CITPL|CHENNAI\s+INTERNATIONAL\s+TERMINAL|PSA\s+CHENNAI|PSA\s+CITPL)\b/.test(v))
+      evidence.push({ key: "CITPL", field, value });
+    if (/\b(CCTL|CHENNAI\s+CONTAINER\s+TERMINAL|DP\s*WORLD\s+CHENNAI|DP\s*WORLD\s+CCT)\b/.test(v))
+      evidence.push({ key: "CCTL", field, value });
+    if (/\b(KATTUPALLI|ADANI\s+KATTUPALLI)\b/.test(v))
+      evidence.push({ key: "Kattupalli", field, value });
+    if (/\b(ENNORE|KAMARAJAR\s+PORT)\b/.test(v))
+      evidence.push({ key: "Ennore", field, value });
+  });
+
+  const keys = [...new Set(evidence.map(x => x.key))];
+  if (keys.length === 1) return { key: keys[0], status: "AUTO", evidence };
+  if (keys.length > 1) return { key: "UNKNOWN", status: "CONFLICT", evidence };
+  return { key: "UNKNOWN", status: "UNVERIFIED", evidence: [] };
 }
 
+function getGatewayPortInfo(r) {
+  const detected = detectGatewayPortEvidence(r);
+  const urls = {
+    CCTL: "https://122.252.230.102/DPWCCTTracking/Index.php",
+    CITPL: "https://cp.citpl.co.in/enquiry/ctrHist",
+    Kattupalli: "https://www.adaniports.com/",
+    Ennore: "https://timetocargo.com/"
+  };
+  const names = { CCTL: "CCTL", CITPL: "CITPL", Kattupalli: "Kattupalli", Ennore: "Ennore" };
+
+  if (detected.key !== "UNKNOWN") {
+    return { name: names[detected.key], url: urls[detected.key], key: detected.key,
+      detectionStatus: detected.status, evidence: detected.evidence };
+  }
+
+  const manual = String(getField(r, ["GATEWAY PORT", "GATEWAY"]) || "").trim().toUpperCase();
+  if (["CCTL", "CITPL", "KATTUPALLI", "ENNORE"].includes(manual)) {
+    const key = manual === "KATTUPALLI" ? "Kattupalli" : manual === "ENNORE" ? "Ennore" : manual;
+    return { name: names[key], url: urls[key], key, detectionStatus: "MANUAL", evidence: [] };
+  }
+
+  return { name: "Unverified", url: "", key: "UNKNOWN", detectionStatus: detected.status, evidence: detected.evidence };
+}
 function getCfsDepotInfo(cfsName) {
   const name = (cfsName || "").toUpperCase();
   if (name.includes("ECCT")) return { name: "ECCT CFS", url: "http://ecctcfs.com/containerTrackAndTrace.jsp" };
