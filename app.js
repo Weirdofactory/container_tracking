@@ -217,7 +217,7 @@ function generatePublicVoyageTimelineHtml(r) {
   else if (berthedPort) { currentStatusTxt = "Vessel Berthed"; nextStepTxt = "Port Discharge"; statusColor = "var(--accent)"; statusIcon = "🚢"; }
   else if (inward) { currentStatusTxt = "Inward Granted"; nextStepTxt = "Vessel Berthing"; statusColor = "var(--warning)"; statusIcon = "🛃"; }
 
-  return \`
+  return `
     <div class="public-status-result">
       <div class="current-status-card" style="--status-color:\${statusColor};">
         <div class="current-status-main">
@@ -242,7 +242,7 @@ function generatePublicVoyageTimelineHtml(r) {
         \${igmSplit ? \`<div class="info-item"><label>IGM Split</label><val>\${igmSplit}</val></div>\` : ''}
       </div>
     </div>
-  \`;
+  `;
 
 }
 
