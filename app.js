@@ -1,6 +1,28 @@
 const SUPABASE_URL = "https://ykeucqritoexykqrggzz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Resilient Supabase bootstrap: the app must still load even if the CDN SDK is temporarily unavailable.
+const sb = (typeof supabase !== "undefined" && typeof supabase.createClient === "function")
+  ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+async function lookupUserRole(accessCode) {
+  if (sb) {
+    const { data, error } = await sb.from("user_roles")
+      .select("user_id, role, username")
+      .eq("access_code", accessCode)
+      .single();
+    return { data, error };
+  }
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/user_roles?select=user_id,role,username&access_code=eq.${encodeURIComponent(accessCode)}&limit=1`, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+    }
+  });
+  if (!response.ok) throw new Error(`Supabase REST ${response.status}`);
+  const list = await response.json();
+  return { data: Array.isArray(list) && list.length ? list[0] : null, error: null };
+}
 
 // --- COMPANY CONFIGURATION TABLE ---
 // Change these values anytime to instantly update the whole app
@@ -637,8 +659,8 @@ el("loginSubmit").addEventListener("click", async () => {
 
   try {
     const { data, error } = await Promise.race([
-      sb.from('user_roles').select('user_id, role, username').eq('access_code', code).single(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 4000))
+      lookupUserRole(code),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
     ]);
 
     if (error || !data) {
