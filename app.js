@@ -219,27 +219,27 @@ function generatePublicVoyageTimelineHtml(r) {
 
   return `
     <div class="public-status-result">
-      <div class="current-status-card" style="--status-color:\${statusColor};">
+      <div class="current-status-card" style="--status-color:${statusColor};">
         <div class="current-status-main">
-          <div class="current-status-icon">\${statusIcon}</div>
+          <div class="current-status-icon">${statusIcon}</div>
           <div class="current-status-copy">
             <div class="current-status-eyebrow">CURRENT STATUS</div>
-            <div class="current-status-title">\${currentStatusTxt}</div>
+            <div class="current-status-title">${currentStatusTxt}</div>
           </div>
         </div>
         <div class="current-status-next">
           <span>AWAITING NEXT</span>
-          <strong>\${nextStepTxt}</strong>
+          <strong>${nextStepTxt}</strong>
         </div>
       </div>
       <div class="info-panel shipment-info-panel">
-        <div class="info-item"><label>Line / MBL</label><val>\${liner} • \${mblNo}</val></div>
-        <div class="info-item"><label>Vessel & Voyage</label><val>\${vesselName}</val></div>
-        <div class="info-item"><label>Estimated Arrival</label><val>\${eta}</val></div>
-        <div class="info-item"><label>Port of Loading</label><val>\${pol}</val></div>
-        <div class="info-item"><label>Designated CFS</label><val>\${cfsName}</val></div>
-        <div class="info-item"><label>Equipment Size</label><val>\${esc(getField(r, ["TYPE", "SIZE"]) || "40' DC")}</val></div>
-        \${igmSplit ? \`<div class="info-item"><label>IGM Split</label><val>\${igmSplit}</val></div>\` : ''}
+        <div class="info-item"><label>Line / MBL</label><val>${liner} • ${mblNo}</val></div>
+        <div class="info-item"><label>Vessel & Voyage</label><val>${vesselName}</val></div>
+        <div class="info-item"><label>Estimated Arrival</label><val>${eta}</val></div>
+        <div class="info-item"><label>Port of Loading</label><val>${pol}</val></div>
+        <div class="info-item"><label>Designated CFS</label><val>${cfsName}</val></div>
+        <div class="info-item"><label>Equipment Size</label><val>${esc(getField(r, ["TYPE", "SIZE"]) || "40' DC")}</val></div>
+        ${igmSplit ? `<div class="info-item"><label>IGM Split</label><val>${igmSplit}</val></div>` : ''}
       </div>
     </div>
   `;
@@ -604,20 +604,20 @@ function generateCleanManifestHtml(containersList) {
 
   const totalTeu = items.reduce((sum,r) => sum + teuFor(getField(r, ["TYPE","SIZE"])), 0);
 
-  return '<div id="manifestCaptureContainer" data-report-version="2026-09-25-V6" style="width:1600px;background:#f3f7fb;padding:36px 42px 30px;font-family:Plus Jakarta Sans,Arial,sans-serif;color:#10213f;box-sizing:border-box;">'
+  return '<div id="manifestCaptureContainer" data-report-version="2026-09-25-V6" style="width:1080px;background:#f3f7fb;padding:24px 26px 22px;font-family:Plus Jakarta Sans,Arial,sans-serif;color:#10213f;box-sizing:border-box;">'
     + '<div style="background:#fff;border-radius:14px 14px 0 0;padding:8px 8px 20px;border-bottom:1px solid #dbe5ef;">'
     + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:30px;">'
     + '<div><div style="font-size:28px;font-weight:900;letter-spacing:.06em;color:#102d57;">GREENWICH MERIDIAN LOGISTICS</div><div style="font-size:14px;font-weight:700;color:#718096;margin-top:6px;">CONTAINER TRACKING &amp; CUSTOMER VISIBILITY</div></div>'
     + '<div style="text-align:right;"><div style="font-size:22px;font-weight:900;color:#17335f;">STATUS REPORT</div><div style="font-size:12px;color:#7b8799;margin-top:6px;">GENERATED ' + esc(generatedDate) + ' • ' + esc(generatedTime) + '</div></div>'
     + '</div>'
     + '</div>'
-    + '<div style="margin-top:0;border-radius:0 0 14px 14px;overflow:hidden;background:linear-gradient(115deg,#0b2c58 0%,#07578f 45%,#16a1b8 100%);height:190px;position:relative;">'
-    + '<div style="padding:34px 38px;color:#fff;position:relative;z-index:2;">'
+    + '<div style="margin-top:0;border-radius:0 0 14px 14px;overflow:hidden;background:linear-gradient(115deg,#0b2c58 0%,#07578f 45%,#16a1b8 100%);height:130px;position:relative;">'
+    + '<div style="padding:22px 28px;color:#fff;position:relative;z-index:2;">'
     + '<div style="display:inline-block;background:#ff8fbd;color:#8b174c;border-radius:18px;padding:7px 13px;font-size:11px;font-weight:900;">🚢 SHIPMENT STATUS</div>'
-    + '<div style="font-size:35px;font-weight:900;letter-spacing:.02em;margin-top:16px;">CONTAINER TRACKING REPORT</div>'
-    + '<div style="font-size:13px;letter-spacing:.18em;margin-top:8px;">REAL TIME VISIBILITY &nbsp; | &nbsp; ACCURATE UPDATES &nbsp; | &nbsp; BETTER PLANNING</div>'
+    + '<div style="font-size:27px;font-weight:900;letter-spacing:.02em;margin-top:16px;">CONTAINER TRACKING REPORT</div>'
+    + '<div style="font-size:10px;letter-spacing:.14em;margin-top:8px;">REAL TIME VISIBILITY &nbsp; | &nbsp; ACCURATE UPDATES &nbsp; | &nbsp; BETTER PLANNING</div>'
     + '</div>'
-    + '<div style="position:absolute;right:28px;bottom:-5px;font-size:130px;opacity:.13;">🚢</div>'
+    + '<div style="position:absolute;right:28px;bottom:-5px;font-size:90px;opacity:.13;">🚢</div>'
     + '</div>'
     + '<div style="margin-top:18px;background:#fff;border-radius:14px;padding:24px 26px;border:1px solid #dfe7f0;box-shadow:0 5px 18px rgba(16,45,87,.08);">'
     + '<div style="display:grid;grid-template-columns:1.35fr 1.45fr 1.1fr .75fr 1.45fr;gap:0;">'
@@ -663,7 +663,7 @@ function downloadMultipleStatusImage(containersList, titleRef = "Status_Report")
   requestAnimationFrame(() => {
     setTimeout(() => {
       html2canvas(target, {
-        scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
+        scale: 1.25,
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#f4f4f5",
