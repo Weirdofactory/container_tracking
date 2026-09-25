@@ -576,16 +576,16 @@ function generateCleanManifestHtml(containersList) {
     const exposure = Number(fees.totalCostUSD || 0);
 
     const routePoint = (title, value, icon) => `
-      <div style="flex:1;min-width:145px;padding:8px 12px 7px;border-right:1px solid #e5e7eb;">
-        <div style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;">${icon} ${title}</div>
-        <div style="font-size:9px;font-weight:900;color:#1f2937;margin-top:3px;text-transform:uppercase;">${esc(value || "—")}</div>
+      <div style="flex:1;min-width:145px;padding:20px 24px 17px;border-right:1px solid #e5e7eb;">
+        <div style="font-size:13px;font-weight:900;color:#687386;text-transform:uppercase;letter-spacing:.08em;">${icon} ${title}</div>
+        <div style="font-size:17px;font-weight:900;color:#263143;margin-top:8px;text-transform:uppercase;">${esc(value || "—")}</div>
       </div>
     `;
 
     const routeStrip = `
-      <div style="display:flex;align-items:stretch;background:#fff;border:1px solid #d1d5db;border-radius:5px;margin:10px 12px 0;overflow:hidden;">
+      <div style="display:flex;align-items:stretch;background:#fff;border:1px solid #d1d5db;border-radius:5px;margin:20px 24px 0;overflow:hidden;">
         ${routePoint("Place of Receipt", pol, "◼")}
-        <div style="display:flex;align-items:center;color:#374151;font-size:18px;font-weight:900;">›</div>
+        <div style="display:flex;align-items:center;color:#374151;font-size:30px;font-weight:900;">›</div>
         ${routePoint("Port of Loading", pol, "◼")}
         <div style="display:flex;align-items:center;color:#374151;font-size:18px;font-weight:900;">›</div>
         ${routePoint("Port of Discharge", pod, "◼")}
@@ -600,35 +600,35 @@ function generateCleanManifestHtml(containersList) {
       .toUpperCase();
 
     const schedule = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 12px 12px;padding:7px 14px;background:#fff;border:1px solid #d1d5db;border-top:0;border-radius:0 0 5px 5px;">
-        <div><span style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;">Actual Departure</span><br><b style="font-size:8px;color:#374151;">${etd ? formatDate(etd).toUpperCase() : "PENDING"}</b></div>
-        <div><span style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;">Actual / Estimated Arrival</span><br><b style="font-size:8px;color:#374151;">${eta ? formatDate(eta).toUpperCase() : "PENDING"}</b></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 24px 20px;padding:26px 28px;background:#fff;border:1px solid #d1d5db;border-top:0;border-radius:0 0 5px 5px;">
+        <div><span style="font-size:14px;font-weight:800;color:#687386;text-transform:uppercase;">Actual Departure</span><br><b style="font-size:17px;color:#374151;">${etd ? formatDate(etd).toUpperCase() : "PENDING"}</b></div>
+        <div><span style="font-size:14px;font-weight:800;color:#687386;text-transform:uppercase;">Actual / Estimated Arrival</span><br><b style="font-size:8px;color:#374151;">${eta ? formatDate(eta).toUpperCase() : "PENDING"}</b></div>
       </div>
     `;
 
     return `
-      <section style="width:100%;background:#fff;border:1px solid #d1d5db;border-radius:7px;overflow:hidden;margin-top:18px;box-shadow:0 2px 6px rgba(15,23,42,.08);">
-        <div style="background:#414246;color:#fff;padding:11px 14px;display:grid;grid-template-columns:1.35fr .85fr 1fr 1.05fr;gap:14px;align-items:center;">
+      <section style="width:100%;background:#fff;border:1px solid #d1d5db;border-radius:7px;overflow:hidden;margin-top:24px;box-shadow:0 2px 8px rgba(15,23,42,.08);">
+        <div style="background:#414246;color:#fff;padding:22px 28px;display:grid;grid-template-columns:1.45fr .9fr 1.05fr 1.05fr;gap:26px;align-items:center;">
           <div>
-            <div style="font-size:7px;opacity:.78;font-weight:800;">CURRENT VESSEL NAME | VOYAGE</div>
-            <div style="font-size:12px;font-weight:900;text-transform:uppercase;">${esc(vessel.vessel)} <span style="font-weight:700;opacity:.85;">| ${esc(vessel.voyage)}</span></div>
+            <div style="font-size:13px;opacity:.78;font-weight:800;">CURRENT VESSEL NAME | VOYAGE</div>
+            <div style="font-size:24px;font-weight:900;text-transform:uppercase;">${esc(vessel.vessel)} <span style="font-weight:700;opacity:.85;">| ${esc(vessel.voyage)}</span></div>
           </div>
           <div>
             <div style="font-size:7px;opacity:.78;font-weight:800;">CARRIER NAME</div>
-            <div style="font-size:10px;font-weight:900;text-transform:uppercase;">${esc(liner)}</div>
+            <div style="font-size:18px;font-weight:900;text-transform:uppercase;">${esc(liner)}</div>
           </div>
           <div>
             <div style="font-size:7px;opacity:.78;font-weight:800;">CONTAINER</div>
-            <div style="font-size:10px;font-weight:900;font-family:'JetBrains Mono',monospace;">${esc(container)}</div>
+            <div style="font-size:18px;font-weight:900;font-family:'JetBrains Mono',monospace;">${esc(container)}</div>
           </div>
-          <div style="background:#fff;color:#374151;border-radius:4px;padding:6px 8px;text-align:center;">
+          <div style="background:#fff;color:#374151;border-radius:8px;padding:17px 14px;text-align:center;">
             <div style="font-size:7px;font-weight:900;color:#6b7280;">CURRENT STATUS</div>
-            <div style="font-size:10px;font-weight:900;margin-top:3px;color:${completed ? "#15803d" : "#111827"};">${esc(currentStatus)}</div>
+            <div style="font-size:18px;font-weight:900;margin-top:7px;color:${completed ? "#15803d" : "#111827"};">${esc(currentStatus)}</div>
           </div>
         </div>
         ${routeStrip}
         ${schedule}
-        <div style="height:6px;"></div>        <div style="border-top:1px solid #e5e7eb;background:#f8fafc;padding:8px 14px;font-size:8px;color:#6b7280;">
+        <div style="height:0;"></div>        <div style="border-top:1px solid #e5e7eb;background:#f8fafc;padding:18px 28px;font-size:14px;color:#6b7280;">
           <span>MBL: <b style="color:#374151;">${esc(mbl)}</b> • CFS: <b style="color:#374151;">${esc(cfs)}</b> • Type: <b style="color:#374151;">${esc(type)}</b></span>
         </div>
       </section>
@@ -636,16 +636,16 @@ function generateCleanManifestHtml(containersList) {
   };
 
   return `
-    <div id="manifestCaptureContainer" style="width:814px;background:#f4f4f5;padding:8px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#111827;box-sizing:border-box;">
-      <div style="padding:8px 10px 5px;display:flex;justify-content:space-between;align-items:center;">
+    <div id="manifestCaptureContainer" style="width:1600px;background:#f5f5f6;padding:18px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#111827;box-sizing:border-box;">
+      <div style="padding:12px 18px 10px;display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <div style="font-size:8px;font-weight:900;color:#374151;letter-spacing:.12em;">GREENWICH MERIDIAN LOGISTICS</div>
-          <div style="font-size:8px;color:#6b7280;margin-top:2px;">Customer Shipment Visibility • Generated ${generatedDate} ${generatedTime}</div>
+          <div style="font-size:18px;font-weight:900;color:#374151;letter-spacing:.09em;">GREENWICH MERIDIAN LOGISTICS</div>
+          <div style="font-size:15px;color:#6b7280;margin-top:6px;">Customer Shipment Visibility • Generated ${generatedDate} ${generatedTime}</div>
         </div>
-        <div style="font-size:8px;font-weight:900;color:#4b5563;">STATUS REPORT</div>
+        <div style="font-size:16px;font-weight:900;color:#4b5563;">STATUS REPORT</div>
       </div>
       ${containersList.map((r,i) => renderContainer(r,i)).join("")}
-      <div style="padding:10px 8px 4px;text-align:center;font-size:7px;color:#6b7280;">
+      <div style="padding:18px 8px 8px;text-align:center;font-size:13px;color:#6b7280;">
         For operational assistance: ${esc(COMPANY_CONFIG.supportEmail)} • Container Tracking Suite
       </div>
     </div>
