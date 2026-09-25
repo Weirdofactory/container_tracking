@@ -567,7 +567,7 @@ function generateCleanManifestHtml(containersList) {
     + '<div style="display:flex;align-items:center;gap:16px;"><div style="font-size:52px;line-height:1;font-weight:900;color:#e3342f;">' + reportItems.length + '</div><div><div style="font-size:20px;font-weight:900;color:#526176;">Total Containers</div><div style="font-size:14px;color:#98a2b3;margin-top:4px;">selected for status report • ' + totalTeu + ' TEU</div></div></div>'
     + '<div style="background:#10213f;color:#fff;border-radius:16px;padding:16px 30px;font-size:21px;font-weight:900;">STATUS REPORT</div>'
     + '</div>'
-    + '<div style="padding:4px 0 8px;">' + (reportItems.length ? renderContainerSection() : '<div style="margin-top:30px;background:#fff;border:1px solid #dfe3e8;border-radius:12px;padding:40px;text-align:center;color:#7b8799;font-weight:700;">No containers selected for this report.</div>') + '</div>
+    + '<div style="padding:4px 0 8px;">' + (reportItems.length ? renderContainerSection() : '<div style="margin-top:30px;background:#fff;border:1px solid #dfe3e8;border-radius:12px;padding:40px;text-align:center;color:#7b8799;font-weight:700;">No containers selected for this report.</div>') + '</div>'
     + '<div style="margin-top:34px;background:#e9edf3;padding:28px 0 8px;">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;gap:30px;padding:0 2px 24px;">'
     + '<div><div style="font-size:21px;font-weight:900;color:#10213f;">GREENWICH MERIDIAN LOGISTICS</div><div style="font-size:12px;color:#7b8799;margin-top:5px;">Container Tracking &amp; Customer Visibility</div></div>'
