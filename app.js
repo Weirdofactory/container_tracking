@@ -204,62 +204,46 @@ function generatePublicVoyageTimelineHtml(r) {
   const destuffed = formatDate(getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]));
   const containerReturned = formatDate(getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]));
 
-  const steps = [
-    { label: "Inward Granted", date: inward, done: !!inward },
-    { label: "Vessel Berthed", date: berthedPort, done: !!berthedPort },
-    { label: "Port Discharged", date: portOut, done: !!portOut },
-    { label: "CFS In-Gate", date: cfsIn, done: !!cfsIn },
-    { label: "Destuffed", date: destuffed, done: !!destuffed },
-    { label: "Empty Returned", date: containerReturned, done: !!containerReturned }
-  ];
-
+  // Current Status only — milestones are intentionally not rendered here.
   let currentStatusTxt = "Pending Arrival";
   let nextStepTxt = inward ? "Vessel Berthing" : "Inward Granted";
   let statusColor = "var(--warning)";
+  let statusIcon = "⏳";
 
-  if (containerReturned) { currentStatusTxt = `Empty Returned (${containerReturned})`; nextStepTxt = "Tracking Complete"; statusColor = "var(--success)"; }
-  else if (destuffed) { currentStatusTxt = `Destuffed (${destuffed})`; nextStepTxt = "Empty Return to Depot"; statusColor = "var(--success)"; }
-  else if (cfsIn) { currentStatusTxt = `Gated into CFS (${cfsIn})`; nextStepTxt = "Destuffing"; statusColor = "var(--accent)"; }
-  else if (portOut) { currentStatusTxt = `Port Discharged (${portOut})`; nextStepTxt = "CFS In-Gate"; statusColor = "var(--accent)"; }
-  else if (berthedPort) { currentStatusTxt = `Vessel Berthed (${berthedPort})`; nextStepTxt = "Port Discharge"; statusColor = "var(--accent)"; }
-  else if (inward) { currentStatusTxt = `Inward Granted (${inward})`; nextStepTxt = "Vessel Berthing"; statusColor = "var(--warning)"; }
+  if (containerReturned) { currentStatusTxt = "Empty Returned"; nextStepTxt = "Tracking Complete"; statusColor = "var(--success)"; statusIcon = "✓"; }
+  else if (destuffed) { currentStatusTxt = "Destuffed"; nextStepTxt = "Empty Return to Depot"; statusColor = "var(--success)"; statusIcon = "📦"; }
+  else if (cfsIn) { currentStatusTxt = "Gated into CFS"; nextStepTxt = "Destuffing"; statusColor = "var(--accent)"; statusIcon = "🏭"; }
+  else if (portOut) { currentStatusTxt = "Port Discharged"; nextStepTxt = "CFS In-Gate"; statusColor = "var(--accent)"; statusIcon = "⚓"; }
+  else if (berthedPort) { currentStatusTxt = "Vessel Berthed"; nextStepTxt = "Port Discharge"; statusColor = "var(--accent)"; statusIcon = "🚢"; }
+  else if (inward) { currentStatusTxt = "Inward Granted"; nextStepTxt = "Vessel Berthing"; statusColor = "var(--warning)"; statusIcon = "🛃"; }
 
-  return `
-    <div>
-      <div class="timeline-stepper">
-        ${steps.map((s, idx) => `
-          <div class="step-node ${s.done ? 'completed' : (idx === 0 || steps[idx-1].done ? 'active' : '')}">
-            <div class="step-dot">${s.done ? '✓' : idx + 1}</div>
-            <div class="step-label">${s.label}</div>
-            <div class="step-date">${s.date || 'Pending'}</div>
+  return \`
+    <div class="public-status-result">
+      <div class="current-status-card" style="--status-color:\${statusColor};">
+        <div class="current-status-main">
+          <div class="current-status-icon">\${statusIcon}</div>
+          <div class="current-status-copy">
+            <div class="current-status-eyebrow">CURRENT STATUS</div>
+            <div class="current-status-title">\${currentStatusTxt}</div>
           </div>
-        `).join("")}
+        </div>
+        <div class="current-status-next">
+          <span>AWAITING NEXT</span>
+          <strong>\${nextStepTxt}</strong>
+        </div>
       </div>
-
-      <div style="padding: 0 24px 24px 24px;">
-        <div class="cascade-item" style="background: var(--bg-surface); border-left: 4px solid ${statusColor}; padding: 16px 20px; border-radius: 8px; margin: 24px 0; box-shadow: var(--shadow-sm); display: flex; gap: 32px; animation-delay: 100ms; flex-wrap: wrap;">
-          <div>
-            <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px; letter-spacing:0.05em;">Current Status</div>
-            <div style="font-size:15px; font-weight:800; color:var(--text-main);">${currentStatusTxt}</div>
-          </div>
-          <div>
-            <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px; letter-spacing:0.05em;">Awaiting</div>
-            <div style="font-size:15px; font-weight:700; color:var(--text-dim);">${nextStepTxt}</div>
-          </div>
-        </div>
-
-        <div class="info-panel cascade-item" style="animation-delay: 200ms;">
-          <div class="info-item"><label>Line / MBL</label><val>${liner} • ${mblNo}</val></div>
-          <div class="info-item"><label>Vessel & Voyage</label><val>${vesselName}</val></div>
-          <div class="info-item"><label>Estimated Arrival</label><val>${eta}</val></div>
-          <div class="info-item"><label>Port of Loading</label><val>${pol}</val></div>
-          <div class="info-item"><label>Designated CFS</label><val>${cfsName}</val></div>
-          <div class="info-item"><label>Equipment Size</label><val>${esc(getField(r, ["TYPE", "SIZE"]) || "40' DC")}</val></div>
-          ${igmSplit ? `<div class="info-item"><label>IGM Split</label><val>${igmSplit}</val></div>` : ''}
-        </div>
+      <div class="info-panel shipment-info-panel">
+        <div class="info-item"><label>Line / MBL</label><val>\${liner} • \${mblNo}</val></div>
+        <div class="info-item"><label>Vessel & Voyage</label><val>\${vesselName}</val></div>
+        <div class="info-item"><label>Estimated Arrival</label><val>\${eta}</val></div>
+        <div class="info-item"><label>Port of Loading</label><val>\${pol}</val></div>
+        <div class="info-item"><label>Designated CFS</label><val>\${cfsName}</val></div>
+        <div class="info-item"><label>Equipment Size</label><val>\${esc(getField(r, ["TYPE", "SIZE"]) || "40' DC")}</val></div>
+        \${igmSplit ? \`<div class="info-item"><label>IGM Split</label><val>\${igmSplit}</val></div>\` : ''}
       </div>
     </div>
-  `;
+  \`;
+
 }
 
 function logAuditEvent(action, containerNo, field, oldVal, newVal) {
