@@ -484,58 +484,109 @@ function calculateStandardFees(r) {
 
 function generateCleanManifestHtml(containersList) {
   const now = new Date();
-  const generatedDate = now.toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"}).toUpperCase();
-  const generatedTime = now.toLocaleTimeString("en-IN", {hour:"2-digit",minute:"2-digit"});
+  const generatedDate = now.toLocaleDateString("en-IN", { weekday:"long", day:"2-digit", month:"long", year:"numeric" });
+  const generatedTime = now.toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit" });
+
+  const shiftName = (r) => {
+    const v = String(getField(r, ["PLANNING","SHIFT"]) || "1ST SHIFT").trim().toUpperCase();
+    return v.includes("SHIFT") ? v : v + " SHIFT";
+  };
+
   const splitVesselVoy = (value) => {
     const raw = String(value || "").trim();
     const m = raw.match(/^(.*?)(?:\s+V(?:OY)?(?:AGE)?\.?\s*)([A-Z0-9-]+)$/i);
-    return m ? {vessel:m[1].trim(),voyage:m[2].trim()} : {vessel:raw || "—",voyage:"—"};
+    if (m) return { vessel:m[1].trim(), voyage:m[2].trim() };
+    const parts = raw.split(/\s+/);
+    if (parts.length >= 2) return { vessel:parts.slice(0,-1).join(" "), voyage:parts[parts.length-1] };
+    return { vessel:raw || "—", voyage:"—" };
   };
+
+  const teuFor = (type) => String(type || "").includes("40") || String(type || "").includes("45") ? 2 : 1;
+
+  const statusLabel = (r) => String(getStatus(r).text || "PENDING").replace(/[^\w\s/-]/g,"").trim().toUpperCase();
+
   const renderContainer = (r) => {
-    const container=getField(r,["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"])||"—";
-    const type=getField(r,["TYPE","SIZE"])||"—";
-    const mbl=getField(r,["MBL NO","MBL","MASTER BL"])||"—";
-    const liner=getField(r,["LINER","LINE"])||detectLinerFromMBL(mbl)||"—";
-    const pol=getField(r,["POL","PORT OF LOADING"])||"—";
-    const pod=getGatewayPortInfo(r).name||"—";
-    const cfs=getField(r,["CFS NAME","CFS"])||"—";
-    const etd=getField(r,["ETD"]);
-    const eta=getField(r,["ETA"]);
-    const vessel=splitVesselVoy(getField(r,["VESSEL & VOY","VESSEL","VESSEL NAME"]));
-    const st=getStatus(r);
-    const completed=isFullyCompleted(r);
-    const currentStatus=(completed?"DE-STUFF COMPLETED":(st.text||"IN TRANSIT")).replace(/<[^>]+>/g,"").replace(/^[^A-Z0-9]+/i,"").toUpperCase();
-    const point=(label,value)=>`<div style="flex:1;min-width:0;padding:24px 26px"><div style="font-size:13px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">${label}</div><div style="font-size:21px;font-weight:900;color:#172033;margin-top:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase">${esc(value||"—")}</div></div>`;
-    return `<div style="width:100%;box-sizing:border-box;background:#fff;border:1px solid #d5d9df;border-radius:10px;overflow:hidden;margin:28px 0 0;box-shadow:0 5px 18px rgba(15,23,42,.08)">
-      <div style="background:#3f4044;color:#fff;padding:30px 34px;display:grid;grid-template-columns:2fr 1.05fr 1.35fr 1.35fr;gap:30px;align-items:center">
-        <div><div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:#d1d5db;text-transform:uppercase">CURRENT VESSEL NAME | VOYAGE</div><div style="font-size:29px;line-height:1.15;font-weight:900;margin-top:8px;text-transform:uppercase">${esc(vessel.vessel)} <span style="font-weight:700;color:#d1d5db">| ${esc(vessel.voyage)}</span></div></div>
-        <div><div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:#d1d5db;text-transform:uppercase">CARRIER NAME</div><div style="font-size:22px;font-weight:900;margin-top:8px;text-transform:uppercase">${esc(liner)}</div></div>
-        <div><div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:#d1d5db;text-transform:uppercase">CONTAINER</div><div style="font-size:22px;font-weight:900;margin-top:8px;font-family:'JetBrains Mono',monospace">${esc(container)}</div></div>
-        <div style="background:#fff;color:#172033;border-radius:9px;padding:19px 18px;text-align:center;min-height:76px;display:flex;flex-direction:column;justify-content:center"><div style="font-size:12px;font-weight:900;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">CURRENT STATUS</div><div style="font-size:22px;font-weight:900;margin-top:7px;text-transform:uppercase">${esc(currentStatus)}</div></div>
-      </div>
-      <div style="padding:24px 28px 0">
-        <div style="display:flex;align-items:stretch;border:1px solid #d5d9df;border-radius:7px;overflow:hidden;background:#fff">
-          ${point("Place of Receipt",pol)}<div style="width:44px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#6b7280">→</div>
-          ${point("Port of Loading",pol)}<div style="width:44px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#6b7280">→</div>
-          ${point("Port of Discharge",pod)}<div style="width:44px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#6b7280">→</div>
-          ${point("Place of Delivery",cfs)}
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #d5d9df;border-top:0;border-radius:0 0 7px 7px;background:#fff">
-          <div style="padding:25px 28px;border-right:1px solid #e5e7eb"><div style="font-size:13px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">Actual Departure</div><div style="font-size:21px;font-weight:900;color:#172033;margin-top:9px">${etd?formatDate(etd).toUpperCase():"PENDING"}</div></div>
-          <div style="padding:25px 28px"><div style="font-size:13px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">Actual / Estimated Arrival</div><div style="font-size:21px;font-weight:900;color:#172033;margin-top:9px">${eta?formatDate(eta).toUpperCase():"PENDING"}</div></div>
-        </div>
-      </div>
-      <div style="margin-top:22px;border-top:1px solid #e5e7eb;background:#f8fafc;padding:20px 34px;font-size:15px;color:#6b7280">MBL: <b style="color:#374151">${esc(mbl)}</b><span style="margin:0 14px;color:#c0c4ca">•</span>CFS: <b style="color:#374151">${esc(cfs)}</b><span style="margin:0 14px;color:#c0c4ca">•</span>Type: <b style="color:#374151">${esc(type)}</b></div>
-    </div>`;
+    const container = getField(r,["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]) || "—";
+    const type = getField(r,["TYPE","SIZE"]) || "—";
+    const mbl = getField(r,["MBL NO","MBL","MASTER BL"]) || "—";
+    const liner = getField(r,["LINER","LINE"]) || detectLinerFromMBL(mbl) || "—";
+    const cfs = getField(r,["CFS NAME","CFS"]) || "—";
+    const eta = getField(r,["ETA"]);
+    const portIn = getField(r,["PORT IN"]);
+    const portOut = getField(r,["PORT OUT"]);
+    const cfsIn = getField(r,["CFS IN"]);
+    const destuff = getField(r,["DESTUFFING DATE","DESTUFF DATE"]);
+    const vessel = splitVesselVoy(getField(r,["VESSEL & VOY","VESSEL","VESSEL NAME"]));
+    const pol = getField(r,["POL","PORT OF LOADING"]) || "—";
+    const complete = isFullyCompleted(r);
+    const schedule = esc(vessel.vessel) + (vessel.voyage !== "—" ? ' <span style="color:#667085">· ' + esc(vessel.voyage) + '</span>' : '') + ' <span style="color:#667085">· ' + esc(pol) + '</span>';
+
+    return ''
+      + '<div style="padding:23px 28px 21px;background:#fff;border-bottom:1px solid #e4e7ec;position:relative;">'
+      + '<div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:#7c3aed;"></div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:18px;">'
+      + '<div style="min-width:0;flex:1;">'
+      + '<div style="display:flex;align-items:center;gap:12px;">'
+      + '<div style="font-family:JetBrains Mono,monospace;font-size:22px;font-weight:900;color:#10213f;">' + esc(container) + '</div>'
+      + '<div style="font-size:11px;font-weight:900;color:#fff;background:#10213f;border-radius:18px;padding:7px 13px;">' + esc(type) + '</div>'
+      + '</div>'
+      + '<div style="margin-top:12px;font-size:15px;font-weight:900;color:#344054;">🚢 ' + schedule + '</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:11px;font-size:12.5px;color:#667085;">'
+      + '<span><b style="color:#98a2b3;">MBL</b> ' + esc(mbl) + '</span>'
+      + '<span><b style="color:#98a2b3;">Line</b> ' + esc(liner) + '</span>'
+      + '<span><b style="color:#98a2b3;">CFS</b> ' + esc(cfs) + '</span>'
+      + '<span><b style="color:#98a2b3;">ETA</b> ' + (eta ? esc(formatDate(eta)) : "Pending") + '</span>'
+      + '</div>'
+      + '<div style="height:1px;background:#e4e7ec;margin:10px 0 8px;"></div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:22px;font-size:12.5px;color:#667085;">'
+      + '<span><b style="color:#98a2b3;">Terminal In</b> ' + (portIn ? esc(portIn) : (cfsIn ? esc(cfsIn) : "—")) + '</span>'
+      + '<span><b style="color:#98a2b3;">Terminal Out</b> ' + (portOut ? esc(portOut) : "—") + '</span>'
+      + (destuff ? '<span><b style="color:#98a2b3;">De-stuff</b> ' + esc(destuff) + '</span>' : '')
+      + '</div></div>'
+      + '<div style="min-width:112px;text-align:right;"><div style="display:inline-block;background:' + (complete ? "#e7f6ec" : "#eef2ff") + ';color:' + (complete ? "#137333" : "#243b64") + ';font-size:10px;font-weight:900;border-radius:16px;padding:7px 10px;">' + esc(statusLabel(r)) + '</div></div>'
+      + '</div></div>';
   };
-  return `<div id="manifestCaptureContainer" data-report-version="2026-09-25-V3" style="width:1600px;background:#f1f2f4;padding:34px 38px 28px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#111827;box-sizing:border-box">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:4px 4px 18px;border-bottom:2px solid #3f4044">
-      <div><div style="font-size:26px;font-weight:900;letter-spacing:.09em;color:#30343b">GREENWICH MERIDIAN LOGISTICS</div><div style="font-size:15px;color:#6b7280;margin-top:7px">Customer Shipment Visibility</div></div>
-      <div style="text-align:right"><div style="font-size:22px;font-weight:900;color:#3f4044;letter-spacing:.05em">STATUS REPORT</div><div style="font-size:13px;color:#6b7280;margin-top:6px">GENERATED ${generatedDate} • ${generatedTime}</div></div>
-    </div>
-    ${containersList.map(renderContainer).join("")}
-    <div style="padding:22px 4px 4px;text-align:center;font-size:13px;color:#6b7280">For operational assistance: ${esc(COMPANY_CONFIG.supportEmail)} • Container Tracking Suite</div>
-  </div>`;
+
+  const grouped = {};
+  (containersList || []).forEach(r => {
+    const shift = shiftName(r);
+    if (!grouped[shift]) grouped[shift] = [];
+    grouped[shift].push(r);
+  });
+  const groups = Object.entries(grouped);
+  const totalTeu = (containersList || []).reduce((sum,r) => sum + teuFor(getField(r,["TYPE","SIZE"])),0);
+
+  const renderGroup = ([shift,items]) => {
+    const groupTeu = items.reduce((sum,r) => sum + teuFor(getField(r,["TYPE","SIZE"])),0);
+    return ''
+      + '<section style="margin-top:30px;border:1px solid #dfe3e8;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.05);">'
+      + '<div style="height:60px;background:#7c3aed;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;">'
+      + '<div style="font-size:20px;font-weight:900;">' + esc(shift) + '</div>'
+      + '<div style="font-size:13px;font-weight:800;">' + items.length + ' cntr • ' + groupTeu + ' TEU</div>'
+      + '</div>' + items.map(renderContainer).join("") + '</section>';
+  };
+
+  return ''
+    + '<div id="manifestCaptureContainer" data-report-version="2026-09-25-V4" style="width:1600px;background:#f4f6f8;padding:42px 56px 30px;font-family:Plus Jakarta Sans,Arial,sans-serif;color:#101828;box-sizing:border-box;">'
+    + '<div style="background:#fff;padding:4px 2px 26px;border-bottom:4px solid #e3342f;">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:40px;">'
+    + '<div><div style="font-size:27px;font-weight:900;letter-spacing:.08em;color:#27364d;">GREENWICH MERIDIAN LOGISTICS</div><div style="font-size:15px;font-weight:600;color:#7b8799;margin-top:8px;">Customer Shipment Visibility</div></div>'
+    + '<div style="text-align:right;"><div style="font-size:22px;font-weight:900;color:#5c687a;letter-spacing:.05em;">STATUS REPORT</div><div style="font-size:13px;color:#7b8799;margin-top:7px;">GENERATED ' + esc(generatedDate) + ' • ' + esc(generatedTime) + '</div></div>'
+    + '</div>'
+    + '<div style="margin-top:32px;"><div style="font-size:34px;font-weight:900;color:#10213f;">📦 ETA &amp; DE-STUFF SCHEDULE</div><div style="font-size:18px;font-weight:900;color:#e3342f;margin-top:7px;">' + esc(generatedDate) + '</div></div>'
+    + '</div>'
+    + '<div style="margin:0 -56px;background:#fff;padding:28px 56px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e4e7ec;">'
+    + '<div style="display:flex;align-items:center;gap:16px;"><div style="font-size:52px;line-height:1;font-weight:900;color:#e3342f;">' + containersList.length + '</div><div><div style="font-size:20px;font-weight:900;color:#526176;">Total Containers</div><div style="font-size:14px;color:#98a2b3;margin-top:4px;">planned for de-stuffing • ' + totalTeu + ' TEU</div></div></div>'
+    + '<div style="background:#10213f;color:#fff;border-radius:16px;padding:16px 30px;font-size:21px;font-weight:900;">STATUS – ' + (groups.length === 1 ? esc(groups[0][0]) : "SCHEDULE") + '</div>'
+    + '</div>'
+    + '<div style="padding:4px 0 8px;">' + (groups.length ? groups.map(renderGroup).join("") : '<div style="margin-top:30px;background:#fff;border:1px solid #dfe3e8;border-radius:12px;padding:40px;text-align:center;color:#7b8799;font-weight:700;">No containers selected for this report.</div>') + '</div>'
+    + '<div style="margin-top:34px;background:#e9edf3;padding:28px 0 8px;">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;gap:30px;padding:0 2px 24px;">'
+    + '<div><div style="font-size:21px;font-weight:900;color:#10213f;">GREENWICH MERIDIAN LOGISTICS</div><div style="font-size:12px;color:#7b8799;margin-top:5px;">Container Tracking &amp; Customer Visibility</div></div>'
+    + '<div style="text-align:right;font-size:13px;color:#667085;"><div>For operational assistance</div><div style="font-size:18px;font-weight:900;color:#10213f;margin-top:4px;">' + esc(COMPANY_CONFIG.supportEmail) + '</div></div>'
+    + '</div>'
+    + '<div style="border-top:1px solid #d2d8e1;padding-top:14px;font-size:12px;color:#7b8799;">Greenwich Meridian Logistics • Container Tracking Suite</div>'
+    + '</div></div>';
 }
 function downloadMultipleStatusImage(containersList, titleRef = "Status_Report") {
   if (!containersList || !containersList.length) return toast("No containers selected!");
