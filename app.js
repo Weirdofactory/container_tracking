@@ -487,11 +487,6 @@ function generateCleanManifestHtml(containersList) {
   const generatedDate = now.toLocaleDateString("en-IN", { weekday:"long", day:"2-digit", month:"long", year:"numeric" });
   const generatedTime = now.toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit" });
 
-  const shiftName = (r) => {
-    const v = String(getField(r, ["PLANNING","SHIFT"]) || "1ST SHIFT").trim().toUpperCase();
-    return v.includes("SHIFT") ? v : v + " SHIFT";
-  };
-
   const splitVesselVoy = (value) => {
     const raw = String(value || "").trim();
     const m = raw.match(/^(.*?)(?:\s+V(?:OY)?(?:AGE)?\.?\s*)([A-Z0-9-]+)$/i);
@@ -547,27 +542,20 @@ function generateCleanManifestHtml(containersList) {
       + '</div></div>';
   };
 
-  const grouped = {};
-  (containersList || []).forEach(r => {
-    const shift = shiftName(r);
-    if (!grouped[shift]) grouped[shift] = [];
-    grouped[shift].push(r);
-  });
-  const groups = Object.entries(grouped);
-  const totalTeu = (containersList || []).reduce((sum,r) => sum + teuFor(getField(r,["TYPE","SIZE"])),0);
+  const reportItems = containersList || [];
+  const totalTeu = reportItems.reduce((sum,r) => sum + teuFor(getField(r,["TYPE","SIZE"])),0);
 
-  const renderGroup = ([shift,items]) => {
-    const groupTeu = items.reduce((sum,r) => sum + teuFor(getField(r,["TYPE","SIZE"])),0);
+  const renderContainerSection = () => {
     return ''
       + '<section style="margin-top:30px;border:1px solid #dfe3e8;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.05);">'
       + '<div style="height:60px;background:#7c3aed;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;">'
-      + '<div style="font-size:20px;font-weight:900;">' + esc(shift) + '</div>'
-      + '<div style="font-size:13px;font-weight:800;">' + items.length + ' cntr • ' + groupTeu + ' TEU</div>'
-      + '</div>' + items.map(renderContainer).join("") + '</section>';
+      + '<div style="font-size:20px;font-weight:900;">CONTAINER DETAILS</div>'
+      + '<div style="font-size:13px;font-weight:800;">' + reportItems.length + ' cntr • ' + totalTeu + ' TEU</div>'
+      + '</div>' + reportItems.map(renderContainer).join("") + '</section>';
   };
 
   return ''
-    + '<div id="manifestCaptureContainer" data-report-version="2026-09-25-V4" style="width:1600px;background:#f4f6f8;padding:42px 56px 30px;font-family:Plus Jakarta Sans,Arial,sans-serif;color:#101828;box-sizing:border-box;">'
+    + '<div id="manifestCaptureContainer" data-report-version="2026-09-25-V5" style="width:1600px;background:#f4f6f8;padding:42px 56px 30px;font-family:Plus Jakarta Sans,Arial,sans-serif;color:#101828;box-sizing:border-box;">'
     + '<div style="background:#fff;padding:4px 2px 26px;border-bottom:4px solid #e3342f;">'
     + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:40px;">'
     + '<div><div style="font-size:27px;font-weight:900;letter-spacing:.08em;color:#27364d;">GREENWICH MERIDIAN LOGISTICS</div><div style="font-size:15px;font-weight:600;color:#7b8799;margin-top:8px;">Customer Shipment Visibility</div></div>'
@@ -576,10 +564,10 @@ function generateCleanManifestHtml(containersList) {
     + '<div style="margin-top:32px;"><div style="font-size:34px;font-weight:900;color:#10213f;">📦 ETA &amp; DE-STUFF SCHEDULE</div><div style="font-size:18px;font-weight:900;color:#e3342f;margin-top:7px;">' + esc(generatedDate) + '</div></div>'
     + '</div>'
     + '<div style="margin:0 -56px;background:#fff;padding:28px 56px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e4e7ec;">'
-    + '<div style="display:flex;align-items:center;gap:16px;"><div style="font-size:52px;line-height:1;font-weight:900;color:#e3342f;">' + containersList.length + '</div><div><div style="font-size:20px;font-weight:900;color:#526176;">Total Containers</div><div style="font-size:14px;color:#98a2b3;margin-top:4px;">planned for de-stuffing • ' + totalTeu + ' TEU</div></div></div>'
-    + '<div style="background:#10213f;color:#fff;border-radius:16px;padding:16px 30px;font-size:21px;font-weight:900;">STATUS – ' + (groups.length === 1 ? esc(groups[0][0]) : "SCHEDULE") + '</div>'
+    + '<div style="display:flex;align-items:center;gap:16px;"><div style="font-size:52px;line-height:1;font-weight:900;color:#e3342f;">' + reportItems.length + '</div><div><div style="font-size:20px;font-weight:900;color:#526176;">Total Containers</div><div style="font-size:14px;color:#98a2b3;margin-top:4px;">selected for status report • ' + totalTeu + ' TEU</div></div></div>'
+    + '<div style="background:#10213f;color:#fff;border-radius:16px;padding:16px 30px;font-size:21px;font-weight:900;">STATUS REPORT</div>'
     + '</div>'
-    + '<div style="padding:4px 0 8px;">' + (groups.length ? groups.map(renderGroup).join("") : '<div style="margin-top:30px;background:#fff;border:1px solid #dfe3e8;border-radius:12px;padding:40px;text-align:center;color:#7b8799;font-weight:700;">No containers selected for this report.</div>') + '</div>'
+    + '<div style="padding:4px 0 8px;">' + (reportItems.length ? renderContainerSection() : '<div style="margin-top:30px;background:#fff;border:1px solid #dfe3e8;border-radius:12px;padding:40px;text-align:center;color:#7b8799;font-weight:700;">No containers selected for this report.</div>') + '</div>
     + '<div style="margin-top:34px;background:#e9edf3;padding:28px 0 8px;">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;gap:30px;padding:0 2px 24px;">'
     + '<div><div style="font-size:21px;font-weight:900;color:#10213f;">GREENWICH MERIDIAN LOGISTICS</div><div style="font-size:12px;color:#7b8799;margin-top:5px;">Container Tracking &amp; Customer Visibility</div></div>'
