@@ -44,13 +44,11 @@ const DEFAULT_ROWS = [
   }
 ];
 
-let rows = [];
-let cloudDataLoaded = false;
-let cloudDataError = "";
+let rows = [...DEFAULT_ROWS];
 
 let currentUser = null;
 let selectedIndices = new Set();
-let currentView = 'sheet';
+let currentView = 'cards';
 let activeQuickFilter = 'all'; 
 let editingIndex = -1;
 let sortField = 'ETA';
@@ -79,17 +77,6 @@ const PORT_COORDS = {
 };
 
 const el = id => document.getElementById(id);
-const refreshCloudBtn = document.createElement("button");
-refreshCloudBtn.id = "refreshCloudBtn";
-refreshCloudBtn.className = "btn btn-ghost";
-refreshCloudBtn.textContent = "↻ Reload Data";
-refreshCloudBtn.title = "Reload live container data";
-refreshCloudBtn.style.display = "none";
-refreshCloudBtn.onclick = () => loadFromCloud(1);
-setTimeout(() => {
-  const exportBtn = document.getElementById("exportBtn");
-  if (exportBtn && exportBtn.parentElement) exportBtn.parentElement.insertBefore(refreshCloudBtn, exportBtn);
-}, 0);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 function resetToLanding() {
@@ -187,12 +174,6 @@ function parseLocalDate(str) {
   return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-function dateInputValue(val) {
-  const d = parseLocalDate(val);
-  if (!d || isNaN(d.getTime())) return "";
-  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
-}
-
 function getField(r, names) {
   if (!r) return "";
   for (let name of names) {
@@ -236,32 +217,32 @@ function generatePublicVoyageTimelineHtml(r) {
   else if (berthedPort) { currentStatusTxt = "Vessel Berthed"; nextStepTxt = "Port Discharge"; statusColor = "var(--accent)"; statusIcon = "🚢"; }
   else if (inward) { currentStatusTxt = "Inward Granted"; nextStepTxt = "Vessel Berthing"; statusColor = "var(--warning)"; statusIcon = "🛃"; }
 
-  return `
+  return \`
     <div class="public-status-result">
-      <div class="current-status-card" style="--status-color:${statusColor};">
+      <div class="current-status-card" style="--status-color:\${statusColor};">
         <div class="current-status-main">
-          <div class="current-status-icon">${statusIcon}</div>
+          <div class="current-status-icon">\${statusIcon}</div>
           <div class="current-status-copy">
             <div class="current-status-eyebrow">CURRENT STATUS</div>
-            <div class="current-status-title">${currentStatusTxt}</div>
+            <div class="current-status-title">\${currentStatusTxt}</div>
           </div>
         </div>
         <div class="current-status-next">
           <span>AWAITING NEXT</span>
-          <strong>${nextStepTxt}</strong>
+          <strong>\${nextStepTxt}</strong>
         </div>
       </div>
       <div class="info-panel shipment-info-panel">
-        <div class="info-item"><label>Line / MBL</label><val>${liner} • ${mblNo}</val></div>
-        <div class="info-item"><label>Vessel & Voyage</label><val>${vesselName}</val></div>
-        <div class="info-item"><label>Estimated Arrival</label><val>${eta}</val></div>
-        <div class="info-item"><label>Port of Loading</label><val>${pol}</val></div>
-        <div class="info-item"><label>Designated CFS</label><val>${cfsName}</val></div>
-        <div class="info-item"><label>Equipment Size</label><val>${esc(getField(r, ["TYPE", "SIZE"]) || "40' DC")}</val></div>
-        ${igmSplit ? `<div class="info-item"><label>IGM Split</label><val>${igmSplit}</val></div>` : ''}
+        <div class="info-item"><label>Line / MBL</label><val>\${liner} • \${mblNo}</val></div>
+        <div class="info-item"><label>Vessel & Voyage</label><val>\${vesselName}</val></div>
+        <div class="info-item"><label>Estimated Arrival</label><val>\${eta}</val></div>
+        <div class="info-item"><label>Port of Loading</label><val>\${pol}</val></div>
+        <div class="info-item"><label>Designated CFS</label><val>\${cfsName}</val></div>
+        <div class="info-item"><label>Equipment Size</label><val>\${esc(getField(r, ["TYPE", "SIZE"]) || "40' DC")}</val></div>
+        \${igmSplit ? \`<div class="info-item"><label>IGM Split</label><val>\${igmSplit}</val></div>\` : ''}
       </div>
     </div>
-  `;
+  \`;
 
 }
 
@@ -503,87 +484,58 @@ function calculateStandardFees(r) {
 
 function generateCleanManifestHtml(containersList) {
   const now = new Date();
-  const reportDate = now.toLocaleDateString("en-IN", { weekday:"short", day:"2-digit", month:"short", year:"numeric" });
-  const items = containersList || [];
-
-  const value = (r, keys, fallback = "—") => getField(r, keys) || fallback;
-  const date = (v) => v ? formatDate(v) : "—";
-  const teuFor = (type) => {
-    const t = String(type || "").toUpperCase();
-    return t.includes("40") || t.includes("45") ? 2 : 1;
+  const generatedDate = now.toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"}).toUpperCase();
+  const generatedTime = now.toLocaleTimeString("en-IN", {hour:"2-digit",minute:"2-digit"});
+  const splitVesselVoy = (value) => {
+    const raw = String(value || "").trim();
+    const m = raw.match(/^(.*?)(?:\s+V(?:OY)?(?:AGE)?\.?\s*)([A-Z0-9-]+)$/i);
+    return m ? {vessel:m[1].trim(),voyage:m[2].trim()} : {vessel:raw || "—",voyage:"—"};
   };
-  const status = (r) => {
-    const s = isFullyCompleted(r) ? "DE-STUFF COMPLETED" : String(getStatus(r).text || "PENDING").replace(/[^\w\s/-]/g,"").trim().toUpperCase();
-    return s || "PENDING";
+  const renderContainer = (r) => {
+    const container=getField(r,["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"])||"—";
+    const type=getField(r,["TYPE","SIZE"])||"—";
+    const mbl=getField(r,["MBL NO","MBL","MASTER BL"])||"—";
+    const liner=getField(r,["LINER","LINE"])||detectLinerFromMBL(mbl)||"—";
+    const pol=getField(r,["POL","PORT OF LOADING"])||"—";
+    const pod=getGatewayPortInfo(r).name||"—";
+    const cfs=getField(r,["CFS NAME","CFS"])||"—";
+    const etd=getField(r,["ETD"]);
+    const eta=getField(r,["ETA"]);
+    const vessel=splitVesselVoy(getField(r,["VESSEL & VOY","VESSEL","VESSEL NAME"]));
+    const st=getStatus(r);
+    const completed=isFullyCompleted(r);
+    const currentStatus=(completed?"DE-STUFF COMPLETED":(st.text||"IN TRANSIT")).replace(/<[^>]+>/g,"").replace(/^[^A-Z0-9]+/i,"").toUpperCase();
+    const point=(label,value)=>`<div style="flex:1;min-width:0;padding:24px 26px"><div style="font-size:13px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">${label}</div><div style="font-size:21px;font-weight:900;color:#172033;margin-top:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase">${esc(value||"—")}</div></div>`;
+    return `<div style="width:100%;box-sizing:border-box;background:#fff;border:1px solid #d5d9df;border-radius:10px;overflow:hidden;margin:28px 0 0;box-shadow:0 5px 18px rgba(15,23,42,.08)">
+      <div style="background:#3f4044;color:#fff;padding:30px 34px;display:grid;grid-template-columns:2fr 1.05fr 1.35fr 1.35fr;gap:30px;align-items:center">
+        <div><div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:#d1d5db;text-transform:uppercase">CURRENT VESSEL NAME | VOYAGE</div><div style="font-size:29px;line-height:1.15;font-weight:900;margin-top:8px;text-transform:uppercase">${esc(vessel.vessel)} <span style="font-weight:700;color:#d1d5db">| ${esc(vessel.voyage)}</span></div></div>
+        <div><div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:#d1d5db;text-transform:uppercase">CARRIER NAME</div><div style="font-size:22px;font-weight:900;margin-top:8px;text-transform:uppercase">${esc(liner)}</div></div>
+        <div><div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:#d1d5db;text-transform:uppercase">CONTAINER</div><div style="font-size:22px;font-weight:900;margin-top:8px;font-family:'JetBrains Mono',monospace">${esc(container)}</div></div>
+        <div style="background:#fff;color:#172033;border-radius:9px;padding:19px 18px;text-align:center;min-height:76px;display:flex;flex-direction:column;justify-content:center"><div style="font-size:12px;font-weight:900;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">CURRENT STATUS</div><div style="font-size:22px;font-weight:900;margin-top:7px;text-transform:uppercase">${esc(currentStatus)}</div></div>
+      </div>
+      <div style="padding:24px 28px 0">
+        <div style="display:flex;align-items:stretch;border:1px solid #d5d9df;border-radius:7px;overflow:hidden;background:#fff">
+          ${point("Place of Receipt",pol)}<div style="width:44px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#6b7280">→</div>
+          ${point("Port of Loading",pol)}<div style="width:44px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#6b7280">→</div>
+          ${point("Port of Discharge",pod)}<div style="width:44px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#6b7280">→</div>
+          ${point("Place of Delivery",cfs)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #d5d9df;border-top:0;border-radius:0 0 7px 7px;background:#fff">
+          <div style="padding:25px 28px;border-right:1px solid #e5e7eb"><div style="font-size:13px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">Actual Departure</div><div style="font-size:21px;font-weight:900;color:#172033;margin-top:9px">${etd?formatDate(etd).toUpperCase():"PENDING"}</div></div>
+          <div style="padding:25px 28px"><div style="font-size:13px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">Actual / Estimated Arrival</div><div style="font-size:21px;font-weight:900;color:#172033;margin-top:9px">${eta?formatDate(eta).toUpperCase():"PENDING"}</div></div>
+        </div>
+      </div>
+      <div style="margin-top:22px;border-top:1px solid #e5e7eb;background:#f8fafc;padding:20px 34px;font-size:15px;color:#6b7280">MBL: <b style="color:#374151">${esc(mbl)}</b><span style="margin:0 14px;color:#c0c4ca">•</span>CFS: <b style="color:#374151">${esc(cfs)}</b><span style="margin:0 14px;color:#c0c4ca">•</span>Type: <b style="color:#374151">${esc(type)}</b></div>
+    </div>`;
   };
-
-  const row = (r) => {
-    const container = value(r, ["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]);
-    const type = value(r, ["TYPE","SIZE"]);
-    const mbl = value(r, ["MBL NO","MBL","MASTER BL"]);
-    const liner = value(r, ["LINER","LINE"]) || detectLinerFromMBL(mbl) || "—";
-    const vessel = value(r, ["VESSEL & VOY","VESSEL","VESSEL NAME"]);
-    const pod = getGatewayPortInfo(r).name || "—";
-    const pol = value(r, ["POL","PORT OF LOADING"]);
-    const cfs = value(r, ["CFS NAME","CFS"]);
-    const eta = date(value(r, ["ETA"], ""));
-    const portIn = date(value(r, ["PORT IN"], ""));
-    const destuff = date(value(r, ["DESTUFFING DATE","DESTUFF DATE"], ""));
-    const remarks = value(r, ["REMARKS","REMARK","NOTES","NOTE"]);
-    const etd = date(value(r, ["ETD"], ""));
-    const st = status(r);
-    const done = /COMPLETED|RETURNED|DELIVERED/.test(st);
-
-    return '<tr>'
-      + '<td><div class="cn">' + esc(container) + '</div><div class="sub">' + esc(type) + '</div></td>'
-      + '<td><div class="main">' + esc(mbl) + '</div><div class="sub">' + esc(liner) + '</div></td>'
-      + '<td><div class="main">' + esc(vessel) + '</div></td>'
-      + '<td><div class="main">' + esc(pod) + '</div></td>'
-      + '<td><div class="main">' + esc(pol) + '</div><div class="sub">ETD: ' + esc(etd) + '</div></td>'
-      + '<td><div class="main cfs">' + esc(cfs) + '</div></td>'
-      + '<td><div class="main">' + esc(eta) + ' /</div><div class="date2">' + esc(portIn) + '</div></td>'
-      + '<td><div class="main">' + esc(destuff) + '</div></td>'
-      + '<td><span class="status ' + (done ? 'done' : 'pending') + '">' + (done ? '📦 ' : '') + esc(st) + '</span></td>'
-      + '<td><div class="remarks">' + esc(remarks) + '</div></td>'
-      + '</tr>';
-  };
-
-  const totalTeu = items.reduce((sum,r) => sum + teuFor(value(r, ["TYPE","SIZE"], "")), 0);
-
-  return '<div id="manifestCaptureContainer" data-report-version="2026-09-25-V7" style="width:1600px;background:#fff;border:1px solid #cfd8e3;border-radius:14px;padding:34px 40px 22px;font-family:Arial,Helvetica,sans-serif;color:#10213f;box-sizing:border-box;">'
-    + '<style>'
-    + '#manifestCaptureContainer .report-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #17233b;padding-bottom:20px;margin-bottom:20px;}'
-    + '#manifestCaptureContainer .brand{font-size:28px;font-weight:900;letter-spacing:.01em;color:#10213f;}'
-    + '#manifestCaptureContainer .desk{font-size:15px;font-weight:700;color:#68778d;margin-top:8px;}'
-    + '#manifestCaptureContainer .rdate{font-family:Consolas,monospace;font-size:19px;font-weight:900;color:#1688be;white-space:nowrap;}'
-    + '#manifestCaptureContainer table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:12px;}'
-    + '#manifestCaptureContainer th{background:#111b31;color:#fff;text-align:left;padding:13px 11px;font-size:12px;font-weight:900;letter-spacing:.01em;border-right:1px solid #2c3850;}'
-    + '#manifestCaptureContainer th:first-child{border-radius:4px 0 0 0;}'
-    + '#manifestCaptureContainer th:last-child{border-radius:0 4px 0 0;border-right:0;}'
-    + '#manifestCaptureContainer td{padding:15px 11px 13px;border-bottom:1px solid #dfe5ec;vertical-align:top;height:70px;}'
-    + '#manifestCaptureContainer .cn{font-family:Consolas,monospace;font-size:14px;font-weight:900;color:#1187bd;letter-spacing:.02em;overflow-wrap:anywhere;word-break:break-word;}'
-    + '#manifestCaptureContainer .main{font-size:12.5px;font-weight:800;color:#1d2b43;line-height:1.35;overflow-wrap:anywhere;word-break:break-word;}'
-    + '#manifestCaptureContainer .sub{font-size:11px;font-weight:700;color:#7a8799;margin-top:5px;overflow-wrap:anywhere;word-break:break-word;}'
-    + '#manifestCaptureContainer .date2{font-size:14px;font-weight:900;color:#1688be;margin-top:4px;}'
-    + '#manifestCaptureContainer .cfs{color:#1688be;}'
-    + '#manifestCaptureContainer .status{display:inline-block;border-radius:6px;padding:7px 10px;font-size:10px;font-weight:900;white-space:normal;line-height:1.25;text-align:center;}'
-    + '#manifestCaptureContainer .status.done{background:#dff7e8;color:#20844a;}'
-    + '#manifestCaptureContainer .status.pending{background:#eaf2fb;color:#235b8c;}'
-    + '#manifestCaptureContainer .remarks{font-size:11px;font-weight:700;color:#34445d;line-height:1.4;overflow-wrap:anywhere;word-break:break-word;}'
-    + '#manifestCaptureContainer .summary{display:flex;justify-content:flex-end;gap:24px;margin-top:14px;font-size:12px;color:#68778d;font-weight:700;}'
-    + '#manifestCaptureContainer .summary b{color:#17233b;}'
-    + '</style>'
-    + '<div class="report-head">'
-    + '<div><div class="brand">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</div><div class="desk">Live Status Report • Chennai Operations Desk</div></div>'
-    + '<div class="rdate">' + esc(reportDate) + '</div>'
-    + '</div>'
-    + '<table>'
-    + '<colgroup><col style="width:10%"><col style="width:10%"><col style="width:16%"><col style="width:7%"><col style="width:10%"><col style="width:7%"><col style="width:10%"><col style="width:8%"><col style="width:10%"><col style="width:12%"></colgroup>'
-    + '<thead><tr><th>CONTAINER NO</th><th>MBL / LINE</th><th>VESSEL</th><th>PORT</th><th>POL</th><th>CFS</th><th>ETA / PORT IN</th><th>DESTUFF</th><th>STATUS</th><th>REMARKS</th></tr></thead>'
-    + '<tbody>' + (items.length ? items.map(row).join("") : '<tr><td colspan="10" style="text-align:center;padding:30px;color:#7a8799;font-weight:700;">No containers selected.</td></tr>') + '</tbody>'
-    + '</table>'
-    + '<div class="summary"><span>Total Containers: <b>' + items.length + '</b></span><span>Total TEU: <b>' + totalTeu + '</b></span></div>'
-    + '</div>';
+  return `<div id="manifestCaptureContainer" data-report-version="2026-09-25-V3" style="width:1600px;background:#f1f2f4;padding:34px 38px 28px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#111827;box-sizing:border-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:4px 4px 18px;border-bottom:2px solid #3f4044">
+      <div><div style="font-size:26px;font-weight:900;letter-spacing:.09em;color:#30343b">GREENWICH MERIDIAN LOGISTICS</div><div style="font-size:15px;color:#6b7280;margin-top:7px">Customer Shipment Visibility</div></div>
+      <div style="text-align:right"><div style="font-size:22px;font-weight:900;color:#3f4044;letter-spacing:.05em">STATUS REPORT</div><div style="font-size:13px;color:#6b7280;margin-top:6px">GENERATED ${generatedDate} • ${generatedTime}</div></div>
+    </div>
+    ${containersList.map(renderContainer).join("")}
+    <div style="padding:22px 4px 4px;text-align:center;font-size:13px;color:#6b7280">For operational assistance: ${esc(COMPANY_CONFIG.supportEmail)} • Container Tracking Suite</div>
+  </div>`;
 }
 function downloadMultipleStatusImage(containersList, titleRef = "Status_Report") {
   if (!containersList || !containersList.length) return toast("No containers selected!");
@@ -613,7 +565,7 @@ function downloadMultipleStatusImage(containersList, titleRef = "Status_Report")
   requestAnimationFrame(() => {
     setTimeout(() => {
       html2canvas(target, {
-        scale: 1.25,
+        scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#f4f4f5",
@@ -1014,72 +966,45 @@ function performPublicSearch() {
 
     container.innerHTML = `
       <div class="public-status-header">
-        <div style="font-size:9px;font-weight:900;color:var(--accent);text-transform:uppercase;letter-spacing:.12em;">CUSTOMER SHIPMENT VISIBILITY</div>
-        <div style="font-size:22px;font-weight:900;margin-top:4px;">Your Shipments</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Quick overview — click any shipment for details.</div>
+        <div style="font-size:9px; font-weight:900; color:var(--accent); text-transform:uppercase; letter-spacing:.12em;">CUSTOMER STATUS</div>
+        <div style="font-size:22px; font-weight:900; margin-top:4px;">Shipment Status & Timeline</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">A simple operational view of your container movement.</div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 12px;">
-        <button class="btn btn-ghost public-list-filter active" data-filter="all" style="padding:7px 12px;font-size:11px;">All (${publicSearchResults.length})</button>
-        <button class="btn btn-ghost public-list-filter" data-filter="active" style="padding:7px 12px;font-size:11px;">In Progress</button>
-        <button class="btn btn-ghost public-list-filter" data-filter="completed" style="padding:7px 12px;font-size:11px;">Completed</button>
-        <button class="btn btn-ghost public-list-filter" data-filter="attention" style="padding:7px 12px;font-size:11px;">Needs Attention</button>
-      </div>
-      <div style="overflow:auto;border:1px solid var(--border);border-radius:14px;background:#fff;">
-        <table class="public-shipment-table" style="width:100%;border-collapse:collapse;min-width:850px;">
-          <thead><tr style="background:#10213f;color:#fff;text-align:left;">
-            <th style="padding:12px 14px;font-size:10px;">CONTAINER</th>
-            <th style="padding:12px 14px;font-size:10px;">VESSEL / VOYAGE</th>
-            <th style="padding:12px 14px;font-size:10px;">ETA</th>
-            <th style="padding:12px 14px;font-size:10px;">CFS</th>
-            <th style="padding:12px 14px;font-size:10px;">CURRENT STATUS</th>
-            <th style="padding:12px 14px;font-size:10px;">NEXT STEP</th>
-            <th style="padding:12px 14px;font-size:10px;"></th>
-          </tr></thead>
-          <tbody>
-            ${publicSearchResults.map((r, i) => {
-              const st = getStatus(r);
-              const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]);
-              const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
-              const eta = formatDate(getField(r, ["ETA"])) || "—";
-              const cfsName = getField(r, ["CFS NAME", "CFS"]) || "—";
-              const returned = getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]);
-              const destuffed = getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]);
-              const cfsIn = getField(r, ["CFS IN"]);
-              const portOut = getField(r, ["PORT OUT"]);
-              const remarks = getField(r, ["REMARKS", "REMARK", "NOTES", "NOTE"]);
-              const next = returned ? "Tracking Complete" : destuffed ? "Empty Return to Depot" : cfsIn ? "Destuffing" : portOut ? "CFS In-Gate" : "Next milestone pending";
-              const complete = !!returned || st.class === "completed";
-              const attention = /PENDING|NOT|ISSUE|HOLD/i.test(remarks);
-              const statusText = returned ? "EMPTY RETURNED" : destuffed ? "DESTUFFED" : cfsIn ? "CFS IN" : portOut ? "PORT OUT" : getField(r, ["PORT IN"]) ? "PORT IN" : (st.text || "PENDING");
-              const publicUrl = window.location.href.split('?')[0] + '?cntr=' + encodeURIComponent(cntr);
-              const detail = generatePublicVoyageTimelineHtml(r);
-              return '<tr class="public-shipment-row" data-status="' + (complete ? "completed" : attention ? "attention" : "active") + '" style="border-top:1px solid var(--border);cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===&quot;table-row&quot;?&quot;none&quot;:&quot;table-row&quot;">'
-                + '<td style="padding:13px 14px;"><div style="font-family:monospace;font-weight:900;color:var(--accent);">' + esc(cntr) + '</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">' + esc(getField(r,["TYPE","SIZE"]) || "") + '</div></td>'
-                + '<td style="padding:13px 14px;font-weight:800;font-size:12px;">' + esc(vessel || "—") + '</td>'
-                + '<td style="padding:13px 14px;font-weight:800;font-size:12px;">' + esc(eta) + '</td>'
-                + '<td style="padding:13px 14px;font-weight:800;font-size:12px;">' + esc(cfsName) + '</td>'
-                + '<td style="padding:13px 14px;"><span style="display:inline-block;border-radius:14px;padding:6px 9px;font-size:10px;font-weight:900;background:' + (complete ? "#e7f6ec" : "#eef6ff") + ';color:' + (complete ? "#137333" : "#245b8a") + ';">' + esc(statusText) + '</span></td>'
-                + '<td style="padding:13px 14px;font-size:11px;font-weight:700;color:var(--text-muted);">' + esc(next) + '</td>'
-                + '<td style="padding:13px 14px;font-size:18px;color:var(--accent);">›</td></tr>'
-                + '<tr class="public-shipment-detail" style="display:none;background:#f8fafc;"><td colspan="7" style="padding:0 14px 14px;"><div style="padding-top:10px;">' + detail + '</div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;"><button class="btn btn-ghost" style="padding:6px 10px;font-size:10px;" data-url="' + esc(publicUrl) + '" onclick="event.stopPropagation();copyText(this.dataset.url)">🔗 Copy Tracking Link</button></div></td></tr>';
-            }).join("")}
-          </tbody>
-        </table>
-      </div>
-    `;
+      ${publicSearchResults.map((r, i) => {
+      const st = getStatus(r);
+      const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]);
+      const originPort = getField(r, ["POL", "PORT OF LOADING"]) || "SHEKOU";
+      const gwPort = getGatewayPortInfo(r).name;
+      const destPort = `${gwPort}, INDIA`;
+      const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+      const publicTimelineHtml = generatePublicVoyageTimelineHtml(r);
+      const publicUrl = window.location.href.split('?')[0] + '?cntr=' + encodeURIComponent(cntr);
 
-    document.querySelectorAll('.public-list-filter').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.public-list-filter').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const filter = btn.dataset.filter;
-        document.querySelectorAll('.public-shipment-row').forEach(row => {
-          const show = filter === 'all' || row.dataset.status === filter;
-          row.style.display = show ? 'table-row' : 'none';
-          if (!show && row.nextElementSibling) row.nextElementSibling.style.display = 'none';
-        });
-      });
-    });
+      return `
+        <div class="cascade-item" style="animation-delay: ${i * 100}ms">
+          <div class="public-container-head">
+            <div>
+              <div style="font-size:9.5px; font-weight:800; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em;">Container Number</div>
+              <div class="public-container-number">${esc(cntr)}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="copyText('${publicUrl}')" title="Copy Public Tracking Link">🔗 Copy Link</button>
+              <button class="btn btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="window.print()" title="Print Summary">🖨️ Print</button>
+              <button class="btn" style="border-radius:20px; font-size:11px; padding:6px 14px;" onclick="openRouteMap('${esc(originPort)}', '${esc(destPort)}', '${esc(vessel)}')">🗺️ Route Map</button>
+              <span class="public-badge ${st.class === 'completed' ? 'completed' : ''}">${st.text}</span>
+            </div>
+          </div>
+          <div class="public-detail-grid">
+            <div class="public-detail"><small>Vessel / Voyage</small><strong>${esc(vessel || '—')}</strong></div>
+            <div class="public-detail"><small>ETA</small><strong>${esc(formatDate(getField(r,['ETA'])) || '—')}</strong></div>
+            <div class="public-detail"><small>Gateway Port</small><strong>${esc(gwPort || '—')}</strong></div>
+            <div class="public-detail"><small>CFS</small><strong>${esc(getField(r,['CFS NAME','CFS']) || '—')}</strong></div>
+          </div>
+          ${publicTimelineHtml}
+        </div>
+      `;
+    }).join("<hr style='border:0; border-top:1px solid var(--border);'>")}
+    `;
 
     // Trigger sequential timeline drawing
     setTimeout(() => {
@@ -1706,82 +1631,61 @@ function renderCards(items) {
 
 function renderSheet(items) {
   const isViewer = currentUser && currentUser.role === "Viewer";
+  
+  const editableAttrText = isViewer ? 'readonly' : 'readonly ondblclick="this.readOnly=false; this.focus();" onblur="this.readOnly=true;"';
+  const editableAttrSelect = isViewer ? 'disabled' : 'disabled ondblclick="this.disabled=false; this.focus();" onblur="this.disabled=true;"';
 
   if (!items.length) {
-    el("sheetTableBody").innerHTML = '<tr><td colspan="29" style="text-align:center;padding:50px;color:var(--text-muted);">No containers found.</td></tr>';
+    el("sheetTableBody").innerHTML = `<tr><td colspan="17" style="text-align:center; padding:40px; color:var(--text-muted);">No records found.</td></tr>`;
     el("paginationWrapper").innerHTML = "";
     return;
   }
 
+  // Pagination Logic
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE) || 1;
   if (currentPage > totalPages) currentPage = totalPages;
   const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedItems = items.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
-  const dateFields = new Set(["ETD","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE"]);
-
-  const show = (r, field) => {
-    const v = getField(r, [field]);
-    if (!v) return "—";
-    return dateFields.has(field) ? (formatDate(v) || v) : v;
-  };
-
   el("sheetTableBody").innerHTML = paginatedItems.map(({r, i}, loopIdx) => {
-    const st = getStatus(r);
+    const isChecked = selectedIndices.has(i) ? "checked" : "";
+    const gwPort = getGatewayPortInfo(r);
     const fees = calculateStandardFees(r);
-    const ev = getEmptyReturnValidity(r);
+    const cntrNo = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "";
+    const isoStatus = validateISO6346(cntrNo);
     const flashClass = lastEditedId === i ? "row-saved" : "";
 
-    const cell = (field, extra = "") =>
-      '<td data-label="' + esc(field) + '" style="white-space:nowrap;' + extra + '">' + esc(show(r, field)) + '</td>';
-
     return `
-      <tr data-row="${i}" class="cascade-item ${flashClass}" style="animation-delay:${loopIdx * 15}ms">
-        <td style="position:sticky;left:0;z-index:3;background:var(--bg-elevated);">
-          <input type="checkbox" class="chk-item" value="${i}" ${selectedIndices.has(i) ? "checked" : ""}>
+      <tr data-row="${i}" class="cascade-item ${flashClass}" style="animation-delay: ${loopIdx * 20}ms">
+        <td><input type="checkbox" class="chk-item" value="${i}" ${isChecked}></td>
+        <td data-label="Container No.">
+          <input class="cell-input" style="font-family:'JetBrains Mono'; font-weight:700; color:var(--accent);" value="${esc(cntrNo)}" title="${isoStatus.message}" onchange="inlineEditContainerNo(${i}, this.value)" ${editableAttrText}>
         </td>
-        <td data-label="Container No." style="position:sticky;left:35px;z-index:3;background:var(--bg-elevated);font-family:'JetBrains Mono';font-weight:900;color:var(--accent);white-space:nowrap;">
-          ${esc(getField(r, ["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]) || "UNKNOWN")}
+        <td data-label="Type"><input class="cell-input" style="width:45px;" value="${esc(getField(r, ["TYPE", "SIZE"]) || "40' DC")}" onchange="inlineEdit(${i}, 'TYPE', this.value)" ${editableAttrText}></td>
+        <td data-label="MBL No"><input class="cell-input" style="width:85px;" value="${esc(getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "")}" onchange="inlineEditMBL(${i}, this.value)" ${editableAttrText}></td>
+        <td data-label="Liner"><input class="cell-input" style="width:75px;" value="${esc(getField(r, ["LINER", "LINE"]) || "")}" onchange="inlineEdit(${i}, 'LINER', this.value)" ${editableAttrText}></td>
+        <td data-label="Port">
+          <select class="cell-select" style="width:80px;" onchange="setGatewayPort(${i}, this.value)" ${editableAttrSelect}>
+            <option value="CITPL" ${gwPort.key === 'CITPL' ? 'selected' : ''}>CITPL</option>
+            <option value="CCTL" ${gwPort.key === 'CCTL' ? 'selected' : ''}>CCTL</option>
+            <option value="Kattupalli" ${gwPort.key === 'Kattupalli' ? 'selected' : ''}>Kattupalli</option>
+            <option value="Ennore" ${gwPort.key === 'Ennore' ? 'selected' : ''}>Ennore</option>
+          </select>
         </td>
-        ${cell("TYPE")}
-        ${cell("MBL NO", "font-family:'JetBrains Mono';font-size:11px;")}
-        ${cell("LINER")}
-        ${cell("GATEWAY PORT")}
-        ${cell("CFS NAME")}
-        ${cell("POL")}
-        ${cell("ETD")}
-        ${cell("FREE DAYS", "text-align:center;")}
-        ${cell("SEAL NO.", "font-family:'JetBrains Mono';font-size:11px;")}
-        ${cell("VESSEL & VOY", "font-weight:800;min-width:190px;")}
-        <td data-label="ETA" style="font-weight:900;white-space:nowrap;cursor:pointer;" onclick="sortSheet('ETA')" title="Sort by ETA">
-          ${esc(show(r,"ETA"))} ↕
-        </td>
-        ${cell("SPLIT DATE")}
-        ${cell("INWARD DATE")}
-        ${cell("PORT IN")}
-        ${cell("PORT OUT")}
-        ${cell("CFS IN")}
-        ${cell("TRUCK NO.", "font-family:'JetBrains Mono';")}
-        ${cell("DRIVER CONTACT", "min-width:150px;")}
-        ${cell("PLANNING", "min-width:130px;")}
-        ${cell("DESTUFFING DATE")}
-        ${cell("EMPTY RETURN VALIDITY")}
-        ${cell("CONTAINER RETURN DATE")}
-        <td data-label="STATUS" style="white-space:nowrap;"><span class="status-pill ${st.class}">${st.text}</span></td>
-        <td data-label="LFD / DWELL" style="min-width:170px;font-size:11px;line-height:1.5;">
-          <strong>${esc(fees.terminalLFD)}</strong>
-          <br>Port dwell: ${fees.portDwell}d / Free ${fees.portFreeDays}d
-          ${fees.demOverdue ? '<br><span style="color:var(--danger);font-weight:900;">Demurrage: ' + esc(formatCurrency(fees.demCostUSD)) + '</span>' : ''}
-        </td>
-        <td data-label="EMPTY STATUS" style="min-width:150px;font-weight:800;">
-          ${esc(ev.date)} · ${esc(ev.label)}
-        </td>
-        ${cell("REMARKS", "min-width:180px;max-width:300px;white-space:normal;")}
-        <td data-label="ACTIONS" style="position:sticky;right:0;z-index:3;background:var(--bg-elevated);white-space:nowrap;">
-          <div style="display:flex;gap:4px;">
-            ${!isViewer ? '<button class="btn btn-primary" style="padding:5px 9px;font-size:10px;" onclick="openModal(' + i + ')">✏️ Edit</button>' : ''}
-            ${!isViewer ? '<button class="btn" style="padding:4px 7px;color:var(--accent);" onclick="markSingleReturned(' + i + ')" title="Mark Returned">↩</button>' : ''}
-            ${currentUser && currentUser.role === 'Admin' ? '<button class="btn btn-danger" style="padding:4px 7px;" onclick="deleteRow(' + i + ')">🗑️</button>' : ''}
+        <td data-label="Port In"><input class="cell-input" type="date" value="${getField(r, ["PORT IN"]) || ""}" onchange="inlineEdit(${i}, 'PORT IN', this.value)" ${editableAttrText}></td>
+        <td data-label="Port Out"><input class="cell-input" type="date" value="${getField(r, ["PORT OUT"]) || ""}" onchange="inlineEdit(${i}, 'PORT OUT', this.value)" ${editableAttrText}></td>
+        <td data-label="CFS Depot"><input class="cell-input" style="width:80px;" value="${esc(getField(r, ["CFS NAME", "CFS"]) || "")}" onchange="inlineEdit(${i}, 'CFS NAME', this.value)" ${editableAttrText}></td>
+        <td data-label="Truck No"><input class="cell-input" style="width:90px; font-family:'JetBrains Mono';" value="${esc(getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "")}" placeholder="Vehicle" oninput="this.value=formatTruckNo(this.value)" onchange="inlineEdit(${i}, 'TRUCK NO.', this.value)" ${editableAttrText}></td>
+        <td data-label="Destuffed"><input class="cell-input" type="date" value="${getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]) || ""}" onchange="inlineEdit(${i}, 'DESTUFFING DATE', this.value)" ${editableAttrText}></td>
+        <td data-label="Empty Return"><input class="cell-input" type="date" value="${getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]) || ""}" onchange="inlineEdit(${i}, 'CONTAINER RETURN DATE', this.value)" ${editableAttrText}></td>
+        <td data-label="Port Out LFD" style="font-weight:700; color:${fees.demOverdue ? 'var(--danger)' : 'var(--text-muted)'};">${fees.terminalLFD}</td>
+        <td data-label="Detention LFD" style="font-weight:700; color:${fees.detOverdue ? 'var(--danger)' : 'var(--text-muted)'};">${fees.detentionLFD}</td>
+        <td data-label="Exposure" style="font-weight:800; font-family:'JetBrains Mono'; color:${fees.totalCostUSD > 0 ? 'var(--danger)' : 'var(--success)'};">${formatCurrency(fees.totalCostUSD)}</td>
+        <td data-label="Remarks"><input class="cell-input" value="${esc(r["REMARKS"] || "")}" onchange="inlineEdit(${i}, 'REMARKS', this.value)" ${editableAttrText}></td>
+        <td data-label="Actions">
+          <div style="display:flex; gap:3px;">
+            ${!isViewer ? `<button class="btn" style="padding:2px 5px; color:var(--accent)" title="Mark Returned" onclick="markSingleReturned(${i})">🔄</button>` : ''}
+            ${currentUser && currentUser.role === 'Admin' ? `<button class="btn btn-danger" style="padding:2px 5px;" onclick="deleteRow(${i})">🗑️</button>` : ''}
           </div>
         </td>
       </tr>
@@ -1789,17 +1693,17 @@ function renderSheet(items) {
   }).join("");
 
   el("paginationWrapper").innerHTML = `
-    <div style="display:flex;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);align-items:center;background:var(--bg-elevated);">
-      <span style="font-size:11px;font-weight:700;color:var(--text-muted)">Showing ${startIdx + 1}-${Math.min(startIdx + ITEMS_PER_PAGE, items.length)} of ${items.length} records</span>
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-ghost" onclick="changePage(-1)" ${currentPage === 1 ? "disabled" : ""}>&larr; Previous</button>
-        <button class="btn btn-ghost" onclick="changePage(1)" ${currentPage === totalPages ? "disabled" : ""}>Next &rarr;</button>
+    <div style="display:flex; justify-content:space-between; padding:12px 16px; border-top:1px solid var(--border); align-items:center; background:var(--bg-elevated);">
+      <span style="font-size:11px; font-weight:700; color:var(--text-muted)">Showing ${startIdx + 1}-${Math.min(startIdx + ITEMS_PER_PAGE, items.length)} of ${items.length} records</span>
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-ghost" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>&larr; Previous</button>
+        <button class="btn btn-ghost" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>Next &rarr;</button>
       </div>
     </div>
   `;
 
   bindCheckboxes();
-  lastEditedId = -1;
+  lastEditedId = -1; // reset flash
 }
 
 // Ensure changePage is globally available
@@ -2022,137 +1926,27 @@ document.querySelectorAll(".chip").forEach(chip => {
 });
 
 async function saveAndRefresh() {
-  if (!cloudDataLoaded) {
-    console.warn("Cloud data is not loaded. Save blocked to protect Supabase data.");
-    toast("Cloud data not loaded — save blocked");
-    return false;
-  }
-
   renderUI();
   try {
-    const { error } = await sb.from('containers').upsert({
-      id: 'gml_tracking_records',
-      data: rows,
-      updated_at: new Date().toISOString()
-    });
-
-    if (error) throw error;
-    cloudDataError = "";
-    return true;
+    localStorage.setItem("containerRows", JSON.stringify(rows));
+    await sb.from('containers').upsert({ id: 'gml_tracking_records', data: rows, updated_at: new Date().toISOString() });
   } catch (err) {
-    console.error("Cloud sync failed:", err);
-    cloudDataError = err?.message || "Cloud sync failed";
-    toast("Cloud sync failed — data not overwritten");
-    return false;
+    console.warn("Cloud sync notice:", err);
   }
 }
 
-async function loadFromCloud(attempt = 1) {
-  cloudDataLoaded = false;
-  cloudDataError = "";
-  rows = [];
-  populateFilters();
-  renderUI();
-
+async function loadFromCloud() {
   try {
-    // Use the Supabase REST endpoint directly for the initial read.
-    // This avoids failures caused by the client SDK/session layer while
-    // keeping Supabase as the single source of truth.
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10000);
-    const url = `${SUPABASE_URL}/rest/v1/containers?select=data&id=eq.gml_tracking_records`;
-
-    let response;
-    try {
-      response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-          "Accept": "application/json"
-        },
-        cache: "no-store",
-        signal: controller.signal
-      });
-    } finally {
-      clearTimeout(timer);
-    }
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      throw new Error(`Supabase HTTP ${response.status}: ${body.slice(0, 180)}`);
-    }
-
-    const result = await response.json();
-    const cloudRecord = Array.isArray(result) ? result[0] : null;
-
-    if (!cloudRecord || !Array.isArray(cloudRecord.data)) {
-      throw new Error("Supabase returned no valid container data.");
-    }
-
-    rows = cloudRecord.data.map(item => ({
-      "PORT OUT": "",
-      "CONTAINER RETURN DATE": "",
-      "TRUCK NO.": "",
-      "DRIVER CONTACT": "",
-      ...item
-    }));
-
-    cloudDataLoaded = true;
-    cloudDataError = "";
-    currentPage = 1;
-    selectedIndices.clear();
-    populateFilters();
-    renderUI();
-
-    console.info(`Loaded ${rows.length} container records directly from Supabase REST.`);
-    toast(`Loaded ${rows.length} live containers`);
-
-    const retryBtn = el("refreshCloudBtn");
-    if (retryBtn) retryBtn.style.display = "none";
-
-    return true;
-  } catch (err) {
-    console.error("Supabase REST load failed:", err);
-
-    // Recovery fallback: use the last verified 109-record snapshot if the
-    // browser cannot reach Supabase. Never write this snapshot back to Supabase.
-    if (Array.isArray(window.LIVE_CONTAINER_SNAPSHOT) && window.LIVE_CONTAINER_SNAPSHOT.length > 0) {
-      rows = window.LIVE_CONTAINER_SNAPSHOT.map(item => ({
-        "PORT OUT": "",
-        "CONTAINER RETURN DATE": "",
-        "TRUCK NO.": "",
-        "DRIVER CONTACT": "",
-        ...item
-      }));
-      cloudDataLoaded = true;
-      cloudDataError = `Live Supabase unavailable; using verified read-only snapshot. ${err?.message || ""}`;
-      currentPage = 1;
-      selectedIndices.clear();
+    const { data, error } = await sb.from('containers').select('data').eq('id', 'gml_tracking_records').single();
+    if (!error && data && Array.isArray(data.data) && data.data.length > 0) {
+      rows = data.data;
+      localStorage.setItem("containerRows", JSON.stringify(rows));
       populateFilters();
       renderUI();
-      console.warn(`Using verified snapshot with ${rows.length} records.`);
-      toast(`Loaded ${rows.length} verified records`);
-      return true;
     }
-
-    cloudDataLoaded = false;
-    cloudDataError = err?.message || "Unable to load cloud data";
-    rows = [];
-    populateFilters();
-    renderUI();
-
-    if (attempt < 3) {
-      toast(`Loading live data… retry ${attempt + 1}/3`);
-      setTimeout(() => loadFromCloud(attempt + 1), 1200);
-    } else {
-      toast("Live data failed to load — use Reload Data");
-      const retryBtn = el("refreshCloudBtn");
-      if (retryBtn) retryBtn.style.display = "inline-flex";
-    }
-    return false;
-  }
+  } catch(err){}
 }
+
 function populateFilters() {
   const vSet = new Set(), cSet = new Set();
   rows.forEach(r => {
@@ -2267,7 +2061,6 @@ el("modalClose").addEventListener("click", () => el("modalBg").classList.remove(
 el("modalCancel").addEventListener("click", () => el("modalBg").classList.remove("open"));
 
 el("modalSave").addEventListener("click", () => {
-  if (!cloudDataLoaded) return alert("Cloud data is not loaded. Editing is locked until the live Supabase data is loaded.");
   if (currentUser && currentUser.role === "Viewer") return alert("Read-only access.");
   
   const item = {};
@@ -2416,7 +2209,6 @@ el("exportBtn").addEventListener("click", () => {
 
 // Centralized Excel Parser for Input & Drag/Drop
 function processExcelFile(file) {
-  if (!cloudDataLoaded) return alert("Cloud data is not loaded yet. Excel import is locked to protect your live Supabase data.");
   if (currentUser && currentUser.role === "Viewer") return alert("Read-only access.");
   if (!file) return;
   
@@ -2500,8 +2292,23 @@ ddOverlay.addEventListener("drop", (e) => {
   }
 });
 
-// Operational container data is loaded ONLY from Supabase.
-// Do not hydrate rows from browser localStorage or DEFAULT_ROWS.
+// Load storage with safety fallback
+try {
+  const saved = localStorage.getItem("containerRows");
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      rows = parsed.map(item => ({
+        "PORT OUT": "",
+        "CONTAINER RETURN DATE": "",
+        "TRUCK NO.": "",
+        "DRIVER CONTACT": "",
+        ...item
+      }));
+    }
+  }
+} catch(e){}
+
 populateFilters();
 loadFromCloud();
 updateAuditBadge();
@@ -2978,8 +2785,8 @@ function renderSheet(items) {
             <option value="Ennore" ${gwPort.key === 'Ennore' ? 'selected' : ''}>Ennore</option>
           </select>
         </td>
-        <td data-label="Port In"><input class="cell-input" type="date" value="${dateInputValue(getField(r, ["PORT IN"]))}" onchange="inlineEdit(${i}, 'PORT IN', this.value)" ${editableAttrText}></td>
-        <td data-label="Port Out"><input class="cell-input" type="date" value="${dateInputValue(getField(r, ["PORT OUT"]))}" onchange="inlineEdit(${i}, 'PORT OUT', this.value)" ${editableAttrText}></td>
+        <td data-label="Port In"><input class="cell-input" type="date" value="${getField(r, ["PORT IN"]) || ""}" onchange="inlineEdit(${i}, 'PORT IN', this.value)" ${editableAttrText}></td>
+        <td data-label="Port Out"><input class="cell-input" type="date" value="${getField(r, ["PORT OUT"]) || ""}" onchange="inlineEdit(${i}, 'PORT OUT', this.value)" ${editableAttrText}></td>
         <td data-label="CFS Depot"><input class="cell-input" style="width:80px;" value="${esc(getField(r, ["CFS NAME", "CFS"]) || "")}" onchange="inlineEdit(${i}, 'CFS NAME', this.value)" ${editableAttrText}></td>
         <td data-label="Truck No"><input class="cell-input" style="width:90px; font-family:'JetBrains Mono';" value="${esc(getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "")}" placeholder="Vehicle" oninput="this.value=formatTruckNo(this.value)" onchange="inlineEdit(${i}, 'TRUCK NO.', this.value)" ${editableAttrText}></td>
         <td data-label="Destuffed"><input class="cell-input" type="date" value="${getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]) || ""}" onchange="inlineEdit(${i}, 'DESTUFFING DATE', this.value)" ${editableAttrText}></td>
@@ -3230,6 +3037,28 @@ document.querySelectorAll(".chip").forEach(chip => {
     renderUI();
   });
 });
+
+async function saveAndRefresh() {
+  renderUI();
+  try {
+    localStorage.setItem("containerRows", JSON.stringify(rows));
+    await sb.from('containers').upsert({ id: 'gml_tracking_records', data: rows, updated_at: new Date().toISOString() });
+  } catch (err) {
+    console.warn("Cloud sync notice:", err);
+  }
+}
+
+async function loadFromCloud() {
+  try {
+    const { data, error } = await sb.from('containers').select('data').eq('id', 'gml_tracking_records').single();
+    if (!error && data && Array.isArray(data.data) && data.data.length > 0) {
+      rows = data.data;
+      localStorage.setItem("containerRows", JSON.stringify(rows));
+      populateFilters();
+      renderUI();
+    }
+  } catch(err){}
+}
 
 function populateFilters() {
   const vSet = new Set(), cSet = new Set();
@@ -3557,13 +3386,25 @@ function processExcelFile(file) {
 
 el("excelInput").addEventListener("change", e => processExcelFile(e.target.files[0]));
 
-// Operational data comes ONLY from Supabase.
-// Browser localStorage must never be used as a source for container records.
-rows = [];
-cloudDataLoaded = false;
-cloudDataError = "";
+// Load storage with safety fallback
+try {
+  const saved = localStorage.getItem("containerRows");
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      rows = parsed.map(item => ({
+        "PORT OUT": "",
+        "CONTAINER RETURN DATE": "",
+        "TRUCK NO.": "",
+        "DRIVER CONTACT": "",
+        ...item
+      }));
+    }
+  }
+} catch(e){}
 
 populateFilters();
+loadFromCloud();
 updateAuditBadge();
 checkActiveSession();
 
@@ -3571,7 +3412,5 @@ activeQuickFilter = 'active';
 document.querySelectorAll(".chip").forEach(c => {
   c.classList.toggle("active", c.dataset.filter === 'active');
 });
-
-// Load the live records after the page is ready.
-loadFromCloud();
+renderUI();
 
