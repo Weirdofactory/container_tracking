@@ -44,7 +44,9 @@ const DEFAULT_ROWS = [
   }
 ];
 
-let rows = [...DEFAULT_ROWS];
+let rows = [];
+let cloudDataLoaded = false;
+let cloudDataError = "";
 
 let currentUser = null;
 let selectedIndices = new Set();
@@ -2009,25 +2011,73 @@ document.querySelectorAll(".chip").forEach(chip => {
 });
 
 async function saveAndRefresh() {
+  if (!cloudDataLoaded) {
+    console.warn("Cloud data is not loaded. Save blocked to protect Supabase data.");
+    toast("Cloud data not loaded — save blocked");
+    return false;
+  }
+
   renderUI();
   try {
-    localStorage.setItem("containerRows", JSON.stringify(rows));
-    await sb.from('containers').upsert({ id: 'gml_tracking_records', data: rows, updated_at: new Date().toISOString() });
+    const { error } = await sb.from('containers').upsert({
+      id: 'gml_tracking_records',
+      data: rows,
+      updated_at: new Date().toISOString()
+    });
+
+    if (error) throw error;
+    cloudDataError = "";
+    return true;
   } catch (err) {
-    console.warn("Cloud sync notice:", err);
+    console.error("Cloud sync failed:", err);
+    cloudDataError = err?.message || "Cloud sync failed";
+    toast("Cloud sync failed — data not overwritten");
+    return false;
   }
 }
 
 async function loadFromCloud() {
+  cloudDataLoaded = false;
+  cloudDataError = "";
+  rows = [];
+  populateFilters();
+  renderUI();
+
   try {
-    const { data, error } = await sb.from('containers').select('data').eq('id', 'gml_tracking_records').single();
-    if (!error && data && Array.isArray(data.data) && data.data.length > 0) {
-      rows = data.data;
-      localStorage.setItem("containerRows", JSON.stringify(rows));
-      populateFilters();
-      renderUI();
+    const { data, error } = await sb
+      .from('containers')
+      .select('data')
+      .eq('id', 'gml_tracking_records')
+      .single();
+
+    if (error) throw error;
+    if (!data || !Array.isArray(data.data)) {
+      throw new Error("Cloud record is missing or invalid.");
     }
-  } catch(err){}
+
+    // Supabase is the single source of truth. Never fall back to demo
+    // DEFAULT_ROWS or browser localStorage for operational container data.
+    rows = data.data.map(item => ({
+      "PORT OUT": "",
+      "CONTAINER RETURN DATE": "",
+      "TRUCK NO.": "",
+      "DRIVER CONTACT": "",
+      ...item
+    }));
+
+    cloudDataLoaded = true;
+    populateFilters();
+    renderUI();
+    console.info(`Loaded ${rows.length} container records from Supabase.`);
+  } catch(err) {
+    cloudDataLoaded = false;
+    cloudDataError = err?.message || "Unable to load cloud data";
+    rows = [];
+    populateFilters();
+    renderUI();
+    console.error("Supabase load failed. Operational data remains locked.", err);
+    toast("Unable to load cloud data — editing locked");
+  }
 }
 
 function populateFilters() {
@@ -2144,6 +2194,7 @@ el("modalClose").addEventListener("click", () => el("modalBg").classList.remove(
 el("modalCancel").addEventListener("click", () => el("modalBg").classList.remove("open"));
 
 el("modalSave").addEventListener("click", () => {
+  if (!cloudDataLoaded) return alert("Cloud data is not loaded. Editing is locked until the live Supabase data is loaded.");
   if (currentUser && currentUser.role === "Viewer") return alert("Read-only access.");
   
   const item = {};
@@ -2292,6 +2343,7 @@ el("exportBtn").addEventListener("click", () => {
 
 // Centralized Excel Parser for Input & Drag/Drop
 function processExcelFile(file) {
+  if (!cloudDataLoaded) return alert("Cloud data is not loaded yet. Excel import is locked to protect your live Supabase data.");
   if (currentUser && currentUser.role === "Viewer") return alert("Read-only access.");
   if (!file) return;
   
@@ -2375,23 +2427,8 @@ ddOverlay.addEventListener("drop", (e) => {
   }
 });
 
-// Load storage with safety fallback
-try {
-  const saved = localStorage.getItem("containerRows");
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      rows = parsed.map(item => ({
-        "PORT OUT": "",
-        "CONTAINER RETURN DATE": "",
-        "TRUCK NO.": "",
-        "DRIVER CONTACT": "",
-        ...item
-      }));
-    }
-  }
-} catch(e){}
-
+// Operational container data is loaded ONLY from Supabase.
+// Do not hydrate rows from browser localStorage or DEFAULT_ROWS.
 populateFilters();
 loadFromCloud();
 updateAuditBadge();
