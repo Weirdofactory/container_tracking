@@ -624,3 +624,253 @@ body { background-color: var(--bg-app); color: var(--text-main); font-family: 'P
 .current-status-next strong{display:block;margin-top:3px;font-size:12px;font-weight:800;color:var(--text-main);}
 .shipment-info-panel{gap:14px 16px;margin:0;}
 @media(max-width:650px){.public-status-result{padding:14px 16px 18px}.current-status-card{align-items:flex-start;flex-direction:column;padding:14px 16px;gap:14px}.current-status-next{width:100%;min-width:0;text-align:left;padding:10px 0 0;border-left:0;border-top:1px solid var(--border)}.current-status-title{white-space:normal}.shipment-info-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}}
+
+
+/* =========================================================
+   Dashboard refresh — professional cards, search, responsive
+   ========================================================= */
+#opsDashboardView{
+  padding-top:24px;
+}
+#opsDashboardView .kpi-card{
+  min-height:104px;
+  padding:16px 17px;
+  border-radius:15px;
+  background:
+    linear-gradient(180deg,var(--bg-surface) 0%,var(--bg-elevated) 100%);
+}
+#opsDashboardView .kpi-card small{
+  line-height:1.35;
+}
+#opsDashboardView .kpi-card strong{
+  font-size:25px;
+  letter-spacing:-.03em;
+}
+#opsDashboardView .kpi-card:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--shadow-md);
+}
+#opsDashboardView .control-tray{
+  border-radius:16px;
+  padding:14px 16px;
+  box-shadow:var(--shadow-md);
+}
+#opsDashboardView .search-input-wrapper{
+  min-width:min(100%,320px);
+  max-width:520px;
+}
+#opsDashboardView .search-input-wrapper input{
+  height:42px;
+  padding-left:38px;
+  padding-right:42px;
+  border-radius:11px;
+  font-size:12.5px;
+  font-weight:700;
+}
+#opsDashboardView .search-input-wrapper:focus-within .search-input-icon{
+  color:var(--accent);
+}
+.search-clear-btn{
+  position:absolute;
+  right:7px;
+  top:50%;
+  transform:translateY(-50%);
+  width:28px;
+  height:28px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:var(--text-dim);
+  cursor:pointer;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+}
+.search-clear-btn:hover{
+  background:var(--bg-elevated);
+  color:var(--text-main);
+}
+.search-result-count{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:0 9px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:var(--bg-elevated);
+  color:var(--text-muted);
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+#opsDashboardView .cards-layout{
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:16px;
+}
+#opsDashboardView .card-box{
+  border-radius:16px;
+  padding:18px;
+  gap:14px;
+  box-shadow:var(--shadow-sm);
+  position:relative;
+  overflow:hidden;
+}
+#opsDashboardView .card-box::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:4px;
+  height:100%;
+  background:var(--accent);
+  opacity:.9;
+}
+#opsDashboardView .card-box.status-completed::before{
+  background:var(--success);
+}
+#opsDashboardView .card-box .card-cntr-code{
+  font-size:16px;
+  letter-spacing:.02em;
+}
+#opsDashboardView .card-box .status-pill{
+  border-radius:999px;
+  padding:5px 9px;
+}
+#opsDashboardView .card-details-grid{
+  gap:10px 12px;
+  padding:12px 13px;
+  border-radius:11px;
+}
+#opsDashboardView .detail-item{
+  min-width:0;
+}
+#opsDashboardView .detail-item val{
+  font-size:10.5px;
+}
+#opsDashboardView .badge-links-group{
+  gap:7px;
+}
+#opsDashboardView .link-pill{
+  min-height:30px;
+  border-radius:8px;
+}
+#opsDashboardView .quick-chips-wrapper{
+  padding-bottom:6px;
+  scrollbar-width:thin;
+}
+#opsDashboardView .chip{
+  border-radius:999px;
+  padding:6px 11px;
+}
+#opsDashboardView .view-selector{
+  border-radius:10px;
+}
+#opsDashboardView .view-btn{
+  min-height:30px;
+  border-radius:8px;
+}
+@media(max-width:1100px){
+  #opsDashboardView .kpi-row{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+}
+@media(max-width:760px){
+  #opsDashboardView{
+    padding:14px 12px 24px;
+  }
+  #opsDashboardView .kpi-row{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:9px;
+    margin-bottom:12px;
+  }
+  #opsDashboardView .kpi-card{
+    min-height:88px;
+    padding:13px;
+  }
+  #opsDashboardView .kpi-card strong{
+    font-size:21px;
+  }
+  #opsDashboardView .control-tray{
+    padding:12px;
+    border-radius:14px;
+  }
+  #opsDashboardView .control-tray-top{
+    align-items:stretch;
+  }
+  #opsDashboardView .filter-inputs{
+    width:100%;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+  }
+  #opsDashboardView .search-input-wrapper{
+    min-width:0;
+    max-width:none;
+    grid-column:1 / -1;
+  }
+  #opsDashboardView .search-result-count{
+    justify-self:start;
+  }
+  #opsDashboardView .filter-inputs > .btn{
+    grid-column:2;
+    grid-row:2;
+  }
+  #opsDashboardView .view-selector{
+    width:100%;
+    justify-content:stretch;
+  }
+  #opsDashboardView .view-btn{
+    flex:1;
+  }
+  #opsDashboardView .control-tray-bottom{
+    align-items:stretch;
+  }
+  #opsDashboardView .cards-layout{
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  #opsDashboardView .card-box{
+    padding:15px;
+  }
+}
+@media(max-width:480px){
+  #opsDashboardView .kpi-row{
+    grid-template-columns:1fr 1fr !important;
+  }
+  #opsDashboardView .kpi-card small{
+    font-size:9px;
+  }
+  #opsDashboardView .kpi-card strong{
+    font-size:19px;
+  }
+  #opsDashboardView .filter-inputs{
+    grid-template-columns:1fr;
+  }
+  #opsDashboardView .filter-inputs > .btn{
+    grid-column:1;
+    grid-row:auto;
+    width:100%;
+  }
+  #opsDashboardView .search-result-count{
+    grid-column:1;
+  }
+  #opsDashboardView .card-header-top{
+    align-items:flex-start;
+  }
+  #opsDashboardView .card-title-group{
+    gap:6px;
+  }
+  #opsDashboardView .card-cntr-code{
+    font-size:14px;
+  }
+  #opsDashboardView .badge-links-group{
+    grid-template-columns:1fr;
+  }
+  #opsDashboardView .link-pill{
+    justify-content:flex-start;
+    padding-left:10px;
+  }
+  #opsDashboardView .card-details-grid{
+    grid-template-columns:1fr;
+  }
+}
