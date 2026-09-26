@@ -1537,12 +1537,20 @@ function getFilteredRows() {
     if (gw && !(getField(r, ["GATEWAY PORT", "PORT"]) || "").toLowerCase().includes(gw.toLowerCase())) return false;
     if (cf && getField(r, ["CFS NAME", "CFS"]) !== cf) return false;
 
+    // Operational stage filters are mutually exclusive: a shipment moves to
+    // the next stage as soon as the corresponding milestone date is entered.
+    const hasPortIn = validDate(getField(r, ["PORT IN"]));
+    const hasPortOut = validDate(getField(r, ["PORT OUT"]));
+    const hasCfsIn = validDate(getField(r, ["CFS IN"]));
+    const hasDestuff = validDate(getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]));
+    const hasEmptyReturn = validDate(getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]));
+
     if (activeQuickFilter === "active" && completed) return false;
     if (activeQuickFilter === "completed" && !completed) return false;
-    if (activeQuickFilter === "today" && (getField(r, ["ETA"]) !== todayStr && getField(r, ["PORT IN"]) !== todayStr)) return false;
-    if (activeQuickFilter === "demurrage" && (completed || !fees.demOverdue)) return false;
-    if (activeQuickFilter === "detention" && (completed || !fees.detOverdue)) return false;
-    if (activeQuickFilter === "critical_lfd" && (completed || ((fees.terminalDaysLeft > 2 || fees.terminalDaysLeft === null) && (fees.detentionDaysLeft > 2 || fees.detentionDaysLeft === null)))) return false;
+    if (activeQuickFilter === "port_in" && !(hasPortIn && !hasPortOut)) return false;
+    if (activeQuickFilter === "port_out" && !(hasPortOut && !hasCfsIn)) return false;
+    if (activeQuickFilter === "cfs_in" && !(hasCfsIn && !hasDestuff)) return false;
+    if (activeQuickFilter === "empty_pending" && !(hasDestuff && !hasEmptyReturn)) return false;
 
     return true;
   });
