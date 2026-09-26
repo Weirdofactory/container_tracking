@@ -79,6 +79,17 @@ const PORT_COORDS = {
 };
 
 const el = id => document.getElementById(id);
+const refreshCloudBtn = document.createElement("button");
+refreshCloudBtn.id = "refreshCloudBtn";
+refreshCloudBtn.className = "btn btn-ghost";
+refreshCloudBtn.textContent = "↻ Reload Data";
+refreshCloudBtn.title = "Reload live container data";
+refreshCloudBtn.style.display = "none";
+refreshCloudBtn.onclick = () => loadFromCloud(1);
+setTimeout(() => {
+  const exportBtn = document.getElementById("exportBtn");
+  if (exportBtn && exportBtn.parentElement) exportBtn.parentElement.insertBefore(refreshCloudBtn, exportBtn);
+}, 0);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 function resetToLanding() {
@@ -2036,27 +2047,28 @@ async function saveAndRefresh() {
   }
 }
 
-async function loadFromCloud() {
+async function loadFromCloud(attempt = 1) {
   cloudDataLoaded = false;
   cloudDataError = "";
   rows = [];
   populateFilters();
   renderUI();
 
+  // Show an explicit loading state instead of making the empty dashboard
+  // look like the live database contains zero records.
+  const loadingMessage = `Loading live container data… (attempt ${attempt}/3)`;
   try {
     const { data, error } = await sb
       .from('containers')
       .select('data')
       .eq('id', 'gml_tracking_records')
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     if (!data || !Array.isArray(data.data)) {
       throw new Error("Cloud record is missing or invalid.");
     }
 
-    // Supabase is the single source of truth. Never fall back to demo
-    // DEFAULT_ROWS or browser localStorage for operational container data.
     rows = data.data.map(item => ({
       "PORT OUT": "",
       "CONTAINER RETURN DATE": "",
@@ -2066,20 +2078,33 @@ async function loadFromCloud() {
     }));
 
     cloudDataLoaded = true;
+    cloudDataError = "";
+    currentPage = 1;
+    selectedIndices.clear();
     populateFilters();
     renderUI();
     console.info(`Loaded ${rows.length} container records from Supabase.`);
+    toast(`Loaded ${rows.length} live containers`);
+    return true;
   } catch(err) {
     cloudDataLoaded = false;
     cloudDataError = err?.message || "Unable to load cloud data";
     rows = [];
     populateFilters();
     renderUI();
-    console.error("Supabase load failed. Operational data remains locked.", err);
-    toast("Unable to load cloud data — editing locked");
+    console.error("Supabase load failed:", err);
+
+    if (attempt < 3) {
+      toast(loadingMessage);
+      setTimeout(() => loadFromCloud(attempt + 1), 1200);
+    } else {
+      toast("Live data could not be loaded — tap Refresh");
+      const retryBtn = el("refreshCloudBtn");
+      if (retryBtn) retryBtn.style.display = "inline-flex";
+    }
+    return false;
   }
 }
-
 function populateFilters() {
   const vSet = new Set(), cSet = new Set();
   rows.forEach(r => {
@@ -3506,25 +3531,13 @@ function processExcelFile(file) {
 
 el("excelInput").addEventListener("change", e => processExcelFile(e.target.files[0]));
 
-// Load storage with safety fallback
-try {
-  const saved = localStorage.getItem("containerRows");
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      rows = parsed.map(item => ({
-        "PORT OUT": "",
-        "CONTAINER RETURN DATE": "",
-        "TRUCK NO.": "",
-        "DRIVER CONTACT": "",
-        ...item
-      }));
-    }
-  }
-} catch(e){}
+// Operational data comes ONLY from Supabase.
+// Browser localStorage must never be used as a source for container records.
+rows = [];
+cloudDataLoaded = false;
+cloudDataError = "";
 
 populateFilters();
-loadFromCloud();
 updateAuditBadge();
 checkActiveSession();
 
@@ -3532,5 +3545,7 @@ activeQuickFilter = 'active';
 document.querySelectorAll(".chip").forEach(c => {
   c.classList.toggle("active", c.dataset.filter === 'active');
 });
-renderUI();
+
+// Load the live records after the page is ready.
+loadFromCloud();
 
