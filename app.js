@@ -1042,7 +1042,7 @@ function performPublicSearch() {
                 + '<td style="padding:13px 14px;"><span style="display:inline-block;border-radius:14px;padding:6px 9px;font-size:10px;font-weight:900;background:' + (complete ? "#e7f6ec" : "#eef6ff") + ';color:' + (complete ? "#137333" : "#245b8a") + ';">' + esc(statusText) + '</span></td>'
                 + '<td style="padding:13px 14px;font-size:11px;font-weight:700;color:var(--text-muted);">' + esc(next) + '</td>'
                 + '<td style="padding:13px 14px;font-size:18px;color:var(--accent);">›</td></tr>'
-                + '<tr class="public-shipment-detail" style="display:none;background:#f8fafc;"><td colspan="7" style="padding:0 14px 14px;"><div style="padding-top:10px;">' + detail + '</div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;"><button class="btn btn-ghost" style="padding:6px 10px;font-size:10px;" onclick="event.stopPropagation();copyText(\\'' + publicUrl.replace(/'/g,"\\\\'") + '\\')">🔗 Copy Tracking Link</button></div></td></tr>';
+                + '<tr class="public-shipment-detail" style="display:none;background:#f8fafc;"><td colspan="7" style="padding:0 14px 14px;"><div style="padding-top:10px;">' + detail + '</div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;"><button class="btn btn-ghost" style="padding:6px 10px;font-size:10px;" data-url="' + esc(publicUrl) + '" onclick="event.stopPropagation();copyText(this.dataset.url)">🔗 Copy Tracking Link</button></div></td></tr>';
             }).join("")}
           </tbody>
         </table>
