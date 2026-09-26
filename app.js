@@ -1695,7 +1695,7 @@ function renderSheet(items) {
   const isViewer = currentUser && currentUser.role === "Viewer";
 
   if (!items.length) {
-    el("sheetTableBody").innerHTML = `<tr><td colspan="16" style="text-align:center;padding:40px;color:var(--text-muted);">No records found.</td></tr>`;
+    el("sheetTableBody").innerHTML = '<tr><td colspan="27" style="text-align:center;padding:50px;color:var(--text-muted);">No containers found.</td></tr>';
     el("paginationWrapper").innerHTML = "";
     return;
   }
@@ -1705,50 +1705,70 @@ function renderSheet(items) {
   const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedItems = items.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
+  const dateFields = new Set(["ETD","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE"]);
+
+  const show = (r, field) => {
+    const v = getField(r, [field]);
+    if (!v) return "—";
+    return dateFields.has(field) ? (formatDate(v) || v) : v;
+  };
+
   el("sheetTableBody").innerHTML = paginatedItems.map(({r, i}, loopIdx) => {
     const st = getStatus(r);
-    const cntrNo = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "UNKNOWN";
-    const mblNo = getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "—";
-    const vesselVoy = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "—";
-    const containerType = getField(r, ["TYPE", "SIZE", "CONTAINER TYPE"]) || "40' HC";
-    const liner = getField(r, ["LINER", "LINE"]) || detectLinerFromMBL(mblNo) || "Line";
-    const eta = formatDate(getField(r, ["ETA"])) || "—";
-    const portIn = formatDate(getField(r, ["PORT IN"])) || "—";
-    const portOut = formatDate(getField(r, ["PORT OUT"])) || "—";
-    const cfsName = getField(r, ["CFS NAME", "CFS"]) || "—";
-    const truckNo = getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "—";
-    const gwPort = getGatewayPortInfo(r);
     const fees = calculateStandardFees(r);
     const ev = getEmptyReturnValidity(r);
-    const remarks = r["REMARKS"] || "—";
     const flashClass = lastEditedId === i ? "row-saved" : "";
 
+    const cell = (field, extra = "") =>
+      '<td data-label="' + esc(field) + '" style="white-space:nowrap;' + extra + '">' + esc(show(r, field)) + '</td>';
+
     return `
-      <tr data-row="${i}" class="cascade-item ${flashClass}" style="animation-delay:${loopIdx * 20}ms">
-        <td><input type="checkbox" class="chk-item" value="${i}" ${selectedIndices.has(i) ? "checked" : ""}></td>
-        <td data-label="Container No." style="font-family:'JetBrains Mono';font-weight:800;color:var(--accent);white-space:nowrap;">${esc(cntrNo)}</td>
-        <td data-label="Vessel / Voyage" style="font-weight:800;min-width:170px;">${esc(vesselVoy)}</td>
-        <td data-label="MBL" style="font-family:'JetBrains Mono';font-size:11px;">${esc(mblNo)}</td>
-        <td data-label="Type">${esc(containerType)}</td>
-        <td data-label="Liner">${esc(liner)}</td>
-        <td data-label="ETA" style="font-weight:800;white-space:nowrap;">${eta}</td>
-        <td data-label="Port In / Out" style="white-space:nowrap;color:var(--warning);">${portIn} / ${portOut}</td>
-        <td data-label="Port" style="white-space:nowrap;">${esc(gwPort.name)}</td>
-        <td data-label="CFS" style="font-weight:700;white-space:nowrap;">${esc(cfsName)}</td>
-        <td data-label="Truck" style="font-family:'JetBrains Mono';white-space:nowrap;">${esc(truckNo)}</td>
-        <td data-label="Status"><span class="status-pill ${st.class}" style="white-space:nowrap;">${st.text}</span></td>
-        <td data-label="LFD / Dwell" style="font-size:11px;line-height:1.45;">
-          <strong>${esc(fees.terminalLFD)}</strong> · ${fees.portDwell}d / Free ${fees.portFreeDays}d
-          ${fees.demOverdue ? `<br><span style="color:var(--danger);font-weight:800;">Port Demurrage: ${formatCurrency(fees.demCostUSD)}</span>` : ""}
-          ${fees.detOverdue ? `<br><span style="color:var(--danger);font-weight:800;">Detention: ${formatCurrency(fees.detCostUSD)}</span>` : ""}
+      <tr data-row="${i}" class="cascade-item ${flashClass}" style="animation-delay:${loopIdx * 15}ms">
+        <td style="position:sticky;left:0;z-index:3;background:var(--bg-elevated);">
+          <input type="checkbox" class="chk-item" value="${i}" ${selectedIndices.has(i) ? "checked" : ""}>
         </td>
-        <td data-label="Empty Return" style="font-weight:800;white-space:nowrap;">${esc(ev.date)} · ${esc(ev.label)}</td>
-        <td data-label="Remarks" style="min-width:150px;max-width:240px;white-space:normal;">${esc(remarks)}</td>
-        <td data-label="Actions">
-          <div style="display:flex;gap:4px;white-space:nowrap;">
-            ${!isViewer ? `<button class="btn btn-primary" style="padding:4px 8px;font-size:10px;" title="Edit Container" onclick="openModal(${i})">✏️ Edit</button>` : ""}
-            ${!isViewer ? `<button class="btn" style="padding:3px 6px;color:var(--accent)" title="Mark Returned" onclick="markSingleReturned(${i})">🔄</button>` : ""}
-            ${currentUser && currentUser.role === "Admin" ? `<button class="btn btn-danger" style="padding:3px 6px;" onclick="deleteRow(${i})">🗑️</button>` : ""}
+        <td data-label="Container No." style="position:sticky;left:35px;z-index:3;background:var(--bg-elevated);font-family:'JetBrains Mono';font-weight:900;color:var(--accent);white-space:nowrap;">
+          ${esc(getField(r, ["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]) || "UNKNOWN")}
+        </td>
+        ${cell("TYPE")}
+        ${cell("MBL NO", "font-family:'JetBrains Mono';font-size:11px;")}
+        ${cell("LINER")}
+        ${cell("GATEWAY PORT")}
+        ${cell("CFS NAME")}
+        ${cell("POL")}
+        ${cell("ETD")}
+        ${cell("FREE DAYS", "text-align:center;")}
+        ${cell("SEAL NO.", "font-family:'JetBrains Mono';font-size:11px;")}
+        ${cell("VESSEL & VOY", "font-weight:800;min-width:190px;")}
+        <td data-label="ETA" style="font-weight:900;white-space:nowrap;cursor:pointer;" onclick="sortSheet('ETA')" title="Sort by ETA">
+          ${esc(show(r,"ETA"))} ↕
+        </td>
+        ${cell("SPLIT DATE")}
+        ${cell("INWARD DATE")}
+        ${cell("PORT IN")}
+        ${cell("PORT OUT")}
+        ${cell("CFS IN")}
+        ${cell("TRUCK NO.", "font-family:'JetBrains Mono';")}
+        ${cell("DRIVER CONTACT", "min-width:150px;")}
+        ${cell("PLANNING", "min-width:130px;")}
+        ${cell("DESTUFFING DATE")}
+        ${cell("EMPTY RETURN VALIDITY")}
+        ${cell("CONTAINER RETURN DATE")}
+        <td data-label="STATUS" style="white-space:nowrap;"><span class="status-pill ${st.class}">${st.text}</span></td>
+        <td data-label="LFD / DWELL" style="min-width:170px;font-size:11px;line-height:1.5;">
+          <strong>${esc(fees.terminalLFD)}</strong>
+          <br>Port dwell: ${fees.portDwell}d / Free ${fees.portFreeDays}d
+          ${fees.demOverdue ? '<br><span style="color:var(--danger);font-weight:900;">Demurrage: ' + esc(formatCurrency(fees.demCostUSD)) + '</span>' : ''}
+        </td>
+        <td data-label="EMPTY STATUS" style="min-width:150px;font-weight:800;">
+          ${esc(ev.date)} · ${esc(ev.label)}
+        </td>
+        ${cell("REMARKS", "min-width:180px;max-width:300px;white-space:normal;")}
+        <td data-label="ACTIONS" style="position:sticky;right:0;z-index:3;background:var(--bg-elevated);white-space:nowrap;">
+          <div style="display:flex;gap:4px;">
+            ${!isViewer ? '<button class="btn btn-primary" style="padding:5px 9px;font-size:10px;" onclick="openModal(' + i + ')">✏️ Edit</button>' : ''}
+            ${!isViewer ? '<button class="btn" style="padding:4px 7px;color:var(--accent);" onclick="markSingleReturned(' + i + ')" title="Mark Returned">↩</button>' : ''}
+            ${currentUser && currentUser.role === 'Admin' ? '<button class="btn btn-danger" style="padding:4px 7px;" onclick="deleteRow(' + i + ')">🗑️</button>' : ''}
           </div>
         </td>
       </tr>
