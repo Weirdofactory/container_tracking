@@ -174,6 +174,12 @@ function parseLocalDate(str) {
   return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
+function dateInputValue(val) {
+  const d = parseLocalDate(val);
+  if (!d || isNaN(d.getTime())) return "";
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
 function getField(r, names) {
   if (!r) return "";
   for (let name of names) {
@@ -1728,8 +1734,10 @@ function renderSheet(items) {
             <option value="Ennore" ${gwPort.key === 'Ennore' ? 'selected' : ''}>Ennore</option>
           </select>
         </td>
-        <td data-label="Port In"><input class="cell-input" type="date" value="${getField(r, ["PORT IN"]) || ""}" onchange="inlineEdit(${i}, 'PORT IN', this.value)" ${editableAttrText}></td>
-        <td data-label="Port Out"><input class="cell-input" type="date" value="${getField(r, ["PORT OUT"]) || ""}" onchange="inlineEdit(${i}, 'PORT OUT', this.value)" ${editableAttrText}></td>
+        <td data-label="Vessel / Voyage" style="font-weight:700;min-width:150px;">${esc(getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "—")}</td>
+        <td data-label="ETA"><input class="cell-input" type="date" value="${dateInputValue(getField(r, ["ETA"]))}" onchange="inlineEdit(${i}, 'ETA', this.value)" ${editableAttrText}></td>
+        <td data-label="Port In"><input class="cell-input" type="date" value="${dateInputValue(getField(r, ["PORT IN"]))}" onchange="inlineEdit(${i}, 'PORT IN', this.value)" ${editableAttrText}></td>
+        <td data-label="Port Out"><input class="cell-input" type="date" value="${dateInputValue(getField(r, ["PORT OUT"]))}" onchange="inlineEdit(${i}, 'PORT OUT', this.value)" ${editableAttrText}></td>
         <td data-label="CFS Depot"><input class="cell-input" style="width:80px;" value="${esc(getField(r, ["CFS NAME", "CFS"]) || "")}" onchange="inlineEdit(${i}, 'CFS NAME', this.value)" ${editableAttrText}></td>
         <td data-label="Truck No"><input class="cell-input" style="width:90px; font-family:'JetBrains Mono';" value="${esc(getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "")}" placeholder="Vehicle" oninput="this.value=formatTruckNo(this.value)" onchange="inlineEdit(${i}, 'TRUCK NO.', this.value)" ${editableAttrText}></td>
         <td data-label="Destuffed"><input class="cell-input" type="date" value="${getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]) || ""}" onchange="inlineEdit(${i}, 'DESTUFFING DATE', this.value)" ${editableAttrText}></td>
@@ -2842,8 +2850,8 @@ function renderSheet(items) {
             <option value="Ennore" ${gwPort.key === 'Ennore' ? 'selected' : ''}>Ennore</option>
           </select>
         </td>
-        <td data-label="Port In"><input class="cell-input" type="date" value="${getField(r, ["PORT IN"]) || ""}" onchange="inlineEdit(${i}, 'PORT IN', this.value)" ${editableAttrText}></td>
-        <td data-label="Port Out"><input class="cell-input" type="date" value="${getField(r, ["PORT OUT"]) || ""}" onchange="inlineEdit(${i}, 'PORT OUT', this.value)" ${editableAttrText}></td>
+        <td data-label="Port In"><input class="cell-input" type="date" value="${dateInputValue(getField(r, ["PORT IN"]))}" onchange="inlineEdit(${i}, 'PORT IN', this.value)" ${editableAttrText}></td>
+        <td data-label="Port Out"><input class="cell-input" type="date" value="${dateInputValue(getField(r, ["PORT OUT"]))}" onchange="inlineEdit(${i}, 'PORT OUT', this.value)" ${editableAttrText}></td>
         <td data-label="CFS Depot"><input class="cell-input" style="width:80px;" value="${esc(getField(r, ["CFS NAME", "CFS"]) || "")}" onchange="inlineEdit(${i}, 'CFS NAME', this.value)" ${editableAttrText}></td>
         <td data-label="Truck No"><input class="cell-input" style="width:90px; font-family:'JetBrains Mono';" value="${esc(getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "")}" placeholder="Vehicle" oninput="this.value=formatTruckNo(this.value)" onchange="inlineEdit(${i}, 'TRUCK NO.', this.value)" ${editableAttrText}></td>
         <td data-label="Destuffed"><input class="cell-input" type="date" value="${getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]) || ""}" onchange="inlineEdit(${i}, 'DESTUFFING DATE', this.value)" ${editableAttrText}></td>
