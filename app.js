@@ -1695,7 +1695,7 @@ function renderSheet(items) {
   const isViewer = currentUser && currentUser.role === "Viewer";
 
   if (!items.length) {
-    el("sheetTableBody").innerHTML = '<tr><td colspan="27" style="text-align:center;padding:50px;color:var(--text-muted);">No containers found.</td></tr>';
+    el("sheetTableBody").innerHTML = '<tr><td colspan="29" style="text-align:center;padding:50px;color:var(--text-muted);">No containers found.</td></tr>';
     el("paginationWrapper").innerHTML = "";
     return;
   }
