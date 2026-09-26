@@ -269,9 +269,9 @@ function generatePublicShipmentReportHtml(r) {
   const cntr=v(["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]), mbl=v(["MBL NO","MBL","MASTER BL"]);
   const liner=v(["LINER","LINE","SHIPPING LINE"]), vessel=v(["VESSEL & VOY","VESSEL","VESSEL NAME"]);
   const type=v(["TYPE","EQUIPMENT TYPE","CONTAINER TYPE","SIZE"]), pol=v(["POL","PORT OF LOADING"]);
-  const pod=v(["POD","PORT OF DISCHARGE","DISCHARGE PORT"]);
+  const podRaw=v(["POD","PORT OF DISCHARGE","DISCHARGE PORT"]); const pod=/^(unverified|unknown|n\/a|na|-)$/i.test(String(podRaw).trim()) ? "" : podRaw;
   const placeReceipt=v(["PLACE OF RECEIPT","RECEIPT PLACE"]) || pol;
-  const placeDelivery=v(["PLACE OF DELIVERY","DELIVERY PLACE"]);
+  const deliveryRaw=v(["PLACE OF DELIVERY","DELIVERY PLACE"]); const placeDelivery=/^(unverified|unknown|n\/a|na|-)$/i.test(String(deliveryRaw).trim()) ? "" : deliveryRaw;
   const terminal=getGatewayPortInfo(r).name || "Unverified";
   const cfs=v(["CFS NAME","CFS"]), eta=formatDate(v(["ETA"])), portIn=formatDate(v(["PORT IN"])), portOut=formatDate(v(["PORT OUT"]));
   const cfsIn=formatDate(v(["CFS IN"])), destuff=formatDate(v(["DESTUFFING DATE","DESTUFF DATE"]));
@@ -309,26 +309,26 @@ function generatePublicShipmentReportHtml(r) {
       <div class="shipment-report-status"><small>CURRENT STATUS</small><strong>● ${esc(statusText||"IN PROGRESS")}</strong>${destuff ? `<span>${esc(destuff)}</span>` : ""}</div>
     </div>
     <div class="shipment-report-grid">
-      <section class="shipment-report-panel route-panel"><header>📍 <span>ROUTE INFORMATION</span></header><div class="shipment-route">
+      <section class="shipment-report-panel route-panel"><header><span class="section-icon">↗</span><span>ROUTE</span><small>SHIPMENT MOVEMENT</small></header><div class="shipment-route">
         <div><small>PLACE OF RECEIPT</small><strong>${esc(placeReceipt||"—")}</strong></div><b>→</b>
         <div><small>PORT OF LOADING</small><strong>${esc(pol||"—")}</strong></div><b>→</b>
         <div><small>PORT OF DISCHARGE</small><strong>${esc(pod||"Pending verification")}</strong></div><b>→</b>
         <div><small>PLACE OF DELIVERY</small><strong>${esc(placeDelivery||"Pending confirmation")}</strong></div>
       </div><div class="shipment-route-terminal"><span>CFS / TERMINAL</span><strong>${esc(cfs||terminal||"Unverified")}</strong></div></section>
-      <section class="shipment-report-panel dates-panel"><header>📅 <span>KEY DATES</span></header><div class="shipment-date-grid">
+      <section class="shipment-report-panel dates-panel"><header><span class="section-icon">◷</span><span>KEY DATES</span><small>VESSEL SCHEDULE</small></header><div class="shipment-date-grid">
         <div><small>ACTUAL DEPARTURE</small><strong>🚢 ${esc(departure||"—")}</strong></div>
         <div><small>ACTUAL / ESTIMATED ARRIVAL</small><strong>⚓ ${esc(arrival||"—")}</strong></div>
       </div></section>
     </div>
-    <section class="shipment-report-panel details-panel"><header>📄 <span>ADDITIONAL DETAILS</span></header><div class="shipment-details-grid">
+    <section class="shipment-report-panel details-panel"><header><span class="section-icon">▤</span><span>SHIPMENT DETAILS</span><small>REFERENCE INFORMATION</small></header><div class="shipment-details-grid">
       <div><small>MBL NUMBER</small><strong>▧ ${esc(mbl||"—")}</strong></div><div><small>CFS</small><strong>⌂ ${esc(cfs||"—")}</strong></div>
       <div><small>CONTAINER TYPE</small><strong>⚙ ${esc(type||"—")}</strong></div><div><small>TERMINAL IN</small><strong>⚓ ${esc(portIn||"—")}</strong></div>
       <div><small>TERMINAL OUT</small><strong>⚓ ${esc(portOut||"—")}</strong></div>
     </div></section>
-    <section class="shipment-report-panel milestone-panel"><header>♻ <span>SHIPMENT MILESTONE</span></header><div class="shipment-milestones">
+    <section class="shipment-report-panel milestone-panel"><header><span class="section-icon">✓</span><span>SHIPMENT JOURNEY</span><small>LIVE MILESTONE PROGRESS</small></header><div class="shipment-milestones">
       ${steps.map(s=>`<div class="shipment-milestone ${s[2]?"done":""}"><div class="shipment-milestone-icon">${s[2]?"✓":"●"}</div><strong>${esc(s[0])}</strong><span>${esc(s[1]||"—")}</span><small>${esc(s[2]||"Pending")}</small></div>`).join("")}
     </div></section>
-    <section class="shipment-report-next"><span>NEXT ACTION</span><strong>${esc(nextAction)}</strong></section>
+    <section class="shipment-report-next"><div><span>NEXT ACTION</span><strong>${esc(nextAction)}</strong></div><b>→</b></section>
     <section class="shipment-report-remarks"><header>💬 <span>REMARKS</span></header>${remarks.map(x=>`<div>✓ <span>${esc(x)}</span></div>`).join("")}</section>
   </article>`;
 }
