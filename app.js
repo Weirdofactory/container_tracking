@@ -1020,7 +1020,7 @@ async function performPublicSearch() {
       <div class="carrier-results-shell">
         <div class="public-results-toolbar"><span>${publicSearchResults.length} shipment${publicSearchResults.length === 1 ? "" : "s"} found</span><span>Search: ${esc(rawInput)}</span></div>
         <div class="carrier-table-wrap">
-          <table class="carrier-results-table">
+          <table class="carrier-results-table carrier-one-table">
             <thead><tr><th class="carrier-expand-head"></th><th>Booking Ref</th><th>Container No.</th><th>Latest Place</th><th>Latest Event Status / Time</th><th>POD / Vessel Arrival</th><th>Seal No.</th><th>Purchase Order No.</th></tr></thead>
             <tbody>${rowsHtml}</tbody>
           </table>
