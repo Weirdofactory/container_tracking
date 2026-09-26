@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20260926-dashboard1">
+<link rel="stylesheet" href="./style.css?v=20260926-one1">
 </head>
 <body>
 
@@ -78,31 +78,37 @@
   </div>
 </header>
 
-<section id="publicLandingView" class="fade-in">
-  <div class="public-hero-section">
-    <div class="public-hero-container">
-      <div class="public-hero-copy">
-        <div class="hero-eyebrow">GLOBAL CONTAINER VISIBILITY</div>
-        <h1>Track your container.<br><span>Know what happens next.</span></h1>
-        <p>Get a clear view of vessel movement, port milestones, CFS progress and the latest container status — all from one search.</p>
-        <div class="hero-trust-row"><span>✓ Live status view</span><span>✓ Timeline milestones</span><span>✓ No login required</span></div>
+<section id="publicLandingView" class="fade-in one-public-shell">
+  <div class="one-hero">
+    <div class="one-hero-inner">
+      <div class="one-hero-copy">
+        <div class="one-eyebrow">GML CONTAINER TRACKING</div>
+        <h1>Cargo Tracking</h1>
+        <p>Track your shipment status, vessel movement and operational milestones from one place.</p>
       </div>
-      <div class="hero-widget-card">
-        <div class="widget-tabs-header"><div class="widget-tab-active">📍 Customer Shipment Status</div></div>
-        <div class="widget-body">
-          <label>Container Number <span>*</span></label>
-          <div class="widget-input-wrapper"><input type="text" id="publicSearchInput" placeholder="E.g. SKHU9422886, IAAU1753030"></div>
-          <div class="widget-helper-text">Enter a container number to view the latest shipment status and timeline.</div>
-          <button class="btn-track-action" id="publicSearchBtn" onclick="performPublicSearch()">Track Shipment Now</button>
+      <div class="one-track-panel">
+        <div class="one-track-panel-head">
+          <div><strong>Track &amp; Trace</strong><span>Enter a container number to begin</span></div>
+          <span class="one-panel-badge">● ONLINE</span>
         </div>
+        <div class="one-track-fields">
+          <div class="one-field-group one-field-type"><label>Tracking Type</label><select aria-label="Tracking Type" disabled><option>Container No.</option></select></div>
+          <div class="one-field-group one-field-input"><label>Container Number</label><input type="text" id="publicSearchInput" autocomplete="off" spellcheck="false" placeholder="Enter Container No. e.g. WHSU6393302"></div>
+          <button class="one-track-button" id="publicSearchBtn" onclick="performPublicSearch()">Search</button>
+        </div>
+        <div class="one-track-help">Use the exact container number from your booking or shipping documents.</div>
       </div>
     </div>
   </div>
-  <div id="publicResultContainer" class="public-result-card"></div>\n  <div class="customer-feature-strip">
+  <div class="one-content-wrap">
+    <div class="one-result-heading"><div><span class="one-section-kicker">SHIPMENT RESULTS</span><h2>Track your cargo</h2></div><span class="one-result-note">Current status &amp; milestone history</span></div>
+  <div id="publicResultContainer" class="public-result-card one-results-surface"></div>
+  <div class="customer-feature-strip">
     <div class="customer-feature"><span class="customer-feature-icon">🚢</span><div><b>Vessel Visibility</b><small>Track vessel, ETA and arrival milestones</small></div></div>
     <div class="customer-feature"><span class="customer-feature-icon">⚓</span><div><b>Terminal Status</b><small>Follow port movement and discharge progress</small></div></div>
     <div class="customer-feature"><span class="customer-feature-icon">📦</span><div><b>CFS Progress</b><small>See CFS in-gate and destuffing milestones</small></div></div>
     <div class="customer-feature"><span class="customer-feature-icon">⏱️</span><div><b>LFD Awareness</b><small>Stay informed about shipment deadlines</small></div></div>
+  </div>
   </div>
   <section class="customer-how-section">
     <div class="customer-section-heading"><span class="hero-eyebrow">SHIPMENT VISIBILITY</span><h2>From vessel arrival to empty return.</h2><p>Follow the important milestones of your Chennai import shipment from one simple tracking view.</p></div>
@@ -245,7 +251,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20260926-dashboard1"></script>
+<script src="./app.js?v=20260926-one1"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
