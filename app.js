@@ -279,8 +279,8 @@ function generatePublicShipmentReportHtml(r) {
   const steps=[
     ["POL",pol,departure],["POD",gw,arrival],["CFS IN",cfs,cfsIn],["DE-STUFF",cfs,destuff],
     ["EMPTY OUT",v(["TRUCK NO.","TRUCK NO","VEHICLE NO"])||"Terminal",emptyOut],
-    ["GATE OUT","Delivery",formatDate(v(["GATE OUT","DELIVERY DATE"]))],
-    ["DELIVERED","Completion",formatDate(v(["DELIVERED DATE","POD DATE"]))]
+    ["GATE OUT","Delivery",emptyOut],
+    ["DELIVERED","Completion",emptyOut]
   ];
   const remarks=[];
   if(destuff) remarks.push("Container de-stuff completed at "+(cfs||"CFS")+" on "+destuff+".");
@@ -290,7 +290,6 @@ function generatePublicShipmentReportHtml(r) {
   return `
   <article class="shipment-report">
     <div class="shipment-report-head">
-      <div class="shipment-report-brand"><div class="shipment-report-globe">◎</div><div><strong>GREENWICH MERIDIAN LOGISTICS</strong><span>CONTAINER TRACKING &amp; CUSTOMER VISIBILITY</span></div></div>
       <div class="shipment-report-title"><strong>STATUS REPORT</strong><span>Generated on ${esc(new Date().toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}</span></div>
     </div>
     <div class="shipment-report-banner"><span class="shipment-report-pill">⚓ SHIPMENT STATUS</span><h2>CONTAINER TRACKING REPORT</h2><p>REAL TIME VISIBILITY <b>|</b> ACCURATE UPDATES <b>|</b> BETTER PLANNING</p></div>
