@@ -2054,22 +2054,43 @@ async function loadFromCloud(attempt = 1) {
   populateFilters();
   renderUI();
 
-  // Show an explicit loading state instead of making the empty dashboard
-  // look like the live database contains zero records.
-  const loadingMessage = `Loading live container data… (attempt ${attempt}/3)`;
   try {
-    const { data, error } = await sb
-      .from('containers')
-      .select('data')
-      .eq('id', 'gml_tracking_records')
-      .maybeSingle();
+    // Use the Supabase REST endpoint directly for the initial read.
+    // This avoids failures caused by the client SDK/session layer while
+    // keeping Supabase as the single source of truth.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    const url = `${SUPABASE_URL}/rest/v1/containers?select=data&id=eq.gml_tracking_records`;
 
-    if (error) throw error;
-    if (!data || !Array.isArray(data.data)) {
-      throw new Error("Cloud record is missing or invalid.");
+    let response;
+    try {
+      response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Accept": "application/json"
+        },
+        cache: "no-store",
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timer);
     }
 
-    rows = data.data.map(item => ({
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      throw new Error(`Supabase HTTP ${response.status}: ${body.slice(0, 180)}`);
+    }
+
+    const result = await response.json();
+    const cloudRecord = Array.isArray(result) ? result[0] : null;
+
+    if (!cloudRecord || !Array.isArray(cloudRecord.data)) {
+      throw new Error("Supabase returned no valid container data.");
+    }
+
+    rows = cloudRecord.data.map(item => ({
       "PORT OUT": "",
       "CONTAINER RETURN DATE": "",
       "TRUCK NO.": "",
@@ -2083,22 +2104,27 @@ async function loadFromCloud(attempt = 1) {
     selectedIndices.clear();
     populateFilters();
     renderUI();
-    console.info(`Loaded ${rows.length} container records from Supabase.`);
+
+    console.info(`Loaded ${rows.length} container records directly from Supabase REST.`);
     toast(`Loaded ${rows.length} live containers`);
+
+    const retryBtn = el("refreshCloudBtn");
+    if (retryBtn) retryBtn.style.display = "none";
+
     return true;
-  } catch(err) {
+  } catch (err) {
     cloudDataLoaded = false;
     cloudDataError = err?.message || "Unable to load cloud data";
     rows = [];
     populateFilters();
     renderUI();
-    console.error("Supabase load failed:", err);
+    console.error("Supabase REST load failed:", err);
 
     if (attempt < 3) {
-      toast(loadingMessage);
+      toast(`Loading live data… retry ${attempt + 1}/3`);
       setTimeout(() => loadFromCloud(attempt + 1), 1200);
     } else {
-      toast("Live data could not be loaded — tap Refresh");
+      toast("Live data failed to load — use Reload Data");
       const retryBtn = el("refreshCloudBtn");
       if (retryBtn) retryBtn.style.display = "inline-flex";
     }
