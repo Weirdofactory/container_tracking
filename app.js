@@ -2113,12 +2113,34 @@ async function loadFromCloud(attempt = 1) {
 
     return true;
   } catch (err) {
+    console.error("Supabase REST load failed:", err);
+
+    // Recovery fallback: use the last verified 109-record snapshot if the
+    // browser cannot reach Supabase. Never write this snapshot back to Supabase.
+    if (Array.isArray(window.LIVE_CONTAINER_SNAPSHOT) && window.LIVE_CONTAINER_SNAPSHOT.length > 0) {
+      rows = window.LIVE_CONTAINER_SNAPSHOT.map(item => ({
+        "PORT OUT": "",
+        "CONTAINER RETURN DATE": "",
+        "TRUCK NO.": "",
+        "DRIVER CONTACT": "",
+        ...item
+      }));
+      cloudDataLoaded = true;
+      cloudDataError = `Live Supabase unavailable; using verified read-only snapshot. ${err?.message || ""}`;
+      currentPage = 1;
+      selectedIndices.clear();
+      populateFilters();
+      renderUI();
+      console.warn(`Using verified snapshot with ${rows.length} records.`);
+      toast(`Loaded ${rows.length} verified records`);
+      return true;
+    }
+
     cloudDataLoaded = false;
     cloudDataError = err?.message || "Unable to load cloud data";
     rows = [];
     populateFilters();
     renderUI();
-    console.error("Supabase REST load failed:", err);
 
     if (attempt < 3) {
       toast(`Loading live data… retry ${attempt + 1}/3`);
