@@ -981,7 +981,7 @@ body { background-color: var(--bg-app); color: var(--text-main); font-family: 'P
 /* GML customer carrier portal — current ONE-style Track & Trace structure */
 body.public-carrier-mode{background:#f3f5f7;}
 body.public-carrier-mode .nav-header{display:none;}
-body.public-carrier-mode .one-public-shell{padding-left:230px;min-height:100vh;background:#f3f5f7;}
+body.public-carrier-mode .one-public-shell{padding-left:0;min-height:100vh;background:#f3f5f7;}
 .public-carrier-topbar{height:76px;box-sizing:border-box;background:#fff;border-bottom:1px solid #d9dee3;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:relative;z-index:50;}
 .public-carrier-brand{display:flex;align-items:center;gap:10px;cursor:pointer;}
 .public-carrier-mark{font-size:34px;line-height:1;font-weight:900;letter-spacing:-.09em;color:#c90068;}
@@ -1060,3 +1060,29 @@ body.public-carrier-mode .one-public-shell{padding-left:230px;min-height:100vh;b
 @media(max-width:1100px){.public-carrier-nav{gap:20px;padding:0 20px}.carrier-detail-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:800px){body.public-carrier-mode .one-public-shell{padding-left:0}.public-carrier-sidebar{display:none}.public-carrier-topbar{height:64px;padding:0 14px}.public-carrier-mark{font-size:28px}.public-carrier-brand-sub{display:none}.public-utility-btn{font-size:11px;padding:8px 6px}.public-utility-btn span{display:none}.public-carrier-nav{height:46px;gap:18px;padding:0 14px}.public-carrier-nav a{font-size:11px}.one-hero{padding:22px 14px 26px}.one-content-wrap{padding:16px 14px 34px}.one-track-fields{grid-template-columns:1fr}.one-track-button{width:100%}.carrier-detail-top{flex-direction:column}.carrier-route-strip{grid-template-columns:1fr;gap:20px}.carrier-route-line{width:100%;margin:4px 0}.carrier-route-point.right{text-align:left}.carrier-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.public-carrier-nav a:nth-child(n+5):not(:last-child){display:none}.public-utility-btn:first-child{display:none}.one-track-panel{padding:14px}.carrier-detail-grid{grid-template-columns:1fr}}
+
+/* Public page alignment + staff login */
+.one-hero-title-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:24px;
+}
+.public-staff-login-btn{
+  flex:0 0 auto;
+  margin-top:2px;
+  border:1px solid #c90068;
+  background:#c90068;
+  color:#fff;
+  border-radius:3px;
+  min-height:40px;
+  padding:0 16px;
+  font:800 11px 'Plus Jakarta Sans',sans-serif;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(201,0,104,.16);
+}
+.public-staff-login-btn:hover{background:#a90058;border-color:#a90058;}
+@media(max-width:760px){
+  .one-hero-title-row{flex-direction:column;gap:14px;}
+  .public-staff-login-btn{width:100%;margin-top:0;}
+}
