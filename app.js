@@ -274,95 +274,104 @@ function generatePublicShipmentReportHtml(r) {
   const type=v(["TYPE","EQUIPMENT TYPE","CONTAINER TYPE","SIZE"]);
   const pol=clean(v(["POL","PORT OF LOADING"]));
   const pod=clean(v(["POD","PORT OF DISCHARGE","DISCHARGE PORT"]));
-  const placeReceipt=clean(v(["PLACE OF RECEIPT","RECEIPT PLACE"])) || pol;
-  const placeDelivery=clean(v(["PLACE OF DELIVERY","DELIVERY PLACE"]));
+  const receipt=clean(v(["PLACE OF RECEIPT","RECEIPT PLACE"])) || pol;
+  const delivery=clean(v(["PLACE OF DELIVERY","DELIVERY PLACE"]));
   const terminal=getGatewayPortInfo(r).name || "";
   const cfs=v(["CFS NAME","CFS"]);
-  const portIn=formatDate(v(["PORT IN"]));
-  const portOut=formatDate(v(["PORT OUT"]));
-  const cfsIn=formatDate(v(["CFS IN"]));
-  const destuff=formatDate(v(["DESTUFFING DATE","DESTUFF DATE"]));
+  const portIn=formatDate(v(["PORT IN"])), portOut=formatDate(v(["PORT OUT"]));
+  const cfsIn=formatDate(v(["CFS IN"])), destuff=formatDate(v(["DESTUFFING DATE","DESTUFF DATE"]));
   const emptyOut=formatDate(v(["CONTAINER RETURN DATE","EMPTY RETURN DATE"]));
   const departure=formatDate(v(["ATD","ACTUAL DEPARTURE","VESSEL DEPARTURE","DEPARTURE DATE"])) || formatDate(v(["ETD"]));
-  const arrival=formatDate(v(["ATA","ACTUAL ARRIVAL","VESSEL ARRIVAL","ARRIVAL DATE"])) || formatDate(v(["ETA"]));
+  const arrival=formatDate(v(["ATA","ACTUAL ARRIVAL","ARRIVAL DATE"])) || formatDate(v(["ETA"]));
   const st=getStatus(r), statusText=(st.text||"SHIPMENT IN PROGRESS").replace(/^[^A-Za-z0-9]+/,"").trim();
   const steps=[
-    ["POL",pol,departure],["POD",pod,arrival],["CFS IN",cfs,cfsIn],["DE-STUFF",cfs,destuff],
-    ["EMPTY OUT","Return",emptyOut],["GATE OUT","Delivery",emptyOut],["DELIVERED","Complete",emptyOut]
+    ["VESSEL DEPARTED","Vessel",departure],["PORT ARRIVAL","POD",arrival],["CFS IN","CFS",cfsIn],
+    ["DE-STUFF","CFS",destuff],["EMPTY RETURN","Terminal",emptyOut]
   ];
-  const doneCount=steps.filter(s=>s[2]).length;
-  const progress=Math.round((doneCount/steps.length)*100);
-  const remarks=[];
-  if(destuff) remarks.push("De-stuff completed at "+(cfs||"CFS")+" on "+destuff+".");
-  if(!emptyOut) remarks.push("Awaiting empty return confirmation.");
-  else remarks.push("Empty container return recorded on "+emptyOut+".");
-  const nextAction = emptyOut ? "Shipment completed." :
+  const completedSteps=steps.filter(x=>x[2]).length;
+  const progress=Math.round(completedSteps/steps.length*100);
+  const nextAction=emptyOut ? "Shipment completed — empty return recorded." :
     destuff ? "Awaiting empty container return confirmation." :
     cfsIn ? "Awaiting de-stuff completion." :
-    "Shipment is in transit — awaiting next milestone.";
+    arrival ? "Awaiting CFS in-gate movement." :
+    "Shipment is in transit.";
   const generated=new Date().toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
   return `
-  <article class="shipment-report whatsapp-report">
-    <header class="report-share-head">
-      <div><span class="report-label">SHIPMENT STATUS REPORT</span><h1>Container Tracking</h1><p>Customer shipment visibility</p></div>
-      <div class="report-generated"><strong>STATUS REPORT</strong><span>${esc(generated)}</span></div>
-    </header>
+  <article class="customer-report-v3">
+    <div class="cr3-top">
+      <div class="cr3-brand"><span class="cr3-brand-mark">GML</span><div><strong>GREENWICH MERIDIAN LOGISTICS</strong><small>Customer Shipment Status</small></div></div>
+      <div class="cr3-generated"><span>STATUS REPORT</span><strong>${esc(generated)}</strong></div>
+    </div>
 
-    <section class="report-hero">
-      <div class="report-hero-main">
-        <span class="report-status-pill">● ${esc(statusText)}</span>
-        <h2>${esc(cntr||"Container —")}</h2>
-        <p>${esc(vessel||"Vessel pending")} ${vessel && liner ? " • " : ""}${esc(liner||"")}</p>
+    <section class="cr3-hero">
+      <div class="cr3-hero-copy">
+        <span class="cr3-live">● LIVE SHIPMENT STATUS</span>
+        <h1>${esc(statusText)}</h1>
+        <p>${esc(vessel||"Vessel details pending")} ${vessel&&liner?" • ":""}${esc(liner||"")}</p>
       </div>
-      <div class="report-hero-side"><span>CONTAINER TYPE</span><strong>${esc(type||"—")}</strong></div>
-    </section>
-
-    <section class="report-stats">
-      <div><span>VESSEL / VOYAGE</span><strong>${esc(vessel||"—")}</strong></div>
-      <div><span>CARRIER / LINE</span><strong>${esc(liner||"—")}</strong></div>
-      <div><span>MBL NUMBER</span><strong>${esc(mbl||"—")}</strong></div>
-      <div><span>CURRENT STATUS</span><strong class="report-green">${esc(statusText||"IN PROGRESS")}</strong></div>
-    </section>
-
-    <section class="report-route-card">
-      <div class="report-section-title"><span>ROUTE</span><small>SHIPMENT MOVEMENT</small></div>
-      <div class="report-route">
-        <div><span>RECEIPT</span><strong>${esc(placeReceipt||"—")}</strong></div><b>→</b>
-        <div><span>LOADING</span><strong>${esc(pol||"—")}</strong></div><b>→</b>
-        <div><span>DISCHARGE</span><strong>${esc(pod||"Pending")}</strong></div><b>→</b>
-        <div><span>DELIVERY</span><strong>${esc(placeDelivery||"Pending")}</strong></div>
-      </div>
-      <div class="report-route-foot"><span>CFS / TERMINAL</span><strong>${esc(cfs||terminal||"Pending")}</strong></div>
-    </section>
-
-    <section class="report-dates">
-      <div><span>ACTUAL DEPARTURE</span><strong>${esc(departure||"—")}</strong></div>
-      <div><span>ACTUAL / ESTIMATED ARRIVAL</span><strong>${esc(arrival||"—")}</strong></div>
-      <div><span>CONTAINER TYPE</span><strong>${esc(type||"—")}</strong></div>
-    </section>
-
-    <section class="report-journey">
-      <div class="report-section-title"><span>SHIPMENT JOURNEY</span><small>${doneCount} OF ${steps.length} MILESTONES RECORDED</small></div>
-      <div class="report-progress"><i style="width:${progress}%"></i></div>
-      <div class="report-steps">
-        ${steps.map(s=>`<div class="report-step ${s[2]?"done":""}"><div class="report-step-dot">${s[2]?"✓":"·"}</div><strong>${esc(s[0])}</strong><span>${esc(s[1]||"—")}</span><small>${esc(s[2]||"Pending")}</small></div>`).join("")}
+      <div class="cr3-container">
+        <small>CONTAINER</small>
+        <strong>${esc(cntr||"—")}</strong>
+        <span>${esc(type||"—")} EQUIPMENT</span>
       </div>
     </section>
 
-    <section class="report-details">
-      <div class="report-section-title"><span>SHIPMENT DETAILS</span><small>REFERENCE INFORMATION</small></div>
-      <div class="report-detail-grid">
-        <div><span>PORT IN</span><strong>${esc(portIn||"—")}</strong></div>
-        <div><span>PORT OUT</span><strong>${esc(portOut||"—")}</strong></div>
-        <div><span>CFS IN</span><strong>${esc(cfsIn||"—")}</strong></div>
-        <div><span>DE-STUFF</span><strong>${esc(destuff||"—")}</strong></div>
-        <div><span>EMPTY RETURN</span><strong>${esc(emptyOut||"—")}</strong></div>
+    <section class="cr3-summary">
+      <div><small>VESSEL / VOYAGE</small><strong>${esc(vessel||"—")}</strong></div>
+      <div><small>CARRIER / LINE</small><strong>${esc(liner||"—")}</strong></div>
+      <div><small>MBL NUMBER</small><strong>${esc(mbl||"—")}</strong></div>
+      <div class="cr3-status"><small>CURRENT STATUS</small><strong>${esc(statusText)}</strong></div>
+    </section>
+
+    <section class="cr3-route">
+      <div class="cr3-section-head"><div><span>01</span><strong>SHIPMENT ROUTE</strong></div><small>ORIGIN TO DELIVERY</small></div>
+      <div class="cr3-route-line">
+        <div class="cr3-route-node"><i>●</i><small>RECEIPT</small><strong>${esc(receipt||"—")}</strong></div>
+        <b>→</b>
+        <div class="cr3-route-node"><i>●</i><small>LOADING</small><strong>${esc(pol||"—")}</strong></div>
+        <b>→</b>
+        <div class="cr3-route-node"><i>●</i><small>DISCHARGE</small><strong>${esc(pod||"Pending")}</strong></div>
+        <b>→</b>
+        <div class="cr3-route-node"><i>●</i><small>DELIVERY</small><strong>${esc(delivery||"Pending")}</strong></div>
+      </div>
+      <div class="cr3-terminal"><span>CFS / TERMINAL</span><strong>${esc(cfs||terminal||"Pending")}</strong></div>
+    </section>
+
+    <div class="cr3-two-col">
+      <section class="cr3-card">
+        <div class="cr3-section-head"><div><span>02</span><strong>KEY DATES</strong></div><small>SCHEDULE</small></div>
+        <div class="cr3-dates">
+          <div><small>DEPARTURE</small><strong>${esc(departure||"—")}</strong></div>
+          <div><small>ARRIVAL</small><strong>${esc(arrival||"—")}</strong></div>
+          <div><small>TYPE</small><strong>${esc(type||"—")}</strong></div>
+        </div>
+      </section>
+      <section class="cr3-card cr3-action-card">
+        <div class="cr3-section-head"><div><span>03</span><strong>NEXT ACTION</strong></div></div>
+        <div class="cr3-action"><i>→</i><strong>${esc(nextAction)}</strong></div>
+      </section>
+    </div>
+
+    <section class="cr3-journey">
+      <div class="cr3-section-head"><div><span>04</span><strong>SHIPMENT JOURNEY</strong></div><small>${completedSteps} / ${steps.length} COMPLETE</small></div>
+      <div class="cr3-progress"><i style="width:${progress}%"></i></div>
+      <div class="cr3-steps">
+        ${steps.map((s,idx)=>`<div class="cr3-step ${s[2]?"done":""}"><div class="cr3-dot">${s[2]?"✓":String(idx+1).padStart(2,"0")}</div><strong>${esc(s[0])}</strong><small>${esc(s[2]||"Pending")}</small></div>`).join("")}
       </div>
     </section>
 
-    <section class="report-next"><span>NEXT ACTION</span><strong>${esc(nextAction)}</strong></section>
-    <section class="report-remarks"><span>REMARKS</span>${remarks.map(x=>`<div>✓ ${esc(x)}</div>`).join("")}</section>
-    <footer class="report-footer">Container Tracking Suite • Generated for customer communication</footer>
+    <section class="cr3-details">
+      <div class="cr3-section-head"><div><span>05</span><strong>OPERATIONAL DETAILS</strong></div><small>ACTIVITY RECORD</small></div>
+      <div class="cr3-detail-grid">
+        <div><small>PORT IN</small><strong>${esc(portIn||"—")}</strong></div>
+        <div><small>PORT OUT</small><strong>${esc(portOut||"—")}</strong></div>
+        <div><small>CFS IN</small><strong>${esc(cfsIn||"—")}</strong></div>
+        <div><small>DE-STUFF</small><strong>${esc(destuff||"—")}</strong></div>
+        <div><small>EMPTY RETURN</small><strong>${esc(emptyOut||"—")}</strong></div>
+      </div>
+    </section>
+
+    <div class="cr3-footer"><span>GREENWICH MERIDIAN LOGISTICS • CONTAINER TRACKING</span><strong>Customer Copy</strong></div>
   </article>`;
 }
 function logAuditEvent(action, containerNo, field, oldVal, newVal) {
