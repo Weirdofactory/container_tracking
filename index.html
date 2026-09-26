@@ -10,7 +10,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="./data_snapshot.js?v=20260926-01"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -161,14 +160,14 @@
         <div class="search-input-wrapper"><span class="search-input-icon">🔍</span><input id="search" class="input" placeholder="Search container, vessel, seal, truck..."></div>
         <button class="btn" onclick="openDrawer()">⚙️ Deep Filters</button>
       </div>
-      <div class="view-selector"><button class="view-btn active" data-view="sheet">Simple View</button><button class="view-btn" data-view="cards">Cards</button><button class="view-btn" data-view="kanban">Pipeline</button></div>
+      <div class="view-selector"><button class="view-btn active" data-view="cards">Cards</button><button class="view-btn" data-view="sheet">Table</button><button class="view-btn" data-view="kanban">Pipeline</button></div>
     </div>
     <div class="control-tray-bottom"><div class="quick-chips-wrapper">
       <span class="chip" data-filter="all">All</span><span class="chip active" data-filter="active">Active Only</span><span class="chip" data-filter="today">Arriving Today</span><span class="chip" data-filter="demurrage">Demurrage (Port)</span><span class="chip" data-filter="detention">Detention (Outside)</span><span class="chip" data-filter="critical_lfd">⚠️ LFD Critical (&le; 2d)</span><span class="chip" data-filter="delayed">Delayed / Rolled</span><span class="chip" data-filter="completed">Archive (Returned)</span>
     </div></div>
   </div>
   <section id="cardsView" class="cards-layout fade-in"></section>
-  <section id="sheetView" class="sheet-box fade-in" style="display:none;overflow:auto;"><table class="sheet-table" style="min-width:3000px;table-layout:auto;"><thead><tr><th width="35">✓</th><th>CONTAINER NO.</th><th>TYPE</th><th>MBL NO</th><th>LINER</th><th>GATEWAY PORT</th><th>CFS NAME</th><th>POL</th><th>ETD</th><th>FREE DAYS</th><th>SEAL NO.</th><th>VESSEL & VOYAGE</th><th style="cursor:pointer" onclick="sortSheet('ETA')">ETA ↕</th><th>SPLIT DATE</th><th>INWARD DATE</th><th>PORT IN</th><th>PORT OUT</th><th>CFS IN</th><th>TRUCK NO.</th><th>DRIVER CONTACT</th><th>PLANNING</th><th>DESTUFFING DATE</th><th>EMPTY RETURN VALIDITY</th><th>CONTAINER RETURN DATE</th><th>STATUS</th><th>LFD / DWELL</th><th>EMPTY STATUS</th><th>REMARKS</th><th>ACTIONS</th></tr></thead><tbody id="sheetTableBody"></tbody></table><div id="paginationWrapper"></div></section></section>
+  <section id="sheetView" class="sheet-box fade-in" style="display:none;"><table class="sheet-table"><thead><tr><th width="35"><input type="checkbox" id="sheetSelectAll"></th><th>Container No.</th><th>Type</th><th>MBL No</th><th>Liner</th><th>Port</th><th>Port In</th><th>Port Out</th><th>CFS Depot</th><th>Truck No.</th><th>Destuffed</th><th>Empty Return</th><th>Terminal LFD</th><th>Detention LFD</th><th>Exposure</th><th>Remarks</th><th width="80">Actions</th></tr></thead><tbody id="sheetTableBody"></tbody></table><div id="paginationWrapper"></div></section>
   <section id="kanbanView" class="kanban-layout fade-in" style="display:none;"></section>
 </main>
 
@@ -187,37 +186,7 @@
 
 <div class="modal-bg" id="mapModalBg"><div class="modal-dialog" style="width:840px;max-width:95vw;"><div class="modal-header"><span id="mapModalTitle">Voyage Tracker</span><button class="btn btn-ghost" id="mapCloseBtn">✕</button></div><div class="modal-body" style="padding:0;background:#0b1329;"><div id="leafletMap" style="width:100%;height:380px;background:#0b1329;"></div><div style="padding:10px 16px;font-size:11px;display:flex;justify-content:space-between;align-items:center;background:var(--bg-elevated);"><div><strong id="mapVesselText">Vessel Route</strong></div><a id="vesselFinderExternalBtn" href="https://www.vesselfinder.com/" target="_blank" class="btn btn-primary" style="padding:4px 10px;font-size:11px;">Open Live AIS ↗</a></div></div></div></div>
 
-<div class="modal-bg" id="loginModalBg" style="background:linear-gradient(135deg,#071426 0%,#0b2745 55%,#083b5c 100%);backdrop-filter:none;padding:0;">
-  <div style="width:100%;min-height:100%;display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box;position:relative;overflow:hidden;">
-    <div style="position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(0,160,220,.18),transparent 32%),radial-gradient(circle at 85% 80%,rgba(235,73,157,.12),transparent 30%);pointer-events:none;"></div>
-    <div style="position:absolute;top:24px;left:28px;right:28px;display:flex;align-items:center;justify-content:space-between;color:#fff;z-index:2;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#087fc1,#8b3bbd);display:grid;place-items:center;font-size:21px;box-shadow:0 8px 24px rgba(0,0,0,.2);">⚓</div>
-        <div>
-          <div style="font-size:15px;font-weight:900;letter-spacing:-.02em;">Container Tracking Suite</div>
-          <div style="font-size:9px;font-weight:800;letter-spacing:.16em;opacity:.65;margin-top:2px;">OPERATIONS CONTROL</div>
-        </div>
-      </div>
-      <button class="btn btn-ghost" id="loginClose" style="color:#fff;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);">✕ Close</button>
-    </div>
-    <div style="position:relative;z-index:1;width:min(440px,100%);background:rgba(255,255,255,.97);border:1px solid rgba(255,255,255,.25);border-radius:24px;box-shadow:0 28px 80px rgba(0,0,0,.35);padding:34px;box-sizing:border-box;">
-      <div style="text-align:center;margin-bottom:26px;">
-        <div style="display:inline-grid;place-items:center;width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,#087fc1,#8b3bbd);color:#fff;font-size:27px;box-shadow:0 12px 28px rgba(8,127,193,.25);">🔐</div>
-        <div style="font-size:25px;font-weight:900;color:#101828;letter-spacing:-.04em;margin-top:16px;">Staff Portal</div>
-        <div style="font-size:12px;color:#667085;margin-top:7px;">Secure access to container operations & control tower</div>
-      </div>
-      <div>
-        <label style="font-size:10px;font-weight:900;color:#667085;text-transform:uppercase;letter-spacing:.09em;">Authorized Access Code</label>
-        <input type="password" id="loginCodeInput" class="input" style="width:100%;box-sizing:border-box;margin-top:8px;font-family:'JetBrains Mono';font-weight:800;font-size:16px;letter-spacing:.12em;text-align:center;height:48px;border-radius:12px;" placeholder="Enter access code" autocomplete="current-password">
-      </div>
-      <div style="font-size:11px;color:#98A2B3;text-align:center;margin-top:10px;">Your access is authenticated securely before opening the operations dashboard.</div>
-      <button class="btn btn-primary" id="loginSubmit" style="width:100%;height:46px;margin-top:20px;border-radius:12px;font-weight:900;">Sign In to Operations</button>
-      <button class="btn btn-ghost" id="loginCancel" style="width:100%;margin-top:9px;height:40px;border-radius:12px;">Back to Customer Tracking</button>
-      <div style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:20px;font-size:10px;color:#98A2B3;"><span style="width:6px;height:6px;border-radius:50%;background:#12B76A;"></span> Authorized staff access only</div>
-    </div>
-    <div style="position:absolute;bottom:20px;left:0;right:0;text-align:center;color:rgba(255,255,255,.5);font-size:10px;">Greenwich Meridian Logistics (India) Pvt. Ltd. • Operations Portal</div>
-  </div>
-</div>
+<div class="modal-bg" id="loginModalBg"><div class="modal-dialog" style="max-width:380px;"><div class="modal-header"><span>🔐 Staff Portal Login</span><button class="btn btn-ghost" id="loginClose">✕</button></div><div class="modal-body" style="padding:20px;"><div><label style="font-size:10.5px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;">Access Code</label><input type="password" id="loginCodeInput" class="input" style="width:100%;margin-top:6px;font-family:'JetBrains Mono';font-weight:800;font-size:15px;letter-spacing:.1em;text-align:center;height:40px;" placeholder="••••••••"></div><div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;">Please enter your authorized access code.</div></div><div class="modal-footer"><button class="btn" id="loginCancel">Cancel</button><button class="btn btn-primary" id="loginSubmit">Sign In</button></div></div></div>
 
 <div class="modal-bg" id="modalBg"><div class="modal-dialog"><div class="modal-header"><span id="modalTitle">Container Details</span><button class="btn btn-ghost" id="modalClose">✕</button></div><div class="modal-body" id="modalForm" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div><div class="modal-footer"><button class="btn" id="modalCancel">Cancel</button><button class="btn btn-primary" id="modalSave">Save & Sync</button></div></div></div>
 
@@ -271,7 +240,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20260926-05"></script>
+<script src="./app.js?v=20260926-rollback"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
