@@ -995,45 +995,72 @@ function performPublicSearch() {
 
     container.innerHTML = `
       <div class="public-status-header">
-        <div style="font-size:9px; font-weight:900; color:var(--accent); text-transform:uppercase; letter-spacing:.12em;">CUSTOMER STATUS</div>
-        <div style="font-size:22px; font-weight:900; margin-top:4px;">Shipment Status & Timeline</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">A simple operational view of your container movement.</div>
+        <div style="font-size:9px;font-weight:900;color:var(--accent);text-transform:uppercase;letter-spacing:.12em;">CUSTOMER SHIPMENT VISIBILITY</div>
+        <div style="font-size:22px;font-weight:900;margin-top:4px;">Your Shipments</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Quick overview — click any shipment for details.</div>
       </div>
-      ${publicSearchResults.map((r, i) => {
-      const st = getStatus(r);
-      const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]);
-      const originPort = getField(r, ["POL", "PORT OF LOADING"]) || "SHEKOU";
-      const gwPort = getGatewayPortInfo(r).name;
-      const destPort = `${gwPort}, INDIA`;
-      const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
-      const publicTimelineHtml = generatePublicVoyageTimelineHtml(r);
-      const publicUrl = window.location.href.split('?')[0] + '?cntr=' + encodeURIComponent(cntr);
-
-      return `
-        <div class="cascade-item" style="animation-delay: ${i * 100}ms">
-          <div class="public-container-head">
-            <div>
-              <div style="font-size:9.5px; font-weight:800; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em;">Container Number</div>
-              <div class="public-container-number">${esc(cntr)}</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <button class="btn btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="copyText('${publicUrl}')" title="Copy Public Tracking Link">🔗 Copy Link</button>
-              <button class="btn btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="window.print()" title="Print Summary">🖨️ Print</button>
-              <button class="btn" style="border-radius:20px; font-size:11px; padding:6px 14px;" onclick="openRouteMap('${esc(originPort)}', '${esc(destPort)}', '${esc(vessel)}')">🗺️ Route Map</button>
-              <span class="public-badge ${st.class === 'completed' ? 'completed' : ''}">${st.text}</span>
-            </div>
-          </div>
-          <div class="public-detail-grid">
-            <div class="public-detail"><small>Vessel / Voyage</small><strong>${esc(vessel || '—')}</strong></div>
-            <div class="public-detail"><small>ETA</small><strong>${esc(formatDate(getField(r,['ETA'])) || '—')}</strong></div>
-            <div class="public-detail"><small>Gateway Port</small><strong>${esc(gwPort || '—')}</strong></div>
-            <div class="public-detail"><small>CFS</small><strong>${esc(getField(r,['CFS NAME','CFS']) || '—')}</strong></div>
-          </div>
-          ${publicTimelineHtml}
-        </div>
-      `;
-    }).join("<hr style='border:0; border-top:1px solid var(--border);'>")}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 12px;">
+        <button class="btn btn-ghost public-list-filter active" data-filter="all" style="padding:7px 12px;font-size:11px;">All (\${publicSearchResults.length})</button>
+        <button class="btn btn-ghost public-list-filter" data-filter="active" style="padding:7px 12px;font-size:11px;">In Progress</button>
+        <button class="btn btn-ghost public-list-filter" data-filter="completed" style="padding:7px 12px;font-size:11px;">Completed</button>
+        <button class="btn btn-ghost public-list-filter" data-filter="attention" style="padding:7px 12px;font-size:11px;">Needs Attention</button>
+      </div>
+      <div style="overflow:auto;border:1px solid var(--border);border-radius:14px;background:#fff;">
+        <table class="public-shipment-table" style="width:100%;border-collapse:collapse;min-width:850px;">
+          <thead><tr style="background:#10213f;color:#fff;text-align:left;">
+            <th style="padding:12px 14px;font-size:10px;">CONTAINER</th>
+            <th style="padding:12px 14px;font-size:10px;">VESSEL / VOYAGE</th>
+            <th style="padding:12px 14px;font-size:10px;">ETA</th>
+            <th style="padding:12px 14px;font-size:10px;">CFS</th>
+            <th style="padding:12px 14px;font-size:10px;">CURRENT STATUS</th>
+            <th style="padding:12px 14px;font-size:10px;">NEXT STEP</th>
+            <th style="padding:12px 14px;font-size:10px;"></th>
+          </tr></thead>
+          <tbody>
+            \${publicSearchResults.map((r, i) => {
+              const st = getStatus(r);
+              const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]);
+              const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+              const eta = formatDate(getField(r, ["ETA"])) || "—";
+              const cfsName = getField(r, ["CFS NAME", "CFS"]) || "—";
+              const returned = getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]);
+              const destuffed = getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]);
+              const cfsIn = getField(r, ["CFS IN"]);
+              const portOut = getField(r, ["PORT OUT"]);
+              const remarks = getField(r, ["REMARKS", "REMARK", "NOTES", "NOTE"]);
+              const next = returned ? "Tracking Complete" : destuffed ? "Empty Return to Depot" : cfsIn ? "Destuffing" : portOut ? "CFS In-Gate" : "Next milestone pending";
+              const complete = !!returned || st.class === "completed";
+              const attention = /PENDING|NOT|ISSUE|HOLD/i.test(remarks);
+              const statusText = returned ? "EMPTY RETURNED" : destuffed ? "DESTUFFED" : cfsIn ? "CFS IN" : portOut ? "PORT OUT" : getField(r, ["PORT IN"]) ? "PORT IN" : (st.text || "PENDING");
+              const publicUrl = window.location.href.split('?')[0] + '?cntr=' + encodeURIComponent(cntr);
+              const detail = generatePublicVoyageTimelineHtml(r);
+              return '<tr class="public-shipment-row" data-status="' + (complete ? "completed" : attention ? "attention" : "active") + '" style="border-top:1px solid var(--border);cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\\'table-row\\'?\\'none\\':\\'table-row\\'">'
+                + '<td style="padding:13px 14px;"><div style="font-family:monospace;font-weight:900;color:var(--accent);">' + esc(cntr) + '</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">' + esc(getField(r,["TYPE","SIZE"]) || "") + '</div></td>'
+                + '<td style="padding:13px 14px;font-weight:800;font-size:12px;">' + esc(vessel || "—") + '</td>'
+                + '<td style="padding:13px 14px;font-weight:800;font-size:12px;">' + esc(eta) + '</td>'
+                + '<td style="padding:13px 14px;font-weight:800;font-size:12px;">' + esc(cfsName) + '</td>'
+                + '<td style="padding:13px 14px;"><span style="display:inline-block;border-radius:14px;padding:6px 9px;font-size:10px;font-weight:900;background:' + (complete ? "#e7f6ec" : "#eef6ff") + ';color:' + (complete ? "#137333" : "#245b8a") + ';">' + esc(statusText) + '</span></td>'
+                + '<td style="padding:13px 14px;font-size:11px;font-weight:700;color:var(--text-muted);">' + esc(next) + '</td>'
+                + '<td style="padding:13px 14px;font-size:18px;color:var(--accent);">›</td></tr>'
+                + '<tr class="public-shipment-detail" style="display:none;background:#f8fafc;"><td colspan="7" style="padding:0 14px 14px;"><div style="padding-top:10px;">' + detail + '</div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;"><button class="btn btn-ghost" style="padding:6px 10px;font-size:10px;" onclick="event.stopPropagation();copyText(\\'' + publicUrl.replace(/'/g,"\\\\'") + '\\')">🔗 Copy Tracking Link</button></div></td></tr>';
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
     `;
+
+    document.querySelectorAll('.public-list-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.public-list-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        document.querySelectorAll('.public-shipment-row').forEach(row => {
+          const show = filter === 'all' || row.dataset.status === filter;
+          row.style.display = show ? 'table-row' : 'none';
+          if (!show && row.nextElementSibling) row.nextElementSibling.style.display = 'none';
+        });
+      });
+    });
 
     // Trigger sequential timeline drawing
     setTimeout(() => {
