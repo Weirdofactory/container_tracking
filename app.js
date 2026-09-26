@@ -692,6 +692,7 @@ function checkActiveSession() {
 }
 
 function setAccessState(isStaff) {
+  document.body.classList.toggle("public-carrier-mode", !isStaff);
   el("opsControls").style.display = isStaff ? "flex" : "none";
   el("publicControls").style.display = isStaff ? "none" : "flex";
   
@@ -991,16 +992,17 @@ async function performPublicSearch() {
       const detailId = "publicDetail" + i;
       return `
         <tr class="carrier-result-row cascade-item">
-          <td><button class="carrier-container-link" type="button" onclick="togglePublicShipmentDetail('${detailId}', this)"><span class="carrier-row-arrow">›</span><span>${esc(cntr)}</span></button></td>
-          <td><span class="carrier-mono">${esc(mbl)}</span></td>
-          <td>${esc(liner)}</td>
-          <td><div class="carrier-place"><strong>${esc(gwPort)}</strong><small>${esc(originPort)} → India</small></div></td>
-          <td><div class="carrier-vessel"><strong>${esc(vessel)}</strong><small>ETA ${esc(eta)}</small></div></td>
-          <td><span class="carrier-status-pill ${st.class === 'completed' ? 'is-complete' : ''}">${esc(st.text)}</span></td>
-          <td><button class="carrier-view-btn" type="button" onclick="togglePublicShipmentDetail('${detailId}', this)">View</button></td>
+          <td class="carrier-expand-cell"><button class="carrier-expand-btn" type="button" aria-expanded="false" onclick="togglePublicShipmentDetail('${detailId}', this)">⌄</button></td>
+          <td><span class="carrier-booking-ref">${esc(mbl)}</span></td>
+          <td><button class="carrier-container-link" type="button" onclick="togglePublicShipmentDetail('${detailId}', this)">${esc(cntr)}</button><small class="carrier-subline">${esc(type)}</small></td>
+          <td><div class="carrier-place"><strong>${esc(gwPort)}</strong><small>${esc(liner)}</small></div></td>
+          <td><div class="carrier-event"><strong>${esc(st.text.replace(/^[^A-Za-z0-9]+/, "").trim())}</strong><small>${esc(eta)}</small></div></td>
+          <td><div class="carrier-arrival"><strong>${esc(gwPort)}</strong><small>${esc(eta)}</small></div></td>
+          <td><span class="carrier-sensitive">${esc(getField(r, ["SEAL NO.", "SEAL NO", "SEAL"]) || "—")}</span></td>
+          <td><span class="carrier-sensitive">${esc(getField(r, ["PURCHASE ORDER NO.", "PURCHASE ORDER", "PO NO", "P/O NO."]) || "—")}</span></td>
         </tr>
         <tr id="${detailId}" class="carrier-detail-row" hidden>
-          <td colspan="7">
+          <td colspan="8">
             <div class="carrier-detail-panel">
               <div class="carrier-detail-top">
                 <div><span class="carrier-detail-kicker">SHIPMENT DETAIL</span><h3>${esc(cntr)}</h3><p>${esc(mbl)} · ${esc(liner)} · ${esc(type)}</p></div>
@@ -1019,7 +1021,7 @@ async function performPublicSearch() {
         <div class="public-results-toolbar"><span>${publicSearchResults.length} shipment${publicSearchResults.length === 1 ? "" : "s"} found</span><span>Search: ${esc(rawInput)}</span></div>
         <div class="carrier-table-wrap">
           <table class="carrier-results-table">
-            <thead><tr><th>Container No.</th><th>Booking / MBL</th><th>Liner</th><th>Latest Place</th><th>Vessel / ETA</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th class="carrier-expand-head"></th><th>Booking Ref</th><th>Container No.</th><th>Latest Place</th><th>Latest Event Status / Time</th><th>POD / Vessel Arrival</th><th>Seal No.</th><th>Purchase Order No.</th></tr></thead>
             <tbody>${rowsHtml}</tbody>
           </table>
         </div>
