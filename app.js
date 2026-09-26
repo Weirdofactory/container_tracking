@@ -1937,6 +1937,18 @@ async function saveAndRefresh() {
 
 async function loadFromCloud() {
   try {
+    // If the page bootstrapped live data, use it first. This prevents the public
+    // tracker from briefly operating on demo/local data while Supabase initializes.
+    if (window.gmlLiveDataPromise) {
+      const bootRows = await window.gmlLiveDataPromise;
+      if (Array.isArray(bootRows) && bootRows.length > 0) {
+        rows = bootRows;
+        localStorage.setItem("containerRows", JSON.stringify(rows));
+        populateFilters();
+        renderUI();
+        return;
+      }
+    }
     const { data, error } = await sb.from('containers').select('data').eq('id', 'gml_tracking_records').single();
     if (!error && data && Array.isArray(data.data) && data.data.length > 0) {
       rows = data.data;

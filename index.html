@@ -202,6 +202,27 @@
 /* Customer-safe boot fallback: keeps Track/Login usable even if an optional app module fails. */
 (function(){
   const $=id=>document.getElementById(id);
+  // Stable live-data bootstrap: read-only preload from Supabase before the main app starts.
+  // Never writes to Supabase and never replaces a non-empty cache with an empty result.
+  const GML_SUPABASE_URL='https://ykeucqritoexykqrggzz.supabase.co';
+  const GML_SUPABASE_KEY='sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ';
+  window.gmlLiveDataPromise=(async function(){
+    try{
+      const res=await fetch(GML_SUPABASE_URL+'/rest/v1/containers?select=data&id=eq.gml_tracking_records',{headers:{apikey:GML_SUPABASE_KEY}});
+      if(!res.ok) throw new Error('containers HTTP '+res.status);
+      const body=await res.json();
+      const live=body&&body[0]&&Array.isArray(body[0].data)?body[0].data:[];
+      if(live.length){
+        localStorage.setItem('containerRows',JSON.stringify(live));
+        window.gmlLiveRows=live;
+      }
+      return live;
+    }catch(e){
+      console.warn('Live data bootstrap failed:',e);
+      return [];
+    }
+  })();
+
   window.openStaffLoginFallback=function(){
     const m=$('loginModalBg'); if(m)m.classList.add('open');
     setTimeout(()=>{const x=$('loginCodeInput');if(x)x.focus();},50);
@@ -224,23 +245,30 @@
   const login=$('loginBtn');
   if(login) login.onclick=function(){window.openStaffLoginFallback();};
   const submit=$('loginSubmit');
-  if(submit) submit.addEventListener('click',async function(){
-    if(typeof window.sb==='undefined' && typeof window.supabase==='undefined') return;
-    if(typeof window.executeSuccessfulLogin==='function') return;
+  if(submit) submit.addEventListener('click',async function(e){
+    // Handle staff login here before app.js so login remains functional even if
+    // the main application bundle has a transient Supabase/client problem.
+    e.stopImmediatePropagation();
     const code=String(($('loginCodeInput')||{}).value||'').trim().toLowerCase();
-    if(!code)return;
-    const btn=submit; btn.disabled=true; btn.textContent='Verifying...';
+    if(!code){alert('Please enter your Access Code.');return;}
+    const btn=submit; const original=btn.textContent; btn.disabled=true; btn.textContent='Verifying...';
     try{
-      const client=window.sb || (window.supabase&&window.supabase.createClient('https://ykeucqritoexykqrggzz.supabase.co','sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ'));
-      const {data,error}=await client.from('user_roles').select('user_id, role, username').eq('access_code',code).single();
-      if(error||!data){alert('Invalid access code.');return;}
-      localStorage.setItem('gml_auth_code_user',JSON.stringify(data)); location.reload();
-    }catch(e){alert('Login service unavailable. Please try again.');}
-    finally{btn.disabled=false;btn.textContent='Sign In';}
+      const url=GML_SUPABASE_URL+'/rest/v1/user_roles?select=user_id,role,username&access_code=eq.'+encodeURIComponent(code)+'&limit=1';
+      const res=await fetch(url,{headers:{apikey:GML_SUPABASE_KEY}});
+      if(!res.ok) throw new Error('login HTTP '+res.status);
+      const list=await res.json();
+      const data=Array.isArray(list)&&list[0];
+      if(!data){alert('Invalid Access Code.');return;}
+      localStorage.setItem('gml_auth_code_user',JSON.stringify(data));
+      location.reload();
+    }catch(err){
+      console.error('Staff login error:',err);
+      alert('Login service unavailable. Please try again.');
+    }finally{btn.disabled=false;btn.textContent=original;}
   },true);
 })();
 </script>
-<script src="./app.js?v=20260925-09"></script>
+<script src="./app.js?v=20260926-rollback"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
