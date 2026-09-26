@@ -1034,7 +1034,7 @@ function performPublicSearch() {
               const statusText = returned ? "EMPTY RETURNED" : destuffed ? "DESTUFFED" : cfsIn ? "CFS IN" : portOut ? "PORT OUT" : getField(r, ["PORT IN"]) ? "PORT IN" : (st.text || "PENDING");
               const publicUrl = window.location.href.split('?')[0] + '?cntr=' + encodeURIComponent(cntr);
               const detail = generatePublicVoyageTimelineHtml(r);
-              return '<tr class="public-shipment-row" data-status="' + (complete ? "completed" : attention ? "attention" : "active") + '" style="border-top:1px solid var(--border);cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\\'table-row\\'?\\'none\\':\\'table-row\\'">'
+              return '<tr class="public-shipment-row" data-status="' + (complete ? "completed" : attention ? "attention" : "active") + '" style="border-top:1px solid var(--border);cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===&quot;table-row&quot;?&quot;none&quot;:&quot;table-row&quot;">'
                 + '<td style="padding:13px 14px;"><div style="font-family:monospace;font-weight:900;color:var(--accent);">' + esc(cntr) + '</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">' + esc(getField(r,["TYPE","SIZE"]) || "") + '</div></td>'
                 + '<td style="padding:13px 14px;font-weight:800;font-size:12px;">' + esc(vessel || "—") + '</td>'
                 + '<td style="padding:13px 14px;font-weight:800;font-size:12px;">' + esc(eta) + '</td>'
