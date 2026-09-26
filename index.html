@@ -202,6 +202,27 @@
 /* Customer-safe boot fallback: keeps Track/Login usable even if an optional app module fails. */
 (function(){
   const $=id=>document.getElementById(id);
+  // Stable live-data bootstrap: read-only preload from Supabase before the main app starts.
+  // Never writes to Supabase and never replaces a non-empty cache with an empty result.
+  const GML_SUPABASE_URL='https://ykeucqritoexykqrggzz.supabase.co';
+  const GML_SUPABASE_KEY='sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ';
+  window.gmlLiveDataPromise=(async function(){
+    try{
+      const res=await fetch(GML_SUPABASE_URL+'/rest/v1/containers?select=data&id=eq.gml_tracking_records',{headers:{apikey:GML_SUPABASE_KEY}});
+      if(!res.ok) throw new Error('containers HTTP '+res.status);
+      const body=await res.json();
+      const live=body&&body[0]&&Array.isArray(body[0].data)?body[0].data:[];
+      if(live.length){
+        localStorage.setItem('containerRows',JSON.stringify(live));
+        window.gmlLiveRows=live;
+      }
+      return live;
+    }catch(e){
+      console.warn('Live data bootstrap failed:',e);
+      return [];
+    }
+  })();
+
   window.openStaffLoginFallback=function(){
     const m=$('loginModalBg'); if(m)m.classList.add('open');
     setTimeout(()=>{const x=$('loginCodeInput');if(x)x.focus();},50);
