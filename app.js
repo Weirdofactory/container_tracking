@@ -266,70 +266,103 @@ function generatePublicVoyageTimelineHtml(r) {
 
 function generatePublicShipmentReportHtml(r) {
   const v = names => getField(r, names) || "";
-  const cntr=v(["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]), mbl=v(["MBL NO","MBL","MASTER BL"]);
-  const liner=v(["LINER","LINE","SHIPPING LINE"]), vessel=v(["VESSEL & VOY","VESSEL","VESSEL NAME"]);
-  const type=v(["TYPE","EQUIPMENT TYPE","CONTAINER TYPE","SIZE"]), pol=v(["POL","PORT OF LOADING"]);
-  const podRaw=v(["POD","PORT OF DISCHARGE","DISCHARGE PORT"]); const pod=/^(unverified|unknown|n\/a|na|-)$/i.test(String(podRaw).trim()) ? "" : podRaw;
-  const placeReceipt=v(["PLACE OF RECEIPT","RECEIPT PLACE"]) || pol;
-  const deliveryRaw=v(["PLACE OF DELIVERY","DELIVERY PLACE"]); const placeDelivery=/^(unverified|unknown|n\/a|na|-)$/i.test(String(deliveryRaw).trim()) ? "" : deliveryRaw;
-  const terminal=getGatewayPortInfo(r).name || "Unverified";
-  const cfs=v(["CFS NAME","CFS"]), eta=formatDate(v(["ETA"])), portIn=formatDate(v(["PORT IN"])), portOut=formatDate(v(["PORT OUT"]));
-  const cfsIn=formatDate(v(["CFS IN"])), destuff=formatDate(v(["DESTUFFING DATE","DESTUFF DATE"]));
+  const clean = value => /^(unverified|unknown|n\/a|na|-)$/i.test(String(value || "").trim()) ? "" : value;
+  const cntr=v(["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]);
+  const mbl=v(["MBL NO","MBL","MASTER BL"]);
+  const liner=v(["LINER","LINE","SHIPPING LINE"]);
+  const vessel=v(["VESSEL & VOY","VESSEL","VESSEL NAME"]);
+  const type=v(["TYPE","EQUIPMENT TYPE","CONTAINER TYPE","SIZE"]);
+  const pol=clean(v(["POL","PORT OF LOADING"]));
+  const pod=clean(v(["POD","PORT OF DISCHARGE","DISCHARGE PORT"]));
+  const placeReceipt=clean(v(["PLACE OF RECEIPT","RECEIPT PLACE"])) || pol;
+  const placeDelivery=clean(v(["PLACE OF DELIVERY","DELIVERY PLACE"]));
+  const terminal=getGatewayPortInfo(r).name || "";
+  const cfs=v(["CFS NAME","CFS"]);
+  const portIn=formatDate(v(["PORT IN"]));
+  const portOut=formatDate(v(["PORT OUT"]));
+  const cfsIn=formatDate(v(["CFS IN"]));
+  const destuff=formatDate(v(["DESTUFFING DATE","DESTUFF DATE"]));
   const emptyOut=formatDate(v(["CONTAINER RETURN DATE","EMPTY RETURN DATE"]));
   const departure=formatDate(v(["ATD","ACTUAL DEPARTURE","VESSEL DEPARTURE","DEPARTURE DATE"])) || formatDate(v(["ETD"]));
-  const arrival=formatDate(v(["ATA","ACTUAL ARRIVAL","VESSEL ARRIVAL","ARRIVAL DATE"])) || eta;
+  const arrival=formatDate(v(["ATA","ACTUAL ARRIVAL","VESSEL ARRIVAL","ARRIVAL DATE"])) || formatDate(v(["ETA"]));
   const st=getStatus(r), statusText=(st.text||"SHIPMENT IN PROGRESS").replace(/^[^A-Za-z0-9]+/,"").trim();
   const steps=[
     ["POL",pol,departure],["POD",pod,arrival],["CFS IN",cfs,cfsIn],["DE-STUFF",cfs,destuff],
-    ["EMPTY OUT",v(["TRUCK NO.","TRUCK NO","VEHICLE NO"])||"Terminal",emptyOut],
-    ["GATE OUT","Delivery",emptyOut],["DELIVERED","Completion",emptyOut]
+    ["EMPTY OUT","Return",emptyOut],["GATE OUT","Delivery",emptyOut],["DELIVERED","Complete",emptyOut]
   ];
+  const doneCount=steps.filter(s=>s[2]).length;
+  const progress=Math.round((doneCount/steps.length)*100);
   const remarks=[];
-  if(destuff) remarks.push("Container de-stuff completed at "+(cfs||"CFS")+" on "+destuff+".");
-  if(!emptyOut) remarks.push("Awaiting empty return details from terminal.");
-  if(!emptyOut) remarks.push("Will update once empty out is confirmed.");
-  if(emptyOut) remarks.push("Empty container return has been recorded.");
-  const nextAction = emptyOut ? "Shipment completed — empty container return recorded." :
+  if(destuff) remarks.push("De-stuff completed at "+(cfs||"CFS")+" on "+destuff+".");
+  if(!emptyOut) remarks.push("Awaiting empty return confirmation.");
+  else remarks.push("Empty container return recorded on "+emptyOut+".");
+  const nextAction = emptyOut ? "Shipment completed." :
     destuff ? "Awaiting empty container return confirmation." :
-    cfsIn ? "Container is at CFS and awaiting de-stuff completion." :
-    "Shipment is in transit — awaiting next milestone update.";
+    cfsIn ? "Awaiting de-stuff completion." :
+    "Shipment is in transit — awaiting next milestone.";
+  const generated=new Date().toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
   return `
-  <article class="shipment-report">
-    <div class="shipment-report-head">
-      <div><strong class="shipment-report-kicker">CONTAINER TRACKING</strong><span class="shipment-report-subtitle">Customer Shipment Visibility</span></div>
-      <div class="shipment-report-title"><strong>STATUS REPORT</strong><span>Generated on ${esc(new Date().toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}</span></div>
-    </div>
-    <div class="shipment-report-banner">
-      <div class="shipment-report-banner-copy"><span class="shipment-report-pill">⚓ SHIPMENT STATUS</span><h2>CONTAINER TRACKING REPORT</h2><p>REAL TIME VISIBILITY <b>|</b> ACCURATE UPDATES <b>|</b> BETTER PLANNING</p></div>
-    </div>
-    <div class="shipment-report-summary">
-      <div><small>VESSEL / VOYAGE</small><strong>⚓ ${esc(vessel||"—")}</strong></div>
-      <div><small>CARRIER / LINE</small><strong>⚑ ${esc(liner||"—")}</strong></div>
-      <div><small>CONTAINER</small><strong>${esc(cntr||"—")}</strong><em>${esc(type||"—")}</em></div>
-      <div class="shipment-report-status"><small>CURRENT STATUS</small><strong>● ${esc(statusText||"IN PROGRESS")}</strong>${destuff ? `<span>${esc(destuff)}</span>` : ""}</div>
-    </div>
-    <div class="shipment-report-grid">
-      <section class="shipment-report-panel route-panel"><header><span class="section-icon">↗</span><span>ROUTE</span><small>SHIPMENT MOVEMENT</small></header><div class="shipment-route">
-        <div><small>PLACE OF RECEIPT</small><strong>${esc(placeReceipt||"—")}</strong></div><b>→</b>
-        <div><small>PORT OF LOADING</small><strong>${esc(pol||"—")}</strong></div><b>→</b>
-        <div><small>PORT OF DISCHARGE</small><strong>${esc(pod||"Pending verification")}</strong></div><b>→</b>
-        <div><small>PLACE OF DELIVERY</small><strong>${esc(placeDelivery||"Pending confirmation")}</strong></div>
-      </div><div class="shipment-route-terminal"><span>CFS / TERMINAL</span><strong>${esc(cfs||terminal||"Unverified")}</strong></div></section>
-      <section class="shipment-report-panel dates-panel"><header><span class="section-icon">◷</span><span>KEY DATES</span><small>VESSEL SCHEDULE</small></header><div class="shipment-date-grid">
-        <div><small>ACTUAL DEPARTURE</small><strong>🚢 ${esc(departure||"—")}</strong></div>
-        <div><small>ACTUAL / ESTIMATED ARRIVAL</small><strong>⚓ ${esc(arrival||"—")}</strong></div>
-      </div></section>
-    </div>
-    <section class="shipment-report-panel details-panel"><header><span class="section-icon">▤</span><span>SHIPMENT DETAILS</span><small>REFERENCE INFORMATION</small></header><div class="shipment-details-grid">
-      <div><small>MBL NUMBER</small><strong>▧ ${esc(mbl||"—")}</strong></div><div><small>CFS</small><strong>⌂ ${esc(cfs||"—")}</strong></div>
-      <div><small>CONTAINER TYPE</small><strong>⚙ ${esc(type||"—")}</strong></div><div><small>TERMINAL IN</small><strong>⚓ ${esc(portIn||"—")}</strong></div>
-      <div><small>TERMINAL OUT</small><strong>⚓ ${esc(portOut||"—")}</strong></div>
-    </div></section>
-    <section class="shipment-report-panel milestone-panel"><header><span class="section-icon">✓</span><span>SHIPMENT JOURNEY</span><small>LIVE MILESTONE PROGRESS</small></header><div class="shipment-milestones">
-      ${steps.map(s=>`<div class="shipment-milestone ${s[2]?"done":""}"><div class="shipment-milestone-icon">${s[2]?"✓":"●"}</div><strong>${esc(s[0])}</strong><span>${esc(s[1]||"—")}</span><small>${esc(s[2]||"Pending")}</small></div>`).join("")}
-    </div></section>
-    <section class="shipment-report-next"><div><span>NEXT ACTION</span><strong>${esc(nextAction)}</strong></div><b>→</b></section>
-    <section class="shipment-report-remarks"><header>💬 <span>REMARKS</span></header>${remarks.map(x=>`<div>✓ <span>${esc(x)}</span></div>`).join("")}</section>
+  <article class="shipment-report whatsapp-report">
+    <header class="report-share-head">
+      <div><span class="report-label">SHIPMENT STATUS REPORT</span><h1>Container Tracking</h1><p>Customer shipment visibility</p></div>
+      <div class="report-generated"><strong>STATUS REPORT</strong><span>${esc(generated)}</span></div>
+    </header>
+
+    <section class="report-hero">
+      <div class="report-hero-main">
+        <span class="report-status-pill">● ${esc(statusText)}</span>
+        <h2>${esc(cntr||"Container —")}</h2>
+        <p>${esc(vessel||"Vessel pending")} ${vessel && liner ? " • " : ""}${esc(liner||"")}</p>
+      </div>
+      <div class="report-hero-side"><span>CONTAINER TYPE</span><strong>${esc(type||"—")}</strong></div>
+    </section>
+
+    <section class="report-stats">
+      <div><span>VESSEL / VOYAGE</span><strong>${esc(vessel||"—")}</strong></div>
+      <div><span>CARRIER / LINE</span><strong>${esc(liner||"—")}</strong></div>
+      <div><span>MBL NUMBER</span><strong>${esc(mbl||"—")}</strong></div>
+      <div><span>CURRENT STATUS</span><strong class="report-green">${esc(statusText||"IN PROGRESS")}</strong></div>
+    </section>
+
+    <section class="report-route-card">
+      <div class="report-section-title"><span>ROUTE</span><small>SHIPMENT MOVEMENT</small></div>
+      <div class="report-route">
+        <div><span>RECEIPT</span><strong>${esc(placeReceipt||"—")}</strong></div><b>→</b>
+        <div><span>LOADING</span><strong>${esc(pol||"—")}</strong></div><b>→</b>
+        <div><span>DISCHARGE</span><strong>${esc(pod||"Pending")}</strong></div><b>→</b>
+        <div><span>DELIVERY</span><strong>${esc(placeDelivery||"Pending")}</strong></div>
+      </div>
+      <div class="report-route-foot"><span>CFS / TERMINAL</span><strong>${esc(cfs||terminal||"Pending")}</strong></div>
+    </section>
+
+    <section class="report-dates">
+      <div><span>ACTUAL DEPARTURE</span><strong>${esc(departure||"—")}</strong></div>
+      <div><span>ACTUAL / ESTIMATED ARRIVAL</span><strong>${esc(arrival||"—")}</strong></div>
+      <div><span>CONTAINER TYPE</span><strong>${esc(type||"—")}</strong></div>
+    </section>
+
+    <section class="report-journey">
+      <div class="report-section-title"><span>SHIPMENT JOURNEY</span><small>${doneCount} OF ${steps.length} MILESTONES RECORDED</small></div>
+      <div class="report-progress"><i style="width:${progress}%"></i></div>
+      <div class="report-steps">
+        ${steps.map(s=>`<div class="report-step ${s[2]?"done":""}"><div class="report-step-dot">${s[2]?"✓":"·"}</div><strong>${esc(s[0])}</strong><span>${esc(s[1]||"—")}</span><small>${esc(s[2]||"Pending")}</small></div>`).join("")}
+      </div>
+    </section>
+
+    <section class="report-details">
+      <div class="report-section-title"><span>SHIPMENT DETAILS</span><small>REFERENCE INFORMATION</small></div>
+      <div class="report-detail-grid">
+        <div><span>PORT IN</span><strong>${esc(portIn||"—")}</strong></div>
+        <div><span>PORT OUT</span><strong>${esc(portOut||"—")}</strong></div>
+        <div><span>CFS IN</span><strong>${esc(cfsIn||"—")}</strong></div>
+        <div><span>DE-STUFF</span><strong>${esc(destuff||"—")}</strong></div>
+        <div><span>EMPTY RETURN</span><strong>${esc(emptyOut||"—")}</strong></div>
+      </div>
+    </section>
+
+    <section class="report-next"><span>NEXT ACTION</span><strong>${esc(nextAction)}</strong></section>
+    <section class="report-remarks"><span>REMARKS</span>${remarks.map(x=>`<div>✓ ${esc(x)}</div>`).join("")}</section>
+    <footer class="report-footer">Container Tracking Suite • Generated for customer communication</footer>
   </article>`;
 }
 function logAuditEvent(action, containerNo, field, oldVal, newVal) {
