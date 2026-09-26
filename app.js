@@ -1424,7 +1424,12 @@ el("bulkPhotoBtn").addEventListener("click", () => {
 });
 
 function getFilteredRows() {
-  const q = el("search").value.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const searchTokens = el("search").value
+    .toLowerCase()
+    .trim()
+    .split(/\s+/)
+    .map(token => token.replace(/[^a-z0-9]/g, ''))
+    .filter(Boolean);
   const vf = el("vesselFilter").value;
   const gw = el("gatewayFilter").value;
   const cf = el("cfsFilter").value;
@@ -1436,10 +1441,16 @@ function getFilteredRows() {
     const vsl = (getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "").toLowerCase();
     const mbl = (getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "").toLowerCase().replace(/[^a-z0-9]/g, '');
     const truck = (getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "").toLowerCase().replace(/[^a-z0-9]/g, '');
+    const searchHaystack = Object.values(r)
+      .map(value => String(value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, ' '))
+      .join(' ');
     const completed = isFullyCompleted(r);
     const fees = calculateStandardFees(r);
 
-    if (q && !cntr.includes(q) && !vsl.includes(q) && !mbl.includes(q) && !truck.includes(q)) return false;
+    if (searchTokens.length && !searchTokens.every(token =>
+      searchHaystack.replace(/\s+/g, '').includes(token) ||
+      searchHaystack.includes(token)
+    )) return false;
     if (vf && getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) !== vf) return false;
     if (gw && !(getField(r, ["GATEWAY PORT", "PORT"]) || "").toLowerCase().includes(gw.toLowerCase())) return false;
     if (cf && getField(r, ["CFS NAME", "CFS"]) !== cf) return false;
@@ -1505,9 +1516,18 @@ function updateKPIs() {
   animateValue(el("kTotalExposure"), 0, totalExposureUSD, 1000, true);
 }
 
+function searchTokensForDisplay(count) {
+  return count + " result" + (count === 1 ? "" : "s");
+}
+
 function renderUI() {
   const filtered = getFilteredRows();
   updateKPIs();
+
+  const searchCount = el("searchResultCount");
+  if (searchCount) {
+    searchCount.textContent = searchTokensForDisplay(filtered.length);
+  }
 
   if (currentView === 'cards') renderCards(filtered);
   else if (currentView === 'sheet') renderSheet(filtered);
@@ -1573,7 +1593,7 @@ function renderCards(items) {
     const flashClass = lastEditedId === i ? "card-saved" : "";
 
     return `
-      <div class="card-box cascade-item ${flashClass}" style="animation-delay: ${loopIdx * 40}ms">
+      <div class="card-box cascade-item status-${st.class} ${flashClass}" style="animation-delay: ${loopIdx * 40}ms">
         <div>
           <div class="card-header-top">
             <div>
@@ -3430,3 +3450,39 @@ document.querySelectorAll(".chip").forEach(c => {
 });
 renderUI();
 
+
+
+/* Dashboard search UX helpers — intentionally isolated from existing listeners. */
+(() => {
+  const searchInput = document.getElementById("search");
+  const clearButton = document.getElementById("searchClearBtn");
+  const syncSearchChrome = () => {
+    if (!searchInput || !clearButton) return;
+    clearButton.style.display = searchInput.value.trim() ? "inline-flex" : "none";
+  };
+  if (searchInput && clearButton) {
+    clearButton.addEventListener("click", () => {
+      searchInput.value = "";
+      currentPage = 1;
+      renderUI();
+      searchInput.focus();
+      syncSearchChrome();
+    });
+    searchInput.addEventListener("input", syncSearchChrome);
+    syncSearchChrome();
+  }
+  document.addEventListener("keydown", (event) => {
+    const target = event.target;
+    const isTyping = target && ["INPUT","TEXTAREA","SELECT"].includes(target.tagName);
+    if (event.key === "/" && !isTyping && searchInput) {
+      event.preventDefault();
+      searchInput.focus();
+    }
+    if (event.key === "Escape" && document.activeElement === searchInput && searchInput.value) {
+      searchInput.value = "";
+      currentPage = 1;
+      renderUI();
+      syncSearchChrome();
+    }
+  });
+})();
