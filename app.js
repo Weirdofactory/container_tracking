@@ -1740,6 +1740,7 @@ function renderSheet(items) {
         <td data-label="Remarks"><input class="cell-input" value="${esc(r["REMARKS"] || "")}" onchange="inlineEdit(${i}, 'REMARKS', this.value)" ${editableAttrText}></td>
         <td data-label="Actions">
           <div style="display:flex; gap:3px;">
+            ${!isViewer ? `<button class="btn btn-primary" style="padding:3px 7px;font-size:10px;" title="Edit Container" onclick="openModal(${i})">✏️ Edit</button>` : ''}
             ${!isViewer ? `<button class="btn" style="padding:2px 5px; color:var(--accent)" title="Mark Returned" onclick="markSingleReturned(${i})">🔄</button>` : ''}
             ${currentUser && currentUser.role === 'Admin' ? `<button class="btn btn-danger" style="padding:2px 5px;" onclick="deleteRow(${i})">🗑️</button>` : ''}
           </div>
