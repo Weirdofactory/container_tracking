@@ -3183,28 +3183,6 @@ document.querySelectorAll(".chip").forEach(chip => {
   });
 });
 
-async function saveAndRefresh() {
-  renderUI();
-  try {
-    localStorage.setItem("containerRows", JSON.stringify(rows));
-    await sb.from('containers').upsert({ id: 'gml_tracking_records', data: rows, updated_at: new Date().toISOString() });
-  } catch (err) {
-    console.warn("Cloud sync notice:", err);
-  }
-}
-
-async function loadFromCloud() {
-  try {
-    const { data, error } = await sb.from('containers').select('data').eq('id', 'gml_tracking_records').single();
-    if (!error && data && Array.isArray(data.data) && data.data.length > 0) {
-      rows = data.data;
-      localStorage.setItem("containerRows", JSON.stringify(rows));
-      populateFilters();
-      renderUI();
-    }
-  } catch(err){}
-}
-
 function populateFilters() {
   const vSet = new Set(), cSet = new Set();
   rows.forEach(r => {
