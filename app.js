@@ -290,7 +290,6 @@ function generatePublicShipmentReportHtml(r) {
   return `
   <article class="shipment-report">
     <div class="shipment-report-head">
-      </div>
       <div class="shipment-report-title"><strong>STATUS REPORT</strong><span>Generated on ${esc(new Date().toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}</span></div>
     </div>
     <div class="shipment-report-banner"><span class="shipment-report-pill">⚓ SHIPMENT STATUS</span><h2>CONTAINER TRACKING REPORT</h2><p>REAL TIME VISIBILITY <b>|</b> ACCURATE UPDATES <b>|</b> BETTER PLANNING</p></div>
