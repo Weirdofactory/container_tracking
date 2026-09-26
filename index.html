@@ -165,7 +165,7 @@
       <div class="view-selector"><button class="view-btn active" data-view="cards">Cards</button><button class="view-btn" data-view="sheet">Table</button><button class="view-btn" data-view="kanban">Pipeline</button></div>
     </div>
     <div class="control-tray-bottom"><div class="quick-chips-wrapper">
-      <span class="chip" data-filter="all">All</span><span class="chip active" data-filter="active">Active Only</span><span class="chip" data-filter="today">Arriving Today</span><span class="chip" data-filter="demurrage">Demurrage (Port)</span><span class="chip" data-filter="detention">Detention (Outside)</span><span class="chip" data-filter="critical_lfd">⚠️ LFD Critical (&le; 2d)</span><span class="chip" data-filter="delayed">Delayed / Rolled</span><span class="chip" data-filter="completed">Archive (Returned)</span>
+      <span class="chip" data-filter="all">All</span><span class="chip active" data-filter="active">Active</span><span class="chip" data-filter="port_in">Port In</span><span class="chip" data-filter="port_out">Port Out</span><span class="chip" data-filter="cfs_in">CFS In</span><span class="chip" data-filter="empty_pending">Empty Pending</span><span class="chip" data-filter="completed">Completed</span>
     </div></div>
   </div>
   <section id="cardsView" class="cards-layout fade-in"></section>
@@ -242,7 +242,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20260927-report2"></script>
+<script src="./app.js?v=20260927-stagefilters1"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
