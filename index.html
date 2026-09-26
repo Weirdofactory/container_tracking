@@ -79,6 +79,22 @@
 </header>
 
 <section id="publicLandingView" class="fade-in one-public-shell">
+  <div class="public-carrier-topbar">
+    <div class="public-carrier-brand" onclick="resetToLanding()" role="button" tabindex="0"><span class="public-carrier-mark">GML</span><span class="public-carrier-brand-sub">GLOBAL MARINE LOGISTICS</span></div>
+    <div class="public-carrier-utility">
+      <button type="button" class="public-utility-btn">⌕ <span>Search</span></button>
+      <button type="button" class="public-utility-btn">◎ <span>English</span></button>
+      <button type="button" class="public-utility-btn" onclick="document.getElementById('loginModalBg').classList.add('open');document.getElementById('loginCodeInput')?.focus();">◯ <span>Login</span></button>
+    </div>
+  </div>
+  <nav class="public-carrier-nav" aria-label="Customer navigation">
+    <a href="#publicLandingView">Price</a><a href="#publicLandingView">Book</a><a class="active" href="#publicSearchInput">Track</a><a href="#publicLandingView">Schedule</a><a href="#publicLandingView">Services <span>⌄</span></a><a href="#publicLandingView">Digital Solutions <span>⌄</span></a><a href="#publicLandingView">Industries <span>⌄</span></a><span class="public-nav-spacer"></span><a href="#publicLandingView">Local Information</a><a href="#publicLandingView">Contact Us</a><a href="#publicLandingView">About GML <span>⌄</span></a>
+  </nav>
+  <aside class="public-carrier-sidebar" aria-label="Customer portal navigation">
+    <div class="public-side-search">⌕ <span>I’m looking for</span></div>
+    <a href="#publicLandingView">⌂ <span>HOME</span></a><a href="#publicLandingView">◷ <span>Schedule</span><b>›</b></a><a href="#publicLandingView">◉ <span>Prices</span><b>›</b></a><a href="#publicLandingView">▣ <span>Booking</span><b>›</b></a><a href="#publicLandingView">▤ <span>Documentation</span><b>›</b></a>
+    <div class="public-side-group"><div class="public-side-group-title">⚓ <span>Manage Shipment</span><b>⌄</b></div><a href="#publicLandingView">Shipment Overview <span>›</span></a><a class="active" href="#publicSearchInput">Track &amp; Trace <span>›</span></a><a href="#publicLandingView">e-Subscription <span>›</span></a><a href="#publicLandingView">Report <span>›</span></a></div>
+  </aside>
   <div class="one-hero">
     <div class="one-hero-inner">
       <div class="one-hero-copy">
@@ -92,11 +108,11 @@
           <span class="one-panel-badge">● ONLINE</span>
         </div>
         <div class="one-track-fields">
-          <div class="one-field-group one-field-type"><label>Tracking Type</label><select aria-label="Tracking Type" disabled><option>Container No.</option></select></div>
-          <div class="one-field-group one-field-input"><label>Container Number</label><input type="text" id="publicSearchInput" autocomplete="off" spellcheck="false" placeholder="Container or MBL No. e.g. WHSU6393302"></div>
+          <div class="one-field-group one-field-type"><label>Search Type</label><select id="publicTrackingType" aria-label="Search Type"><option value="all">All</option><option value="container">Container No.</option><option value="mbl">MBL No.</option></select></div>
+          <div class="one-field-group one-field-input"><label>Tracking Number</label><input type="text" id="publicSearchInput" autocomplete="off" spellcheck="false" placeholder="Enter Container / MBL / Booking No."></div>
           <button class="one-track-button" id="publicSearchBtn" onclick="performPublicSearch()">Search</button>
         </div>
-        <div class="one-track-help">Search one or multiple Container / MBL numbers. Separate multiple numbers with spaces or commas.</div>
+        <div class="one-track-help">Enter one or multiple tracking numbers. Separate multiple entries with a space or comma.</div>
       </div>
     </div>
   </div>
