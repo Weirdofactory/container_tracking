@@ -263,6 +263,68 @@ function generatePublicVoyageTimelineHtml(r) {
   `;
 }
 
+
+function generatePublicShipmentReportHtml(r) {
+  const v = names => getField(r, names) || "";
+  const cntr=v(["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]), mbl=v(["MBL NO","MBL","MASTER BL"]);
+  const liner=v(["LINER","LINE","SHIPPING LINE"]), vessel=v(["VESSEL & VOY","VESSEL","VESSEL NAME"]);
+  const type=v(["TYPE","EQUIPMENT TYPE","CONTAINER TYPE","SIZE"]), pol=v(["POL","PORT OF LOADING"]);
+  const gw=getGatewayPortInfo(r).name || v(["POD","PORT OF DISCHARGE","PORT OF DELIVERY"]) || "—";
+  const cfs=v(["CFS NAME","CFS"]), eta=formatDate(v(["ETA"])), portIn=formatDate(v(["PORT IN"])), portOut=formatDate(v(["PORT OUT"]));
+  const cfsIn=formatDate(v(["CFS IN"])), destuff=formatDate(v(["DESTUFFING DATE","DESTUFF DATE"]));
+  const emptyOut=formatDate(v(["CONTAINER RETURN DATE","EMPTY RETURN DATE"]));
+  const departure=formatDate(v(["ATD","ACTUAL DEPARTURE","VESSEL DEPARTURE","DEPARTURE DATE"])) || formatDate(v(["ETD"]));
+  const arrival=formatDate(v(["ATA","ACTUAL ARRIVAL","VESSEL ARRIVAL","ARRIVAL DATE"])) || eta;
+  const st=getStatus(r), statusText=(st.text||"SHIPMENT IN PROGRESS").replace(/^[^A-Za-z0-9]+/,"").trim();
+  const steps=[
+    ["POL",pol,departure],["POD",gw,arrival],["CFS IN",cfs,cfsIn],["DE-STUFF",cfs,destuff],
+    ["EMPTY OUT",v(["TRUCK NO.","TRUCK NO","VEHICLE NO"])||"Terminal",emptyOut],
+    ["GATE OUT","Delivery",formatDate(v(["GATE OUT","DELIVERY DATE"]))],
+    ["DELIVERED","Completion",formatDate(v(["DELIVERED DATE","POD DATE"]))]
+  ];
+  const remarks=[];
+  if(destuff) remarks.push("Container de-stuff completed at "+(cfs||"CFS")+" on "+destuff+".");
+  if(!emptyOut) remarks.push("Awaiting empty return details from terminal.");
+  if(!emptyOut) remarks.push("Will update once empty out is confirmed.");
+  if(emptyOut) remarks.push("Empty container return has been recorded.");
+  return `
+  <article class="shipment-report">
+    <div class="shipment-report-head">
+      <div class="shipment-report-brand"><div class="shipment-report-globe">◎</div><div><strong>GREENWICH MERIDIAN LOGISTICS</strong><span>CONTAINER TRACKING &amp; CUSTOMER VISIBILITY</span></div></div>
+      <div class="shipment-report-title"><strong>STATUS REPORT</strong><span>Generated on ${esc(new Date().toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}</span></div>
+    </div>
+    <div class="shipment-report-banner"><span class="shipment-report-pill">⚓ SHIPMENT STATUS</span><h2>CONTAINER TRACKING REPORT</h2><p>REAL TIME VISIBILITY <b>|</b> ACCURATE UPDATES <b>|</b> BETTER PLANNING</p></div>
+    <div class="shipment-report-summary">
+      <div><small>CONTAINER NUMBER</small><strong>${esc(cntr||"—")}</strong><em>${esc(type||"—")}</em></div>
+      <div><small>VESSEL / VOYAGE</small><strong>⚓ ${esc(vessel||"—")}</strong></div>
+      <div><small>CARRIER / LINE</small><strong>⚑ ${esc(liner||"—")}</strong></div>
+      <div><small>TYPE</small><strong>▣ ${esc(type||"—")}</strong></div>
+      <div class="shipment-report-status"><small>CURRENT STATUS</small><strong>▣ ${esc(statusText||"IN PROGRESS")}</strong></div>
+    </div>
+    <div class="shipment-report-grid">
+      <section class="shipment-report-panel route-panel"><header>📍 <span>ROUTE INFORMATION</span></header><div class="shipment-route">
+        <div><small>PLACE OF RECEIPT</small><strong>${esc(v(["PLACE OF RECEIPT","RECEIPT PLACE"])||pol||"—")}</strong></div><b>→</b>
+        <div><small>PORT OF LOADING</small><strong>${esc(pol||"—")}</strong></div><b>→</b>
+        <div><small>PORT OF DISCHARGE</small><strong>${esc(gw)}</strong></div><b>→</b>
+        <div><small>PLACE OF DELIVERY</small><strong>${esc(v(["PLACE OF DELIVERY","DELIVERY PLACE"])||gw)}</strong></div>
+      </div></section>
+      <section class="shipment-report-panel dates-panel"><header>📅 <span>KEY DATES</span></header><div class="shipment-date-grid">
+        <div><small>ACTUAL DEPARTURE</small><strong>🚢 ${esc(departure||"—")}</strong></div>
+        <div><small>ESTIMATED / ACTUAL ARRIVAL</small><strong>⚓ ${esc(arrival||"—")}</strong></div>
+      </div></section>
+    </div>
+    <section class="shipment-report-panel details-panel"><header>📄 <span>ADDITIONAL DETAILS</span></header><div class="shipment-details-grid">
+      <div><small>MBL NUMBER</small><strong>▧ ${esc(mbl||"—")}</strong></div><div><small>CFS</small><strong>⌂ ${esc(cfs||"—")}</strong></div>
+      <div><small>CONTAINER TYPE</small><strong>⚙ ${esc(type||"—")}</strong></div><div><small>TERMINAL IN</small><strong>⚓ ${esc(portIn||"—")}</strong></div>
+      <div><small>TERMINAL OUT</small><strong>⚓ ${esc(portOut||"—")}</strong></div>
+    </div></section>
+    <section class="shipment-report-panel milestone-panel"><header>♻ <span>SHIPMENT MILESTONE</span></header><div class="shipment-milestones">
+      ${steps.map(s=>`<div class="shipment-milestone ${s[2]?"done":""}"><div class="shipment-milestone-icon">${s[2]?"✓":"●"}</div><strong>${esc(s[0])}</strong><span>${esc(s[1]||"—")}</span><small>${esc(s[2]||"—")}</small></div>`).join("")}
+    </div></section>
+    <section class="shipment-report-remarks"><header>💬 <span>REMARKS</span></header>${remarks.map(x=>`<div>✓ <span>${esc(x)}</span></div>`).join("")}</section>
+  </article>`;
+}
+
 function logAuditEvent(action, containerNo, field, oldVal, newVal) {
   const operator = currentUser ? `${currentUser.id} (${currentUser.role})` : "System / Auto";
   const entry = {
@@ -1011,7 +1073,7 @@ async function performPublicSearch() {
               <div class="carrier-detail-grid">
                 <div><small>Container</small><strong>${esc(cntr)}</strong></div><div><small>MBL</small><strong>${esc(mbl)}</strong></div><div><small>Gateway</small><strong>${esc(gwPort)}</strong></div><div><small>CFS</small><strong>${esc(cfs)}</strong></div><div><small>Vessel / Voyage</small><strong>${esc(vessel)}</strong></div><div><small>ETA</small><strong>${esc(eta)}</strong></div>
               </div>
-              ${publicTimelineHtml}
+              ${generatePublicShipmentReportHtml(r)}
             </div>
           </td>
         </tr>`;
