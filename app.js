@@ -944,101 +944,108 @@ async function performPublicSearch() {
   const rawInput = el("publicSearchInput").value.trim();
   const container = el("publicResultContainer");
   const btn = el("publicSearchBtn");
-  
   if (!rawInput) {
     toast("Please enter a Container or MBL Number!");
     el("publicSearchInput").focus();
     return;
   }
-
-  // Trigger Realistic Loading Skeleton
   btn.classList.add("btn-loading");
   container.style.display = "block";
   container.innerHTML = getSkeletonHTML();
   container.classList.add("fade-in");
   container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
   await cloudDataReady;
-
   setTimeout(() => {
     btn.classList.remove("btn-loading");
-    const queries = rawInput.split(/[\s,]+/).filter(Boolean).map(q => q.toLowerCase().replace(/[^a-z0-9]/g, ''));
-
+    const queries = rawInput.split(/[\\s,]+/).filter(Boolean).map(q => q.toLowerCase().replace(/[^a-z0-9]/g, ''));
     const publicSearchResults = rows.filter(r => {
       const cntr = (getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "").toLowerCase().replace(/[^a-z0-9]/g, '');
       const mbl = (getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "").toLowerCase().replace(/[^a-z0-9]/g, '');
       return queries.some(q => q && (cntr === q || mbl === q || cntr.includes(q) || mbl.includes(q)));
     });
-
+    const countBadge = el("publicResultCountBadge");
+    if (countBadge) countBadge.textContent = publicSearchResults.length + " result" + (publicSearchResults.length === 1 ? "" : "s");
     if (!publicSearchResults.length) {
       container.innerHTML = `
-        <div style="text-align:center; padding:40px 20px; color:var(--danger);">
-          <div style="font-size:36px; margin-bottom:10px;">🔍</div>
-          <strong style="font-size:16px;">No shipment records found for "${esc(rawInput)}"</strong>
-          <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
-            Try searching test units: <code>SKHU9422886</code>, <code>IAAU1753030</code>, or MBL <code>A56GX21515</code>
-          </div>
-        </div>
-      `;
+        <div class="carrier-empty-state">
+          <div class="carrier-empty-icon">⌕</div>
+          <strong>No shipment records found</strong>
+          <span>Check the container or MBL number and try again.</span>
+          <small>Example: <code>WHSU6393302</code> or <code>027G701690</code></small>
+        </div>`;
       return;
     }
-
-    container.innerHTML = `
-      <div class="public-status-header">
-        <div class="public-results-toolbar"><span>${publicSearchResults.length} shipment${publicSearchResults.length === 1 ? "" : "s"} found</span><span>Search: ${esc(rawInput)}</span></div>
-        <div style="font-size:9px; font-weight:900; color:var(--accent); text-transform:uppercase; letter-spacing:.12em;">CUSTOMER STATUS</div>
-        <div style="font-size:22px; font-weight:900; margin-top:4px;">Shipment Status & Timeline</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">A simple operational view of your container movement.</div>
-      </div>
-      ${publicSearchResults.map((r, i) => {
+    const rowsHtml = publicSearchResults.map((r, i) => {
       const st = getStatus(r);
-      const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]);
-      const originPort = getField(r, ["POL", "PORT OF LOADING"]) || "SHEKOU";
-      const gwPort = getGatewayPortInfo(r).name;
-      const destPort = `${gwPort}, INDIA`;
-      const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+      const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "—";
+      const mbl = getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "—";
+      const liner = getField(r, ["LINER", "LINE", "SHIPPING LINE"]) || "—";
+      const originPort = getField(r, ["POL", "PORT OF LOADING"]) || "—";
+      const gwPort = getGatewayPortInfo(r).name || "—";
+      const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "—";
+      const eta = formatDate(getField(r, ["ETA"])) || "—";
+      const cfs = getField(r, ["CFS NAME", "CFS"]) || "—";
+      const type = getField(r, ["TYPE", "EQUIPMENT TYPE", "CONTAINER TYPE", "SIZE"]) || "—";
       const publicTimelineHtml = generatePublicVoyageTimelineHtml(r);
       const publicUrl = window.location.href.split('?')[0] + '?cntr=' + encodeURIComponent(cntr);
-
+      const detailId = "publicDetail" + i;
       return `
-        <div class="cascade-item" style="animation-delay: ${i * 100}ms">
-          <div class="public-container-head">
-            <div>
-              <div style="font-size:9.5px; font-weight:800; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em;">Container Number</div>
-              <div class="public-container-number">${esc(cntr)}</div>
+        <tr class="carrier-result-row cascade-item">
+          <td><button class="carrier-container-link" type="button" onclick="togglePublicShipmentDetail('${detailId}', this)"><span class="carrier-row-arrow">›</span><span>${esc(cntr)}</span></button></td>
+          <td><span class="carrier-mono">${esc(mbl)}</span></td>
+          <td>${esc(liner)}</td>
+          <td><div class="carrier-place"><strong>${esc(gwPort)}</strong><small>${esc(originPort)} → India</small></div></td>
+          <td><div class="carrier-vessel"><strong>${esc(vessel)}</strong><small>ETA ${esc(eta)}</small></div></td>
+          <td><span class="carrier-status-pill ${st.class === 'completed' ? 'is-complete' : ''}">${esc(st.text)}</span></td>
+          <td><button class="carrier-view-btn" type="button" onclick="togglePublicShipmentDetail('${detailId}', this)">View</button></td>
+        </tr>
+        <tr id="${detailId}" class="carrier-detail-row" hidden>
+          <td colspan="7">
+            <div class="carrier-detail-panel">
+              <div class="carrier-detail-top">
+                <div><span class="carrier-detail-kicker">SHIPMENT DETAIL</span><h3>${esc(cntr)}</h3><p>${esc(mbl)} · ${esc(liner)} · ${esc(type)}</p></div>
+                <div class="carrier-detail-actions"><button class="btn btn-ghost" type="button" onclick="copyText('${publicUrl}')">🔗 Copy Link</button><button class="btn btn-ghost" type="button" onclick="window.print()">🖨️ Print</button><button class="btn" type="button" onclick="openRouteMap('${esc(originPort)}', '${esc(gwPort)}, INDIA', '${esc(vessel)}')">🗺️ Route</button></div>
+              </div>
+              <div class="carrier-detail-grid">
+                <div><small>Container</small><strong>${esc(cntr)}</strong></div><div><small>MBL</small><strong>${esc(mbl)}</strong></div><div><small>Gateway</small><strong>${esc(gwPort)}</strong></div><div><small>CFS</small><strong>${esc(cfs)}</strong></div><div><small>Vessel / Voyage</small><strong>${esc(vessel)}</strong></div><div><small>ETA</small><strong>${esc(eta)}</strong></div>
+              </div>
+              ${publicTimelineHtml}
             </div>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <button class="btn btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="copyText('${publicUrl}')" title="Copy Public Tracking Link">🔗 Copy Link</button>
-              <button class="btn btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="window.print()" title="Print Summary">🖨️ Print</button>
-              <button class="btn" style="border-radius:20px; font-size:11px; padding:6px 14px;" onclick="openRouteMap('${esc(originPort)}', '${esc(destPort)}', '${esc(vessel)}')">🗺️ Route Map</button>
-              <span class="public-badge ${st.class === 'completed' ? 'completed' : ''}">${st.text}</span>
-            </div>
-          </div>
-          <div class="public-detail-grid">
-            <div class="public-detail"><small>Vessel / Voyage</small><strong>${esc(vessel || '—')}</strong></div>
-            <div class="public-detail"><small>ETA</small><strong>${esc(formatDate(getField(r,['ETA'])) || '—')}</strong></div>
-            <div class="public-detail"><small>Gateway Port</small><strong>${esc(gwPort || '—')}</strong></div>
-            <div class="public-detail"><small>CFS</small><strong>${esc(getField(r,['CFS NAME','CFS']) || '—')}</strong></div>
-          </div>
-          ${publicTimelineHtml}
+          </td>
+        </tr>`;
+    }).join("");
+    container.innerHTML = `
+      <div class="carrier-results-shell">
+        <div class="public-results-toolbar"><span>${publicSearchResults.length} shipment${publicSearchResults.length === 1 ? "" : "s"} found</span><span>Search: ${esc(rawInput)}</span></div>
+        <div class="carrier-table-wrap">
+          <table class="carrier-results-table">
+            <thead><tr><th>Container No.</th><th>Booking / MBL</th><th>Liner</th><th>Latest Place</th><th>Vessel / ETA</th><th>Status</th><th></th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
         </div>
-      `;
-    }).join("<hr style='border:0; border-top:1px solid var(--border);'>")}
-    `;
-
-    // Trigger sequential timeline drawing
+      </div>`;
     setTimeout(() => {
       document.querySelectorAll('.timeline-stepper').forEach(stepper => {
-         const nodes = stepper.querySelectorAll('.step-node');
-         nodes.forEach((node, idx) => {
-             if (nodes[idx + 1] && (nodes[idx + 1].classList.contains('completed') || nodes[idx + 1].classList.contains('active'))) {
-                 setTimeout(() => node.classList.add('draw-line'), idx * 300);
-             }
-         });
+        const nodes = stepper.querySelectorAll('.step-node');
+        nodes.forEach((node, idx) => {
+          if (nodes[idx + 1] && (nodes[idx + 1].classList.contains('completed') || nodes[idx + 1].classList.contains('active'))) setTimeout(() => node.classList.add('draw-line'), idx * 180);
+        });
       });
     }, 50);
-
-  }, 1200); // 1.2s for realistic load feel
+  }, 900);
+}
+function togglePublicShipmentDetail(detailId, trigger) {
+  const row = document.getElementById(detailId);
+  if (!row) return;
+  const willOpen = row.hidden;
+  row.hidden = !willOpen;
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", String(willOpen));
+    const arrow = trigger.querySelector(".carrier-row-arrow");
+    if (arrow) arrow.textContent = willOpen ? "⌄" : "›";
+    if (trigger.classList.contains("carrier-view-btn")) trigger.textContent = willOpen ? "Close" : "View";
+  }
+  if (willOpen) setTimeout(() => row.scrollIntoView({behavior:"smooth", block:"nearest"}), 30);
 }
 
 el("publicSearchBtn").addEventListener("click", performPublicSearch);
