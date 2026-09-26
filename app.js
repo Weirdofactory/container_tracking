@@ -1693,64 +1693,62 @@ function renderCards(items) {
 
 function renderSheet(items) {
   const isViewer = currentUser && currentUser.role === "Viewer";
-  
-  const editableAttrText = isViewer ? 'readonly' : 'readonly ondblclick="this.readOnly=false; this.focus();" onblur="this.readOnly=true;"';
-  const editableAttrSelect = isViewer ? 'disabled' : 'disabled ondblclick="this.disabled=false; this.focus();" onblur="this.disabled=true;"';
 
   if (!items.length) {
-    el("sheetTableBody").innerHTML = `<tr><td colspan="17" style="text-align:center; padding:40px; color:var(--text-muted);">No records found.</td></tr>`;
+    el("sheetTableBody").innerHTML = `<tr><td colspan="16" style="text-align:center;padding:40px;color:var(--text-muted);">No records found.</td></tr>`;
     el("paginationWrapper").innerHTML = "";
     return;
   }
 
-  // Pagination Logic
   const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE) || 1;
   if (currentPage > totalPages) currentPage = totalPages;
   const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedItems = items.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   el("sheetTableBody").innerHTML = paginatedItems.map(({r, i}, loopIdx) => {
-    const isChecked = selectedIndices.has(i) ? "checked" : "";
+    const st = getStatus(r);
+    const cntrNo = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "UNKNOWN";
+    const mblNo = getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "—";
+    const vesselVoy = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "—";
+    const containerType = getField(r, ["TYPE", "SIZE", "CONTAINER TYPE"]) || "40' HC";
+    const liner = getField(r, ["LINER", "LINE"]) || detectLinerFromMBL(mblNo) || "Line";
+    const eta = formatDate(getField(r, ["ETA"])) || "—";
+    const portIn = formatDate(getField(r, ["PORT IN"])) || "—";
+    const portOut = formatDate(getField(r, ["PORT OUT"])) || "—";
+    const cfsName = getField(r, ["CFS NAME", "CFS"]) || "—";
+    const truckNo = getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "—";
     const gwPort = getGatewayPortInfo(r);
     const fees = calculateStandardFees(r);
-    const cntrNo = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "";
-    const isoStatus = validateISO6346(cntrNo);
+    const ev = getEmptyReturnValidity(r);
+    const remarks = r["REMARKS"] || "—";
     const flashClass = lastEditedId === i ? "row-saved" : "";
 
     return `
-      <tr data-row="${i}" class="cascade-item ${flashClass}" style="animation-delay: ${loopIdx * 20}ms">
-        <td><input type="checkbox" class="chk-item" value="${i}" ${isChecked}></td>
-        <td data-label="Container No.">
-          <input class="cell-input" style="font-family:'JetBrains Mono'; font-weight:700; color:var(--accent);" value="${esc(cntrNo)}" title="${isoStatus.message}" onchange="inlineEditContainerNo(${i}, this.value)" ${editableAttrText}>
+      <tr data-row="${i}" class="cascade-item ${flashClass}" style="animation-delay:${loopIdx * 20}ms">
+        <td><input type="checkbox" class="chk-item" value="${i}" ${selectedIndices.has(i) ? "checked" : ""}></td>
+        <td data-label="Container No." style="font-family:'JetBrains Mono';font-weight:800;color:var(--accent);white-space:nowrap;">${esc(cntrNo)}</td>
+        <td data-label="Vessel / Voyage" style="font-weight:800;min-width:170px;">${esc(vesselVoy)}</td>
+        <td data-label="MBL" style="font-family:'JetBrains Mono';font-size:11px;">${esc(mblNo)}</td>
+        <td data-label="Type">${esc(containerType)}</td>
+        <td data-label="Liner">${esc(liner)}</td>
+        <td data-label="ETA" style="font-weight:800;white-space:nowrap;">${eta}</td>
+        <td data-label="Port In / Out" style="white-space:nowrap;color:var(--warning);">${portIn} / ${portOut}</td>
+        <td data-label="Port" style="white-space:nowrap;">${esc(gwPort.name)}</td>
+        <td data-label="CFS" style="font-weight:700;white-space:nowrap;">${esc(cfsName)}</td>
+        <td data-label="Truck" style="font-family:'JetBrains Mono';white-space:nowrap;">${esc(truckNo)}</td>
+        <td data-label="Status"><span class="status-pill ${st.class}" style="white-space:nowrap;">${st.text}</span></td>
+        <td data-label="LFD / Dwell" style="font-size:11px;line-height:1.45;">
+          <strong>${esc(fees.terminalLFD)}</strong> · ${fees.portDwell}d / Free ${fees.portFreeDays}d
+          ${fees.demOverdue ? `<br><span style="color:var(--danger);font-weight:800;">Port Demurrage: ${formatCurrency(fees.demCostUSD)}</span>` : ""}
+          ${fees.detOverdue ? `<br><span style="color:var(--danger);font-weight:800;">Detention: ${formatCurrency(fees.detCostUSD)}</span>` : ""}
         </td>
-        <td data-label="Type"><input class="cell-input" style="width:45px;" value="${esc(getField(r, ["TYPE", "SIZE"]) || "40' DC")}" onchange="inlineEdit(${i}, 'TYPE', this.value)" ${editableAttrText}></td>
-        <td data-label="MBL No"><input class="cell-input" style="width:85px;" value="${esc(getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "")}" onchange="inlineEditMBL(${i}, this.value)" ${editableAttrText}></td>
-        <td data-label="Liner"><input class="cell-input" style="width:75px;" value="${esc(getField(r, ["LINER", "LINE"]) || "")}" onchange="inlineEdit(${i}, 'LINER', this.value)" ${editableAttrText}></td>
-        <td data-label="Port">
-          <select class="cell-select" style="width:80px;" onchange="setGatewayPort(${i}, this.value)" ${editableAttrSelect}>
-            <option value="CITPL" ${gwPort.key === 'CITPL' ? 'selected' : ''}>CITPL</option>
-            <option value="CCTL" ${gwPort.key === 'CCTL' ? 'selected' : ''}>CCTL</option>
-            <option value="Kattupalli" ${gwPort.key === 'Kattupalli' ? 'selected' : ''}>Kattupalli</option>
-            <option value="Ennore" ${gwPort.key === 'Ennore' ? 'selected' : ''}>Ennore</option>
-          </select>
-        </td>
-        <td data-label="Vessel / Voyage" style="font-weight:700;min-width:150px;">${esc(getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "—")}</td>
-        <td data-label="ETA"><input class="cell-input" type="date" value="${dateInputValue(getField(r, ["ETA"]))}" onchange="inlineEdit(${i}, 'ETA', this.value)" ${editableAttrText}></td>
-        <td data-label="Port In"><input class="cell-input" type="date" value="${dateInputValue(getField(r, ["PORT IN"]))}" onchange="inlineEdit(${i}, 'PORT IN', this.value)" ${editableAttrText}></td>
-        <td data-label="Port Out"><input class="cell-input" type="date" value="${dateInputValue(getField(r, ["PORT OUT"]))}" onchange="inlineEdit(${i}, 'PORT OUT', this.value)" ${editableAttrText}></td>
-        <td data-label="CFS Depot"><input class="cell-input" style="width:80px;" value="${esc(getField(r, ["CFS NAME", "CFS"]) || "")}" onchange="inlineEdit(${i}, 'CFS NAME', this.value)" ${editableAttrText}></td>
-        <td data-label="Truck No"><input class="cell-input" style="width:90px; font-family:'JetBrains Mono';" value="${esc(getField(r, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "")}" placeholder="Vehicle" oninput="this.value=formatTruckNo(this.value)" onchange="inlineEdit(${i}, 'TRUCK NO.', this.value)" ${editableAttrText}></td>
-        <td data-label="Destuffed"><input class="cell-input" type="date" value="${getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]) || ""}" onchange="inlineEdit(${i}, 'DESTUFFING DATE', this.value)" ${editableAttrText}></td>
-        <td data-label="Empty Return"><input class="cell-input" type="date" value="${getField(r, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]) || ""}" onchange="inlineEdit(${i}, 'CONTAINER RETURN DATE', this.value)" ${editableAttrText}></td>
-        <td data-label="Port Out LFD" style="font-weight:700; color:${fees.demOverdue ? 'var(--danger)' : 'var(--text-muted)'};">${fees.terminalLFD}</td>
-        <td data-label="Detention LFD" style="font-weight:700; color:${fees.detOverdue ? 'var(--danger)' : 'var(--text-muted)'};">${fees.detentionLFD}</td>
-        <td data-label="Exposure" style="font-weight:800; font-family:'JetBrains Mono'; color:${fees.totalCostUSD > 0 ? 'var(--danger)' : 'var(--success)'};">${formatCurrency(fees.totalCostUSD)}</td>
-        <td data-label="Remarks"><input class="cell-input" value="${esc(r["REMARKS"] || "")}" onchange="inlineEdit(${i}, 'REMARKS', this.value)" ${editableAttrText}></td>
+        <td data-label="Empty Return" style="font-weight:800;white-space:nowrap;">${esc(ev.date)} · ${esc(ev.label)}</td>
+        <td data-label="Remarks" style="min-width:150px;max-width:240px;white-space:normal;">${esc(remarks)}</td>
         <td data-label="Actions">
-          <div style="display:flex; gap:3px;">
-            ${!isViewer ? `<button class="btn btn-primary" style="padding:3px 7px;font-size:10px;" title="Edit Container" onclick="openModal(${i})">✏️ Edit</button>` : ''}
-            ${!isViewer ? `<button class="btn" style="padding:2px 5px; color:var(--accent)" title="Mark Returned" onclick="markSingleReturned(${i})">🔄</button>` : ''}
-            ${currentUser && currentUser.role === 'Admin' ? `<button class="btn btn-danger" style="padding:2px 5px;" onclick="deleteRow(${i})">🗑️</button>` : ''}
+          <div style="display:flex;gap:4px;white-space:nowrap;">
+            ${!isViewer ? `<button class="btn btn-primary" style="padding:4px 8px;font-size:10px;" title="Edit Container" onclick="openModal(${i})">✏️ Edit</button>` : ""}
+            ${!isViewer ? `<button class="btn" style="padding:3px 6px;color:var(--accent)" title="Mark Returned" onclick="markSingleReturned(${i})">🔄</button>` : ""}
+            ${currentUser && currentUser.role === "Admin" ? `<button class="btn btn-danger" style="padding:3px 6px;" onclick="deleteRow(${i})">🗑️</button>` : ""}
           </div>
         </td>
       </tr>
@@ -1758,17 +1756,17 @@ function renderSheet(items) {
   }).join("");
 
   el("paginationWrapper").innerHTML = `
-    <div style="display:flex; justify-content:space-between; padding:12px 16px; border-top:1px solid var(--border); align-items:center; background:var(--bg-elevated);">
-      <span style="font-size:11px; font-weight:700; color:var(--text-muted)">Showing ${startIdx + 1}-${Math.min(startIdx + ITEMS_PER_PAGE, items.length)} of ${items.length} records</span>
-      <div style="display:flex; gap:6px;">
-        <button class="btn btn-ghost" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>&larr; Previous</button>
-        <button class="btn btn-ghost" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>Next &rarr;</button>
+    <div style="display:flex;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);align-items:center;background:var(--bg-elevated);">
+      <span style="font-size:11px;font-weight:700;color:var(--text-muted)">Showing ${startIdx + 1}-${Math.min(startIdx + ITEMS_PER_PAGE, items.length)} of ${items.length} records</span>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost" onclick="changePage(-1)" ${currentPage === 1 ? "disabled" : ""}>&larr; Previous</button>
+        <button class="btn btn-ghost" onclick="changePage(1)" ${currentPage === totalPages ? "disabled" : ""}>Next &rarr;</button>
       </div>
     </div>
   `;
 
   bindCheckboxes();
-  lastEditedId = -1; // reset flash
+  lastEditedId = -1;
 }
 
 // Ensure changePage is globally available
