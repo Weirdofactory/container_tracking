@@ -48,7 +48,7 @@ let rows = [...DEFAULT_ROWS];
 
 let currentUser = null;
 let selectedIndices = new Set();
-let currentView = 'cards';
+let currentView = 'sheet';
 let activeQuickFilter = 'all'; 
 let editingIndex = -1;
 let sortField = 'ETA';
