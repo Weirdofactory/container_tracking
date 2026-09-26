@@ -279,8 +279,8 @@ function generatePublicShipmentReportHtml(r) {
   const steps=[
     ["POL",pol,departure],["POD",gw,arrival],["CFS IN",cfs,cfsIn],["DE-STUFF",cfs,destuff],
     ["EMPTY OUT",v(["TRUCK NO.","TRUCK NO","VEHICLE NO"])||"Terminal",emptyOut],
-    ["GATE OUT","Delivery",formatDate(v(["GATE OUT","DELIVERY DATE"]))],
-    ["DELIVERED","Completion",formatDate(v(["DELIVERED DATE","POD DATE"]))]
+    ["GATE OUT","Delivery",emptyOut],
+    ["DELIVERED","Completion",emptyOut]
   ];
   const remarks=[];
   if(destuff) remarks.push("Container de-stuff completed at "+(cfs||"CFS")+" on "+destuff+".");
