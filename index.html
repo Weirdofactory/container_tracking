@@ -245,19 +245,26 @@
   const login=$('loginBtn');
   if(login) login.onclick=function(){window.openStaffLoginFallback();};
   const submit=$('loginSubmit');
-  if(submit) submit.addEventListener('click',async function(){
-    if(typeof window.sb==='undefined' && typeof window.supabase==='undefined') return;
-    if(typeof window.executeSuccessfulLogin==='function') return;
+  if(submit) submit.addEventListener('click',async function(e){
+    // Handle staff login here before app.js so login remains functional even if
+    // the main application bundle has a transient Supabase/client problem.
+    e.stopImmediatePropagation();
     const code=String(($('loginCodeInput')||{}).value||'').trim().toLowerCase();
-    if(!code)return;
-    const btn=submit; btn.disabled=true; btn.textContent='Verifying...';
+    if(!code){alert('Please enter your Access Code.');return;}
+    const btn=submit; const original=btn.textContent; btn.disabled=true; btn.textContent='Verifying...';
     try{
-      const client=window.sb || (window.supabase&&window.supabase.createClient('https://ykeucqritoexykqrggzz.supabase.co','sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ'));
-      const {data,error}=await client.from('user_roles').select('user_id, role, username').eq('access_code',code).single();
-      if(error||!data){alert('Invalid access code.');return;}
-      localStorage.setItem('gml_auth_code_user',JSON.stringify(data)); location.reload();
-    }catch(e){alert('Login service unavailable. Please try again.');}
-    finally{btn.disabled=false;btn.textContent='Sign In';}
+      const url=GML_SUPABASE_URL+'/rest/v1/user_roles?select=user_id,role,username&access_code=eq.'+encodeURIComponent(code)+'&limit=1';
+      const res=await fetch(url,{headers:{apikey:GML_SUPABASE_KEY}});
+      if(!res.ok) throw new Error('login HTTP '+res.status);
+      const list=await res.json();
+      const data=Array.isArray(list)&&list[0];
+      if(!data){alert('Invalid Access Code.');return;}
+      localStorage.setItem('gml_auth_code_user',JSON.stringify(data));
+      location.reload();
+    }catch(err){
+      console.error('Staff login error:',err);
+      alert('Login service unavailable. Please try again.');
+    }finally{btn.disabled=false;btn.textContent=original;}
   },true);
 })();
 </script>
