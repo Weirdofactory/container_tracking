@@ -45,6 +45,7 @@ const DEFAULT_ROWS = [
 ];
 
 let rows = [...DEFAULT_ROWS];
+let cloudDataReady = Promise.resolve();
 
 let currentUser = null;
 let selectedIndices = new Set();
@@ -939,7 +940,7 @@ function getSkeletonHTML() {
   `;
 }
 
-function performPublicSearch() {
+async function performPublicSearch() {
   const rawInput = el("publicSearchInput").value.trim();
   const container = el("publicResultContainer");
   const btn = el("publicSearchBtn");
@@ -956,6 +957,8 @@ function performPublicSearch() {
   container.innerHTML = getSkeletonHTML();
   container.classList.add("fade-in");
   container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  await cloudDataReady;
 
   setTimeout(() => {
     btn.classList.remove("btn-loading");
@@ -982,6 +985,7 @@ function performPublicSearch() {
 
     container.innerHTML = `
       <div class="public-status-header">
+        <div class="public-results-toolbar"><span>${publicSearchResults.length} shipment${publicSearchResults.length === 1 ? "" : "s"} found</span><span>Search: ${esc(rawInput)}</span></div>
         <div style="font-size:9px; font-weight:900; color:var(--accent); text-transform:uppercase; letter-spacing:.12em;">CUSTOMER STATUS</div>
         <div style="font-size:22px; font-weight:900; margin-top:4px;">Shipment Status & Timeline</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">A simple operational view of your container movement.</div>
@@ -2346,7 +2350,7 @@ try {
 } catch(e){}
 
 populateFilters();
-loadFromCloud();
+cloudDataReady = loadFromCloud();
 updateAuditBadge();
 checkActiveSession();
 

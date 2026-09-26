@@ -905,3 +905,35 @@ body { background-color: var(--bg-app); color: var(--text-main); font-family: 'P
 .one-results-surface{min-height:0;margin:0;}
 .one-feature-strip{margin-top:26px;}
 @media(max-width:760px){.one-hero{padding:34px 14px 44px}.one-hero-copy h1{font-size:32px}.one-track-panel{padding:16px}.one-track-fields{grid-template-columns:1fr}.one-track-button{width:100%}.one-content-wrap{padding:24px 14px 40px}.one-result-heading{align-items:flex-start;flex-direction:column;gap:4px}}
+
+
+/* Tracking polish — result summary + clearer customer search */
+.public-results-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 14px;
+  margin:0 0 12px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--bg-elevated);
+  color:var(--text-muted);
+  font-size:10px;
+  font-weight:800;
+}
+.public-results-toolbar span:first-child{
+  color:var(--accent);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+.public-results-toolbar span:last-child{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  max-width:55%;
+}
+@media(max-width:560px){
+  .public-results-toolbar{align-items:flex-start;flex-direction:column;gap:4px}
+  .public-results-toolbar span:last-child{max-width:100%}
+}
