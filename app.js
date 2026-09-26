@@ -1000,7 +1000,7 @@ function performPublicSearch() {
         <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Quick overview — click any shipment for details.</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 12px;">
-        <button class="btn btn-ghost public-list-filter active" data-filter="all" style="padding:7px 12px;font-size:11px;">All (\${publicSearchResults.length})</button>
+        <button class="btn btn-ghost public-list-filter active" data-filter="all" style="padding:7px 12px;font-size:11px;">All (${publicSearchResults.length})</button>
         <button class="btn btn-ghost public-list-filter" data-filter="active" style="padding:7px 12px;font-size:11px;">In Progress</button>
         <button class="btn btn-ghost public-list-filter" data-filter="completed" style="padding:7px 12px;font-size:11px;">Completed</button>
         <button class="btn btn-ghost public-list-filter" data-filter="attention" style="padding:7px 12px;font-size:11px;">Needs Attention</button>
@@ -1017,7 +1017,7 @@ function performPublicSearch() {
             <th style="padding:12px 14px;font-size:10px;"></th>
           </tr></thead>
           <tbody>
-            \${publicSearchResults.map((r, i) => {
+            ${publicSearchResults.map((r, i) => {
               const st = getStatus(r);
               const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]);
               const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
