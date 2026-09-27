@@ -630,7 +630,8 @@ function generateCleanManifestHtml(containersList) {
     const cfs=getField(r,["CFS NAME","CFS"])||"—";
     const eta=getField(r,["ETA","VESSEL ARRIVAL","ARRIVAL DATE"]);
     const portIn=getField(r,["PORT IN"]);
-    const splitDate=getField(r,["SPLIT DATE","SPLIT"]);\n    const destuff=getField(r,["DESTUFFING DATE","DESTUFF DATE"]);
+    const splitDate=getField(r,["SPLIT DATE","SPLIT"]);
+    const destuff=getField(r,["DESTUFFING DATE","DESTUFF DATE"]);
     const vessel=splitVesselVoy(getField(r,["VESSEL & VOY","VESSEL","VESSEL NAME"]));
     const st=getStatus(r);
     const status=(splitDate?"SPLIT COMPLETED":isFullyCompleted(r)?"COMPLETED":(st.text||"IN TRANSIT")).replace(/<[^>]+>/g,"").replace(/^[^A-Z0-9]+/i,"").trim().toUpperCase();
