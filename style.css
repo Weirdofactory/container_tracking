@@ -1151,3 +1151,13 @@ body.public-carrier-mode .one-public-shell{padding-left:0;min-height:100vh;backg
 .cr3-footer{padding:13px 24px;background:#eef2f7;display:flex;justify-content:space-between;color:#8a97a8;font-size:8px;letter-spacing:.04em}.cr3-footer strong{color:#566b85}
 @media(max-width:800px){.cr3-hero{align-items:flex-start;flex-direction:column;gap:20px}.cr3-container{min-width:0;width:100%;box-sizing:border-box}.cr3-summary{grid-template-columns:1fr 1fr}.cr3-summary>div{border-bottom:1px solid #edf1f5}.cr3-two-col{grid-template-columns:1fr}.cr3-dates{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:600px){.cr3-top{padding:15px 16px}.cr3-brand strong{font-size:12px}.cr3-generated{display:none}.cr3-hero{padding:24px 18px}.cr3-hero h1{font-size:25px}.cr3-summary{margin:-13px 13px 13px}.cr3-route,.cr3-card,.cr3-journey,.cr3-details,.cr3-two-col{margin-left:13px;margin-right:13px}.cr3-route-line{grid-template-columns:1fr 1fr}.cr3-route-line>b{display:none}.cr3-dates{grid-template-columns:1fr}.cr3-dates>div{border-right:0;border-bottom:1px solid #edf1f5}.cr3-detail-grid{grid-template-columns:1fr 1fr}.cr3-detail-grid>div{border-right:0;border-bottom:1px solid #edf1f5}.cr3-steps{min-width:650px}.cr3-journey{overflow-x:auto}.cr3-footer{font-size:7px}}
+
+/* WhatsApp table status report */
+.wa-report-table thead th{background:#101d35;color:#fff;text-align:left;padding:13px;font-size:10px;font-weight:900;letter-spacing:.02em;border-right:1px solid rgba(255,255,255,.15)}
+.wa-report-table tbody td{padding:14px 13px;border-bottom:1px solid #e3e9f0;vertical-align:top;color:#243653;overflow-wrap:anywhere}
+.wa-report-table tbody tr:last-child td{border-bottom:0}
+.wa-report-table tbody td strong{display:block;font-size:11px;line-height:1.35}
+.wa-report-table tbody td small{display:block;margin-top:6px;color:#7b8aa0;font-size:9px;font-weight:700;line-height:1.25}
+.wa-report-table tbody td:first-child strong{color:#118ac4;font-family:'JetBrains Mono',monospace}
+.wa-report-table .rpt-link{color:#118ac4}
+.wa-report-table .rpt-status{display:inline-block;padding:7px 10px;border-radius:8px;background:#eaf3fb;color:#205a8b;font-size:9px;font-weight:900;white-space:nowrap}
