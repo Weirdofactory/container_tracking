@@ -363,11 +363,14 @@ function generatePublicShipmentReportHtml(r) {
     <section class="cr3-details">
       <div class="cr3-section-head"><div><span>05</span><strong>OPERATIONAL DETAILS</strong></div><small>ACTIVITY RECORD</small></div>
       <div class="cr3-detail-grid">
+        <div><small>IGM SPLIT</small><strong>${esc(formatDate(v(["SPLIT DATE","SPLIT"]))||"—")}</strong></div>
+        <div><small>INWARD DATE</small><strong>${esc(formatDate(v(["INWARD DATE","INWARD"]))||"—")}</strong></div>
         <div><small>PORT IN</small><strong>${esc(portIn||"—")}</strong></div>
         <div><small>PORT OUT</small><strong>${esc(portOut||"—")}</strong></div>
         <div><small>CFS IN</small><strong>${esc(cfsIn||"—")}</strong></div>
         <div><small>DE-STUFF</small><strong>${esc(destuff||"—")}</strong></div>
         <div><small>EMPTY RETURN</small><strong>${esc(emptyOut||"—")}</strong></div>
+        <div><small>GATEWAY PORT</small><strong>${esc(terminal||"—")}</strong></div>
       </div>
     </section>
 
@@ -1056,6 +1059,24 @@ function getSkeletonHTML() {
   `;
 }
 
+function getLatestPublicEvent(r) {
+  const events = [
+    ["EMPTY RETURNED", "CONTAINER RETURN DATE"],
+    ["DE-STUFF COMPLETED", "DESTUFFING DATE"],
+    ["CFS IN", "CFS IN"],
+    ["PORT OUT", "PORT OUT"],
+    ["PORT IN", "PORT IN"],
+    ["INWARD", "INWARD DATE"],
+    ["ETD DEPARTED", "ETD"]
+  ];
+  for (const [label, field] of events) {
+    const value = getField(r, [field]);
+    if (validDate(value)) return { label, date: formatDate(value) || "—", rawDate: value };
+  }
+  const eta = getField(r, ["ETA"]);
+  return { label: "ETA SCHEDULED", date: formatDate(eta) || "—", rawDate: eta };
+}
+
 async function performPublicSearch() {
   const rawInput = el("publicSearchInput").value.trim();
   const container = el("publicResultContainer");
@@ -1093,11 +1114,13 @@ async function performPublicSearch() {
     }
     const rowsHtml = publicSearchResults.map((r, i) => {
       const st = getStatus(r);
+      const latestEvent = getLatestPublicEvent(r);
       const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "—";
       const mbl = getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "—";
       const liner = getField(r, ["LINER", "LINE", "SHIPPING LINE"]) || "—";
       const originPort = getField(r, ["POL", "PORT OF LOADING"]) || "—";
-      const gwPort = getGatewayPortInfo(r).name || "—";
+      const gwInfo = getGatewayPortInfo(r);
+      const gwPort = gwInfo.name || getField(r, ["GATEWAY PORT", "GATEWAY"]) || "—";
       const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "—";
       const eta = formatDate(getField(r, ["ETA"])) || "—";
       const cfs = getField(r, ["CFS NAME", "CFS"]) || "—";
@@ -1111,7 +1134,7 @@ async function performPublicSearch() {
           <td><span class="carrier-booking-ref">${esc(mbl)}</span></td>
           <td><button class="carrier-container-link" type="button" onclick="togglePublicShipmentDetail('${detailId}', this)">${esc(cntr)}</button><small class="carrier-subline">${esc(type)}</small></td>
           <td><div class="carrier-place"><strong>${esc(gwPort)}</strong><small>${esc(liner)}</small></div></td>
-          <td><div class="carrier-event"><strong>${esc(st.text.replace(/^[^A-Za-z0-9]+/, "").trim())}</strong><small>${esc(eta)}</small></div></td>
+          <td><div class="carrier-event"><strong>${esc(latestEvent.label)}</strong><small>${esc(latestEvent.date)}</small></div></td>
           <td><div class="carrier-arrival"><strong>${esc(gwPort)}</strong><small>${esc(eta)}</small></div></td>
           <td><span class="carrier-sensitive">${esc(getField(r, ["SEAL NO.", "SEAL NO", "SEAL"]) || "—")}</span></td>
           <td><span class="carrier-sensitive">${esc(getField(r, ["PURCHASE ORDER NO.", "PURCHASE ORDER", "PO NO", "P/O NO."]) || "—")}</span></td>
@@ -1124,7 +1147,7 @@ async function performPublicSearch() {
                 <div class="carrier-detail-actions"><button class="btn btn-ghost" type="button" onclick="copyText('${publicUrl}')">🔗 Copy Link</button><button class="btn btn-ghost" type="button" onclick="window.print()">🖨️ Print</button><button class="btn" type="button" onclick="openRouteMap('${esc(originPort)}', '${esc(gwPort)}, INDIA', '${esc(vessel)}')">🗺️ Route</button></div>
               </div>
               <div class="carrier-detail-grid">
-                <div><small>Container</small><strong>${esc(cntr)}</strong></div><div><small>MBL</small><strong>${esc(mbl)}</strong></div><div><small>Gateway</small><strong>${esc(gwPort)}</strong></div><div><small>CFS</small><strong>${esc(cfs)}</strong></div><div><small>Vessel / Voyage</small><strong>${esc(vessel)}</strong></div><div><small>ETA</small><strong>${esc(eta)}</strong></div>
+                <div><small>Container</small><strong>${esc(cntr)}</strong></div><div><small>MBL</small><strong>${esc(mbl)}</strong></div><div><small>Gateway Port</small><strong>${esc(gwPort)}</strong></div><div><small>CFS</small><strong>${esc(cfs)}</strong></div><div><small>Vessel / Voyage</small><strong>${esc(vessel)}</strong></div><div><small>ETA</small><strong>${esc(eta)}</strong></div>
               </div>
               ${generatePublicShipmentReportHtml(r)}
             </div>
