@@ -626,14 +626,14 @@ function generateCleanManifestHtml(containersList) {
     const mbl=getField(r,["MBL NO","MBL","MASTER BL"])||"—";
     const liner=getField(r,["LINER","LINE"])||detectLinerFromMBL(mbl)||"—";
     const pol=clean(getField(r,["POL","PORT OF LOADING"]))||"—";
-    const pod=clean(getField(r,["POD","PORT OF DISCHARGE","DISCHARGE PORT"]))||"—";
+    const gatewayPort=clean(getField(r,["GATEWAY PORT","GATEWAY","PORT"]))||"—";
     const cfs=getField(r,["CFS NAME","CFS"])||"—";
     const eta=getField(r,["ETA","VESSEL ARRIVAL","ARRIVAL DATE"]);
     const portIn=getField(r,["PORT IN"]);
-    const destuff=getField(r,["DESTUFFING DATE","DESTUFF DATE"]);
+    const splitDate=getField(r,["SPLIT DATE","SPLIT"]);\n    const destuff=getField(r,["DESTUFFING DATE","DESTUFF DATE"]);
     const vessel=splitVesselVoy(getField(r,["VESSEL & VOY","VESSEL","VESSEL NAME"]));
     const st=getStatus(r);
-    const status=(isFullyCompleted(r)?"COMPLETED":(st.text||"IN TRANSIT")).replace(/<[^>]+>/g,"").replace(/^[^A-Z0-9]+/i,"").trim().toUpperCase();
+    const status=(splitDate?"SPLIT COMPLETED":isFullyCompleted(r)?"COMPLETED":(st.text||"IN TRANSIT")).replace(/<[^>]+>/g,"").replace(/^[^A-Z0-9]+/i,"").trim().toUpperCase();
     const remarks=isFullyCompleted(r)?"Empty return completed.":destuff?"De-stuff completed; awaiting empty return.":getField(r,["CFS IN"])?"CFS in-gate completed.":portIn?"Port in recorded.":"—";
     const etd=getField(r,["ETD"]);
     return `
@@ -641,7 +641,7 @@ function generateCleanManifestHtml(containersList) {
         <td><strong>${esc(container)}</strong><small>${esc(type)}</small></td>
         <td><strong>${esc(mbl)}</strong><small>${esc(liner)}</small></td>
         <td><strong>${esc(vessel.vessel)}${vessel.voyage ? " V"+esc(vessel.voyage) : ""}</strong></td>
-        <td><strong>${esc(pod)}</strong></td>
+        <td><strong>${esc(gatewayPort)}</strong></td>
         <td><strong>${esc(pol)}</strong><small>${etd?"ETD: "+esc(fmt(etd)):""}</small></td>
         <td><strong class="rpt-link">${esc(cfs)}</strong></td>
         <td><strong>${esc(fmt(eta))} / ${esc(fmt(portIn))}</strong></td>
