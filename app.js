@@ -612,65 +612,60 @@ function calculateStandardFees(r) {
 
 function generateCleanManifestHtml(containersList) {
   const now = new Date();
-  const generatedDate = now.toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"}).toUpperCase();
-  const generatedTime = now.toLocaleTimeString("en-IN", {hour:"2-digit",minute:"2-digit"});
-  const splitVesselVoy = (value) => {
-    const raw = String(value || "").trim();
-    const m = raw.match(/^(.*?)(?:\s+V(?:OY)?(?:AGE)?\.?\s*)([A-Z0-9-]+)$/i);
-    return m ? {vessel:m[1].trim(),voyage:m[2].trim()} : {vessel:raw || "—",voyage:"—"};
+  const generatedDate = now.toLocaleDateString("en-IN",{weekday:"short",day:"2-digit",month:"short",year:"numeric"});
+  const clean = v => /^(unverified|unknown|n\/a|na|-)$/i.test(String(v||"").trim()) ? "" : v;
+  const fmt = v => v ? formatDate(v).toUpperCase() : "—";
+  const splitVesselVoy = value => {
+    const raw=String(value||"").trim();
+    const m=raw.match(/^(.*?)(?:\s+V(?:OY)?(?:AGE)?\.?\s*)([A-Z0-9-]+)$/i);
+    return m ? {vessel:m[1].trim(),voyage:m[2].trim()} : {vessel:raw||"—",voyage:""};
   };
-  const renderContainer = (r) => {
+  const renderRow = r => {
     const container=getField(r,["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"])||"—";
     const type=getField(r,["TYPE","SIZE"])||"—";
     const mbl=getField(r,["MBL NO","MBL","MASTER BL"])||"—";
     const liner=getField(r,["LINER","LINE"])||detectLinerFromMBL(mbl)||"—";
-    const pol=getField(r,["POL","PORT OF LOADING"])||"—";
-    const pod=getField(r,["POD","PORT OF DISCHARGE","DISCHARGE PORT"])||"—";
+    const pol=clean(getField(r,["POL","PORT OF LOADING"]))||"—";
+    const pod=clean(getField(r,["POD","PORT OF DISCHARGE","DISCHARGE PORT"]))||"—";
     const cfs=getField(r,["CFS NAME","CFS"])||"—";
-    const etd=getField(r,["ETD"]);
-    const eta=getField(r,["ETA"]);
+    const eta=getField(r,["ETA","VESSEL ARRIVAL","ARRIVAL DATE"]);
+    const portIn=getField(r,["PORT IN"]);
+    const destuff=getField(r,["DESTUFFING DATE","DESTUFF DATE"]);
     const vessel=splitVesselVoy(getField(r,["VESSEL & VOY","VESSEL","VESSEL NAME"]));
     const st=getStatus(r);
-    const completed=isFullyCompleted(r);
-    const currentStatus=(completed?"DE-STUFF COMPLETED":(st.text||"IN TRANSIT")).replace(/<[^>]+>/g,"").replace(/^[^A-Z0-9]+/i,"").toUpperCase();
-    const point=(label,value)=>`<div style="flex:1;min-width:0;padding:24px 26px"><div style="font-size:13px;font-weight:800;color:#b9d2e7;letter-spacing:.08em;text-transform:uppercase">${label}</div><div style="font-size:21px;font-weight:900;color:#172033;margin-top:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase">${esc(value||"—")}</div></div>`;
-    return `<div style="width:100%;box-sizing:border-box;background:#fff;border:1px solid #dbe4ee;border-radius:18px;overflow:hidden;margin:24px 0 0;box-shadow:0 14px 32px rgba(15,35,65,.12)">
-      <div style="background:linear-gradient(115deg,#061d3c,#0b4778 68%,#087f9e);color:#fff;padding:30px 34px;border-radius:18px 18px 0 0;display:grid;grid-template-columns:2fr 1.05fr 1.35fr 1.35fr;gap:30px;align-items:center">
-        <div><div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:#b9d2e7;text-transform:uppercase">CURRENT VESSEL NAME | VOYAGE</div><div style="font-size:29px;line-height:1.15;font-weight:900;margin-top:8px;text-transform:uppercase">${esc(vessel.vessel)} <span style="font-weight:700;color:#d1d5db">| ${esc(vessel.voyage)}</span></div></div>
-        <div><div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:#d1d5db;text-transform:uppercase">CARRIER NAME</div><div style="font-size:22px;font-weight:900;margin-top:8px;text-transform:uppercase">${esc(liner)}</div></div>
-        <div><div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:#d1d5db;text-transform:uppercase">CONTAINER</div><div style="font-size:22px;font-weight:900;margin-top:8px;font-family:'JetBrains Mono',monospace">${esc(container)}</div></div>
-        <div style="background:rgba(255,255,255,.10);color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:19px 18px;text-align:center;min-height:76px;display:flex;flex-direction:column;justify-content:center"><div style="font-size:12px;font-weight:900;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">CURRENT STATUS</div><div style="font-size:22px;font-weight:900;margin-top:7px;text-transform:uppercase">${esc(currentStatus)}</div></div>
-      </div>
-      <div style="padding:24px 28px 0">
-        <div style="display:flex;align-items:stretch;border:1px solid #d5d9df;border-radius:7px;overflow:hidden;background:#fff">
-          ${point("Place of Receipt",pol)}<div style="width:44px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#6b7280">→</div>
-          ${point("Port of Loading",pol)}<div style="width:44px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#6b7280">→</div>
-          ${point("Port of Discharge",pod)}<div style="width:44px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#6b7280">→</div>
-          ${point("Place of Delivery",getField(r,["PLACE OF DELIVERY","DELIVERY PLACE"])||"—")}
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #d5d9df;border-top:0;border-radius:0 0 7px 7px;background:#fff">
-          <div style="padding:25px 28px;border-right:1px solid #e5e7eb"><div style="font-size:13px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">Actual Departure</div><div style="font-size:21px;font-weight:900;color:#172033;margin-top:9px">${etd?formatDate(etd).toUpperCase():"PENDING"}</div></div>
-          <div style="padding:25px 28px"><div style="font-size:13px;font-weight:800;color:#6b7280;letter-spacing:.08em;text-transform:uppercase">Actual / Estimated Arrival</div><div style="font-size:21px;font-weight:900;color:#172033;margin-top:9px">${eta?formatDate(eta).toUpperCase():"PENDING"}</div></div>
-        </div>
-      </div>
-      <div style="margin:14px 0 0;border:1px solid #dfe7ef;border-radius:13px;overflow:hidden;background:#fff">
-        <div style="padding:13px 16px;background:#f7faff;border-bottom:1px solid #e8eef5;display:flex;justify-content:space-between"><strong style="font-size:10px;letter-spacing:.08em;color:#17416d">SHIPMENT JOURNEY</strong><span style="font-size:8px;color:#8a99aa">LIVE MILESTONE STATUS</span></div>
-        <div style="padding:18px 16px;display:grid;grid-template-columns:repeat(6,1fr);gap:6px">
-          ${[
-            ["PORT IN","PORT IN"],["PORT OUT","PORT OUT"],["CFS IN","CFS IN"],["DE-STUFF","DESTUFFING DATE"],["EMPTY RETURN","CONTAINER RETURN DATE"],["DELIVERED","CONTAINER RETURN DATE"]
-          ].map(([label,key])=>`<div style="text-align:center"><div style="width:25px;height:25px;margin:0 auto 7px;border-radius:50%;background:${getField(r,[key])?"#12ae5b":"#dce5ee"};color:${getField(r,[key])?"#fff":"#7f8ea0"};display:grid;place-items:center;font-size:8px;font-weight:900">${getField(r,[key])?"✓":"·"}</div><strong style="display:block;font-size:7px;color:#243d5b">${label}</strong><small style="display:block;margin-top:3px;font-size:7px;color:#8a98a8">${getField(r,[key])?formatDate(getField(r,[key])).toUpperCase():"PENDING"}</small></div>`).join("")}
-        </div>
-      </div>
-      <div style="margin-top:22px;border-top:1px solid #e5e7eb;background:#eef3f8;padding:18px 34px;font-size:12px;color:#6b7280">MBL: <b style="color:#374151">${esc(mbl)}</b><span style="margin:0 14px;color:#c0c4ca">•</span>CFS: <b style="color:#374151">${esc(cfs)}</b><span style="margin:0 14px;color:#c0c4ca">•</span>Type: <b style="color:#374151">${esc(type)}</b></div>
-    </div>`;
+    const status=(isFullyCompleted(r)?"COMPLETED":(st.text||"IN TRANSIT")).replace(/<[^>]+>/g,"").replace(/^[^A-Z0-9]+/i,"").trim().toUpperCase();
+    const remarks=isFullyCompleted(r)?"Empty return completed.":destuff?"De-stuff completed; awaiting empty return.":getField(r,["CFS IN"])?"CFS in-gate completed.":portIn?"Port in recorded.":"—";
+    const etd=getField(r,["ETD"]);
+    return `
+      <tr>
+        <td><strong>${esc(container)}</strong><small>${esc(type)}</small></td>
+        <td><strong>${esc(mbl)}</strong><small>${esc(liner)}</small></td>
+        <td><strong>${esc(vessel.vessel)}${vessel.voyage ? " V"+esc(vessel.voyage) : ""}</strong></td>
+        <td><strong>${esc(pod)}</strong></td>
+        <td><strong>${esc(pol)}</strong><small>${etd?"ETD: "+esc(fmt(etd)):""}</small></td>
+        <td><strong class="rpt-link">${esc(cfs)}</strong></td>
+        <td><strong>${esc(fmt(eta))} / ${esc(fmt(portIn))}</strong></td>
+        <td><strong>${esc(fmt(destuff))}</strong></td>
+        <td><span class="rpt-status">${esc(status)}</span></td>
+        <td><strong>${esc(remarks)}</strong></td>
+      </tr>`;
   };
-  return `<div id="manifestCaptureContainer" data-report-version="2026-09-25-V3" style="width:1600px;background:#eef3f8;padding:28px 34px 26px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#111827;box-sizing:border-box">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:4px 4px 18px;border-bottom:0">
-      <div><div style="font-size:24px;font-weight:900;letter-spacing:.07em;color:#102f57">GREENWICH MERIDIAN LOGISTICS</div><div style="font-size:15px;color:#6b7280;margin-top:7px">Customer Shipment Visibility</div></div>
-      <div style="text-align:right"><div style="font-size:22px;font-weight:900;color:#3f4044;letter-spacing:.05em">STATUS REPORT</div><div style="font-size:13px;color:#6b7280;margin-top:6px">GENERATED ${generatedDate} • ${generatedTime}</div></div>
+  const totalTEU=containersList.reduce((sum,r)=>sum+(String(getField(r,["TYPE","SIZE"])||"").includes("40")?2:1),0);
+  return `
+  <div id="manifestCaptureContainer" style="width:1900px;background:#fff;padding:34px 48px 28px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#1b2c46;box-sizing:border-box;border:1px solid #d7e0ea;border-radius:16px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:4px 0 22px;border-bottom:3px solid #15284a">
+      <div><div style="font-size:28px;font-weight:900;letter-spacing:.035em;color:#10264a">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</div><div style="font-size:16px;color:#667891;font-weight:700;margin-top:8px">Live Status Report • Chennai Operations Desk</div></div>
+      <div style="font-size:17px;color:#1188c1;font-weight:900">${esc(generatedDate)}</div>
     </div>
-    ${containersList.map(renderContainer).join("")}
-    <div style="padding:22px 4px 4px;text-align:center;font-size:13px;color:#6b7280">For operational assistance: ${esc(COMPANY_CONFIG.supportEmail)} • Container Tracking Suite</div>
+    <table class="wa-report-table" style="width:100%;border-collapse:collapse;table-layout:fixed;margin-top:24px;font-size:12px">
+      <colgroup><col style="width:10%"><col style="width:10%"><col style="width:16%"><col style="width:7%"><col style="width:11%"><col style="width:7%"><col style="width:10%"><col style="width:8%"><col style="width:10%"><col style="width:11%"></colgroup>
+      <thead><tr><th>CONTAINER NO</th><th>MBL / LINE</th><th>VESSEL</th><th>PORT</th><th>POL</th><th>CFS</th><th>ETA / PORT IN</th><th>DESTUFF</th><th>STATUS</th><th>REMARKS</th></tr></thead>
+      <tbody>${containersList.map(renderRow).join("")}</tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end;gap:28px;padding:18px 4px 0;font-size:13px;color:#6b7c92;font-weight:800">
+      <span>Total Containers: <b style="color:#243955">${containersList.length}</b></span>
+      <span>Total TEU: <b style="color:#243955">${totalTEU}</b></span>
+    </div>
   </div>`;
 }
 function downloadMultipleStatusImage(containersList, titleRef = "Status_Report") {
