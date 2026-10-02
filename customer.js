@@ -352,8 +352,14 @@
       oldBtn.replaceWith(fresh);
       fresh.addEventListener("click",performCustomerSearch);
     }
+    var oldInput=el("publicSearchInput");
+    if(oldInput){
+      var freshInput=oldInput.cloneNode(true);
+      freshInput.id="publicSearchInput";
+      oldInput.replaceWith(freshInput);
+      freshInput.addEventListener("keydown",function(e){if(e.key==="Enter")performCustomerSearch();});
+    }
     el("publicTrackingType")?.addEventListener("change",updateSearchPlaceholder);
-    el("publicSearchInput")?.addEventListener("keydown",function(e){if(e.key==="Enter")performCustomerSearch();});
     updateSearchPlaceholder();
     var scanned=new URLSearchParams(window.location.search).get("cntr");
     if(scanned){
