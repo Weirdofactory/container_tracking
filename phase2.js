@@ -259,3 +259,32 @@
     window.renderUI=function(){oldRender.apply(this,arguments); if($('p1v2Tower')?.style.display!=='none')renderAll();};
   }
 })();
+
+
+// Customer portal hotfix: load the verified public tracking renderer after the legacy phase scripts.
+(function(){
+  function loadVerifiedCustomerPortal(){
+    if(!document.getElementById("publicLandingView")) return;
+    if(document.getElementById("gmlCustomerLiveScript")) return;
+    var s=document.createElement("script");
+    s.id="gmlCustomerLiveScript";
+    s.src="./customer-live.js?v=20261003-working1";
+    s.onload=function(){
+      try{
+        if(typeof window.performPublicSearch==="function"){
+          window.performPublicSearch=function(){
+            return typeof window.GMLCustomerPortalSearch==="function"
+              ? window.GMLCustomerPortalSearch()
+              : undefined;
+          };
+        }
+      }catch(e){}
+    };
+    document.head.appendChild(s);
+  }
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",loadVerifiedCustomerPortal,{once:true});
+  }else{
+    loadVerifiedCustomerPortal();
+  }
+})();
