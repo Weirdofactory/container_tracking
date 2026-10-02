@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Container Tracking Suite - Enterprise Hub</title>
+<title>GML Customer Portal — Shipment Tracking</title>
 <!-- Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,7 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20260927-report-v3">
+<link rel="stylesheet" href="./style.css?v=20261003-customer-v1">
+<link rel="stylesheet" href="./customer.css?v=20261003-customer-v1">
 </head>
 <body>
 
@@ -71,65 +72,76 @@
       </div>
 
       <div id="publicControls" style="display:flex; align-items:center; gap:8px;">
-        <button class="btn btn-ghost" id="publicThemeBtn" style="padding:6px 10px;">☀️</button>
-        <button class="btn btn-primary" id="loginBtn" onclick="document.getElementById('loginModalBg').classList.add('open'); document.getElementById('loginCodeInput')?.focus();">🔐 Staff Portal Login</button>
+        <nav class="customer-public-nav" aria-label="Customer navigation">
+          <a href="#" onclick="return false;">Track &amp; Trace</a>
+          <a href="#" onclick="return false;">Schedules</a>
+          <a href="#customer-help">Services</a>
+          <a href="#" onclick="return false;">Tools</a>
+          <a href="#" onclick="return false;">Resources</a>
+          <a href="#" onclick="return false;">Company</a>
+          <a href="#customer-help">Contact</a>
+        </nav>
+        <span class="customer-lang">🌐 EN⌄</span>
+        <button class="customer-icon-btn" id="publicThemeBtn" type="button" aria-label="Toggle theme">☀️</button>
+        <button class="customer-portal-btn" id="loginBtn" type="button">Customer Portal</button>
       </div>
     </div>
   </div>
 </header>
 
-<section id="publicLandingView" class="fade-in one-public-shell">
-  <div class="one-hero">
-    <div class="one-hero-inner">
-      <div class="one-hero-copy">
-        <div class="one-hero-title-row">
-          <div>
-            <div class="one-eyebrow">GLOBAL FREIGHT SOLUTIONS</div>
-            <h1>Track Your Shipment</h1>
-            <p>Real-time container tracking with global visibility.</p>
-          </div>
-          <button type="button" class="public-staff-login-btn" onclick="document.getElementById('loginModalBg').classList.add('open');document.getElementById('loginCodeInput')?.focus();">🔐 Staff Portal Login</button>
-        </div>
+
+<section id="publicLandingView" class="fade-in customer-public-page">
+  <div class="customer-hero">
+    <div class="customer-hero-inner">
+      <div class="customer-hero-copy">
+        <div class="customer-eyebrow">GLOBAL FREIGHT SOLUTIONS</div>
+        <h1>Track Your Shipment</h1>
+        <p>Real-time container tracking with global visibility.</p>
       </div>
-      <div class="one-track-panel">
-        <div class="one-track-fields" style="grid-template-columns: 220px minmax(0,1fr) 140px;">
-          <div class="one-field-group one-field-type">
+
+      <div class="customer-search-panel">
+        <div class="customer-search-fields">
+          <div class="customer-field">
             <label>Search By</label>
             <select id="publicTrackingType" aria-label="Search Type">
               <option value="container">Container Number</option>
-              <option value="all">All / MBL</option>
+              <option value="all">All Tracking References</option>
             </select>
           </div>
-          <div class="one-field-group one-field-input">
+          <div class="customer-field">
             <label style="opacity:0">Tracking Number</label>
             <input type="text" id="publicSearchInput" autocomplete="off" spellcheck="false" placeholder="MSMU5334429">
           </div>
-          <button class="one-track-button" id="publicSearchBtn" onclick="performPublicSearch()">🔍 Track</button>
+          <button class="customer-track-btn" id="publicSearchBtn" type="button">🔍 Track</button>
         </div>
-        <div class="one-track-help">You can search by Container #, HBL/AWB #, Booking #, Vessel/Voyage # or Customer Ref #.</div>
+        <div class="customer-search-help">Search by Container #, HBL/AWB #, Booking #, Vessel/Voyage # or Customer Ref #.</div>
       </div>
     </div>
   </div>
-  <div class="one-content-wrap">
-    <div class="one-result-heading">
-      <div><span class="one-section-kicker">SHIPMENT RESULTS</span><h2>Track your cargo</h2></div>
-      <div class="one-result-actions">
-        <span class="one-result-note">Current status &amp; milestone history</span>
-        <span class="one-result-count-badge" id="publicResultCountBadge">0 results</span>
-      </div>
-    </div>
-    <div id="publicResultContainer" class="public-result-card one-results-surface"></div>
-  </div>
-  <section class="customer-help-section">
-    <div>
+
+  <main class="customer-content">
+    <div class="customer-result-bar">
       <div>
-        <span class="hero-eyebrow">NEED ASSISTANCE?</span>
-        <h2>Our operations team is here to help.</h2>
-        <p>For shipment-specific questions, keep your container number ready when contacting the team.</p>
+        <span class="customer-result-kicker">SHIPMENT RESULTS</span>
+        <h2>Track your cargo</h2>
+      </div>
+      <div class="customer-result-meta">
+        <span>Current status &amp; milestone history</span>
+        <span class="customer-result-count" id="publicResultCountBadge">0 results</span>
+      </div>
+    </div>
+    <div id="publicResultContainer" class="public-result-card"></div>
+  </main>
+
+  <section id="customer-help" class="customer-help-section">
+    <div class="customer-help-card">
+      <div>
+        <h3>Need assistance with a shipment?</h3>
+        <p>Keep the container, MBL or booking number ready when contacting our operations team.</p>
       </div>
       <div class="customer-help-actions">
-        <a class="btn btn-primary" href="mailto:madhan@gmlindia.net">✉️ Email Operations</a>
-        <a class="btn btn-ghost" href="https://wa.me/919884070344" target="_blank" rel="noopener">💬 WhatsApp Operations</a>
+        <a class="customer-help-btn primary" href="mailto:madhan@gmlindia.net">✉️ Email Operations</a>
+        <a class="customer-help-btn secondary" href="https://wa.me/919884070344" target="_blank" rel="noopener">💬 WhatsApp Operations</a>
       </div>
     </div>
   </section>
@@ -397,7 +409,9 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20260927-whatsapp-table-v3"></script>
+<script>window.GML_CUSTOMER_PORTAL_V2 = true;</script>
+<script src="./app.js?v=20261003-customer-v1"></script>
+<script src="./customer.js?v=20261003-customer-v1"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
