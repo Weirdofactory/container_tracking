@@ -189,8 +189,22 @@ body.public-carrier-mode #publicControls{
 .customer-tab-pane.active{display:block}
 
 .customer-overview-grid{
-  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(390px,.85fr);gap:13px;padding:0 20px 15px;
+  display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(390px,.85fr);
+  gap:13px;
+  padding:0 20px 15px;
+  align-items:start;
 }
+.customer-overview-grid > .customer-section-card,
+.customer-overview-grid > div{
+  min-width:0;
+}
+.customer-overview-grid > div:last-child{
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+}
+
 .customer-section-card{background:#fff;border:1px solid #dce5ee;border-radius:11px;overflow:hidden}
 .customer-section-title{
   padding:10px 13px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #edf1f5;background:#fff;
@@ -212,7 +226,7 @@ body.public-carrier-mode #publicControls{
 }
 .customer-info-item:last-child,.customer-info-item:nth-last-child(2){border-bottom:0}
 
-.customer-map-card{min-height:100%}
+.customer-map-card{min-height:0}
 .customer-map-wrap{position:relative;height:268px;background:#dff0fb}
 .customer-map{width:100%;height:100%}
 .customer-map-toggle{
