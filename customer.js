@@ -623,30 +623,39 @@
   async function loadIgmHblsForReports(matched){
     for(var i=0;i<matched.length;i++){
       var r=matched[i];
-      var mbl=cclean(cv(r,["MBL NO","MBL","MASTER BL"]));
       var cntr=cclean(cv(r,["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]));
       var box=document.getElementById("customerHbl_"+i);
-      if(!box) continue;
-      if(!mbl||!cntr){
-        box.innerHTML='<span class="customer-hbl-empty">No linked HBL / IGM record.</span>';
-        continue;
-      }
+      if(!box||!cntr) continue;
+
       try{
-        var rows=await customerRpc("get_igm_hbls_for_shipment",{p_mbl:mbl,p_container:cntr});
-        if(!Array.isArray(rows)) rows=[];
-        if(!rows.length){
-          rows=await customerRpc("get_igm_hbls_for_container",{p_container:cntr});
-          if(!Array.isArray(rows)) rows=[];
+        var bundle=await customerRpc("get_customer_igm_bundle",{p_container:cntr});
+        if(!bundle || Array.isArray(bundle) || typeof bundle!=="object"){
+          throw new Error("Invalid IGM bundle response.");
         }
+
+        var rows=Array.isArray(bundle.hbls)?bundle.hbls:[];
         rows.forEach(function(row){
           igmHblCache[String(row.hbl_no||"").toUpperCase()]=row;
         });
-        customerIgmSummary[cntr.toUpperCase()] = buildIgmSummary(rows);
+
         renderIgmHblList(box,rows);
         renderCustomerIgmSummary(i,rows);
+
+        var count=Number(bundle.hbl_count||rows.length||0);
+        var summaryBox=document.getElementById("customerIgmSummary_"+i);
+        if(summaryBox && count===0){
+          summaryBox.querySelector(".customer-igm-loading")?.replaceWith(
+            Object.assign(document.createElement("div"),{
+              className:"customer-igm-empty",
+              textContent:"No IGM / HBL records linked to this container."
+            })
+          );
+        }
       }catch(err){
         console.warn("IGM/HBL lookup failed:",err);
-        box.innerHTML='<span class="customer-hbl-empty">IGM details unavailable.</span>';
+        box.innerHTML='<span class="customer-hbl-empty">Unable to load IGM / HBL details.</span>';
+        var summaryBox=document.getElementById("customerIgmSummary_"+i);
+        if(summaryBox) summaryBox.innerHTML='<div class="customer-igm-empty">IGM data could not be loaded. Please contact operations.</div>';
       }
     }
   }
