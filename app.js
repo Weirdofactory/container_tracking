@@ -1189,8 +1189,10 @@ function togglePublicShipmentDetail(detailId, trigger) {
   if (willOpen) setTimeout(() => row.scrollIntoView({behavior:"smooth", block:"nearest"}), 30);
 }
 
-el("publicSearchBtn").addEventListener("click", performPublicSearch);
-el("publicSearchInput").addEventListener("keypress", (e) => { if (e.key === "Enter") performPublicSearch(); });
+if (!window.GML_CUSTOMER_PORTAL_V2) {
+  el("publicSearchBtn").addEventListener("click", performPublicSearch);
+  el("publicSearchInput").addEventListener("keypress", (e) => { if (e.key === "Enter") performPublicSearch(); });
+}
 
 function toggleTheme() {
   const current = document.documentElement.getAttribute("data-theme") || "light";
