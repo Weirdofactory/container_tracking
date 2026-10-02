@@ -430,3 +430,23 @@ body.public-carrier-mode #publicControls{
   display:flex!important;visibility:visible!important;opacity:1!important;
 }
 @media(max-width:680px){.customer-hero-login{margin-top:15px;width:100%}}
+
+/* Override legacy app rule: public-result-card was globally hidden by the operations stylesheet. */
+body.public-carrier-mode .public-result-card{
+  display:block!important;
+  max-width:none!important;
+  margin:0!important;
+  position:relative;
+  z-index:1;
+  background:transparent;
+  border:0;
+  border-radius:0;
+  overflow:visible;
+  box-shadow:none;
+}
+body.public-carrier-mode #publicResultContainer{
+  min-height:20px;
+}
+body.public-carrier-mode .customer-result-stack{
+  width:100%;
+}
