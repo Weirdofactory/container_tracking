@@ -779,6 +779,7 @@
     }
   }
 
+  window.GMLCustomerPortalSearch=performCustomerSearch;
   window.performPublicSearch=performCustomerSearch;
   window.toggleCustomerMapLayer=toggleCustomerMapLayer;
   window.switchCustomerTab=switchCustomerTab;
