@@ -166,7 +166,7 @@
 
     html += '<div>';
     html += '<div class="customer-section-card customer-map-card"><div class="customer-section-title"><div><span class="customer-section-number">02</span><strong>ROUTE & MAP</strong></div><small>PORT-TO-PORT</small></div><div class="customer-map-wrap"><div id="'+mapId+'" class="customer-map"></div><div class="customer-map-toggle"><button type="button" class="active" data-map-mode="map">Map</button><button type="button" data-map-mode="satellite">Satellite</button></div></div><div class="customer-map-note"><span>'+cesc(pol)+' → '+cesc(pod)+'</span><strong>'+cesc(vessel)+'</strong></div></div>';
-    html += '<div class="customer-section-card" style="margin-top:13px"><div class="customer-section-title"><div><span class="customer-section-number">03</span><strong>KEY MILESTONES</strong></div><small>'+doneCount+' RECORDED</small></div><div class="customer-milestone-list">
+    html += '<div class="customer-section-card" style="margin-top:13px"><div class="customer-section-title"><div><span class="customer-section-number">03</span><strong>KEY MILESTONES</strong></div><small>'+doneCount+' RECORDED</small></div><div class="customer-milestone-list">';
     milestones.forEach(function(m,idx){
       var done = cvalid(m.date);
       var active = !done && idx===lastDone+1;
