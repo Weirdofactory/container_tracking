@@ -1,5 +1,3 @@
+/* Restore the known-good operations stylesheet, then layer the customer tracking UI. */
+@import url("https://raw.githubusercontent.com/Weirdofactory/container_tracking/0ccbe02c6267f3e8d14fcc0a4175416413e175fe/style.css");
 @import url("./customer-tracking.css?v=20261002-v14");
-
-:root[data-theme="dark"] {
-  --bg-app: #090d16;
-  --bg-surface: #111827;
