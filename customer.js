@@ -296,6 +296,195 @@
   }
 
 
+
+  function normalizeIgmHeader(v){
+    return String(v == null ? "" : v).toLowerCase().replace(/[^a-z0-9]+/g,"");
+  }
+
+  function igmFindColumn(headers, candidates){
+    var normalized=headers.map(normalizeIgmHeader);
+    for(var i=0;i<candidates.length;i++){
+      var target=normalizeIgmHeader(candidates[i]);
+      var exact=normalized.indexOf(target);
+      if(exact>=0) return exact;
+    }
+    for(var i=0;i<candidates.length;i++){
+      var target=normalizeIgmHeader(candidates[i]);
+      var idx=normalized.findIndex(function(h){ return h.indexOf(target)>=0 || target.indexOf(h)>=0; });
+      if(idx>=0) return idx;
+    }
+    return -1;
+  }
+
+  function igmToText(v){
+    if(v == null) return "";
+    return String(v).trim();
+  }
+
+  function igmToNumber(v){
+    var s=igmToText(v).replace(/,/g,"");
+    if(!s) return null;
+    var n=Number(s);
+    return isFinite(n) ? n : null;
+  }
+
+  function igmPick(row, headers, candidates){
+    var idx=igmFindColumn(headers,candidates);
+    return idx>=0 ? igmToText(row[idx]) : "";
+  }
+
+  function deriveIgmNoFromFileName(fileName){
+    var m=String(fileName||"").match(/igm[_\-\s]*(\d+)/i);
+    return m ? m[1] : "";
+  }
+
+  function deriveMblFromFileName(fileName){
+    var s=String(fileName||"");
+    var m=s.match(/(?:bl|mbl)[_\-\s]+([A-Z]{4,6}[A-Z0-9]+)/i);
+    if(m) return m[1].replace(/[_\-\s]+$/,"");
+    return "";
+  }
+
+  function findIgmHeaderRow(rows){
+    var best={index:-1,score:0};
+    rows.slice(0,80).forEach(function(row,index){
+      var text=row.map(igmToText).join(" | ").toLowerCase();
+      var score=0;
+      if(/hbl|house\s*bl|house\s*bill/.test(text)) score+=4;
+      if(/igm/.test(text)) score+=4;
+      if(/container/.test(text)) score+=2;
+      if(/gross\s*weight|grossweight/.test(text)) score+=1;
+      if(/line|subline/.test(text)) score+=1;
+      if(score>best.score) best={index:index,score:score};
+    });
+    return best.index;
+  }
+
+  function parseIgmWorkbook(arrayBuffer,fileName){
+    if(typeof XLSX==="undefined") throw new Error("Excel parser is unavailable.");
+    var wb=XLSX.read(arrayBuffer,{type:"array",cellDates:false,raw:false});
+    var all=[];
+    var fallbackIgm=deriveIgmNoFromFileName(fileName);
+    var fallbackMbl=deriveMblFromFileName(fileName);
+
+    wb.SheetNames.forEach(function(sheetName){
+      var ws=wb.Sheets[sheetName];
+      var matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+      var headerIndex=findIgmHeaderRow(matrix);
+      if(headerIndex<0) return;
+
+      var headers=matrix[headerIndex].map(igmToText);
+      var hblCol=igmFindColumn(headers,["HBL No","HBL Number","House BL","House Bill","House BL No"]);
+      var mblCol=igmFindColumn(headers,["MBL No","MBL Number","BL No","Master BL","Bill No"]);
+      var igmCol=igmFindColumn(headers,["IGM No","IGM Number","IGM"]);
+      var hblDateCol=igmFindColumn(headers,["HBL Date","House BL Date"]);
+      var blDateCol=igmFindColumn(headers,["BL Date","Bill Date"]);
+      var lineCol=igmFindColumn(headers,["Line No","Line Number","Line"]);
+      var sublineCol=igmFindColumn(headers,["Subline No","Subline Number","Subline"]);
+      var movementCol=igmFindColumn(headers,["Cargo Movement","Movement"]);
+      var weightCol=igmFindColumn(headers,["Gross Weight","GrossWeight","Weight"]);
+      var weightUnitCol=igmFindColumn(headers,["Unit of Weight","Weight Unit","UOM"]);
+      var pkgCol=igmFindColumn(headers,["Total Package","Total Packages","Package","Packages","No of Packages"]);
+      var pkgCodeCol=igmFindColumn(headers,["Package Code","Pkg Code","Package Type"]);
+      var destCol=igmFindColumn(headers,["Port Destination","Port of Destination","Destination Port"]);
+      var descCol=igmFindColumn(headers,["Description of Goods","Desc of Goods","Goods Description","Cargo Description"]);
+      var igmDateCol=igmFindColumn(headers,["IGM Date","IGM Filing Date","IGM Date/Time"]);
+      var inwCol=igmFindColumn(headers,["INW Date","Inward Date","INW"]);
+      var gatewayCol=igmFindColumn(headers,["Gateway Port","Gateway","Port"]);
+      var voyageCol=igmFindColumn(headers,["Voyage Number","Voyage No","Voyage"]);
+      var imoCol=igmFindColumn(headers,["IMO No","IMO Number","IMO"]);
+      var vesselCodeCol=igmFindColumn(headers,["Vessel Code","Vessel ID"]);
+      var containerCol=igmFindColumn(headers,["Container No","Container Number","Container","Container No."]);
+      var statusCol=igmFindColumn(headers,["Container Status","Status"]);
+
+      for(var rowIndex=headerIndex+1;rowIndex<matrix.length;rowIndex++){
+        var row=matrix[rowIndex];
+        if(!row || !row.length) continue;
+        var hbl=hblCol>=0 ? igmToText(row[hblCol]) : "";
+        var container=containerCol>=0 ? igmToText(row[containerCol]) : "";
+        var mbl=mblCol>=0 ? igmToText(row[mblCol]) : fallbackMbl;
+        var igm=igmCol>=0 ? igmToText(row[igmCol]) : fallbackIgm;
+        if(!hbl || !container) continue;
+
+        all.push({
+          hbl_no:hbl,
+          mbl_no:mbl,
+          bl_date:blDateCol>=0?igmToText(row[blDateCol]):"",
+          hbl_date:hblDateCol>=0?igmToText(row[hblDateCol]):"",
+          line_number:lineCol>=0?igmToNumber(row[lineCol]):null,
+          subline_number:sublineCol>=0?igmToNumber(row[sublineCol]):null,
+          cargo_movement:movementCol>=0?igmToText(row[movementCol]):"",
+          gross_weight:weightCol>=0?igmToNumber(row[weightCol]):null,
+          unit_of_weight:weightUnitCol>=0?igmToText(row[weightUnitCol]):"",
+          total_package:pkgCol>=0?igmToNumber(row[pkgCol]):null,
+          package_code:pkgCodeCol>=0?igmToText(row[pkgCodeCol]):"",
+          port_destination:destCol>=0?igmToText(row[destCol]):"",
+          desc_of_goods:descCol>=0?igmToText(row[descCol]):"",
+          igm_no:igm,
+          igm_date:igmDateCol>=0?igmToText(row[igmDateCol]):"",
+          inw_date:inwCol>=0?igmToText(row[inwCol]):"",
+          igm_file_name:sheetName,
+          gateway_port:gatewayCol>=0?igmToText(row[gatewayCol]):"",
+          voyage_number:voyageCol>=0?igmToText(row[voyageCol]):"",
+          imo_no:imoCol>=0?igmToText(row[imoCol]):"",
+          vessel_code:vesselCodeCol>=0?igmToText(row[vesselCodeCol]):"",
+          container_no:container,
+          container_status:statusCol>=0?igmToText(row[statusCol]):"LCL",
+          source_file_name:fileName
+        });
+      }
+    });
+
+    var unique={};
+    all.forEach(function(row){
+      unique[String(row.hbl_no).toUpperCase()+"|"+String(row.container_no).toUpperCase()]=row;
+    });
+    return Object.keys(unique).map(function(k){return unique[k];});
+  }
+
+  async function importIgmWorkbook(file){
+    var authRaw=localStorage.getItem("gml_auth_code_user");
+    var auth=null;
+    try{auth=authRaw?JSON.parse(authRaw):null;}catch(e){}
+    if(!auth||!auth.access_code) throw new Error("Please sign in to the Staff Portal first.");
+    if(auth.role==="Viewer") throw new Error("IGM import is available to Admin / Editor users only.");
+
+    var buffer=await file.arrayBuffer();
+    var records=parseIgmWorkbook(buffer,file.name);
+    if(!records.length) throw new Error("No HBL + container rows were detected in this IGM file.");
+
+    var imported=0;
+    var chunkSize=250;
+    for(var i=0;i<records.length;i+=chunkSize){
+      var chunk=records.slice(i,i+chunkSize);
+      var resp=await sb.rpc("import_igm_hbl_rows",{p_access_code:auth.access_code,p_rows:chunk});
+      if(resp.error) throw new Error(resp.error.message||"IGM import failed.");
+      imported += Number(resp.data&&resp.data.imported||chunk.length);
+    }
+    return {detected:records.length,imported:imported};
+  }
+
+  function bindIgmImport(){
+    var input=el("igmImportInput");
+    if(!input) return;
+    input.addEventListener("change",async function(){
+      var file=input.files&&input.files[0];
+      input.value="";
+      if(!file) return;
+      var label=el("igmImportLabel");
+      if(label){label.dataset.originalText=label.textContent;label.classList.add("btn-loading");}
+      try{
+        var result=await importIgmWorkbook(file);
+        if(typeof toast==="function") toast("IGM import complete: "+result.imported+" HBL records updated.");
+      }catch(err){
+        console.error("IGM import error:",err);
+        alert(err.message||"Unable to import IGM file.");
+      }finally{
+        if(label){label.classList.remove("btn-loading");}
+      }
+    });
+  }
+
   async function loadIgmHblsForReports(matched){
     if(typeof sb==="undefined") return;
     for(var i=0;i<matched.length;i++){
@@ -493,5 +682,6 @@
   window.switchCustomerTab=switchCustomerTab;
   window.shareCustomerReport=shareCustomerReport;
   window.openIgmModal=openIgmModal;
+  bindIgmImport();
   wireCustomerPortal();
 })();
