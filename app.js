@@ -72,6 +72,7 @@ try {
 
 const PORT_COORDS = {
   "SHEKOU": [22.48, 113.91], "BUSAN": [35.10, 129.04], "SHANGHAI": [31.23, 121.47],
+  "JEBEL ALI": [25.0113, 55.0610], "HOUSTON": [29.7341, -95.1179], "DUBAI": [25.2048, 55.2708],
   "NINGBO": [29.86, 121.54], "QINGDAO": [36.06, 120.38], "SINGAPORE": [1.29, 103.85],
   "PORT KLANG": [3.00, 101.40], "CCTL": [13.085, 80.298], "CITPL": [13.098, 80.305],
   "KATTUPALLI": [13.315, 80.345], "ENNORE": [13.250, 80.332], "CHENNAI": [13.0827, 80.2707]
@@ -2517,7 +2518,7 @@ renderUI();
 
 const urlParams = new URLSearchParams(window.location.search);
 const scannedCntr = urlParams.get("cntr");
-if (scannedCntr) {
+if (scannedCntr && !window.GML_CUSTOMER_PORTAL_V2) {
   el("publicSearchInput").value = scannedCntr;
   performPublicSearch();
 }
