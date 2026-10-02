@@ -8,6 +8,7 @@
   var customerReportLinks = {};
   var customerReportRecords = {};
   var igmHblCache = {};
+  var customerIgmSummary = {};
 
   function cv(r,names,fallback){
     fallback = fallback || "";
@@ -153,15 +154,19 @@
     var hblBoxId="customerHbl_"+index;
     html += '<section class="customer-tab-pane active" data-pane="overview">';
     html += '<div class="customer-overview-grid">';
+    html += '<div>';
     html += '<div class="customer-section-card"><div class="customer-section-title"><div><span class="customer-section-number">01</span><strong>SHIPMENT INFORMATION</strong></div><small>REFERENCE DATA</small></div><div class="customer-info-grid">';
     [["Container Number",cntr],["Size / Type",type]].forEach(function(x){html+=dataItem(x[0],x[1]);});
     html += '<div class="customer-info-item customer-hbl-item"><span class="data-label">HBL NUMBERS</span><div id="'+hblBoxId+'" class="customer-hbl-list"><span class="customer-hbl-loading">Loading HBL details…</span></div></div>';
     [["MBL Number",mbl],["Vessel / Voyage",vessel]].forEach(function(x){html+=dataItem(x[0],x[1]);});
     html += '</div></div>';
 
+    html += '<div class="customer-section-card customer-igm-cargo-card"><div class="customer-section-title"><div><span class="customer-section-number">04</span><strong>CARGO INFORMATION</strong></div><small>IGM / HBL SUMMARY</small></div><div id="customerIgmSummary_'+index+'" class="customer-igm-cargo-summary"><div class="customer-igm-loading">Waiting for IGM / HBL data…</div></div></div>';
+    html += '</div>';
+
     html += '<div>';
     html += '<div class="customer-section-card customer-map-card"><div class="customer-section-title"><div><span class="customer-section-number">02</span><strong>ROUTE & MAP</strong></div><small>PORT-TO-PORT</small></div><div class="customer-map-wrap"><div id="'+mapId+'" class="customer-map"></div><div class="customer-map-toggle"><button type="button" class="active" data-map-mode="map">Map</button><button type="button" data-map-mode="satellite">Satellite</button></div></div><div class="customer-map-note"><span>'+cesc(pol)+' → '+cesc(pod)+'</span><strong>'+cesc(vessel)+'</strong></div></div>';
-    html += '<div class="customer-section-card" style="margin-top:13px"><div class="customer-section-title"><div><span class="customer-section-number">03</span><strong>KEY MILESTONES</strong></div><small>'+doneCount+' RECORDED</small></div><div class="customer-milestone-list">';
+    html += '<div class="customer-section-card" style="margin-top:13px"><div class="customer-section-title"><div><span class="customer-section-number">03</span><strong>KEY MILESTONES</strong></div><small>'+doneCount+' RECORDED</small></div><div class="customer-milestone-list">
     milestones.forEach(function(m,idx){
       var done = cvalid(m.date);
       var active = !done && idx===lastDone+1;
@@ -169,10 +174,7 @@
     });
     html += '</div></div></div></div>';
 
-    html += '<div class="customer-bottom-grid">';
-    html += '<div class="customer-section-card"><div class="customer-section-title"><div><span class="customer-section-number">04</span><strong>CARGO INFORMATION</strong></div><small>CARGO PROFILE</small></div><div class="customer-cargo-grid">';
-    [["Package",pkg],["Quantity",qty],["Weight (KGS)",weight],["CBM",cbm],["Freight Term",freight],["DG",dg]].forEach(function(x){html+='<div class="customer-cargo-item"><span class="data-label">'+cesc(x[0])+'</span><strong>'+cesc(x[1])+'</strong></div>';});
-    html += '</div></div>';
+    html += '<div class="customer-bottom-grid customer-bottom-grid-single">';
     html += '<div class="customer-section-card"><div class="customer-section-title"><div><span class="customer-section-number">05</span><strong>PORT INFORMATION</strong></div><small>LOGISTICS ROUTE</small></div><div class="customer-port-grid">';
     [["Place of Receipt",receipt],["Loading Port",pol],["Transshipment",transship],["Discharge Port",pod],["Place of Delivery",delivery],["Gateway / Terminal",gateway]].forEach(function(x){html+='<div class="customer-port-item"><span class="data-label">'+cesc(x[0])+'</span><strong>'+cesc(x[1])+'</strong></div>';});
     html += '</div></div></div>';
@@ -296,6 +298,71 @@
   }
 
 
+
+
+  function buildIgmSummary(rows){
+    var hbls=[];
+    var seen={};
+    var totalWeight=0;
+    var totalPackages=0;
+    var packageTypes=[];
+    var igmNumbers=[];
+    var destinations=[];
+    rows.forEach(function(row){
+      var h=String(row.hbl_no||"").trim().toUpperCase();
+      if(h&&!seen[h]){seen[h]=true;hbls.push(h);}
+      if(Number(row.gross_weight)) totalWeight += Number(row.gross_weight);
+      if(Number(row.total_package)) totalPackages += Number(row.total_package);
+      if(row.package_code && packageTypes.indexOf(String(row.package_code))<0) packageTypes.push(String(row.package_code));
+      if(row.igm_no && igmNumbers.indexOf(String(row.igm_no))<0) igmNumbers.push(String(row.igm_no));
+      if(row.port_destination && destinations.indexOf(String(row.port_destination))<0) destinations.push(String(row.port_destination));
+    });
+    return {
+      hblCount:hbls.length,
+      totalWeight:totalWeight,
+      totalPackages:totalPackages,
+      packageTypes:packageTypes,
+      igmNumbers:igmNumbers,
+      destinations:destinations
+    };
+  }
+
+  function fmtMetricNumber(v,decimals){
+    var n=Number(v);
+    if(!isFinite(n)) return "—";
+    return n.toLocaleString("en-IN",{minimumFractionDigits:decimals||0,maximumFractionDigits:decimals||2});
+  }
+
+  function renderCustomerIgmSummary(index,rows){
+    var box=document.getElementById("customerIgmSummary_"+index);
+    if(!box)return;
+    if(!rows.length){
+      box.innerHTML='<div class="customer-igm-empty">No IGM / HBL cargo data linked to this container yet.</div>';
+      return;
+    }
+    var s=buildIgmSummary(rows);
+    var summaryPairs=[
+      ["HBL COUNT",fmtMetricNumber(s.hblCount,0)],
+      ["TOTAL PACKAGES",fmtMetricNumber(s.totalPackages,0)],
+      ["GROSS WEIGHT (KGS)",fmtMetricNumber(s.totalWeight,2)],
+      ["PACKAGE TYPES",s.packageTypes.join(", ")||"—"],
+      ["IGM NUMBER",s.igmNumbers.join(", ")||"—"],
+      ["DESTINATION",s.destinations.join(", ")||"—"]
+    ];
+    var html='<div class="customer-igm-metrics">'+summaryPairs.map(function(x){
+      return '<div class="customer-igm-metric"><span>'+cesc(x[0])+'</span><strong>'+cesc(x[1])+'</strong></div>';
+    }).join("")+'</div>';
+    html+='<div class="customer-igm-breakdown"><div class="customer-igm-breakdown-title"><span>HBL CARGO BREAKDOWN</span><small>'+s.hblCount+' HBL'+(s.hblCount===1?"":"s")+'</small></div>';
+    html+='<div class="customer-igm-table-wrap"><table class="customer-igm-table"><thead><tr><th>HBL</th><th>SUBLINE</th><th>PKG</th><th>QTY</th><th>WEIGHT</th></tr></thead><tbody>';
+    rows.forEach(function(row){
+      html+='<tr><td><button type="button" class="customer-igm-hbl-link" data-hbl="'+cesc(String(row.hbl_no||"").toUpperCase())+'">'+cesc(String(row.hbl_no||"").toUpperCase())+'</button></td><td>'+cesc(row.subline_number||"—")+'</td><td>'+cesc(row.package_code||"—")+'</td><td>'+cesc(row.total_package||"—")+'</td><td>'+cesc(row.gross_weight!=null?fmtMetricNumber(row.gross_weight,2):"—")+' '+cesc(row.unit_of_weight||"")+'</td></tr>';
+    }).join("");
+    html+='</tbody></table></div></div>';
+    box.innerHTML=html;
+    box.querySelectorAll(".customer-igm-hbl-link").forEach(function(btn){
+      btn.addEventListener("click",function(){openIgmModal(btn.getAttribute("data-hbl"));});
+    });
+  }
 
   function normalizeIgmHeader(v){
     return String(v == null ? "" : v).toLowerCase().replace(/[^a-z0-9]+/g,"");
@@ -537,7 +604,9 @@
         rows.forEach(function(row){
           igmHblCache[String(row.hbl_no||"").toUpperCase()]=row;
         });
+        customerIgmSummary[cntr.toUpperCase()] = buildIgmSummary(rows);
         renderIgmHblList(box,rows);
+        renderCustomerIgmSummary(i,rows);
       }catch(err){
         console.warn("IGM/HBL lookup failed:",err);
         box.innerHTML='<span class="customer-hbl-empty">IGM details unavailable.</span>';
