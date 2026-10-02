@@ -446,7 +446,8 @@
     var authRaw=localStorage.getItem("gml_auth_code_user");
     var auth=null;
     try{auth=authRaw?JSON.parse(authRaw):null;}catch(e){}
-    if(!auth||!auth.access_code) throw new Error("Please sign in to the Staff Portal first.");
+    var userId=auth && (auth.uid || auth.user_id);
+    if(!userId) throw new Error("Please sign in to the Staff Portal first.");
     if(auth.role==="Viewer") throw new Error("IGM import is available to Admin / Editor users only.");
 
     var buffer=await file.arrayBuffer();
@@ -457,7 +458,7 @@
     var chunkSize=250;
     for(var i=0;i<records.length;i+=chunkSize){
       var chunk=records.slice(i,i+chunkSize);
-      var resp=await sb.rpc("import_igm_hbl_rows",{p_access_code:auth.access_code,p_rows:chunk});
+      var resp=await sb.rpc("import_igm_hbl_rows",{p_user_id:userId,p_rows:chunk});
       if(resp.error) throw new Error(resp.error.message||"IGM import failed.");
       imported += Number(resp.data&&resp.data.imported||chunk.length);
     }
