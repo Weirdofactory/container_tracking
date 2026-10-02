@@ -415,3 +415,18 @@ body.public-carrier-mode #publicControls{
 .customer-footer strong{color:#294766}
 @media(max-width:900px){.customer-search-fields{grid-template-columns:190px minmax(0,1fr) 112px 130px}.customer-footer{padding-left:18px;padding-right:18px}}
 @media(max-width:680px){.customer-search-fields{grid-template-columns:1fr}.customer-multiple-btn{width:100%}.customer-footer{align-items:flex-start;flex-direction:column}}
+
+.customer-hero-login{
+  margin-top:18px;height:38px;padding:0 15px;border:1px solid rgba(255,255,255,.48);border-radius:7px;
+  background:rgba(255,255,255,.10);color:#fff;font-size:10px;font-weight:900;cursor:pointer;
+  backdrop-filter:blur(5px);box-shadow:0 8px 20px rgba(0,0,0,.12);
+}
+.customer-hero-login:hover{background:#fff;color:#0b315f;border-color:#fff}
+body.public-carrier-mode #loginBtn{
+  display:inline-flex!important;visibility:visible!important;opacity:1!important;
+  position:relative;z-index:9999;
+}
+body.public-carrier-mode #publicControls{
+  display:flex!important;visibility:visible!important;opacity:1!important;
+}
+@media(max-width:680px){.customer-hero-login{margin-top:15px;width:100%}}
