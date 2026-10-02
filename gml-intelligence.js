@@ -37,6 +37,15 @@ window.gmlShipmentIntelligence=function(r){
   function rowFor(cntr){try{const a=JSON.parse(localStorage.getItem('containerRows')||'[]');return Array.isArray(a)?a.find(r=>norm(field(r,['CONTAINER NO.','CONTAINER','CONTAINER NO','CNTR NO']))===norm(cntr)):null}catch(e){return null}}
   function escAttr(v){return esc(v).replace(/`/g,'&#96;')}
 
+  function loadReferenceStyles(){
+    if(document.querySelector('link[data-gml-reference-css]')) return;
+    const link=document.createElement('link');
+    link.rel='stylesheet';
+    link.dataset.gmlReferenceCss='1';
+    link.href='./customer-report-final.css?v=20261002-reference2';
+    document.head.appendChild(link);
+  }
+
   function buildReport(r){
     const cntr=field(r,['CONTAINER NO.','CONTAINER','CONTAINER NO','CNTR NO'])||'—';
     const type=field(r,['TYPE','SIZE','CONTAINER TYPE'])||'—';
@@ -92,6 +101,7 @@ window.gmlShipmentIntelligence=function(r){
   }
 
   function render(){
+    loadReferenceStyles();
     document.querySelectorAll('.customer-report-v3').forEach(report=>{
       if(report.classList.contains('gml-ref-ready'))return;
       const cntr=report.querySelector('.cr3-container strong')?.textContent?.trim();
