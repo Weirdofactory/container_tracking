@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEARATES - Global Freight Solutions Customer Tracking</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef6ff',
+                            100: '#d9eafd',
+                            500: '#0052cc',
+                            600: '#0040a8',
+                            700: '#003182',
+                            900: '#0a192f'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .map-bg {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <header class="bg-[#0b1f3a] text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 p-2 rounded-lg text-white font-bold text-xl flex items-center justify-center shadow">
+                    <i class="fa-solid fa-ship"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-lg tracking-wide block leading-tight">SEARATES</span>
+                    <span class="text-[10px] text-blue-300 font-medium tracking-widest uppercase">Global Freight Solutions</span>
+                </div>
+            </div>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-slate-300">
+                <a href="#" class="text-white hover:text-blue-400 transition">Track & Trace</a>
+                <a href="#" class="hover:text-blue-400 transition">Schedules</a>
+                <a href="#" class="hover:text-blue-400 transition">Services</a>
+                <a href="#" class="hover:text-blue-400 transition">Tools</a>
+                <a href="#" class="hover:text-blue-400 transition">Resources</a>
+                <a href="#" class="hover:text-blue-400 transition">Contact</a>
+            </nav>
+
+            <!-- Right Actions -->
+            <div class="flex items-center space-x-3">
+                <div class="hidden sm:flex items-center space-x-1 text-xs bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+                    <i class="fa-solid fa-globe text-blue-400"></i>
+                    <span>EN</span>
+                </div>
+                <button onclick="openPortalModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition flex items-center space-x-2">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>Customer Portal</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="bg-gradient-to-r from-[#0a192f] via-[#102a45] to-[#1e3a8a] text-white py-10 px-4 sm:px-6 shadow-inner relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div class="max-w-7xl mx-auto relative z-10">
+            <div class="mb-6">
+                <h1 class="text-2xl sm:text-4xl font-bold tracking-tight">Track Your Shipment</h1>
+                <p class="text-slate-300 text-sm sm:text-base mt-1">Real-time container tracking with global visibility and instant milestone updates.</p>
+            </div>
+
+            <!-- Search Bar Box -->
+            <div class="bg-white rounded-xl p-3 shadow-2xl max-w-5xl text-slate-800">
+                <form id="searchForm" onsubmit="handleSearch(event)" class="flex flex-col md:flex-row items-center gap-3">
+                    <div class="flex items-center bg-slate-100 rounded-lg px-3 py-2 w-full md:w-56 border border-slate-200">
+                        <span class="text-xs font-semibold text-slate-500 mr-2 uppercase">Search By</span>
+                        <select id="searchType" class="bg-transparent text-sm font-medium text-slate-700 outline-none w-full cursor-pointer">
+                            <option value="container">Container Number</option>
+                            <option value="booking">Booking Reference</option>
+                            <option value="hbl">HBL / AWB #</option>
+                        </select>
+                    </div>
+
+                    <div class="relative flex-1 w-full">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-barcode text-slate-400"></i>
+                        </div>
+                        <input type="text" id="searchInput" value="MSMU533429" placeholder="Enter Container # (e.g. MSMU533429, HDMU5601794, HDMU5626895)" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-semibold uppercase">
+                    </div>
+
+                    <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg shadow transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>Track</span>
+                    </button>
+                </form>
+
+                <div class="flex flex-wrap items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 px-1 gap-2">
+                    <span>You can search by Container #, HBL/AWB #, Booking #, Vessel/Voyage # or Customer Ref #.</span>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="loadSample('MSMU533429')" class="text-blue-600 hover:underline font-medium">Sample 1: MSMU533429 (Houston)</button>
+                        <button type="button" onclick="loadSample('HDMU5601794')" class="text-blue-600 hover:underline font-medium">Sample 2: HDMU5601794 (Kattupalli)</button>
+                        <button type="button" onclick="loadSample('HDMU5626895')" class="text-blue-600 hover:underline font-medium">Sample 3: HDMU5626895 (Busan)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow">
+        
+        <!-- Breadcrumb & Results Count -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
+            <div class="flex items-center space-x-2 text-sm text-blue-600 font-medium">
+                <a href="#" class="hover:underline flex items-center space-x-1"><i class="fa-solid fa-arrow-left text-xs"></i> <span>Back to Search Results</span></a>
+            </div>
+            <div class="flex items-center space-x-3 text-xs text-slate-500 font-semibold">
+                <span class="bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full"><span id="resultCountBadge">2</span> shipments found in database</span>
+                <span id="carrierBadge" class="bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full uppercase">Carrier: MSC</span>
+            </div>
+        </div>
+
+        <!-- Top Overview Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+                <div class="flex items-start space-x-4">
+                    <div class="bg-blue-50 text-blue-600 p-3 rounded-xl border border-blue-100 text-2xl flex items-center justify-center">
+                        <i class="fa-solid fa-box"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-3">
+                            <h2 id="containerTitle" class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">MSMU533429</h2>
+                            <button onclick="copyToClipboard(document.getElementById('containerTitle').innerText)" class="text-slate-400 hover:text-slate-600 text-sm" title="Copy container number">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                            <span id="statusBadge" class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">In Transit</span>
+                        </div>
+                        <p id="containerSpec" class="text-sm text-slate-500 mt-1 font-medium">40' High Cube Dry Equipment • Booking: MSMUSELA9982310</p>
+                    </div>
+                </div>
+
+                <!-- Route Origin/Destination Quick Summary -->
+                <div class="flex items-center space-x-4 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                    <div class="text-right">
+                        <span id="originCity" class="block font-bold text-slate-800 text-sm">Jebel Ali, AE</span>
+                        <span id="originDate" class="text-xs text-slate-500">Departure: 08-Mar</span>
+                    </div>
+                    <div class="flex flex-col items-center px-2">
+                        <span class="text-xs text-slate-400 mb-1" id="transportMode">At Sea</span>
+                        <div class="w-32 sm:w-48 h-0.5 bg-blue-500 relative flex items-center justify-center">
+                            <div class="absolute bg-white p-1 rounded-full border border-blue-500 text-blue-600 text-xs shadow-sm">
+                                <i class="fa-solid fa-ship"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <span id="destCity" class="block font-bold text-slate-800 text-sm">Houston, US</span>
+                        <span id="destDate" class="text-xs text-slate-500">ETA: 28-Apr</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Progress Bar Journey -->
+            <div class="py-8 px-2">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Shipment Journey Tracker</div>
+                <div class="relative">
+                    <div class="absolute top-4 left-4 right-4 h-1 bg-slate-200 z-0 hidden sm:block"></div>
+                    <div id="progressFill" class="absolute top-4 left-4 h-1 bg-blue-600 z-0 transition-all duration-500 hidden sm:block" style="width: 60%;"></div>
+
+                    <div id="journeySteps" class="grid grid-cols-1 sm:grid-cols-5 gap-4 relative z-10">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two Column Section: Details & Map / Milestones -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            
+            <!-- Left 2 Cols: Tabs & Shipment Info -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Tab Navigation Buttons -->
+                <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-3 text-sm font-medium">
+                    <button onclick="switchTab('overview')" id="tabBtn-overview" class="px-4 py-2 rounded-lg bg-blue-600 text-white shadow-sm transition">Overview</button>
+                    <button onclick="switchTab('route')" id="tabBtn-route" class="px-4 py-2 rounded-lg bg-white text-slate-600 hover:bg-slate-100 transition border border-slate-200">Route & Map</button>
+                    <button onclick="switchTab('vessel')" id="tabBtn-vessel" class="px-4 py-2 rounded-lg bg-white text-slate-600 hover:bg-slate-100 transition border border-slate-200">Vessel Information</button>
+                    <button onclick="switchTab('cargo')" id="tabBtn-cargo" class="px-4 py-2 rounded-lg bg-white text-slate-600 hover:bg-slate-100 transition border border-slate-200">Cargo Details</button>
+                    <button onclick="switchTab('documents')" id="tabBtn-documents" class="px-4 py-2 rounded-lg bg-white text-slate-600 hover:bg-slate-100 transition border border-slate-200">Documents</button>
+                </div>
+
+                <!-- Tab Content: Overview -->
+                <div id="tabContent-overview" class="space-y-6">
+                    
+                    <!-- Shipment Information Card -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center space-x-2">
+                            <i class="fa-solid fa-circle-info text-blue-600"></i>
+                            <span>Shipment Information</span>
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                            <div class="flex justify-between py-1.5 border-b border-slate-100">
+                                <span class="text-slate-500 font-medium">Container Number:</span>
+                                <span id="infoContainer" class="font-bold text-slate-800">MSMU533429</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 border-b border-slate-100">
+                                <span class="text-slate-500 font-medium">Booking Number:</span>
+                                <span id="infoBooking" class="font-bold text-slate-800">MSMUSELA9982310</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 border-b border-slate-100">
+                                <span class="text-slate-500 font-medium">Size / Type:</span>
+                                <span id="infoSizeType" class="font-bold text-slate-800">40' High Cube Dry</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 border-b border-slate-100">
+                                <span class="text-slate-500 font-medium">HBL / AWB Number:</span>
+                                <span id="infoHbl" class="font-bold text-slate-800">MSMU-HBL-8892</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 border-b border-slate-100">
+                                <span class="text-slate-500 font-medium">Status:</span>
+                                <span id="infoStatus" class="font-bold text-blue-600 uppercase">In Transit</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 border-b border-slate-100">
+                                <span class="text-slate-500 font-medium">MBL Number:</span>
+                                <span id="infoMbl" class="font-bold text-slate-800">MSC-MBL-44211</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 border-b border-slate-100">
+                                <span class="text-slate-500 font-medium">Shipper:</span>
+                                <span id="infoShipper" class="font-bold text-slate-800">Middle East Exports FZE</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 border-b border-slate-100">
+                                <span class="text-slate-500 font-medium">Vessel / Voyage:</span>
+                                <span id="infoVessel" class="font-bold text-blue-600">MSC VIRTUES V.204E</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 border-b border-slate-100">
+                                <span class="text-slate-500 font-medium">Consignee:</span>
+                                <span id="infoConsignee" class="font-bold text-slate-800">US Houston Imports LLC</span>
+                            </div>
+                            <div class="flex justify-between py-1.5 border-b border-slate-100">
+                                <span class="text-slate-500 font-medium">Freight Term:</span>
+                                <span id="infoFreightTerm" class="font-bold text-slate-800">Freight Collect</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cargo Information Table -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 overflow-hidden">
+                        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center space-x-2">
+                            <i class="fa-solid fa-boxes-stacked text-blue-600"></i>
+                            <span>Cargo Information</span>
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-600 text-xs uppercase font-semibold border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-3 px-4">Package</th>
+                                        <th class="py-3 px-4">Quantity</th>
+                                        <th class="py-3 px-4">Weight (KGS)</th>
+                                        <th class="py-3 px-4">CBM</th>
+                                        <th class="py-3 px-4">Freight Term</th>
+                                        <th class="py-3 px-4">DG</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-700 font-medium">
+                                    <tr>
+                                        <td class="py-3 px-4" id="cargoPackage">PLT (Pallets)</td>
+                                        <td class="py-3 px-4" id="cargoQty">20</td>
+                                        <td class="py-3 px-4" id="cargoWeight">2,000.000</td>
+                                        <td class="py-3 px-4" id="cargoCbm">0.000</td>
+                                        <td class="py-3 px-4" id="cargoTerm">Freight Prepaid</td>
+                                        <td class="py-3 px-4"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs">No</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Port Information Grid -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center space-x-2">
+                            <i class="fa-solid fa-anchor text-blue-600"></i>
+                            <span>Port & Routing Information</span>
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4 text-center">
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <span class="block text-xs text-slate-500 uppercase font-semibold">Place of Receipt</span>
+                                <span id="portReceipt" class="block font-bold text-slate-800 text-sm mt-1">JEBEL ALI, UAE</span>
+                                <span class="text-xs text-slate-400 mt-0.5 block">17-Feb</span>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <span class="block text-xs text-slate-500 uppercase font-semibold">Loading Port</span>
+                                <span id="portLoading" class="block font-bold text-slate-800 text-sm mt-1">JEBEL ALI, UAE</span>
+                                <span class="text-xs text-slate-400 mt-0.5 block">ATD: 08-Mar</span>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <span class="block text-xs text-slate-500 uppercase font-semibold">Transshipment</span>
+                                <span id="portTrans" class="block font-bold text-slate-800 text-sm mt-1">N/A</span>
+                                <span class="text-xs text-slate-400 mt-0.5 block">-</span>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <span class="block text-xs text-slate-500 uppercase font-semibold">Discharge Port</span>
+                                <span id="portDischarge" class="block font-bold text-slate-800 text-sm mt-1">HOUSTON, US</span>
+                                <span class="text-xs text-slate-400 mt-0.5 block">ETA: 28-Apr</span>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <span class="block text-xs text-slate-500 uppercase font-semibold">Place of Delivery</span>
+                                <span id="portDelivery" class="block font-bold text-slate-800 text-sm mt-1">HOUSTON, US</span>
+                                <span class="text-xs text-slate-400 mt-0.5 block">CFS Delivery</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Hidden alternate tab contents -->
+                <div id="tabContent-route" class="hidden space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="text-lg font-bold text-slate-900 mb-4">Detailed Vessel Routing & Itinerary</h3>
+                        <p class="text-sm text-slate-600 mb-4">Complete voyage timeline for <span class="font-semibold text-blue-600">MSC VIRTUES V.204E</span> operated by <span class="font-semibold">MSC</span>.</p>
+                        <div class="space-y-4 border-l-2 border-blue-500 pl-4 ml-2">
+                            <div class="relative">
+                                <span class="absolute -left-[21px] top-1.5 w-3 h-3 bg-emerald-600 rounded-full border-2 border-white"></span>
+                                <h4 class="font-bold text-sm text-slate-800">Jebel Ali Port, UAE (POL)</h4>
+                                <p class="text-xs text-slate-500">Vessel Departure: 08 Mar 2024</p>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute -left-[21px] top-1.5 w-3 h-3 bg-blue-600 rounded-full border-2 border-white animate-ping"></span>
+                                <h4 class="font-bold text-sm text-slate-800">In Transit Across Ocean Route</h4>
+                                <p class="text-xs text-slate-500">Current Position: At Sea, vessel cruising normally</p>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute -left-[21px] top-1.5 w-3 h-3 bg-slate-300 rounded-full border-2 border-white"></span>
+                                <h4 class="font-bold text-sm text-slate-800">Houston Port, USA (POD)</h4>
+                                <p class="text-xs text-slate-500">Estimated Arrival: 28 Apr 2024</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tabContent-vessel" class="hidden space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="text-lg font-bold text-slate-900 mb-4">Vessel Specifications</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                <span class="text-slate-500 block">Vessel Name</span>
+                                <span class="font-bold text-slate-800 text-base">MSC VIRTUES</span>
+                            </div>
+                            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                <span class="text-slate-500 block">Voyage Number</span>
+                                <span class="font-bold text-slate-800 text-base">204E</span>
+                            </div>
+                            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                <span class="text-slate-500 block">Flag / Nationality</span>
+                                <span class="font-bold text-slate-800 text-base">Panama</span>
+                            </div>
+                            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                <span class="text-slate-500 block">IMO Number</span>
+                                <span class="font-bold text-slate-800 text-base">9721839</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tabContent-cargo" class="hidden space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="text-lg font-bold text-slate-900 mb-4">Detailed Commodity & Packaging Breakdown</h3>
+                        <p class="text-sm text-slate-600 mb-4">All cargo items are safely secured inside the 40-foot container.</p>
+                        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-900">
+                            <i class="fa-solid fa-triangle-exclamation mr-2 text-blue-600"></i>
+                            <span>Non-hazardous dry cargo container inspected and certified for international maritime transport.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tabContent-documents" class="hidden space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="text-lg font-bold text-slate-900 mb-4">Associated Shipping Documents</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fa-solid fa-file-pdf text-red-500 text-xl"></i>
+                                    <div>
+                                        <span class="font-bold text-sm block text-slate-800">House Bill of Lading (HBL)</span>
+                                        <span class="text-xs text-slate-500">PDF • Verified & Signed</span>
+                                    </div>
+                                </div>
+                                <button onclick="downloadReport()" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition">Download</button>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fa-solid fa-file-invoice text-blue-500 text-xl"></i>
+                                    <div>
+                                        <span class="font-bold text-sm block text-slate-800">Commercial Invoice & Packing List</span>
+                                        <span class="text-xs text-slate-500">PDF • Verified</span>
+                                    </div>
+                                </div>
+                                <button onclick="downloadReport()" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition">Download</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Col: Interactive Map & Key Milestones & Quick Actions -->
+            <div class="space-y-8">
+                
+                <!-- Interactive Map Placeholder -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 uppercase flex items-center space-x-2">
+                            <i class="fa-solid fa-map-location-dot text-blue-600"></i>
+                            <span>Global Vessel Live Map</span>
+                        </span>
+                        <div class="flex space-x-1 bg-white p-0.5 rounded-lg border border-slate-200 text-xs font-semibold">
+                            <button onclick="setMapMode('map')" id="mapModeBtn" class="px-2.5 py-1 rounded bg-blue-600 text-white transition">Map</button>
+                            <button onclick="setMapMode('sat')" id="satModeBtn" class="px-2.5 py-1 rounded text-slate-600 transition">Satellite</button>
+                        </div>
+                    </div>
+
+                    <!-- Map Container Area -->
+                    <div class="h-64 sm:h-72 map-bg relative flex items-center justify-center p-4 overflow-hidden bg-blue-950">
+                        <div class="absolute inset-0 opacity-20 bg-cover bg-center pointer-events-none" style="background-image: url('https://placehold.co/600x400/0a192f/ffffff?text=World+Map+Route+Vector');"></div>
+                        
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 60,180 Q 150,80 280,140" fill="none" stroke="#3b82f6" stroke-width="3" stroke-dasharray="6,6" class="animate-pulse" />
+                        </svg>
+
+                        <!-- Origin Pin -->
+                        <div class="absolute left-10 top-36 flex flex-col items-center">
+                            <div class="bg-white text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded shadow mb-1 whitespace-nowrap" id="mapOriginLabel">Jebel Ali, AE</div>
+                            <div class="w-3 h-3 bg-blue-600 rounded-full border-2 border-white shadow"></div>
+                        </div>
+
+                        <!-- Moving Ship Pin -->
+                        <div class="absolute left-1/2 top-28 flex flex-col items-center transform -translate-x-1/2">
+                            <div class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow mb-1 whitespace-nowrap flex items-center space-x-1">
+                                <i class="fa-solid fa-ship text-[9px]"></i>
+                                <span id="mapVesselStatus">At Sea</span>
+                            </div>
+                            <div class="w-4 h-4 bg-amber-500 rounded-full border-2 border-white shadow animate-ping absolute top-5"></div>
+                            <div class="w-4 h-4 bg-amber-500 rounded-full border-2 border-white shadow"></div>
+                        </div>
+
+                        <!-- Destination Pin -->
+                        <div class="absolute right-12 top-24 flex flex-col items-center">
+                            <div class="bg-white text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded shadow mb-1 whitespace-nowrap" id="mapDestLabel">Houston, US</div>
+                            <div class="w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow"></div>
+                        </div>
+
+                        <div class="absolute bottom-3 right-3 flex flex-col space-y-1 bg-white rounded-lg shadow border border-slate-200 overflow-hidden">
+                            <button onclick="alertBox('Zoom in')" class="p-2 hover:bg-slate-100 text-slate-700 text-xs"><i class="fa-solid fa-plus"></i></button>
+                            <button onclick="alertBox('Zoom out')" class="p-2 hover:bg-slate-100 text-slate-700 text-xs border-t border-slate-200"><i class="fa-solid fa-minus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Milestones Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center space-x-2">
+                        <i class="fa-solid fa-timeline text-blue-600"></i>
+                        <span>Key Milestones</span>
+                    </h3>
+                    
+                    <div class="space-y-6 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200" id="milestonesList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Quick Actions Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center space-x-2">
+                        <i class="fa-solid fa-bolt text-blue-600"></i>
+                        <span>Quick Actions</span>
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="downloadReport()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition flex flex-col justify-between group">
+                            <i class="fa-solid fa-file-arrow-down text-blue-600 text-lg mb-2"></i>
+                            <span class="text-xs font-semibold text-slate-700 group-hover:text-blue-600">Download Report</span>
+                        </button>
+                        <button onclick="shareTracking()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition flex flex-col justify-between group">
+                            <i class="fa-solid fa-share-nodes text-blue-600 text-lg mb-2"></i>
+                            <span class="text-xs font-semibold text-slate-700 group-hover:text-blue-600">Share Tracking</span>
+                        </button>
+                        <button onclick="emailUpdatesModal()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition flex flex-col justify-between group">
+                            <i class="fa-solid fa-envelope-circle-check text-blue-600 text-lg mb-2"></i>
+                            <span class="text-xs font-semibold text-slate-700 group-hover:text-blue-600">Email Updates</span>
+                        </button>
+                        <button onclick="contactSupport()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition flex flex-col justify-between group">
+                            <i class="fa-solid fa-headset text-blue-600 text-lg mb-2"></i>
+                            <span class="text-xs font-semibold text-slate-700 group-hover:text-blue-600">Contact Us</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="bg-[#0b1f3a] text-slate-400 text-sm mt-12 py-8 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 p-1.5 rounded text-white text-sm font-bold">
+                    <i class="fa-solid fa-ship"></i>
+                </div>
+                <span class="text-white font-semibold tracking-wider">SEARATES GLOBAL FREIGHT SOLUTIONS</span>
+            </div>
+            <p class="text-xs text-slate-500">© 2026 SeaRates. All Rights Reserved.</p>
+            <div class="flex space-x-6 text-xs font-medium">
+                <a href="#" class="hover:text-white transition">Privacy Policy</a>
+                <a href="#" class="hover:text-white transition">Terms & Conditions</a>
+                <a href="#" class="hover:text-white transition">Help Center</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom Modal for Notifications -->
+    <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center transform transition-all">
+            <div id="modalIconContainer" class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
+                <i class="fa-solid fa-circle-check" id="modalIcon"></i>
+            </div>
+            <h3 id="modalTitle" class="text-lg font-bold text-slate-900 mb-2">Notification</h3>
+            <p id="modalMessage" class="text-sm text-slate-600 mb-6">Action completed successfully.</p>
+            <button onclick="closeModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow transition">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const shipmentDatabase = {
+            "MSMU533429": {
+                containerNo: "MSMU533429",
+                bookingNo: "MSMUSELA9982310",
+                sizeType: "40' High Cube Dry",
+                hbl: "MSMU-HBL-8892",
+                mbl: "MSC-MBL-44211",
+                status: "IN TRANSIT",
+                statusClass: "bg-blue-100 text-blue-800",
+                carrier: "MSC",
+                shipper: "Middle East Exports FZE",
+                consignee: "US Houston Imports LLC",
+                vessel: "MSC VIRTUES V.204E",
+                freightTerm: "Freight Collect",
+                origin: "Jebel Ali, AE",
+                originDate: "08-Mar",
+                dest: "Houston, US",
+                destDate: "28-Apr",
+                transportMode: "At Sea",
+                cargoPackage: "PLT",
+                cargoQty: "20",
+                cargoWeight: "2,000.000",
+                cargoCbm: "0.000",
+                portReceipt: "JEBEL ALI, UAE",
+                portLoading: "JEBEL ALI, UAE",
+                portTrans: "N/A",
+                portDischarge: "HOUSTON, US",
+                portDelivery: "HOUSTON, US",
+                journey: [
+                    { title: "Empty to Shipper", status: "completed", date: "17-Feb" },
+                    { title: "Export Received", status: "completed", date: "18-Feb" },
+                    { title: "Loaded on Vessel", status: "completed", date: "08-Mar" },
+                    { title: "In Transit", status: "active", date: "At Sea" },
+                    { title: "Arrival at Discharge", status: "pending", date: "28-Apr (ETA)" }
+                ],
+                milestones: [
+                    { title: "Empty to Shipper", location: "Jebel Ali, AE", date: "17 Feb 2024 00:00", active: true, done: true },
+                    { title: "Export received at CY", location: "Jebel Ali, AE", date: "18 Feb 2024 00:00", active: true, done: true },
+                    { title: "Export Loaded on Vessel", location: "Jebel Ali, AE", date: "08 Mar 2024 00:00", active: true, done: true },
+                    { title: "In Transit", location: "At Sea", date: "-", active: true, done: true, current: true },
+                    { title: "Arrival at Discharge Port", location: "Houston, US", date: "28 Apr 2024 (ETA)", active: false, done: false }
+                ]
+            },
+            "HDMU5601794": {
+                containerNo: "HDMU5601794",
+                bookingNo: "HDMUSELA45471700",
+                sizeType: "40' High Cube Dry",
+                hbl: "HDMUSELA45471700",
+                mbl: "HDMUSELA45471700",
+                status: "ETD DEPARTED",
+                statusClass: "bg-amber-100 text-amber-800",
+                carrier: "HMM",
+                shipper: "Global Logistics Corp",
+                consignee: "Greenwich Meridian Logistics",
+                vessel: "HYUNDAI VOYAGER V 0165W",
+                freightTerm: "Freight Prepaid",
+                origin: "Busan, KR",
+                originDate: "16-Sep",
+                dest: "Kattupalli, IN",
+                destDate: "03-Oct",
+                transportMode: "At Sea",
+                cargoPackage: "PLT (Pallets)",
+                cargoQty: "20",
+                cargoWeight: "2,000.000",
+                cargoCbm: "34.500",
+                portReceipt: "BUSAN",
+                portLoading: "BUSAN, KR",
+                portTrans: "Direct / N/A",
+                portDischarge: "KATTUPALLI",
+                portDelivery: "Kattupalli CFS",
+                journey: [
+                    { title: "Empty to Shipper", status: "completed", date: "12-Sep" },
+                    { title: "Export Received", status: "completed", date: "14-Sep" },
+                    { title: "Loaded on Vessel", status: "completed", date: "16-Sep" },
+                    { title: "In Transit", status: "active", date: "At Sea" },
+                    { title: "Arrival at Discharge", status: "pending", date: "03-Oct (ETA)" }
+                ],
+                milestones: [
+                    { title: "Empty Equipment Released", location: "Busan, KR", date: "12 Sep 2026 09:00", active: true, done: true },
+                    { title: "Export Received at CY", location: "Busan Port", date: "14 Sep 2026 14:30", active: true, done: true },
+                    { title: "Export Loaded on Vessel", location: "Busan Port", date: "16 Sep 2026 18:00", active: true, done: true },
+                    { title: "In Transit / Vessel Departed", location: "At Sea (Voyage 0165W)", date: "16 Sep 2026 22:00", active: true, done: true, current: true },
+                    { title: "Arrival at Discharge Port", location: "Kattupalli, IN", date: "03 Oct 2026 (ETA)", active: false, done: false }
+                ]
+            },
+            "HDMU5626895": {
+                containerNo: "HDMU5626895",
+                bookingNo: "HDMUSELA45471708",
+                sizeType: "40' Standard Dry",
+                hbl: "HDMUSELA45471708",
+                mbl: "HDMUSELA45471700",
+                status: "ETD DEPARTED",
+                statusClass: "bg-amber-100 text-amber-800",
+                carrier: "HMM",
+                shipper: "Global Freight Ltd",
+                consignee: "Kattupalli Logistics Hub",
+                vessel: "HYUNDAI VOYAGER V 0165W",
+                freightTerm: "Freight Prepaid",
+                origin: "Busan, KR",
+                originDate: "16-Sep",
+                dest: "Kattupalli, IN",
+                destDate: "03-Oct",
+                transportMode: "At Sea",
+                cargoPackage: "BOX",
+                cargoQty: "45",
+                cargoWeight: "1,850.000",
+                cargoCbm: "22.000",
+                portReceipt: "BUSAN",
+                portLoading: "BUSAN, KR",
+                portTrans: "Direct",
+                portDischarge: "KATTUPALLI",
+                portDelivery: "Kattupalli CFS",
+                journey: [
+                    { title: "Empty to Shipper", status: "completed", date: "14-Sep" },
+                    { title: "Export Received", status: "completed", date: "15-Sep" },
+                    { title: "Loaded on Vessel", status: "completed", date: "16-Sep" },
+                    { title: "In Transit", status: "active", date: "At Sea" },
+                    { title: "Arrival at Discharge", status: "pending", date: "03-Oct" }
+                ],
+                milestones: [
+                    { title: "Export Received at CY", location: "Busan, KR", date: "15 Sep 2026", active: true, done: true },
+                    { title: "Vessel Departed", location: "Busan Port", date: "16 Sep 2026", active: true, done: true, current: true },
+                    { title: "Arrival at Gateway Port", location: "Kattupalli", date: "03 Oct 2026 (ETA)", active: false, done: false }
+                ]
+            }
+        };
+
+        function handleSearch(e) {
+            e.preventDefault();
+            const val = document.getElementById('searchInput').value.trim().toUpperCase();
+            if(shipmentDatabase[val]) {
+                renderShipment(shipmentDatabase[val]);
+            } else {
+                const dynamicMock = {
+                    containerNo: val || "MSMU533429",
+                    bookingNo: "GML-BK-" + Math.floor(Math.random() * 89999 + 10000),
+                    sizeType: "40' High Cube Dry",
+                    hbl: "GML-HBL-" + Math.floor(Math.random() * 8999 + 1000),
+                    mbl: "GML-MBL-9921",
+                    status: "IN TRANSIT",
+                    statusClass: "bg-blue-100 text-blue-800",
+                    carrier: "MSC / HMM",
+                    shipper: "Global Freight Shipper Inc.",
+                    consignee: "Consignee Logistics Partner",
+                    vessel: "OCEAN TITAN V.042",
+                    freightTerm: "Freight Prepaid",
+                    origin: "Singapore, SG",
+                    originDate: "20-Sep",
+                    dest: "Chennai, IN",
+                    destDate: "10-Oct",
+                    transportMode: "At Sea",
+                    cargoPackage: "Pallets",
+                    cargoQty: "32",
+                    cargoWeight: "4,500.00",
+                    cargoCbm: "45.00",
+                    portReceipt: "SINGAPORE",
+                    portLoading: "SINGAPORE PORT",
+                    portTrans: "Direct",
+                    portDischarge: "CHENNAI",
+                    portDelivery: "CHENNAI CFS",
+                    journey: [
+                        { title: "Empty Released", status: "completed", date: "18-Sep" },
+                        { title: "Export Received", status: "completed", date: "19-Sep" },
+                        { title: "Loaded on Vessel", status: "completed", date: "20-Sep" },
+                        { title: "In Transit", status: "active", date: "At Sea" },
+                        { title: "Discharge ETA", status: "pending", date: "10-Oct" }
+                    ],
+                    milestones: [
+                        { title: "Empty Released", location: "Singapore Depot", date: "18 Sep 2026", active: true, done: true },
+                        { title: "Export Received at CY", location: "Singapore Port", date: "19 Sep 2026", active: true, done: true },
+                        { title: "Loaded on Vessel", location: "Singapore Port", date: "20 Sep 2026", active: true, done: true },
+                        { title: "In Transit", location: "Indian Ocean", date: "Current", active: true, done: true, current: true },
+                        { title: "Arrival at Discharge Port", location: "Chennai, IN", date: "10 Oct 2026 (ETA)", active: false, done: false }
+                    ]
+                };
+                renderShipment(dynamicMock);
+            }
+        }
+
+        function loadSample(containerKey) {
+            document.getElementById('searchInput').value = containerKey;
+            if(shipmentDatabase[containerKey]) {
+                renderShipment(shipmentDatabase[containerKey]);
+            }
+        }
+
+        function renderShipment(data) {
+            document.getElementById('containerTitle').innerText = data.containerNo;
+            document.getElementById('containerSpec').innerText = `${data.sizeType} Equipment • Booking: ${data.bookingNo}`;
+            
+            const badge = document.getElementById('statusBadge');
+            badge.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider ${data.statusClass}`;
+            badge.innerText = data.status;
+
+            document.getElementById('originCity').innerText = data.origin;
+            document.getElementById('originDate').innerText = `Departure: ${data.originDate}`;
+            document.getElementById('destCity').innerText = data.dest;
+            document.getElementById('destDate').innerText = `ETA: ${data.destDate}`;
+            document.getElementById('transportMode').innerText = data.transportMode;
+            document.getElementById('carrierBadge').innerText = `Carrier: ${data.carrier}`;
+
+            document.getElementById('infoContainer').innerText = data.containerNo;
+            document.getElementById('infoBooking').innerText = data.bookingNo;
+            document.getElementById('infoSizeType').innerText = data.sizeType;
+            document.getElementById('infoHbl').innerText = data.hbl;
+            document.getElementById('infoStatus').innerText = data.status;
+            document.getElementById('infoMbl').innerText = data.mbl;
+            document.getElementById('infoShipper').innerText = data.shipper;
+            document.getElementById('infoVessel').innerText = data.vessel;
+            document.getElementById('infoConsignee').innerText = data.consignee;
+            document.getElementById('infoFreightTerm').innerText = data.freightTerm;
+
+            document.getElementById('cargoPackage').innerText = data.cargoPackage;
+            document.getElementById('cargoQty').innerText = data.cargoQty;
+            document.getElementById('cargoWeight').innerText = data.cargoWeight;
+            document.getElementById('cargoCbm').innerText = data.cargoCbm;
+            document.getElementById('cargoTerm').innerText = data.freightTerm;
+
+            document.getElementById('portReceipt').innerText = data.portReceipt;
+            document.getElementById('portLoading').innerText = data.portLoading;
+            document.getElementById('portTrans').innerText = data.portTrans;
+            document.getElementById('portDischarge').innerText = data.portDischarge;
+            document.getElementById('portDelivery').innerText = data.portDelivery;
+
+            document.getElementById('mapOriginLabel').innerText = data.origin;
+            document.getElementById('mapDestLabel').innerText = data.dest;
+            document.getElementById('mapVesselStatus').innerText = data.status;
+
+            const journeyContainer = document.getElementById('journeySteps');
+            journeyContainer.innerHTML = data.journey.map((step, idx) => {
+                let iconColor = "bg-slate-200 text-slate-500";
+                let textColor = "text-slate-500";
+                if(step.status === 'completed') {
+                    iconColor = "bg-emerald-600 text-white";
+                    textColor = "text-slate-800 font-semibold";
+                } else if(step.status === 'active') {
+                    iconColor = "bg-blue-600 text-white ring-4 ring-blue-100";
+                    textColor = "text-blue-600 font-bold";
+                }
+                return `
+                    <div class="flex flex-col items-center text-center">
+                        <div class="w-8 h-8 rounded-full ${iconColor} flex items-center justify-center text-xs font-bold mb-2 shadow z-10">
+                            ${idx + 1}
+                        </div>
+                        <span class="text-xs ${textColor}">${step.title}</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">${step.date}</span>
+                    </div>
+                `;
+            }).join('');
+
+            const milestonesContainer = document.getElementById('milestonesList');
+            milestonesContainer.innerHTML = data.milestones.map(m => {
+                let dotClass = "bg-slate-300 text-slate-600";
+                if(m.done) dotClass = "bg-emerald-600 text-white";
+                if(m.current) dotClass = "bg-blue-600 text-white ring-4 ring-blue-100 animate-pulse";
+
+                return `
+                    <div class="flex items-start space-x-3 relative">
+                        <div class="w-7 h-7 rounded-full ${dotClass} flex items-center justify-center text-xs font-bold z-10 flex-shrink-0">
+                            <i class="fa-solid ${m.done ? 'fa-check' : 'fa-circle text-[8px]'}"></i>
+                        </div>
+                        <div class="flex-grow bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-slate-800 text-sm">${m.title}</span>
+                                <span class="text-xs text-slate-400">${m.date}</span>
+                            </div>
+                            <span class="text-xs text-slate-500 flex items-center mt-1"><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i> ${m.location}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function switchTab(tabName) {
+            ['overview', 'route', 'vessel', 'cargo', 'documents'].forEach(t => {
+                const content = document.getElementById(`tabContent-${t}`);
+                const btn = document.getElementById(`tabBtn-${t}`);
+                if (content && btn) {
+                    if(t === tabName) {
+                        content.classList.remove('hidden');
+                        btn.className = "px-4 py-2 rounded-lg bg-blue-600 text-white shadow-sm transition";
+                    } else {
+                        content.classList.add('hidden');
+                        btn.className = "px-4 py-2 rounded-lg bg-white text-slate-600 hover:bg-slate-100 transition border border-slate-200";
+                    }
+                }
+            });
+        }
+
+        function setMapMode(mode) {
+            const mapBtn = document.getElementById('mapModeBtn');
+            const satBtn = document.getElementById('satModeBtn');
+            if(mode === 'map') {
+                mapBtn.className = "px-2.5 py-1 rounded bg-blue-600 text-white transition";
+                satBtn.className = "px-2.5 py-1 rounded text-slate-600 transition";
+            } else {
+                satBtn.className = "px-2.5 py-1 rounded bg-blue-600 text-white transition";
+                mapBtn.className = "px-2.5 py-1 rounded text-slate-600 transition";
+            }
+        }
+
+        function alertBox(msg) {
+            showModal("Information", msg, "fa-circle-info");
+        }
+
+        function downloadReport() {
+            showModal("Report Generated", "Container tracking summary report PDF has been downloaded successfully.", "fa-file-arrow-down");
+        }
+
+        function shareTracking() {
+            const currentContainer = document.getElementById('containerTitle').innerText;
+            const shareUrl = window.location.origin + window.location.pathname + "?container=" + currentContainer;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = shareUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showModal("Tracking Link Copied", "Secure tracking link copied to clipboard! You can now share it with stakeholders.", "fa-share-nodes");
+            } catch (err) {
+                showModal("Sharing", "Tracking link ready to share.", "fa-share-nodes");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function emailUpdatesModal() {
+            showModal("Email Subscriptions", "You have successfully subscribed to real-time email alerts for this shipment container.", "fa-envelope-circle-check");
+        }
+
+        function contactSupport() {
+            showModal("Customer Operations Support", "Our 24/7 Global Freight Operations desk is reachable at ops@searates.com or +1 (800) 555-SEARATES.", "fa-headset");
+        }
+
+        function openPortalModal() {
+            showModal("Customer Portal Login", "Redirecting to SeaRates secure enterprise staff & client login portal...", "fa-user-shield");
+        }
+
+        function showModal(title, message, iconClass) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            document.getElementById('modalIcon').className = `fa-solid ${iconClass}`;
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.add('hidden');
+        }
+
+        function copyToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showModal("Copied", `Container number ${text} copied to clipboard!`, "fa-copy");
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        window.onload = function() {
+            renderShipment(shipmentDatabase["MSMU533429"]);
+        };
+    </script>
+</body>
+</html>
