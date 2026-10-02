@@ -601,12 +601,26 @@
     });
   }
 
+  async function customerRpc(functionName,params){
+    var url="https://ykeucqritoexykqrggzz.supabase.co/rest/v1/rpc/"+functionName;
+    var key="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
+    var resp=await fetch(url,{
+      method:"POST",
+      headers:{
+        "apikey":key,
+        "Authorization":"Bearer "+key,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify(params||{})
+    });
+    var text=await resp.text();
+    var data=[];
+    try{data=text?JSON.parse(text):[];}catch(e){throw new Error("Invalid response from IGM service.");}
+    if(!resp.ok) throw new Error((data&&data.message)||"IGM service returned "+resp.status);
+    return data;
+  }
+
   async function loadIgmHblsForReports(matched){
-    var client=getCustomerSb();
-    if(!client){
-      console.warn("Customer IGM lookup: Supabase client unavailable");
-      return;
-    }
     for(var i=0;i<matched.length;i++){
       var r=matched[i];
       var mbl=cclean(cv(r,["MBL NO","MBL","MASTER BL"]));
@@ -618,13 +632,11 @@
         continue;
       }
       try{
-        var resp=await client.rpc("get_igm_hbls_for_shipment",{p_mbl:mbl,p_container:cntr});
-        var rows=resp && Array.isArray(resp.data) ? resp.data : [];
-        if(resp && resp.error) throw resp.error;
+        var rows=await customerRpc("get_igm_hbls_for_shipment",{p_mbl:mbl,p_container:cntr});
+        if(!Array.isArray(rows)) rows=[];
         if(!rows.length){
-          var fallbackResp=await client.rpc("get_igm_hbls_for_container",{p_container:cntr});
-          if(fallbackResp && fallbackResp.error) throw fallbackResp.error;
-          rows=fallbackResp && Array.isArray(fallbackResp.data) ? fallbackResp.data : [];
+          rows=await customerRpc("get_igm_hbls_for_container",{p_container:cntr});
+          if(!Array.isArray(rows)) rows=[];
         }
         rows.forEach(function(row){
           igmHblCache[String(row.hbl_no||"").toUpperCase()]=row;
