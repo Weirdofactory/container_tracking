@@ -488,3 +488,17 @@ body.public-carrier-mode .customer-result-stack{
 .customer-mile-copy small{margin-top:2px;font-size:7.8px}
 .customer-mile-date{font-size:7.8px}
 .customer-mile:not(:last-child)::after{top:29px;left:12px}
+
+/* Prevent CSS Grid from stretching shipment-information rows into excessive vertical gaps. */
+body.public-carrier-mode .customer-info-grid{
+  align-content:start!important;
+  grid-auto-rows:minmax(64px,auto)!important;
+}
+body.public-carrier-mode .customer-info-item{
+  min-height:64px!important;
+  height:auto!important;
+  align-self:start!important;
+}
+body.public-carrier-mode .customer-overview-grid{
+  align-items:start!important;
+}
