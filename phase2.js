@@ -258,4 +258,95 @@
   if(typeof oldRender==='function'){
     window.renderUI=function(){oldRender.apply(this,arguments); if($('p1v2Tower')?.style.display!=='none')renderAll();};
   }
+
+  // ---------------------------------------------------------------------------
+  // Customer shipment intelligence bridge
+  // Phase 2 is loaded after app.js, so use this late-loaded module as the
+  // integration point without changing the core operations renderer.
+  // ---------------------------------------------------------------------------
+  (function wireCustomerIntelligence(){
+    const INTEL_SRC='./gml-intelligence.js?v=20261002-wire1';
+    let intelReady=null;
+    let enhancing=false;
+
+    function loadIntel(){
+      if(window.gmlShipmentIntelligence) return Promise.resolve();
+      if(intelReady) return intelReady;
+      intelReady=new Promise((resolve,reject)=>{
+        const s=document.createElement('script');
+        s.src=INTEL_SRC;
+        s.onload=()=>resolve();
+        s.onerror=reject;
+        document.head.appendChild(s);
+      });
+      return intelReady;
+    }
+
+    function normalize(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');}
+    function findRow(containerNo){
+      try{
+        const saved=JSON.parse(localStorage.getItem('containerRows')||'[]');
+        if(Array.isArray(saved)){
+          const key=normalize(containerNo);
+          const hit=saved.find(r=>normalize(r['CONTAINER NO.']||r['CONTAINER']||r['CONTAINER NO']||r['CNTR NO'])===key);
+          if(hit) return hit;
+        }
+      }catch(e){}
+      return null;
+    }
+
+    function ensureStyles(){
+      if(document.getElementById('gmlIntelWireStyles')) return;
+      const s=document.createElement('style');
+      s.id='gmlIntelWireStyles';
+      s.textContent=`
+        .gml-intel-wire{margin:0 24px 14px;padding:0;background:#fff;border:1px solid #dfe7f0;border-radius:15px;overflow:hidden;box-shadow:0 5px 18px rgba(18,40,70,.04)}
+        .gml-intel-wire-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 17px;border-bottom:1px solid #edf1f5;background:#f8fbff}
+        .gml-intel-wire-head>div{display:flex;align-items:center;gap:9px}.gml-intel-wire-head b{font-size:10px;letter-spacing:.08em;color:#173d67}.gml-intel-wire-head span{width:26px;height:26px;border-radius:8px;background:#eaf4ff;color:#087fca;display:grid;place-items:center;font-size:12px}
+        .gml-intel-wire-head small{font-size:8px;color:#7e8da1;letter-spacing:.08em}
+        .gml-intel-wire-body{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:0}
+        .gml-intel-wire-cell{padding:16px 18px;border-right:1px solid #edf1f5}.gml-intel-wire-cell:last-child{border-right:0}.gml-intel-wire-cell label{display:block;font-size:8px;font-weight:900;letter-spacing:.09em;color:#8492a5;text-transform:uppercase}.gml-intel-wire-cell strong{display:block;margin-top:6px;font-size:12px;color:#18385f;line-height:1.45}.gml-intel-wire-cell p{margin:6px 0 0;font-size:9px;color:#6c7c91;line-height:1.5}
+        .gml-intel-wire-remark{grid-column:1/-1;padding:14px 18px;background:#fffaf0;border-top:1px solid #f1e5c9;color:#4a5870;font-size:10.5px;line-height:1.55}.gml-intel-wire-remark b{color:#7b5b1a;font-size:8px;letter-spacing:.1em;text-transform:uppercase;margin-right:8px}
+        .gml-intel-wire.overdue .gml-intel-wire-head{background:#fff6f6}.gml-intel-wire.overdue .gml-intel-wire-head span{background:#fee2e2;color:#b91c1c}.gml-intel-wire.complete .gml-intel-wire-head{background:#f1fbf6}.gml-intel-wire.complete .gml-intel-wire-head span{background:#dcfce7;color:#15803d}
+        @media(max-width:700px){.gml-intel-wire{margin-left:14px;margin-right:14px}.gml-intel-wire-body{grid-template-columns:1fr}.gml-intel-wire-cell{border-right:0;border-bottom:1px solid #edf1f5}.gml-intel-wire-remark{grid-column:auto}}
+      `;
+      document.head.appendChild(s);
+    }
+
+    function enhanceReport(report){
+      if(!report || report.querySelector('.gml-intel-wire')) return;
+      const container=report.querySelector('.cr3-container strong')?.textContent?.trim();
+      if(!container) return;
+      const row=findRow(container);
+      if(!row || typeof window.gmlShipmentIntelligence!=='function') return;
+      const intel=window.gmlShipmentIntelligence(row);
+      ensureStyles();
+      const cls=(intel.etaDays!==null && intel.etaDays<0 && !intel.eventLabel?.includes('Returned'))?' overdue':'';
+      const state=intel.title==='EMPTY RETURN COMPLETED'?'complete':'';
+      const el=document.createElement('section');
+      el.className='gml-intel-wire'+cls+' '+state;
+      el.innerHTML=`<div class="gml-intel-wire-head"><div><span>✦</span><b>MILESTONE INTELLIGENCE</b></div><small>RECORDED DATA + SCHEDULE ANALYSIS</small></div><div class="gml-intel-wire-body"><div class="gml-intel-wire-cell"><label>Latest Event</label><strong>${esc2(intel.eventLabel||intel.title||'Shipment Processing')}</strong><p>${esc2(intel.eventDate||'Date pending')} · ${esc2(intel.place||'Location pending')}</p></div><div class="gml-intel-wire-cell"><label>Time Intelligence</label><strong>${esc2(intel.timeLabel||'Schedule status pending')}</strong><p>ETA-based timing is shown separately from actual milestones.</p></div><div class="gml-intel-wire-cell"><label>Next Action</label><strong>${esc2(intel.next||'Next milestone pending')}</strong><p>Derived from the latest recorded shipment event.</p></div><div class="gml-intel-wire-remark"><b>Operational Remark</b>${esc2(intel.remark||'Shipment is being processed. The next operational milestone is pending confirmation.')}</div></div>`;
+      const hero=report.querySelector('.cr3-hero');
+      if(hero) hero.insertAdjacentElement('afterend',el); else report.prepend(el);
+    }
+
+    function enhanceAll(){
+      if(enhancing) return;
+      enhancing=true;
+      loadIntel().then(()=>{
+        document.querySelectorAll('.customer-report-v3').forEach(enhanceReport);
+      }).catch(()=>{}).finally(()=>{enhancing=false;});
+    }
+
+    const target=document.getElementById('publicResultContainer');
+    if(target){
+      const observer=new MutationObserver(()=>setTimeout(enhanceAll,60));
+      observer.observe(target,{childList:true,subtree:true});
+    }
+    document.addEventListener('click',e=>{
+      if(e.target.closest('#publicSearchBtn')) setTimeout(enhanceAll,1100);
+    },true);
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(enhanceAll,500));
+    else setTimeout(enhanceAll,500);
+  })();
 })();
