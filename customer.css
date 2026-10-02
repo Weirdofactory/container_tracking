@@ -215,14 +215,9 @@ body.public-carrier-mode #publicControls{
   font-size:8px;font-weight:900;
 }
 .customer-section-title strong{font-size:9px;letter-spacing:.075em;color:#183d65}
-.customer-section-title small{font-size:7px;color:#97a4b2;letter-spacing:.09em;font-weight:900}
-.customer-overview-grid > .customer-section-card{
-  align-self:stretch;
-  height:100%;
-}
-.customer-overview-grid > .customer-section-card .customer-info-grid{
-  height:calc(100% - 46px);
-  grid-template-rows:repeat(6,minmax(58px,1fr));
+.customer-section-title small{font-size:7px;color:#97a4b2;letter-spacing:.09em;font-weight:900}.customer-overview-grid > .customer-section-card{
+  align-self:start;
+  height:auto;
 }
 .customer-info-grid{display:grid;grid-template-columns:1fr 1fr}
 .customer-info-item{
@@ -481,3 +476,15 @@ body.public-carrier-mode .customer-result-stack{
   position:relative;
   z-index:2;
 }
+
+/* Compact milestone stack and balanced shipment information proportions */
+.customer-info-item{
+  min-height:66px;
+  padding:10px 13px;
+}
+.customer-mile{padding:6px 0}
+.customer-mile-dot{width:25px;height:25px}
+.customer-mile-copy strong{font-size:8.8px}
+.customer-mile-copy small{margin-top:2px;font-size:7.8px}
+.customer-mile-date{font-size:7.8px}
+.customer-mile:not(:last-child)::after{top:29px;left:12px}
