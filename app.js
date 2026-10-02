@@ -1079,6 +1079,11 @@ function getLatestPublicEvent(r) {
 }
 
 async function performPublicSearch() {
+  // The public customer portal owns tracking on the public page.
+  // Route any legacy/public calls into the redesigned customer renderer.
+  if (window.GML_CUSTOMER_PORTAL_V2 && typeof window.GMLCustomerPortalSearch === "function") {
+    return window.GMLCustomerPortalSearch();
+  }
   const rawInput = el("publicSearchInput").value.trim();
   const container = el("publicResultContainer");
   const btn = el("publicSearchBtn");
