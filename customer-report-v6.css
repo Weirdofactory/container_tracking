@@ -1,0 +1,159 @@
+/* GML CUSTOMER REPORT V6 — NEW INFORMATION ARCHITECTURE */
+/* This is a structural redesign, not a theme override. */
+.customer-report-v3{
+  display:grid!important;
+  grid-template-columns:minmax(300px,34%) minmax(0,66%)!important;
+  grid-template-areas:
+    "top top"
+    "hero summary"
+    "hero route"
+    "meta meta"
+    "journey journey"
+    "details details"
+    "footer footer"!important;
+  width:min(1240px,100%)!important;
+  max-width:1240px!important;
+  margin:0 auto!important;
+  border:1px solid #cbd5df!important;
+  border-radius:0!important;
+  background:#eef2f5!important;
+  overflow:hidden!important;
+  box-shadow:0 22px 55px rgba(19,39,58,.12)!important;
+}
+
+/* 01 — editorial masthead */
+.customer-report-v3>.cr3-top{grid-area:top!important;min-height:76px!important;display:grid!important;grid-template-columns:280px 1fr 190px!important;border-bottom:1px solid #cbd5df!important}
+.customer-report-v3>.cr3-top .cr3-brand{padding:14px 20px!important;border-right:1px solid #dce3e9!important}
+.customer-report-v3>.cr3-top .cr3-brand-mark{width:46px!important;height:46px!important;flex-basis:46px!important;border-radius:3px!important;font-size:13px!important}
+.customer-report-v3>.cr3-top .cr3-brand strong{font-size:11px!important}
+.customer-report-v3>.cr3-top .cr3-brand small{font-size:7px!important}
+.customer-report-v3>.cr3-top .cr3-generated{padding:12px 22px!important}
+.customer-report-v3>.cr3-top:after{padding-right:20px!important;font-size:7px!important}
+
+/* 02 — left shipment identity rail */
+.customer-report-v3>.cr3-hero{
+  grid-area:hero!important;
+  min-height:520px!important;
+  height:100%!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:space-between!important;
+  gap:30px!important;
+  padding:34px 30px!important;
+  background:#082b49!important;
+}
+.customer-report-v3>.cr3-hero:before{right:-100px!important;bottom:-40px!important;top:auto!important;font-size:210px!important;opacity:.8!important}
+.customer-report-v3>.cr3-hero:after{width:90px!important}
+.customer-report-v3>.cr3-hero-copy{margin-top:4px!important}
+.customer-report-v3>.cr3-live{font-size:7px!important}
+.customer-report-v3>.cr3-hero h1{font-size:34px!important;line-height:1.02!important;margin:16px 0 9px!important}
+.customer-report-v3>.cr3-hero p{font-size:8px!important;line-height:1.5!important}
+.customer-report-v3>.cr3-hero .cr3-container{
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  padding:20px!important;
+  background:rgba(255,255,255,.06)!important;
+}
+.customer-report-v3>.cr3-hero .cr3-container strong{font-size:21px!important}
+
+/* 03 — right side: factual status strip */
+.customer-report-v3>.cr3-summary{
+  grid-area:summary!important;
+  margin:0!important;
+  align-self:start!important;
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  border-bottom:1px solid #cbd5df!important;
+}
+.customer-report-v3>.cr3-summary>div{min-height:82px!important;padding:15px 16px!important}
+.customer-report-v3>.cr3-summary strong{font-size:11px!important}
+
+/* 04 — route becomes the dominant operational panel */
+.customer-report-v3>.cr3-route{
+  grid-area:route!important;
+  margin:0!important;
+  padding:0 24px 16px!important;
+  background:#fff!important;
+  border-top:0!important;
+  border-bottom:1px solid #cbd5df!important;
+}
+.customer-report-v3>.cr3-route .cr3-section-head{padding:14px 0!important}
+.customer-report-v3>.cr3-route .cr3-section-head span{background:#082b49!important}
+.customer-report-v3>.cr3-route .cr3-route-line{padding:24px 0 18px!important;grid-template-columns:1fr 32px 1fr 32px 1fr 32px 1fr!important}
+.customer-report-v3>.cr3-route .cr3-route-node strong{font-size:14px!important}
+.customer-report-v3>.cr3-route .cr3-terminal{margin:0!important}
+
+/* 05 — dates/action becomes a single clean operational band */
+.customer-report-v3>.cr3-two-col{
+  grid-area:meta!important;
+  margin:0!important;
+  padding:18px 24px!important;
+  display:grid!important;
+  grid-template-columns:1.35fr .8fr!important;
+  gap:18px!important;
+  background:#f4f6f8!important;
+  border-bottom:1px solid #cbd5df!important;
+}
+.customer-report-v3>.cr3-two-col .cr3-card{background:#fff!important;border:1px solid #d4dde5!important}
+
+/* 06 — journey is a full-width timeline, not a card */
+.customer-report-v3>.cr3-journey{
+  grid-area:journey!important;
+  margin:0!important;
+  padding:0 24px 20px!important;
+  background:#fff!important;
+  border-top:0!important;
+  border-bottom:1px solid #cbd5df!important;
+}
+.customer-report-v3>.cr3-journey .cr3-section-head{padding:16px 0 13px!important}
+.customer-report-v3>.cr3-journey .cr3-progress{margin:20px 12px 0!important}
+.customer-report-v3>.cr3-journey .cr3-steps{padding:20px 0 8px!important}
+
+/* 07 — operational ledger */
+.customer-report-v3>.cr3-details{
+  grid-area:details!important;
+  margin:0!important;
+  padding:0 24px 22px!important;
+  background:#fff!important;
+  border-top:0!important;
+}
+.customer-report-v3>.cr3-details .cr3-section-head{padding:16px 0 13px!important}
+.customer-report-v3>.cr3-details .cr3-detail-grid{border-left:1px solid #d4dde5!important;border-top:1px solid #d4dde5!important}
+.customer-report-v3>.cr3-details .cr3-detail-grid>div{background:#f9fafb!important}
+
+.customer-report-v3>.cr3-footer{grid-area:footer!important}
+
+/* Desktop refinement: the report reads like a shipment manifest rather than a dashboard. */
+@media(min-width:901px){
+  .customer-report-v3>.cr3-hero{border-right:1px solid rgba(255,255,255,.08)!important}
+  .customer-report-v3>.cr3-summary{border-left:1px solid #cbd5df!important}
+}
+
+@media(max-width:900px){
+  .customer-report-v3{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-areas:"top" "hero" "summary" "route" "meta" "journey" "details" "footer"!important;
+  }
+  .customer-report-v3>.cr3-top{grid-template-columns:1fr auto!important}
+  .customer-report-v3>.cr3-top:after{display:none!important}
+  .customer-report-v3>.cr3-hero{min-height:390px!important;height:auto!important}
+  .customer-report-v3>.cr3-summary{grid-template-columns:repeat(2,1fr)!important}
+  .customer-report-v3>.cr3-two-col{grid-template-columns:1fr!important}
+}
+
+@media(max-width:560px){
+  .customer-report-v3>.cr3-top{display:block!important}
+  .customer-report-v3>.cr3-top .cr3-generated{display:none!important}
+  .customer-report-v3>.cr3-hero{min-height:330px!important;padding:25px 20px!important}
+  .customer-report-v3>.cr3-summary{grid-template-columns:1fr 1fr!important}
+  .customer-report-v3>.cr3-route{padding-left:16px!important;padding-right:16px!important}
+  .customer-report-v3>.cr3-route .cr3-route-line{grid-template-columns:1fr 1fr!important;row-gap:20px!important}
+  .customer-report-v3>.cr3-route .cr3-route-line>b{display:none!important}
+  .customer-report-v3>.cr3-two-col{padding:14px 16px!important}
+  .customer-report-v3>.cr3-journey{padding-left:16px!important;padding-right:16px!important;overflow-x:auto!important}
+  .customer-report-v3>.cr3-details{padding-left:16px!important;padding-right:16px!important}
+}
