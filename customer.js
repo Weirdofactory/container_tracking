@@ -360,6 +360,18 @@
       freshInput.addEventListener("keydown",function(e){if(e.key==="Enter")performCustomerSearch();});
     }
     el("publicTrackingType")?.addEventListener("change",updateSearchPlaceholder);
+    var multipleBtn=el("publicMultipleBtn");
+    if(multipleBtn){
+      multipleBtn.addEventListener("click",function(){
+        var type=el("publicTrackingType");
+        if(type){type.value="all";type.dispatchEvent(new Event("change"));}
+        var input=el("publicSearchInput");
+        if(input){
+          input.focus();
+          if(typeof toast==="function")toast("Enter multiple container / MBL / booking references separated by comma or space.");
+        }
+      });
+    }
     updateSearchPlaceholder();
     var scanned=new URLSearchParams(window.location.search).get("cntr");
     if(scanned){
