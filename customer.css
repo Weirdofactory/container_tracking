@@ -502,3 +502,84 @@ body.public-carrier-mode .customer-info-item{
 body.public-carrier-mode .customer-overview-grid{
   align-items:start!important;
 }
+
+.customer-hbl-item{min-width:0}
+.customer-hbl-list{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:6px}
+.customer-hbl-chip{
+  border:1px solid #bfdbef;background:#f4fbff;color:#0d67a9;border-radius:999px;
+  padding:5px 8px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+  font:800 8.5px 'JetBrains Mono',monospace;line-height:1;
+}
+.customer-hbl-chip:hover{background:#e7f6ff;border-color:#74b6e2;color:#075c98;transform:translateY(-1px)}
+.customer-hbl-chip small{font:800 7px 'Plus Jakarta Sans',sans-serif;color:#7890a5}
+.customer-hbl-count{
+  display:inline-flex;align-items:center;height:22px;padding:0 6px;border-radius:6px;
+  background:#edf6ff;color:#0c6eaf;font-size:7px;font-weight:900;letter-spacing:.05em;
+}
+.customer-hbl-loading,.customer-hbl-empty{
+  display:inline-block;font-size:8px;color:#92a0af;padding:2px 0;font-weight:700;
+}
+.customer-igm-modal{position:fixed;inset:0;display:none;z-index:12000}
+.customer-igm-modal.open{display:block}
+.customer-igm-backdrop{position:absolute;inset:0;background:rgba(4,20,38,.58);backdrop-filter:blur(5px)}
+.customer-igm-dialog{
+  position:relative;width:min(920px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;
+  margin:16px auto;background:#fff;border-radius:16px;box-shadow:0 30px 80px rgba(2,20,42,.3);
+  border:1px solid #dce5ee;z-index:2;
+}
+.customer-igm-head{
+  position:sticky;top:0;z-index:3;background:#fff;border-bottom:1px solid #e5ebf1;
+  padding:16px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;
+}
+.customer-igm-kicker{font-size:8px;font-weight:900;letter-spacing:.13em;color:#0d74bd}
+.customer-igm-head h2{margin:4px 0 2px;font-size:20px;color:#153b65;letter-spacing:-.02em}
+.customer-igm-head p{margin:0;color:#8794a4;font-size:9px}
+.customer-igm-close{
+  width:34px;height:34px;border:1px solid #dfe7ef;background:#fff;border-radius:8px;
+  color:#4e657d;cursor:pointer;font-weight:900;
+}
+.customer-igm-close:hover{background:#f4f8fb;color:#0b5e9c}
+.customer-igm-body{padding:16px 18px 20px;background:#f6f9fc}
+.customer-igm-summary{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;
+}
+.customer-igm-summary>div{
+  background:#fff;border:1px solid #dce5ee;border-radius:10px;padding:11px 12px;min-width:0;
+}
+.customer-igm-summary small{display:block;color:#8997a8;font-size:7px;letter-spacing:.08em;font-weight:900}
+.customer-igm-summary strong{display:block;margin-top:5px;color:#1c4166;font-size:10px;overflow-wrap:anywhere}
+.customer-igm-section{
+  background:#fff;border:1px solid #dce5ee;border-radius:10px;overflow:hidden;margin-bottom:12px;
+}
+.customer-igm-section-title{
+  padding:10px 12px;border-bottom:1px solid #edf1f5;font-size:8px;font-weight:900;
+  letter-spacing:.09em;color:#173c65;background:#fbfdff;
+}
+.customer-igm-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.customer-igm-grid>div{
+  padding:10px 12px;border-right:1px solid #edf1f5;border-bottom:1px solid #edf1f5;min-width:0;
+}
+.customer-igm-grid>div:nth-child(4n){border-right:0}
+.customer-igm-grid>div:nth-last-child(-n+4){border-bottom:0}
+.customer-igm-grid span,.customer-igm-cargo span{
+  display:block;font-size:7px;color:#8a99aa;font-weight:900;letter-spacing:.07em;text-transform:uppercase;
+}
+.customer-igm-grid strong,.customer-igm-cargo strong{
+  display:block;margin-top:4px;color:#1e4267;font-size:10px;line-height:1.35;overflow-wrap:anywhere;
+}
+.customer-igm-cargo{
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;
+}
+.customer-igm-cargo>div{padding:12px;border-right:1px solid #edf1f5}
+.customer-igm-cargo>div:last-child{border-right:0}
+.customer-igm-source{
+  text-align:right;color:#98a4b1;font-size:7px;letter-spacing:.03em;padding-top:4px;
+}
+@media(max-width:700px){
+  .customer-igm-summary,.customer-igm-grid,.customer-igm-cargo{grid-template-columns:1fr 1fr}
+  .customer-igm-grid>div:nth-child(4n){border-right:1px solid #edf1f5}
+  .customer-igm-grid>div:nth-child(2n){border-right:0}
+  .customer-igm-grid>div:nth-last-child(-n+4){border-bottom:1px solid #edf1f5}
+  .customer-igm-grid>div:nth-last-child(-n+2){border-bottom:0}
+  .customer-igm-cargo>div:nth-child(2n){border-right:0}
+}
