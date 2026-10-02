@@ -7,6 +7,7 @@
   var customerMapLayers = {};
   var customerReportLinks = {};
   var customerReportRecords = {};
+  var igmHblCache = {};
 
   function cv(r,names,fallback){
     fallback = fallback || "";
@@ -149,10 +150,13 @@
     tabNames.forEach(function(t,i){ html += '<button type="button" class="customer-tab '+(i===0?"active":"")+'" data-tab="'+t[0]+'">'+t[1]+'</button>'; });
     html += '</div>';
 
+    var hblBoxId="customerHbl_"+index;
     html += '<section class="customer-tab-pane active" data-pane="overview">';
     html += '<div class="customer-overview-grid">';
     html += '<div class="customer-section-card"><div class="customer-section-title"><div><span class="customer-section-number">01</span><strong>SHIPMENT INFORMATION</strong></div><small>REFERENCE DATA</small></div><div class="customer-info-grid">';
-    [["Container Number",cntr],["Size / Type",type],["Booking Number",booking],["HBL Number",hbl],["MBL Number",mbl],["Vessel / Voyage",vessel],["Freight Term",freight],["Cargo Description",cargo],["Shipper",shipper],["Consignee",consignee],["Notify Party",notify],["Seal Number",seal]].forEach(function(x){html+=dataItem(x[0],x[1]);});
+    [["Container Number",cntr],["Size / Type",type],["Booking Number",booking]].forEach(function(x){html+=dataItem(x[0],x[1]);});
+    html += '<div class="customer-info-item customer-hbl-item"><span class="data-label">HBL NUMBERS</span><div id="'+hblBoxId+'" class="customer-hbl-list"><span class="customer-hbl-loading">Loading HBL details…</span></div></div>';
+    [["MBL Number",mbl],["Vessel / Voyage",vessel],["Freight Term",freight],["Cargo Description",cargo],["Shipper",shipper],["Consignee",consignee],["Notify Party",notify],["Seal Number",seal]].forEach(function(x){html+=dataItem(x[0],x[1]);});
     html += '</div></div>';
 
     html += '<div>';
@@ -256,6 +260,7 @@
         : '<div class="customer-results-note"><strong>'+matched.length+' shipment records found</strong><span>Each matching container is shown as a separate customer tracking report.</span></div>';
       container.innerHTML='<div class="customer-result-stack">'+note+matched.map(buildCustomerReport).join("")+'</div>';
       bindReportInteractions(matched);
+      loadIgmHblsForReports(matched);
     }catch(err){
       console.error("Customer portal search error:",err);
       container.style.display="block";
@@ -288,6 +293,102 @@
 
       setTimeout(function(){initCustomerMap("customerMap_"+index,r);},80);
     });
+  }
+
+
+  async function loadIgmHblsForReports(matched){
+    if(typeof sb==="undefined") return;
+    for(var i=0;i<matched.length;i++){
+      var r=matched[i];
+      var mbl=cclean(cv(r,["MBL NO","MBL","MASTER BL"]));
+      var cntr=cclean(cv(r,["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]));
+      var box=document.getElementById("customerHbl_"+i);
+      if(!box) continue;
+      if(!mbl||!cntr){
+        box.innerHTML='<span class="customer-hbl-empty">No linked HBL / IGM record.</span>';
+        continue;
+      }
+      try{
+        var resp=await sb.rpc("get_igm_hbls_for_shipment",{p_mbl:mbl,p_container:cntr});
+        var rows=resp && Array.isArray(resp.data) ? resp.data : [];
+        if(resp && resp.error) throw resp.error;
+        rows.forEach(function(row){
+          igmHblCache[String(row.hbl_no||"").toUpperCase()]=row;
+        });
+        renderIgmHblList(box,rows);
+      }catch(err){
+        console.warn("IGM/HBL lookup failed:",err);
+        box.innerHTML='<span class="customer-hbl-empty">IGM details unavailable.</span>';
+      }
+    }
+  }
+
+  function renderIgmHblList(box,rows){
+    if(!rows.length){
+      box.innerHTML='<span class="customer-hbl-empty">No linked HBL / IGM record.</span>';
+      return;
+    }
+    box.innerHTML=rows.map(function(row){
+      var h=String(row.hbl_no||"").toUpperCase();
+      var sub=row.subline_number ? "SL "+row.subline_number : "";
+      return '<button type="button" class="customer-hbl-chip" data-hbl="'+cesc(h)+'">'+
+        '<span>'+cesc(h)+'</span><small>'+cesc(sub)+'</small></button>';
+    }).join("");
+    box.querySelectorAll(".customer-hbl-chip").forEach(function(btn){
+      btn.addEventListener("click",function(){openIgmModal(btn.getAttribute("data-hbl"));});
+    });
+    var count=rows.length;
+    box.insertAdjacentHTML("afterbegin",'<span class="customer-hbl-count">'+count+' HBL'+(count===1?"":"s")+'</span>');
+  }
+
+  function ensureIgmModal(){
+    var existing=document.getElementById("igmDetailsModal");
+    if(existing) return existing;
+    var wrap=document.createElement("div");
+    wrap.id="igmDetailsModal";
+    wrap.className="customer-igm-modal";
+    wrap.innerHTML=
+      '<div class="customer-igm-backdrop" data-igm-close></div>'+
+      '<div class="customer-igm-dialog" role="dialog" aria-modal="true" aria-labelledby="igmDetailsTitle">'+
+        '<div class="customer-igm-head"><div><span class="customer-igm-kicker">CUSTOMS / IGM LINK</span><h2 id="igmDetailsTitle">HBL Details</h2><p id="igmDetailsSub">Indian Customs manifest information</p></div>'+
+        '<button type="button" class="customer-igm-close" data-igm-close aria-label="Close">✕</button></div>'+
+        '<div id="igmDetailsBody" class="customer-igm-body"></div>'+
+      '</div>';
+    document.body.appendChild(wrap);
+    wrap.querySelectorAll("[data-igm-close]").forEach(function(x){
+      x.addEventListener("click",function(){wrap.classList.remove("open");});
+    });
+    document.addEventListener("keydown",function(e){
+      if(e.key==="Escape") wrap.classList.remove("open");
+    });
+    return wrap;
+  }
+
+  function openIgmModal(hbl){
+    var key=String(hbl||"").trim().toUpperCase();
+    if(!key) return;
+    var row=igmHblCache[key];
+    if(!row) return;
+    var modal=ensureIgmModal();
+    var body=document.getElementById("igmDetailsBody");
+    document.getElementById("igmDetailsTitle").textContent=key;
+    document.getElementById("igmDetailsSub").textContent="IGM "+(row.igm_no||"—")+" • Line "+(row.line_number||"—")+" / Subline "+(row.subline_number||"—");
+    var fields=[
+      ["IGM Number",row.igm_no],["IGM Date",cdate(row.igm_date)],["BL Number",row.mbl_no],["BL Date",cdate(row.bl_date)],
+      ["HBL Number",row.hbl_no],["HBL Date",cdate(row.hbl_date)],["Container",row.container_no],["Container Status",row.container_status],
+      ["Gateway Port",row.gateway_port],["Voyage Number",row.voyage_number],["IMO Number",row.imo_no],["Vessel Code",row.vessel_code],
+      ["Port Destination",row.port_destination],["Cargo Movement",row.cargo_movement],["Gross Weight",row.gross_weight ? row.gross_weight+" "+(row.unit_of_weight||"") : "—"],
+      ["Packages",row.total_package ? row.total_package+" "+(row.package_code||"") : "—"],["INW Date",row.inw_date]
+    ];
+    body.innerHTML=
+      '<div class="customer-igm-summary"><div><small>HBL</small><strong>'+cesc(row.hbl_no)+'</strong></div><div><small>IGM</small><strong>'+cesc(row.igm_no)+'</strong></div><div><small>CONTAINER</small><strong>'+cesc(row.container_no)+'</strong></div><div><small>STATUS</small><strong>'+cesc(row.container_status||"—")+'</strong></div></div>'+
+      '<div class="customer-igm-section"><div class="customer-igm-section-title">IGM / BL REFERENCE</div><div class="customer-igm-grid">'+
+      fields.map(function(x){return '<div><span>'+cesc(x[0])+'</span><strong>'+cesc(x[1]||"—")+'</strong></div>';}).join("")+
+      '</div></div>'+
+      '<div class="customer-igm-section"><div class="customer-igm-section-title">CARGO DECLARATION</div>'+
+      '<div class="customer-igm-cargo"><div><span>Description of Goods</span><strong>'+cesc(row.desc_of_goods||"—")+'</strong></div><div><span>Port Destination</span><strong>'+cesc(row.port_destination||"—")+'</strong></div><div><span>Gross Weight</span><strong>'+cesc(row.gross_weight||"—")+' '+cesc(row.unit_of_weight||"")+'</strong></div><div><span>Package</span><strong>'+cesc(row.total_package||"—")+' '+cesc(row.package_code||"")+'</strong></div></div></div>'+
+      '<div class="customer-igm-source">Source: '+cesc(row.source_file_name||"IGM data")+'</div>';
+    modal.classList.add("open");
   }
 
   function initCustomerMap(mapId,r){
@@ -391,5 +492,6 @@
   window.toggleCustomerMapLayer=toggleCustomerMapLayer;
   window.switchCustomerTab=switchCustomerTab;
   window.shareCustomerReport=shareCustomerReport;
+  window.openIgmModal=openIgmModal;
   wireCustomerPortal();
 })();
