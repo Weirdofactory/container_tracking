@@ -10,6 +10,22 @@
   var igmHblCache = {};
   var customerIgmSummary = {};
 
+  function getCustomerSb(){
+    try{
+      if(typeof sb!=="undefined" && sb) return sb;
+    }catch(e){}
+    if(window.sb) return window.sb;
+    if(window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY){
+      window.sb=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY);
+      return window.sb;
+    }
+    if(window.supabase){
+      window.sb=window.supabase.createClient("https://ykeucqritoexykqrggzz.supabase.co","sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ");
+      return window.sb;
+    }
+    return null;
+  }
+
   function cv(r,names,fallback){
     fallback = fallback || "";
     try{
@@ -586,7 +602,11 @@
   }
 
   async function loadIgmHblsForReports(matched){
-    if(typeof sb==="undefined") return;
+    var client=getCustomerSb();
+    if(!client){
+      console.warn("Customer IGM lookup: Supabase client unavailable");
+      return;
+    }
     for(var i=0;i<matched.length;i++){
       var r=matched[i];
       var mbl=cclean(cv(r,["MBL NO","MBL","MASTER BL"]));
@@ -598,9 +618,14 @@
         continue;
       }
       try{
-        var resp=await sb.rpc("get_igm_hbls_for_shipment",{p_mbl:mbl,p_container:cntr});
+        var resp=await client.rpc("get_igm_hbls_for_shipment",{p_mbl:mbl,p_container:cntr});
         var rows=resp && Array.isArray(resp.data) ? resp.data : [];
         if(resp && resp.error) throw resp.error;
+        if(!rows.length){
+          var fallbackResp=await client.rpc("get_igm_hbls_for_container",{p_container:cntr});
+          if(fallbackResp && fallbackResp.error) throw fallbackResp.error;
+          rows=fallbackResp && Array.isArray(fallbackResp.data) ? fallbackResp.data : [];
+        }
         rows.forEach(function(row){
           igmHblCache[String(row.hbl_no||"").toUpperCase()]=row;
         });
