@@ -397,7 +397,15 @@
     box.innerHTML='<div class="public-result-card"><div class="public-result-head"><div><small>CONTAINER</small><h3>'+val('CONTAINER NO.')+'</h3></div><span class="status-pill">Shipment Found</span></div><div class="public-result-grid"><div><small>Vessel / Voyage</small><b>'+val('VESSEL & VOY')+'</b></div><div><small>Gateway Port</small><b>'+val('GATEWAY PORT')+'</b></div><div><small>ETA</small><b>'+val('ETA')+'</b></div><div><small>CFS</small><b>'+val('CFS NAME')+'</b></div></div></div>';
   };
   const track=$('publicSearchBtn');
-  if(track) track.onclick=function(){ if(typeof window.performPublicSearch==='function') window.performPublicSearch(); else window.performPublicSearchFallback(); };
+  if(track) track.onclick=function(){
+    if(window.GML_CUSTOMER_PORTAL_V2){
+      if(typeof window.performPublicSearch==='function') window.performPublicSearch();
+    }else if(typeof window.performPublicSearch==='function'){
+      window.performPublicSearch();
+    }else{
+      window.performPublicSearchFallback();
+    }
+  };
   const login=$('loginBtn');
   if(login) login.onclick=function(){window.openStaffLoginFallback();};
   const submit=$('loginSubmit');
@@ -417,8 +425,8 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20261003-customer-v17"></script>
-<script src="./customer.js?v=20261003-customer-v17"></script>
+<script src="./app.js?v=20261003-customer-v18"></script>
+<script src="./customer.js?v=20261003-customer-v18"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
