@@ -73,7 +73,7 @@ body.public-carrier-mode #publicControls{
   position:absolute;left:28px;right:28px;bottom:-30px;background:#fff;border:1px solid rgba(224,232,240,.9);
   border-radius:13px;box-shadow:0 20px 35px rgba(17,48,81,.16);padding:10px 12px 8px;
 }
-.customer-search-fields{display:grid;grid-template-columns:215px minmax(0,1fr) 126px;gap:8px;align-items:end}
+.customer-search-fields{display:grid;grid-template-columns:215px minmax(0,1fr) 126px 145px;gap:8px;align-items:end}
 .customer-field{min-width:0}
 .customer-field label{display:block;font-size:9px;line-height:1;color:#17385f;font-weight:800;margin:0 0 7px 5px}
 .customer-field select,.customer-field input{
