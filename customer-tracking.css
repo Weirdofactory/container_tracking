@@ -1,1 +1,160 @@
 @import url("./customer-report-v7.css?v=20261002-v9");
+
+/* GML CUSTOMER TRACKING — V10 TIME-FIRST SHIPMENT VIEW
+   Flat editorial logistics layout. No stacked dashboard cards. */
+
+/* Remove duplicate customer-facing login CTA; the global header owns login. */
+.public-staff-login-btn{display:none!important}
+
+/* Search result shell */
+.one-results-surface,.public-result-card{border-radius:0!important;box-shadow:none!important}
+.public-results-toolbar{width:min(1180px,calc(100vw - 48px));margin:0 auto 8px}
+.carrier-results-shell{width:min(1180px,calc(100vw - 48px));border-radius:0!important;box-shadow:0 10px 30px rgba(12,31,50,.06)!important}
+
+/* Main report: document, not dashboard */
+.customer-report-v3{
+  width:min(1180px,calc(100vw - 48px));
+  margin:18px auto 34px;
+  border:1px solid #cbd7e1!important;
+  border-radius:0!important;
+  box-shadow:0 18px 50px rgba(15,37,56,.08)!important;
+  overflow:hidden;
+  background:#fff!important;
+}
+
+/* Header becomes a professional shipment document masthead */
+.cr3-top{
+  height:78px!important;
+  padding:0 28px!important;
+  border-bottom:1px solid #d5dee6!important;
+  background:#fff!important;
+}
+.cr3-brand{gap:13px!important}
+.cr3-brand-mark{
+  width:46px!important;height:46px!important;flex-basis:46px!important;
+  border-radius:4px!important;background:#082c49!important;font-size:12px!important;
+}
+.cr3-brand strong{font-size:11px!important;letter-spacing:.03em!important}
+.cr3-brand small{font-size:7px!important;margin-top:5px!important}
+.cr3-generated{padding-right:0!important}
+.cr3-generated span{font-size:6px!important}
+.cr3-generated strong{font-size:9px!important}
+.cr3-top:after{content:'GML • OCEAN SHIPMENT VISIBILITY';font-size:7px!important;letter-spacing:.13em!important;color:#7a8a99!important;margin-left:auto!important;margin-right:26px!important;display:block!important;order:1}
+.cr3-brand{order:0}.cr3-top:after{order:1}.cr3-generated{order:2}
+
+/* Time-first hero: ETA and last-mile information dominate */
+.cr3-hero{
+  min-height:178px!important;
+  padding:28px 30px!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 360px!important;
+  align-items:stretch!important;
+  gap:28px!important;
+  background:#f6f9fb!important;
+  color:#17344d!important;
+  border-bottom:1px solid #cfdbe4!important;
+}
+.cr3-hero:before{display:none!important}
+.cr3-hero:after{content:'SHIPMENT STATUS';left:30px!important;top:18px!important;color:#7b8b99!important;font-size:7px!important;letter-spacing:.14em!important}
+.cr3-hero-copy{padding-top:18px!important}
+.cr3-live{background:#dff7ec!important;color:#08744d!important;border-radius:999px!important;padding:5px 9px!important;font-size:7px!important}
+.cr3-hero h1{
+  color:#102f48!important;
+  font-size:34px!important;
+  line-height:1.02!important;
+  letter-spacing:-.045em!important;
+  margin:13px 0 7px!important;
+}
+.cr3-hero p{color:#65798a!important;font-size:8px!important}
+.cr3-container{
+  min-width:0!important;
+  align-self:stretch!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  padding:22px 24px!important;
+  border:1px solid #cbd9e3!important;
+  background:#fff!important;
+}
+.cr3-container small{color:#778998!important;font-size:7px!important}
+.cr3-container strong{color:#0f3550!important;font-size:23px!important;margin-top:9px!important;letter-spacing:.02em!important}
+.cr3-container span{color:#7a8b99!important;margin-top:7px!important}
+
+/* Summary strip is deliberately flat and dense */
+.cr3-summary{grid-template-columns:1.35fr 1fr 1.25fr 1fr!important;border-bottom:1px solid #cfdbe4!important}
+.cr3-summary>div{min-height:76px!important;padding:16px 19px!important;border-right:1px solid #dce4ea!important}
+.cr3-summary small{font-size:6.5px!important}
+.cr3-summary strong{font-size:10px!important;margin-top:8px!important}
+.cr3-status{background:#f0faf6!important}
+
+/* Route becomes an actual route strip rather than another card */
+.cr3-route{padding:22px 28px!important;background:#fff!important;border-bottom:1px solid #cfdbe4!important}
+.cr3-route .cr3-section-head{padding-bottom:12px!important}
+.cr3-section-head{border-bottom:1px solid #dbe3e9!important;padding:12px 0!important}
+.cr3-section-head span{width:auto!important;height:auto!important;padding:0!important;border-radius:0!important;background:none!important;color:#718392!important;font-family:'JetBrains Mono',monospace!important;font-size:7px!important}
+.cr3-section-head strong{font-size:8px!important;letter-spacing:.1em!important}
+.cr3-route-line{grid-template-columns:1fr 55px 1fr 55px 1fr 55px 1fr!important;padding:28px 10px 20px!important}
+.cr3-route-line>b{background:#aebfcb!important}
+.cr3-route-node i{width:8px!important;height:8px!important;margin-bottom:10px!important;background:#0b9f6f!important;border:3px solid #dff4eb!important}
+.cr3-route-node strong{font-size:11px!important}
+.cr3-route-node small{font-size:6.5px!important;margin-top:5px!important}
+.cr3-terminal{border:0!important;border-top:1px solid #e1e8ed!important;background:#f8fafb!important;padding:10px 12px!important}
+
+/* Time intelligence row: two columns, no cards */
+.cr3-two-col{grid-template-columns:1.2fr .8fr!important;background:#fff!important;border-bottom:1px solid #cfdbe4!important}
+.cr3-two-col .cr3-card{border-right:1px solid #d8e1e7!important}
+.cr3-two-col .cr3-section-head{padding:13px 20px!important}
+.cr3-dates{grid-template-columns:repeat(3,1fr)!important}
+.cr3-dates>div{padding:18px 20px!important}
+.cr3-dates strong{font-size:18px!important;letter-spacing:-.025em!important}
+.cr3-action{min-height:83px!important;padding:17px 20px!important}
+.cr3-action i{width:28px!important;height:28px!important;flex-basis:28px!important;background:#edf5f9!important}
+.cr3-action strong{font-size:9px!important;line-height:1.45!important}
+
+/* Journey = primary operational timeline */
+.cr3-journey{padding:0 28px 28px!important;border-bottom:1px solid #cfdbe4!important;background:#fff!important}
+.cr3-journey .cr3-section-head{margin:0 -28px!important;padding:13px 28px!important}
+.cr3-progress{margin:28px 14px 0!important;height:3px!important;background:#d9e3e9!important}
+.cr3-progress:before{height:3px!important;background:#0aa873!important;width:var(--gml-progress,40%)!important}
+.cr3-steps{margin-top:-8px!important;padding:0!important}
+.cr3-step{padding-top:20px!important}
+.cr3-step:before{width:15px!important;height:15px!important;border-width:2px!important}
+.cr3-step strong{font-size:7px!important;color:#334f63!important;margin-top:2px!important}
+.cr3-step small{font-size:6.5px!important;margin-top:5px!important}
+
+/* Operational details become a ledger */
+.cr3-details{padding:0 28px 22px!important;background:#fff!important}
+.cr3-details .cr3-section-head{margin:0 -28px!important;padding:13px 28px!important}
+.cr3-detail-grid{grid-template-columns:repeat(4,1fr)!important;border:1px solid #dce4e9!important;border-top:0!important}
+.cr3-detail-grid>div{min-height:64px!important;padding:13px 15px!important;background:#fff!important}
+.cr3-detail-grid small{font-size:6px!important}
+.cr3-detail-grid strong{font-size:9px!important;margin-top:8px!important}
+
+.cr3-footer{padding:11px 28px!important;background:#f6f8fa!important;font-size:6.5px!important}
+
+/* Hide obsolete helper/report visual fragments that make the page feel duplicated */
+.carrier-detail-panel .customer-report-v3{margin-top:0!important}
+
+@media(max-width:900px){
+  .customer-report-v3{width:calc(100vw - 24px)!important}
+  .cr3-top:after{display:none!important}
+  .cr3-hero{grid-template-columns:1fr!important}
+  .cr3-summary{grid-template-columns:repeat(2,1fr)!important}
+  .cr3-route-line{grid-template-columns:1fr 30px 1fr 30px 1fr 30px 1fr!important}
+  .cr3-two-col{grid-template-columns:1fr!important}
+  .cr3-two-col .cr3-card{border-right:0!important;border-bottom:1px solid #d8e1e7!important}
+}
+@media(max-width:600px){
+  .cr3-top{padding:0 16px!important}
+  .cr3-generated{display:none!important}
+  .cr3-hero{padding:25px 20px!important}
+  .cr3-hero h1{font-size:28px!important}
+  .cr3-summary{grid-template-columns:1fr 1fr!important}
+  .cr3-route{padding:18px 20px!important}
+  .cr3-route-line{display:block!important;padding:18px 4px!important}
+  .cr3-route-node{display:grid!important;grid-template-columns:18px 1fr!important;text-align:left!important;padding-bottom:15px!important}
+  .cr3-route-line>b{display:none!important}
+  .cr3-journey,.cr3-details{padding-left:20px!important;padding-right:20px!important}
+  .cr3-journey .cr3-section-head,.cr3-details .cr3-section-head{margin-left:-20px!important;margin-right:-20px!important;padding-left:20px!important;padding-right:20px!important}
+  .cr3-detail-grid{grid-template-columns:1fr 1fr!important}
+}
