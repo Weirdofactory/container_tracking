@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Container Tracking Suite - Enterprise Hub</title>
+<!-- Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./style.css?v=20260924-36">
+</head>
+<body>
+
+<header class="nav-header">
+  <div class="nav-container nav-multilevel">
+    <div class="brand-box" onclick="resetToLanding()">
+      <div class="brand-logo-icon">⚓</div>
+      <div class="brand-title">Container Tracking Suite</div>
+    </div>
+
+    <div class="header-tools">
+      <div id="opsControls" class="ops-controls-multilevel" style="display:none;">
+        <div class="header-top-row">
+          <div class="header-context">
+            <span class="header-kicker">OPERATIONS CONTROL</span>
+            <span class="header-context-sep">•</span>
+            <span class="header-context-text">Container Operations & Visibility</span>
+          </div>
+          <div class="header-utility">
+            <button class="btn btn-ghost" id="currencyToggleBtn" style="font-family:'JetBrains Mono'; padding:4px 8px;">💱 INR</button>
+            <button class="btn btn-ghost" id="themeBtn" style="padding:4px 8px;">☀️</button>
+            <span id="userBadge" class="tag-badge" style="font-family:'JetBrains Mono'; font-weight:700;">Admin</span>
+            <button class="btn btn-danger" id="logoutBtn" style="padding:4px 8px;" title="Logout">🔒</button>
+          </div>
+        </div>
+
+        <div class="header-bottom-row">
+          <div class="header-segment ops-primary-nav">
+            <button class="btn btn-primary" id="p1v2TowerBtn">🎯 Control Tower</button>
+            <button class="btn btn-ghost" id="headerCsnBtn">📑 SCMTR / CSN</button>
+            <button class="btn btn-ghost" id="headerLfdBtn">⏱️️ LFD Rules</button>
+          </div>
+          <div class="header-segment">
+            <button class="btn btn-primary action-editor-only" id="addBtn">+ Container</button>
+          </div>
+          <div class="header-segment">
+            <button class="btn btn-ghost" id="terminalRoutingBtn">🧭 Terminal Routing</button>
+          </div>
+          <div class="nav-dropdown">
+            <button class="btn" id="opsMenuBtn">⚡ Ops Menu ▾</button>
+            <div class="nav-dropdown-content" id="opsMenuDropdown">
+              <button class="dropdown-item" id="openAuditLogBtn">📜 Audit Trail (<span id="auditCountBadge">0</span>)</button>
+              <button class="dropdown-item" id="dailyDispatchBtn">📋 Dispatch Table</button>
+              <button class="dropdown-item action-editor-only" id="vesselEditBtn">🚢 Bulk Vessel Update</button>
+              <button class="dropdown-item" id="openAnalyticsBtn">📊 Turnaround Stats</button>
+            </div>
+          </div>
+          <div class="header-segment">
+            <button class="btn btn-ghost" id="exportBtn" title="Export to Excel">📤 Export</button>
+            <label class="btn btn-ghost action-editor-only" style="cursor:pointer" title="Import from Excel">📂 Import<input id="excelInput" type="file" accept=".xlsx,.xls,.csv" style="display:none"></label>
+          </div>
+        </div>
+      </div>
+
+      <div id="publicControls" style="display:flex; align-items:center; gap:8px;">
+        <button class="btn btn-ghost" id="publicThemeBtn" style="padding:6px 10px;">☀️</button>
+        <button class="btn btn-primary" id="loginBtn" onclick="document.getElementById('loginModalBg').classList.add('open'); document.getElementById('loginCodeInput')?.focus();">🔐 Staff Portal Login</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="publicLandingView" class="fade-in">
+  <div class="public-hero-section">
+    <div class="public-hero-container">
+      <div class="public-hero-copy">
+        <div class="hero-eyebrow">GLOBAL CONTAINER VISIBILITY</div>
+        <h1>Track Your Shipment.<br><span>Real-time container tracking with global visibility.</span></h1>
+        <p>You can search by Container #, MBL/AWB #, Booking #, Vessel/Voyage # or Customer Ref #.</p>
+        <div class="hero-trust-row"><span>✓ Live AIS Routes</span><span>✓ Milestone Timeline</span><span>✓ Instant PDF/Photo Export</span></div>
+      </div>
+      <div class="hero-widget-card">
+        <div class="widget-tabs-header"><div class="widget-tab-active">📍 Track & Trace</div></div>
+        <div class="widget-body">
+          <label>Search By Container Number <span>*</span></label>
+          <div class="widget-input-wrapper"><input type="text" id="publicSearchInput" placeholder="Enter MSMU5334429, SKHU9422886..."></div>
+          <div class="widget-helper-text">Real-time carrier milestone tracking & live positioning.</div>
+          <button class="btn-track-action" id="publicSearchBtn" onclick="performPublicSearch()">🔍 Track Shipment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="publicResultContainer" class="public-result-card"></div>
+</section>
+
+<!-- Modals & Shared Overlays -->
+<div class="modal-bg" id="loginModalBg"><div class="modal-dialog" style="max-width:380px;"><div class="modal-header"><span>🔐 Staff Portal Login</span><button class="btn btn-ghost" id="loginClose">✕</button></div><div class="modal-body" style="padding:20px;"><div><label style="font-size:10.5px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Access Code</label><input type="password" id="loginCodeInput" class="input" style="width:100%;margin-top:6px;font-family:'JetBrains Mono';font-weight:800;font-size:15px;letter-spacing:.1em;text-align:center;height:40px;" placeholder="••••••••"></div></div><div class="modal-footer"><button class="btn" id="loginCancel">Cancel</button><button class="btn btn-primary" id="loginSubmit">Sign In</button></div></div></div>
+<div class="modal-bg" id="mapModalBg"><div class="modal-dialog" style="width:840px;max-width:95vw;"><div class="modal-header"><span id="mapModalTitle">Voyage Tracker</span><button class="btn btn-ghost" id="mapCloseBtn">✕</button></div><div class="modal-body" style="padding:0;background:#0b1329;"><div id="leafletMap" style="width:100%;height:380px;background:#0b1329;"></div><div style="padding:10px 16px;font-size:11px;display:flex;justify-content:space-between;align-items:center;background:var(--bg-elevated);"><div><strong id="mapVesselText">Vessel Route</strong></div><a id="vesselFinderExternalBtn" href="https://www.vesselfinder.com/" target="_blank" class="btn btn-primary" style="padding:4px 10px;font-size:11px;">Open Live AIS ↗</a></div></div></div></div>
+<div class="modal-bg" id="emailModalBg"><div class="modal-dialog" style="width:540px;"><div class="modal-header"><span>✉️ Automated Client Notification</span><button class="btn btn-ghost" id="emailModalClose">✕</button></div><div class="modal-body"><div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Subject</label><input type="text" id="emailSubject" class="input" style="width:100%;margin-top:4px;"></div><div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Body Text</label><textarea id="emailBody" class="input" style="width:100%;height:130px;margin-top:4px;font-family:'JetBrains Mono';font-size:11px;resize:vertical;padding:8px;"></textarea></div></div><div class="modal-footer"><button class="btn" id="copyEmailBtn">📋 Copy Body</button><a id="sendMailtoBtn" href="#" class="btn btn-primary">Open in Mail App ↗</a></div></div></div>
+<div class="toast-popup" id="toast"></div>
+
+<!-- Main Ops Dashboard container if logged in -->
+<main class="main-wrapper" id="opsDashboardView" style="display:none;"></main>
+
+<script src="./app.js?v=20260925-11"></script>
+<script src="./phase1.js?v=20260924-36"></script>
+<script src="./phase2.js?v=20260924-36"></script>
+</body>
+</html>
