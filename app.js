@@ -1060,24 +1060,21 @@ function getSkeletonHTML() {
 }
 
 function getLatestPublicEvent(r) {
-  const cfs = getField(r, ["CFS NAME", "CFS"]) || "CFS";
-  const gateway = getGatewayPortInfo(r).name || getField(r, ["GATEWAY PORT", "GATEWAY"]) || "Terminal";
-  const pol = getField(r, ["POL", "PORT OF LOADING"]) || "Origin";
   const events = [
-    ["EMPTY RETURNED", "CONTAINER RETURN DATE", gateway],
-    ["DE-STUFF COMPLETED", "DESTUFFING DATE", cfs],
-    ["CFS IN", "CFS IN", cfs],
-    ["PORT OUT", "PORT OUT", gateway],
-    ["PORT IN", "PORT IN", gateway],
-    ["INWARD", "INWARD DATE", gateway],
-    ["ETD DEPARTED", "ETD", pol]
+    ["EMPTY RETURNED", "CONTAINER RETURN DATE"],
+    ["DE-STUFF COMPLETED", "DESTUFFING DATE"],
+    ["CFS IN", "CFS IN"],
+    ["PORT OUT", "PORT OUT"],
+    ["PORT IN", "PORT IN"],
+    ["INWARD", "INWARD DATE"],
+    ["ETD DEPARTED", "ETD"]
   ];
-  for (const [label, field, place] of events) {
+  for (const [label, field] of events) {
     const value = getField(r, [field]);
-    if (validDate(value)) return { label, date: formatDate(value) || "—", rawDate: value, place };
+    if (validDate(value)) return { label, date: formatDate(value) || "—", rawDate: value };
   }
   const eta = getField(r, ["ETA"]);
-  return { label: "ETA SCHEDULED", date: formatDate(eta) || "—", rawDate: eta, place: pol };
+  return { label: "ETA SCHEDULED", date: formatDate(eta) || "—", rawDate: eta };
 }
 
 async function performPublicSearch() {
@@ -1136,9 +1133,9 @@ async function performPublicSearch() {
           <td class="carrier-expand-cell"><button class="carrier-expand-btn" type="button" aria-expanded="false" onclick="togglePublicShipmentDetail('${detailId}', this)">⌄</button></td>
           <td><span class="carrier-booking-ref">${esc(mbl)}</span></td>
           <td><button class="carrier-container-link" type="button" onclick="togglePublicShipmentDetail('${detailId}', this)">${esc(cntr)}</button><small class="carrier-subline">${esc(type)}</small></td>
-          <td><div class="carrier-place"><strong>${esc(latestEvent.place || gwPort)}</strong><small>${esc(liner)}</small></div></td>
+          <td><div class="carrier-place"><strong>${esc(gwPort)}</strong><small>${esc(liner)}</small></div></td>
           <td><div class="carrier-event"><strong>${esc(latestEvent.label)}</strong><small>${esc(latestEvent.date)}</small></div></td>
-          <td><div class="carrier-arrival"><strong>${esc(getField(r, ["POD", "PORT OF DISCHARGE", "DISCHARGE PORT"]) || vessel)}</strong><small>${esc(eta)}</small></div></td>
+          <td><div class="carrier-arrival"><strong>${esc(gwPort)}</strong><small>${esc(eta)}</small></div></td>
           <td><span class="carrier-sensitive">${esc(getField(r, ["SEAL NO.", "SEAL NO", "SEAL"]) || "—")}</span></td>
           <td><span class="carrier-sensitive">${esc(getField(r, ["PURCHASE ORDER NO.", "PURCHASE ORDER", "PO NO", "P/O NO."]) || "—")}</span></td>
         </tr>
