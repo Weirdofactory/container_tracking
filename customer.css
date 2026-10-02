@@ -401,3 +401,17 @@ body.public-carrier-mode #publicControls{
   .customer-help-card{align-items:flex-start;flex-direction:column}
   .customer-help-actions{width:100%}
 }
+
+.customer-multiple-btn{
+  height:47px;border:1px solid #bcd3e7;background:#fff;color:#133c67;border-radius:8px;
+  font-weight:900;font-size:10.5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  gap:5px;white-space:nowrap;
+}
+.customer-multiple-btn:hover{background:#f4faff;border-color:#8fc4e9;color:#0a72c3}
+.customer-footer{
+  border-top:1px solid #dfe7ef;background:#fff;padding:17px 28px;color:#7d8b9c;
+  display:flex;align-items:center;justify-content:space-between;gap:15px;font-size:8.5px;
+}
+.customer-footer strong{color:#294766}
+@media(max-width:900px){.customer-search-fields{grid-template-columns:190px minmax(0,1fr) 112px 130px}.customer-footer{padding-left:18px;padding-right:18px}}
+@media(max-width:680px){.customer-search-fields{grid-template-columns:1fr}.customer-multiple-btn{width:100%}.customer-footer{align-items:flex-start;flex-direction:column}}
