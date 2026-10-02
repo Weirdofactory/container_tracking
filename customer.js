@@ -154,9 +154,9 @@
     html += '<section class="customer-tab-pane active" data-pane="overview">';
     html += '<div class="customer-overview-grid">';
     html += '<div class="customer-section-card"><div class="customer-section-title"><div><span class="customer-section-number">01</span><strong>SHIPMENT INFORMATION</strong></div><small>REFERENCE DATA</small></div><div class="customer-info-grid">';
-    [["Container Number",cntr],["Size / Type",type],["Booking Number",booking]].forEach(function(x){html+=dataItem(x[0],x[1]);});
+    [["Container Number",cntr],["Size / Type",type]].forEach(function(x){html+=dataItem(x[0],x[1]);});
     html += '<div class="customer-info-item customer-hbl-item"><span class="data-label">HBL NUMBERS</span><div id="'+hblBoxId+'" class="customer-hbl-list"><span class="customer-hbl-loading">Loading HBL details…</span></div></div>';
-    [["MBL Number",mbl],["Vessel / Voyage",vessel],["Freight Term",freight],["Cargo Description",cargo],["Shipper",shipper],["Consignee",consignee],["Notify Party",notify],["Seal Number",seal]].forEach(function(x){html+=dataItem(x[0],x[1]);});
+    [["MBL Number",mbl],["Vessel / Voyage",vessel]].forEach(function(x){html+=dataItem(x[0],x[1]);});
     html += '</div></div>';
 
     html += '<div>';
