@@ -21,7 +21,12 @@
     return s;
   }
   function cdate(value){
-    var s = String(value == null ? "" : value).trim();
+    if(value instanceof Date){
+      if(isNaN(value.getTime())) return "—";
+      var dateMonths=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      return String(value.getDate()).padStart(2,"0")+" "+dateMonths[value.getMonth()]+" "+value.getFullYear();
+    }
+    var s=String(value == null ? "" : value).trim();
     if(!s || /^(n\/a|na|null|-)$/i.test(s)) return "—";
     try{
       var d = typeof parseLocalDate === "function" ? parseLocalDate(s) : new Date(s);
