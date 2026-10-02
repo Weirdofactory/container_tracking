@@ -216,6 +216,14 @@ body.public-carrier-mode #publicControls{
 }
 .customer-section-title strong{font-size:9px;letter-spacing:.075em;color:#183d65}
 .customer-section-title small{font-size:7px;color:#97a4b2;letter-spacing:.09em;font-weight:900}
+.customer-overview-grid > .customer-section-card{
+  align-self:stretch;
+  height:100%;
+}
+.customer-overview-grid > .customer-section-card .customer-info-grid{
+  height:calc(100% - 46px);
+  grid-template-rows:repeat(6,minmax(58px,1fr));
+}
 .customer-info-grid{display:grid;grid-template-columns:1fr 1fr}
 .customer-info-item{
   padding:11px 13px;border-right:1px solid #edf1f5;border-bottom:1px solid #edf1f5;min-width:0;
