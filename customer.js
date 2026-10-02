@@ -228,6 +228,7 @@
       input.focus();return;
     }
     btn.classList.add("btn-loading");
+    container.style.display="block";
     container.innerHTML='<div class="customer-skeleton"><div style="padding:20px;background:#fff;border-bottom:1px solid #e4eaf0"><div class="customer-skeleton-line" style="width:180px;height:11px"></div><div class="customer-skeleton-line" style="width:260px;height:24px;margin-top:9px"></div></div><div style="padding:25px"><div class="customer-skeleton-line" style="height:110px"></div><div class="customer-skeleton-line" style="height:80px;margin-top:14px"></div></div></div>';
     container.scrollIntoView({behavior:"smooth",block:"start"});
     try{
@@ -252,6 +253,7 @@
       bindReportInteractions(matched);
     }catch(err){
       console.error("Customer portal search error:",err);
+      container.style.display="block";
       container.innerHTML='<div class="customer-empty"><div><div class="customer-empty-icon">!</div><strong>Tracking service temporarily unavailable</strong><span>Please try again in a moment.</span></div></div>';
     }finally{
       btn.classList.remove("btn-loading");
