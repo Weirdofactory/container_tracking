@@ -602,22 +602,11 @@
   }
 
   async function customerRpc(functionName,params){
-    var url="https://ykeucqritoexykqrggzz.supabase.co/rest/v1/rpc/"+functionName;
-    var key="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
-    var resp=await fetch(url,{
-      method:"POST",
-      headers:{
-        "apikey":key,
-        "Authorization":"Bearer "+key,
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify(params||{})
-    });
-    var text=await resp.text();
-    var data=[];
-    try{data=text?JSON.parse(text):[];}catch(e){throw new Error("Invalid response from IGM service.");}
-    if(!resp.ok) throw new Error((data&&data.message)||"IGM service returned "+resp.status);
-    return data;
+    var client=getCustomerSb();
+    if(!client) throw new Error("Supabase client is unavailable.");
+    var result=await client.rpc(functionName,params||{});
+    if(result.error) throw result.error;
+    return result.data;
   }
 
   async function loadIgmHblsForReports(matched){
