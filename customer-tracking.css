@@ -1,14 +1,49 @@
-@import url("./customer-report-final.css?v=20261002-final1");
+@import url("./customer-report-final.css?v=20261002-final2");
+
+/* FINAL CUSTOMER TRACKING SHELL — full-width operational portal */
+body.public-carrier-mode,
+body.public-carrier-mode .one-public-shell,
+#publicLandingView{width:100%!important;max-width:none!important;min-width:0!important}
+
+#publicLandingView .one-content-wrap{width:100%!important;max-width:1440px!important;margin:0 auto!important;padding:34px 24px 60px!important}
+#publicLandingView .one-results-surface,
+#publicResultContainer{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}
+#publicResultContainer .customer-report-v3{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:20px 0 52px!important}
+#publicResultContainer .cr3-hero{width:100%!important}
+#publicResultContainer .cr3-route,
+#publicResultContainer .cr3-journey,
+#publicResultContainer .cr3-details{width:100%!important}
 
 .public-staff-login-btn{display:none!important}
-.public-results-toolbar{width:min(1280px,calc(100vw - 32px));margin:0 auto 10px}
-.carrier-results-shell{width:min(1280px,calc(100vw - 32px));margin:0 auto;border-radius:0!important;box-shadow:0 10px 30px rgba(18,43,61,.07)!important}
+.public-results-toolbar{width:100%!important;max-width:none!important;margin:0 0 10px!important}
+.carrier-results-shell{width:100%!important;max-width:none!important;margin:0 0 14px!important;border-radius:4px!important;box-shadow:0 10px 30px rgba(18,43,61,.07)!important}
 .one-results-surface{box-shadow:none!important}
+
+/* Make the customer report read like a real freight-forwarding control document */
+#publicResultContainer .cr3-top{padding-left:28px!important;padding-right:28px!important}
+#publicResultContainer .cr3-hero-copy{padding-left:42px!important;padding-right:42px!important}
+#publicResultContainer .cr3-container{padding-left:34px!important;padding-right:34px!important}
+#publicResultContainer .cr3-summary>div{padding-left:24px!important;padding-right:24px!important}
+#publicResultContainer .cr3-route,
+#publicResultContainer .cr3-journey,
+#publicResultContainer .cr3-details{padding-left:42px!important;padding-right:42px!important}
+#publicResultContainer .cr3-two-col{width:100%!important}
+#publicResultContainer .cr3-detail-grid{width:100%!important}
 
 .cr3-intelligence-remark{margin-top:18px!important}
 .cr3-time-note{color:#1688b8!important}
 .cr3-latest-event{color:#087d60!important}
 
+@media(max-width:900px){
+  #publicLandingView .one-content-wrap{padding:25px 16px 42px!important}
+  #publicResultContainer .customer-report-v3{width:100%!important;margin:14px 0 34px!important}
+  #publicResultContainer .cr3-hero-copy{padding:36px 24px 28px!important}
+  #publicResultContainer .cr3-route,
+  #publicResultContainer .cr3-journey,
+  #publicResultContainer .cr3-details{padding-left:24px!important;padding-right:24px!important}
+}
+
 @media(max-width:700px){
+  #publicLandingView .one-content-wrap{padding-left:10px!important;padding-right:10px!important}
   .cr3-latest-event{display:block!important;margin:6px 0 0!important}
 }
