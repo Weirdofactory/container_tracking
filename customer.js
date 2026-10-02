@@ -370,67 +370,99 @@
     wb.SheetNames.forEach(function(sheetName){
       var ws=wb.Sheets[sheetName];
       var matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
-      var headerIndex=findIgmHeaderRow(matrix);
-      if(headerIndex<0) return;
 
-      var headers=matrix[headerIndex].map(igmToText);
-      var hblCol=igmFindColumn(headers,["HBL No","HBL Number","House BL","House Bill","House BL No"]);
-      var mblCol=igmFindColumn(headers,["MBL No","MBL Number","BL No","Master BL","Bill No"]);
-      var igmCol=igmFindColumn(headers,["IGM No","IGM Number","IGM"]);
-      var hblDateCol=igmFindColumn(headers,["HBL Date","House BL Date"]);
-      var blDateCol=igmFindColumn(headers,["BL Date","Bill Date"]);
-      var lineCol=igmFindColumn(headers,["Line No","Line Number","Line"]);
-      var sublineCol=igmFindColumn(headers,["Subline No","Subline Number","Subline"]);
-      var movementCol=igmFindColumn(headers,["Cargo Movement","Movement"]);
-      var weightCol=igmFindColumn(headers,["Gross Weight","GrossWeight","Weight"]);
-      var weightUnitCol=igmFindColumn(headers,["Unit of Weight","Weight Unit","UOM"]);
-      var pkgCol=igmFindColumn(headers,["Total Package","Total Packages","Package","Packages","No of Packages"]);
-      var pkgCodeCol=igmFindColumn(headers,["Package Code","Pkg Code","Package Type"]);
-      var destCol=igmFindColumn(headers,["Port Destination","Port of Destination","Destination Port"]);
-      var descCol=igmFindColumn(headers,["Description of Goods","Desc of Goods","Goods Description","Cargo Description"]);
-      var igmDateCol=igmFindColumn(headers,["IGM Date","IGM Filing Date","IGM Date/Time"]);
-      var inwCol=igmFindColumn(headers,["INW Date","Inward Date","INW"]);
-      var gatewayCol=igmFindColumn(headers,["Gateway Port","Gateway","Port"]);
-      var voyageCol=igmFindColumn(headers,["Voyage Number","Voyage No","Voyage"]);
-      var imoCol=igmFindColumn(headers,["IMO No","IMO Number","IMO"]);
-      var vesselCodeCol=igmFindColumn(headers,["Vessel Code","Vessel ID"]);
-      var containerCol=igmFindColumn(headers,["Container No","Container Number","Container","Container No."]);
-      var statusCol=igmFindColumn(headers,["Container Status","Status"]);
+      function rowText(row){ return row.map(igmToText).join(" | ").toLowerCase(); }
+      function isBlank(row){ return !row || !row.some(function(v){ return igmToText(v)!==""; }); }
+      function isHblHeader(row){
+        var t=rowText(row);
+        return /house\s*bl\s*no/.test(t) && /bl\s*no/.test(t) && /cargo\s*movement/.test(t);
+      }
+      function isIgmHeader(row){
+        var t=rowText(row);
+        return /igm\s*no/.test(t) && /igm\s*date/.test(t) && /voyage\s*number/.test(t);
+      }
+      function isContainerHeader(row){
+        var t=rowText(row);
+        return /container\s*details/.test(t) && /container\s*status/.test(t);
+      }
+      function nextNonBlank(from){
+        for(var n=from;n<matrix.length;n++) if(!isBlank(matrix[n])) return n;
+        return -1;
+      }
 
-      for(var rowIndex=headerIndex+1;rowIndex<matrix.length;rowIndex++){
-        var row=matrix[rowIndex];
-        if(!row || !row.length) continue;
-        var hbl=hblCol>=0 ? igmToText(row[hblCol]) : "";
-        var container=containerCol>=0 ? igmToText(row[containerCol]) : "";
-        var mbl=mblCol>=0 ? igmToText(row[mblCol]) : fallbackMbl;
-        var igm=igmCol>=0 ? igmToText(row[igmCol]) : fallbackIgm;
-        if(!hbl || !container) continue;
+      for(var i=0;i<matrix.length;i++){
+        if(!isHblHeader(matrix[i])) continue;
 
-        all.push({
-          hbl_no:hbl,
-          mbl_no:mbl,
-          bl_date:blDateCol>=0?igmToText(row[blDateCol]):"",
-          hbl_date:hblDateCol>=0?igmToText(row[hblDateCol]):"",
-          line_number:lineCol>=0?igmToNumber(row[lineCol]):null,
-          subline_number:sublineCol>=0?igmToNumber(row[sublineCol]):null,
-          cargo_movement:movementCol>=0?igmToText(row[movementCol]):"",
-          gross_weight:weightCol>=0?igmToNumber(row[weightCol]):null,
-          unit_of_weight:weightUnitCol>=0?igmToText(row[weightUnitCol]):"",
-          total_package:pkgCol>=0?igmToNumber(row[pkgCol]):null,
-          package_code:pkgCodeCol>=0?igmToText(row[pkgCodeCol]):"",
-          port_destination:destCol>=0?igmToText(row[destCol]):"",
-          desc_of_goods:descCol>=0?igmToText(row[descCol]):"",
-          igm_no:igm,
-          igm_date:igmDateCol>=0?igmToText(row[igmDateCol]):"",
-          inw_date:inwCol>=0?igmToText(row[inwCol]):"",
+        var hblHeader=matrix[i].map(igmToText);
+        var hblDataIndex=nextNonBlank(i+1);
+        if(hblDataIndex<0) continue;
+        var hblData=matrix[hblDataIndex];
+
+        var hbl=igmPick(hblData,hblHeader,["House BL No","House Bill No","HBL No"]);
+        var mbl=igmPick(hblData,hblHeader,["BL No","Master BL","MBL No"]);
+        if(!hbl) continue;
+        if(!mbl) mbl=fallbackMbl;
+
+        var base={
+          hbl_no:hbl,mbl_no:mbl,
+          bl_date:igmPick(hblData,hblHeader,["BL Date","Bill Date"]),
+          hbl_date:igmPick(hblData,hblHeader,["House BL Date","HBL Date","House Bill Date"]),
+          line_number:igmToNumber(igmPick(hblData,hblHeader,["Line Number","Line No","Line"])),
+          subline_number:igmToNumber(igmPick(hblData,hblHeader,["Subline Number","Subline No","Subline"])),
+          cargo_movement:igmPick(hblData,hblHeader,["Cargo Movement","Movement"]),
+          gross_weight:igmToNumber(igmPick(hblData,hblHeader,["Gross Weight","GrossWeight","Weight"])),
+          unit_of_weight:igmPick(hblData,hblHeader,["Unit Of Weight","Unit of Weight","Weight Unit","UOM"]),
+          total_package:igmToNumber(igmPick(hblData,hblHeader,["Total Package","Total Packages","Packages","No of Packages"])),
+          package_code:igmPick(hblData,hblHeader,["Package Code","Pkg Code","Package Type"]),
+          port_destination:igmPick(hblData,hblHeader,["Port Destination","Destination Port"]),
+          desc_of_goods:igmPick(hblData,hblHeader,["Desc Of Goods","Description of Goods","Goods Description","Cargo Description"]),
+          igm_no:fallbackIgm,
+          igm_date:"",
+          inw_date:"",
           igm_file_name:sheetName,
-          gateway_port:gatewayCol>=0?igmToText(row[gatewayCol]):"",
-          voyage_number:voyageCol>=0?igmToText(row[voyageCol]):"",
-          imo_no:imoCol>=0?igmToText(row[imoCol]):"",
-          vessel_code:vesselCodeCol>=0?igmToText(row[vesselCodeCol]):"",
-          container_no:container,
-          container_status:statusCol>=0?igmToText(row[statusCol]):"LCL",
+          gateway_port:"",
+          voyage_number:"",
+          imo_no:"",
+          vessel_code:"",
           source_file_name:fileName
+        };
+
+        var containers=[];
+        for(var j=hblDataIndex+1;j<matrix.length;j++){
+          if(isHblHeader(matrix[j])) break;
+
+          if(isIgmHeader(matrix[j])){
+            var ih=matrix[j].map(igmToText);
+            var id=nextNonBlank(j+1);
+            if(id<0) continue;
+            base.igm_no=igmPick(matrix[id],ih,["IGM No","IGM Number","IGM"])||base.igm_no;
+            base.igm_date=igmPick(matrix[id],ih,["IGM Date","IGM Filing Date","IGM Date/Time"]);
+            base.inw_date=igmPick(matrix[id],ih,["INW Date","Inward Date","INW"]);
+            base.igm_file_name=igmPick(matrix[id],ih,["File Name","IGM File Name"])||sheetName;
+            base.gateway_port=igmPick(matrix[id],ih,["Gateway Port","Gateway"]);
+            base.voyage_number=igmPick(matrix[id],ih,["Voyage Number","Voyage No","Voyage"]);
+            base.imo_no=igmPick(matrix[id],ih,["IMO No","IMO Number","IMO"]);
+            base.vessel_code=igmPick(matrix[id],ih,["Vessel Code","Vessel ID"]);
+            j=id;
+            continue;
+          }
+
+          if(isContainerHeader(matrix[j])){
+            var ch=matrix[j].map(igmToText);
+            var cd=nextNonBlank(j+1);
+            if(cd<0) continue;
+            var container=igmPick(matrix[cd],ch,["Container Details","Container No","Container Number","Container"]);
+            var status=igmPick(matrix[cd],ch,["Container Status","Status"])||"LCL";
+            if(container) containers.push({container_no:container,container_status:status});
+            j=cd;
+          }
+        }
+
+        containers.forEach(function(cont){
+          all.push(Object.assign({},base,{
+            container_no:cont.container_no,
+            container_status:cont.container_status
+          }));
         });
       }
     });
