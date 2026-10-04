@@ -50,7 +50,7 @@ async function loadRows(){
   }
 }
 function renderKpis(list){const vals=list.reduce((a,r)=>{const s=st(r)[0];a.active+=s!=="RETURNED";a.done+=s==="RETURNED";a.portin+=s==="PORT IN";a.portout+=s==="PORT OUT";a.destuff+=s==="DE-STUFFED";return a},{active:0,done:0,portin:0,portout:0,destuff:0});se("kActive").textContent=vals.active;se("kDone").textContent=vals.done;se("kPortIn").textContent=vals.portin;se("kPortOut").textContent=vals.portout;se("kDestuff").textContent=vals.destuff;se("kTotal").textContent=list.length;const ht=se("heroTotal"),ha=se("heroActive"),hr=se("heroReturned");if(ht)ht.textContent=list.length;if(ha)ha.textContent=vals.active;if(hr)hr.textContent=vals.done}
-function filtered(){const q=sn(se("staffSearch").value),f=se("statusFilter").value;se("heroTotal").textContent=list.length;return rows.filter(r=>{const hay=[cnum(r),sf(r,["MBL NO","MBL"]),sf(r,["VESSEL & VOY","VESSEL"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");return(!q||hay.includes(q))&&(f==="all"||st(r)[0]===f)})}
+function filtered(){const q=sn(se("staffSearch").value),f=se("statusFilter").value;return rows.filter(r=>{const hay=[cnum(r),sf(r,["MBL NO","MBL"]),sf(r,["VESSEL & VOY","VESSEL"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");return(!q||hay.includes(q))&&(f==="all"||st(r)[0]===f)})}
 
 function renderTable(){
   const list=filtered();
@@ -67,7 +67,7 @@ function renderTable(){
   const countNode=se("staffCount");if(countNode)countNode.textContent=list.length+" shipments";
   renderKpis(list);
   try{renderOpsIntel(list)}catch(e){console.warn("Operations intelligence render skipped",e)}
-  try{renderSmartMetrics(list)}catch(e){console.warn("Smart metrics render skipped",e)}
+
 
   updateSelectAll();
 }
