@@ -162,3 +162,9 @@ body{font-size:14px}
 .s-toolbar-actions .s-btn{min-width:140px}
 @media(max-width:900px){.s-toolbar{grid-template-columns:1fr}.s-toolbar-actions{grid-column:1}.s-toolbar-actions .s-btn{flex:1;min-width:125px}}
 @media(max-width:700px){.s-toolbar-actions{display:grid;grid-template-columns:1fr 1fr}.s-toolbar-actions .s-btn{width:100%}}
+
+
+/* STAFF V9 — one authoritative action toolbar */
+.s-head-live{display:inline-flex;align-items:center;gap:7px;padding:10px 13px;border:1px solid #cfe5d9;background:#f3fbf6;color:#087c47;border-radius:9px;font-size:11px;font-weight:900;letter-spacing:.04em}
+.s-toolbar-actions{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:2px}
+.s-toolbar-actions .s-btn{min-width:145px}
