@@ -1,76 +1,92 @@
-
 const S_URL="https://ykeucqritoexykqrggzz.supabase.co";
 const S_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
-const SSB=supabase.createClient(S_URL,S_KEY); const APP=window.GML_APP_CONFIG||{appName:"CargoTrack",appShort:"CT",appTagline:"SHIPMENT CONTROL CENTER"};
+const SSB=supabase.createClient(S_URL,S_KEY);
+const APP=window.GML_APP_CONFIG||{appName:"CargoTrack",appShort:"CT",appTagline:"SHIPMENT CONTROL CENTER",companyName:"",supportEmail:"",supportWhatsApp:""};
 const se=id=>document.getElementById(id);
 const sx=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const sf=(r,n)=>{for(const x of n){if(r?.[x]!==undefined&&String(r[x]??"").trim()!=="")return r[x]}return""};
+const sf=(r,n)=>{for(const x of n){if(r?.[x]!==undefined&&String(r[x]??"").trim()!=="")return r[x]}return"";
+};
 const sn=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
-const sd=v=>{if(!v)return"—";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})};
+const sd=v=>{if(!v)return"—";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+};
 const st=r=>sf(r,["CONTAINER RETURN DATE"])?["RETURNED","good"]:sf(r,["DESTUFFING DATE"])?["DE-STUFFED","good"]:sf(r,["CFS IN"])?["CFS IN","good"]:sf(r,["PORT OUT"])?["PORT OUT","warn"]:sf(r,["PORT IN"])?["PORT IN","warn"]:sf(r,["INWARD DATE"])?["INWARD GRANTED","warn"]:sf(r,["ETD"])?["IN TRANSIT","warn"]:["PENDING","bad"];
-let rows=[],session=null,editingIndex=-1;
+const cnum=r=>sf(r,["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]);
+let rows=[],session=null,editingIndex=-1,selected=new Set();
 
 function show(id,on=true){se(id).style.display=on?"":"none"}
-function notify(msg){const n=se("staffNotice");n.textContent=msg;n.classList.add("open");setTimeout(()=>n.classList.remove("open"),2200)}
+function notify(msg){const n=se("staffNotice");if(!n)return;n.textContent=msg;n.classList.add("open");setTimeout(()=>n.classList.remove("open"),2200)}
+function applyBrand(){document.querySelectorAll("[data-app-name]").forEach(el=>el.textContent=APP.appName);document.querySelectorAll("[data-app-short]").forEach(el=>el.textContent=APP.appShort||"CT");document.querySelectorAll("[data-app-tagline]").forEach(el=>el.textContent="OPERATIONS CONTROL");document.querySelectorAll("[data-app-context]").forEach(el=>el.textContent=APP.appTagline||"SHIPMENT CONTROL CENTER");document.querySelectorAll("[data-page-title]").forEach(el=>el.textContent=APP.appName+" — Operations Control")}
+applyBrand();
 
 async function login(){
-  const code=String(se("accessCode").value||"").trim().toLowerCase();
-  if(!code)return;
+  const code=String(se("accessCode").value||"").trim().toLowerCase();if(!code)return;
   se("loginBtn").disabled=true;se("loginBtn").textContent="Verifying…";
-  try{
-    const {data,error}=await SSB.from("user_roles").select("user_id,role,username").eq("access_code",code).single();
-    if(error||!data)throw new Error("Invalid access code.");
-    session=data;localStorage.setItem("gml_staff_session",JSON.stringify(data));
-    show("loginScreen",false);show("staffApp",true);bootStaff();
-  }catch(e){se("loginError").textContent=e.message;show("loginError",true)}
+  try{const {data,error}=await SSB.from("user_roles").select("user_id,role,username").eq("access_code",code).single();if(error||!data)throw new Error("Invalid access code.");session=data;localStorage.setItem("gml_staff_session",JSON.stringify(data));show("loginScreen",false);show("staffApp",true);bootStaff();}
+  catch(e){se("loginError").textContent=e.message;show("loginError",true)}
   finally{se("loginBtn").disabled=false;se("loginBtn").textContent="Sign In"}
 }
 function logout(){localStorage.removeItem("gml_staff_session");location.reload()}
 function loadSession(){try{session=JSON.parse(localStorage.getItem("gml_staff_session")||"null")}catch(e){session=null}}
-async function loadRows(){
-  const {data,error}=await SSB.from("containers").select("data").eq("id","gml_tracking_records").single();
-  if(error)throw error;
-  rows=Array.isArray(data?.data)?data.data:[];return rows;
-}
-function renderKpis(list){
-  const vals=list.reduce((a,r)=>{const s=st(r)[0];a.active+=s!=="RETURNED";a.done+=s==="RETURNED";a.portin+=s==="ARRIVED AT PORT";a.portout+=s==="PORT OUT";a.destuff+=s==="DE-STUFFED";return a},{active:0,done:0,portin:0,portout:0,destuff:0});
-  se("kActive").textContent=vals.active;se("kDone").textContent=vals.done;se("kPortIn").textContent=vals.portin;se("kPortOut").textContent=vals.portout;se("kDestuff").textContent=vals.destuff;se("kTotal").textContent=list.length;
-}
-function filtered(){
-  const q=sn(se("staffSearch").value),f=se("statusFilter").value;
-  return rows.filter(r=>{const hay=[sf(r,["CONTAINER NO."]),sf(r,["MBL NO"]),sf(r,["VESSEL & VOY"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");const okQ=!q||hay.includes(q);const s=st(r)[0];const okF=f==="all"||s===f;return okQ&&okF})
-}
+
+async function loadRows(){const {data,error}=await SSB.from("containers").select("data").eq("id","gml_tracking_records").single();if(error)throw error;rows=Array.isArray(data?.data)?data.data:[];selected.clear();return rows}
+function renderKpis(list){const vals=list.reduce((a,r)=>{const s=st(r)[0];a.active+=s!=="RETURNED";a.done+=s==="RETURNED";a.portin+=s==="PORT IN";a.portout+=s==="PORT OUT";a.destuff+=s==="DE-STUFFED";return a},{active:0,done:0,portin:0,portout:0,destuff:0});se("kActive").textContent=vals.active;se("kDone").textContent=vals.done;se("kPortIn").textContent=vals.portin;se("kPortOut").textContent=vals.portout;se("kDestuff").textContent=vals.destuff;se("kTotal").textContent=list.length}
+function filtered(){const q=sn(se("staffSearch").value),f=se("statusFilter").value;return rows.filter(r=>{const hay=[cnum(r),sf(r,["MBL NO","MBL"]),sf(r,["VESSEL & VOY","VESSEL"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");return(!q||hay.includes(q))&&(f==="all"||st(r)[0]===f)})}
+
 function renderTable(){
   const list=filtered();renderKpis(list);se("staffCount").textContent=list.length+" shipments";
-  se("staffBody").innerHTML=list.slice(0,200).map((r)=>{
-    const idx=rows.indexOf(r),s=st(r),c=sf(r,["CONTAINER NO."]),m=sf(r,["MBL NO"]),v=sf(r,["VESSEL & VOY"]),p=sf(r,["POL"]),g=sf(r,["GATEWAY PORT"]),eta=sf(r,["ETA"]);
-    return '<tr><td><button class="s-link" data-edit="'+idx+'">'+sx(c||"—")+'</button></td><td>'+sx(m||"—")+'</td><td>'+sx(sf(r,["LINER"])||"—")+'</td><td>'+sx(p||"—")+'</td><td>'+sx(g||"—")+'</td><td>'+sx(v||"—")+'</td><td>'+sx(sd(eta))+'</td><td><span class="s-status '+s[1]+'">'+sx(s[0])+'</span></td></tr>';
-  }).join("")||'<tr><td colspan="8" style="padding:30px;text-align:center;color:#7e8da0">No shipments match the current filter.</td></tr>';
+  se("staffBody").innerHTML=list.slice(0,300).map(r=>{const idx=rows.indexOf(r),s=st(r),c=cnum(r),m=sf(r,["MBL NO","MBL"]),v=sf(r,["VESSEL & VOY"]),p=sf(r,["POL"]),g=sf(r,["GATEWAY PORT"]),eta=sf(r,["ETA"]);
+    return '<tr><td class="s-check-col"><input type="checkbox" class="row-check" data-row="'+idx+'" '+(selected.has(idx)?"checked":"")+' aria-label="Select '+sx(c)+'"></td><td><button class="s-link" data-edit="'+idx+'">'+sx(c||"—")+'</button></td><td>'+sx(m||"—")+'</td><td>'+sx(sf(r,["LINER"])||"—")+'</td><td>'+sx(p||"—")+'</td><td>'+sx(g||"—")+'</td><td>'+sx(v||"—")+'</td><td>'+sx(sd(eta))+'</td><td><span class="s-status '+s[1]+'">'+sx(s[0])+'</span></td></tr>'}).join("")||'<tr><td colspan="9" style="padding:35px;text-align:center;color:#7e8da0">No shipments match the current filter.</td></tr>';
   se("staffBody").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openEditor(Number(b.dataset.edit))));
+  se("staffBody").querySelectorAll(".row-check").forEach(b=>b.addEventListener("change",()=>{const i=Number(b.dataset.row);b.checked?selected.add(i):selected.delete(i);updateSelectAll()}));
+  updateSelectAll();
 }
-function openEditor(i){
-  editingIndex=i;const r=rows[i]||{};
-  const map=[
-    ["CONTAINER NO.","Container Number"],["TYPE","Size / Type"],["MBL NO","MBL Number"],["LINER","Liner"],
-    ["GATEWAY PORT","Gateway Port"],["CFS NAME","CFS"],["POL","POL"],["ETD","ETD"],["ETA","ETA"],["INWARD DATE","Inward Date"],
-    ["PORT IN","Port In"],["PORT OUT","Port Out"],["CFS IN","CFS In"],["DESTUFFING DATE","Destuffing Date"],["CONTAINER RETURN DATE","Empty Return"],["VESSEL & VOY","Vessel / Voyage"]
-  ];
-  se("editFields").innerHTML=map.map(([k,l])=>'<div><label class="s-label">'+sx(l)+'</label><input class="s-input edit-input" data-field="'+sx(k)+'" value="'+sx(r[k]||"")+'"></div>').join("");
-  se("editDrawer").classList.add("open");
-}
-async function saveEditor(){
-  if(editingIndex<0)return;const r=rows[editingIndex];
-  se("saveEdit").disabled=true;try{
-    se("editFields").querySelectorAll(".edit-input").forEach(x=>{r[x.dataset.field]=x.value});
-    if(!["Admin","Editor"].includes(session.role))throw new Error("Editor access required.");
-    const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});if(error)throw error;
-    se("editDrawer").classList.remove("open");notify("Shipment updated.");renderTable();
-  }catch(e){alert(e.message)}finally{se("saveEdit").disabled=false}
-}
+function updateSelectAll(){const list=filtered();const visible=list.slice(0,300).map(r=>rows.indexOf(r));const all=visible.length>0&&visible.every(i=>selected.has(i));const sa=se("selectAllRows");if(sa)sa.checked=all}
+function selectedRows(){return [...selected].map(i=>rows[i]).filter(Boolean)}
+function requireSelection(){const r=selectedRows();if(!r.length){notify("Select at least one shipment first.");return null}return r}
+
+function openEditor(i){editingIndex=i;const r=rows[i]||{};const map=[["CONTAINER NO.","Container Number"],["TYPE","Size / Type"],["MBL NO","MBL Number"],["LINER","Liner"],["GATEWAY PORT","Gateway Port"],["CFS NAME","CFS"],["POL","POL"],["ETD","ETD"],["ETA","ETA"],["INWARD DATE","Inward Date"],["PORT IN","Port In"],["PORT OUT","Port Out"],["CFS IN","CFS In"],["DESTUFFING DATE","Destuffing Date"],["CONTAINER RETURN DATE","Empty Return"],["VESSEL & VOY","Vessel / Voyage"]];se("editFields").innerHTML=map.map(([k,l])=>'<div><label class="s-label">'+sx(l)+'</label><input class="s-input edit-input" data-field="'+sx(k)+'" value="'+sx(r[k]||"")+'"></div>').join("");se("editDrawer").classList.add("open")}
+async function saveEditor(){if(editingIndex<0)return;const r=rows[editingIndex];se("saveEdit").disabled=true;try{se("editFields").querySelectorAll(".edit-input").forEach(x=>r[x.dataset.field]=x.value);if(!["Admin","Editor"].includes(session.role))throw new Error("Editor access required.");const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});if(error)throw error;se("editDrawer").classList.remove("open");notify("Shipment updated.");renderTable()}catch(e){alert(e.message)}finally{se("saveEdit").disabled=false}}
+
 function norm(v){return String(v??"").trim()}
 function normHeader(v){return norm(v).toLowerCase().replace(/[^a-z0-9]+/g,"")}
-function findCol(headers,cands){const n=headers.map(normHeader);for(const c of cands){const t=normHeader(c);const i=n.indexOf(t);if(i>=0)return i}for(const c of cands){const t=normHeader(c);const i=n.findIndex(h=>h.includes(t)||t.includes(h));if(i>=0)return i}return-1}
-function hnum(v){const n=Number(String(v??"").replace(/,/g,""));return Number.isFinite(n)?n:null}
+function findCol(headers,cands){const n=headers.map(normHeader);for(const c of cands){const t=normHeader(c),i=n.indexOf(t);if(i>=0)return i}for(const c of cands){const t=normHeader(c),i=n.findIndex(h=>h.includes(t)||t.includes(h));if(i>=0)return i}return-1}
+function parseWorkbookRows(file){return file.arrayBuffer().then(buf=>{const wb=XLSX.read(buf,{type:"array",raw:false,cellDates:false});const sheet=wb.Sheets[wb.SheetNames[0]];const data=XLSX.utils.sheet_to_json(sheet,{defval:"",raw:false});if(!data.length)throw new Error("The selected file contains no rows.");return data})}
+async function importTracking(){
+  if(!["Admin","Editor"].includes(session.role))throw new Error("Admin / Editor access required.");
+  const file=se("trackingFile").files[0];if(!file)throw new Error("Select an Excel or CSV file.");
+  const incoming=await parseWorkbookRows(file);const existingBy={};rows.forEach((r,i)=>{const k=sn(cnum(r));if(k)existingBy[k]=i});
+  let added=0,updated=0;
+  incoming.forEach(rec=>{const cleanRec={};Object.keys(rec).forEach(k=>{const key=norm(k);if(key)cleanRec[key]=rec[k]});const k=sn(cnum(cleanRec));if(!k)return;if(existingBy[k]!==undefined){rows[existingBy[k]]={...rows[existingBy[k]],...cleanRec};updated++}else{rows.push(cleanRec);existingBy[k]=rows.length-1;added++}});
+  const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});if(error)throw error;
+  se("importSummary").innerHTML='<div class="s-import-result"><b>Bulk import complete</b><br>'+added+' new shipments added • '+updated+' existing shipments updated.</div>';renderTable();notify("Bulk import saved.");se("trackingFile").value="";
+}
+function exportExcel(){
+  const list=selectedRows();const data=list.length?list:filtered();if(!data.length){notify("No shipment data to export.");return}
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),"Tracking_Data");XLSX.writeFile(wb,(APP.appName||"CargoTrack")+"_Shipments_"+new Date().toISOString().slice(0,10)+".xlsx");notify("Excel download started.");
+}
+
+function makeFeatureModal(id,title,subtitle,body,footer){
+  const old=se(id);if(old)old.remove();const m=document.createElement("div");m.id=id;m.className="s-feature-modal";m.innerHTML='<div class="s-feature-card"><div class="s-feature-head"><div><div class="s-kicker">OPERATIONS TOOL</div><h3>'+sx(title)+'</h3><p>'+sx(subtitle)+'</p></div><button class="s-btn" data-close>✕</button></div><div class="s-feature-body">'+body+'</div><div class="s-feature-foot">'+footer+'</div></div>';document.body.appendChild(m);m.querySelector("[data-close]").addEventListener("click",()=>m.remove());return m}
+
+function openWhatsApp(){
+  const list=requireSelection();if(!list)return;
+  const date=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+  const text="*"+(APP.appName||"CargoTrack")+" • SHIPMENT UPDATE*\n"+date+"\n\n"+list.map((r,i)=>{const c=cnum(r)||"—",s=st(r)[0],v=sf(r,["VESSEL & VOY","VESSEL"])||"—",eta=sd(sf(r,["ETA"])),pod=sf(r,["GATEWAY PORT"])||"—";return (i+1)+". *"+c+"*\nStatus: "+s+"\nVessel: "+v+"\nETA: "+eta+"\nGateway: "+pod}).join("\n\n")+"\n\nPlease contact operations for further assistance.";
+  const m=makeFeatureModal("waModal","WhatsApp Message Composer","Prepare a formatted message for the selected shipments.",'<textarea class="s-wa-text" id="waText">'+sx(text)+'</textarea>','<button class="s-btn" data-copy>📋 Copy Message</button><a class="s-btn blue" id="waOpen" target="_blank" rel="noopener">Open in WhatsApp ↗</a>');
+  m.querySelector("[data-copy]").addEventListener("click",async()=>{await navigator.clipboard?.writeText(text);notify("Message copied.");});
+  const number=String(APP.supportWhatsApp||"").replace(/\D/g,"");m.querySelector("#waOpen").href=number?"https://wa.me/"+number+"?text="+encodeURIComponent(text):"https://wa.me/?text="+encodeURIComponent(text);
+  m.classList.add("open");
+}
+
+async function downloadStatusPhoto(){
+  const list=requireSelection();if(!list)return;if(typeof html2canvas!=="function"){notify("Status photo engine unavailable.");return}
+  const rowsHtml=list.map(r=>{const s=st(r),c=cnum(r)||"—",v=sf(r,["VESSEL & VOY","VESSEL"])||"—",eta=sd(sf(r,["ETA"])),route=(sf(r,["POL"])||"—")+" → "+(sf(r,["GATEWAY PORT"])||"—");return '<div class="s-status-row"><div><small>Container</small><b>'+sx(c)+'</b></div><div><small>Status</small><b>'+sx(s[0])+'</b></div><div><small>Vessel / Route</small><b>'+sx(v)+'<br>'+sx(route)+'</b></div><div><small>ETA</small><b>'+sx(eta)+'</b></div></div>'}).join("");
+  const host=makeFeatureModal("photoModal","Status Photo","Create a share-ready image for the selected shipments.",'<div class="s-status-canvas" id="statusCanvas"><div class="s-status-head"><small>'+sx(APP.appTagline||"SHIPMENT CONTROL CENTER")+'</small><h3>'+sx(APP.appName||"CargoTrack")+' — Shipment Status</h3><p>'+new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"long",year:"numeric"})+' • '+list.length+' shipment'+(list.length===1?"":"s")+'</p></div><div class="s-status-list">'+rowsHtml+'</div></div>','<button class="s-btn" data-close>Close</button><button class="s-btn blue" id="downloadStatus">⬇ Download PNG</button>');
+  host.classList.add("open");
+  host.querySelector("#downloadStatus").addEventListener("click",async()=>{const canvas=await html2canvas(host.querySelector("#statusCanvas"),{backgroundColor:"#ffffff",scale:2,useCORS:true});canvas.toBlob(blob=>{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(APP.appName||"CargoTrack")+"_Status_"+Date.now()+".png";a.click();URL.revokeObjectURL(a.href);notify("Status photo downloaded.")},"image/png")});
+  host.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>host.remove()));
+}
+
 function parseIgm(file){
   return file.arrayBuffer().then(buf=>{
     if(typeof XLSX==="undefined")throw new Error("Excel parser unavailable.");
@@ -112,9 +128,23 @@ async function importIgm(){
   let count=0;for(let i=0;i<recs.length;i+=250){const chunk=recs.slice(i,i+250);const {data,error}=await SSB.rpc("import_igm_hbl_rows",{p_user_id:session.user_id,p_rows:chunk});if(error)throw error;count+=Number(data?.imported||chunk.length)}
   se("importSummary").innerHTML='<div class="s-import-result"><b>Import complete</b><br>'+recs.length+' HBL/container rows detected and '+count+' rows submitted to the database.</div>';
 }
-function bootStaff(){document.querySelectorAll("[data-app-name]").forEach(el=>el.textContent=APP.appName);document.querySelectorAll("[data-app-short]").forEach(el=>el.textContent=APP.appShort||"CT");document.querySelectorAll("[data-app-tagline]").forEach(el=>el.textContent="OPERATIONS CONTROL");document.querySelectorAll("[data-app-context]").forEach(el=>el.textContent=APP.appTagline||"SHIPMENT CONTROL CENTER");document.querySelectorAll("[data-page-title]").forEach(el=>el.textContent=APP.appName+" — Operations Control");se("staffUsername").textContent=session.username||"Staff";se("staffRole").textContent=session.role||"Staff";loadRows().then(renderTable).catch(e=>alert(e.message))}
+
+function applySelectAll(){const list=filtered().slice(0,300);const checked=se("selectAllRows").checked;list.forEach(r=>{const i=rows.indexOf(r);checked?selected.add(i):selected.delete(i)});renderTable()}
+function bootStaff(){applyBrand();se("staffUsername").textContent=session.username||"Staff";se("staffRole").textContent=session.role||"Staff";loadRows().then(renderTable).catch(e=>alert(e.message))}
+
 loadSession();
 if(session){show("loginScreen",false);show("staffApp",true);bootStaff()}
-se("loginBtn").addEventListener("click",login);se("logoutBtn").addEventListener("click",logout);se("staffSearch").addEventListener("input",renderTable);se("statusFilter").addEventListener("change",renderTable);
-se("refreshBtn").addEventListener("click",()=>loadRows().then(renderTable));se("saveEdit").addEventListener("click",saveEditor);se("closeEdit").addEventListener("click",()=>se("editDrawer").classList.remove("open"));
+se("loginBtn").addEventListener("click",login);
+se("logoutBtn").addEventListener("click",logout);
+se("staffSearch").addEventListener("input",renderTable);
+se("statusFilter").addEventListener("change",renderTable);
+se("refreshBtn").addEventListener("click",()=>loadRows().then(renderTable).catch(e=>alert(e.message)));
+se("saveEdit").addEventListener("click",saveEditor);
+se("closeEdit").addEventListener("click",()=>se("editDrawer").classList.remove("open"));
 se("igmFile").addEventListener("change",()=>importIgm().catch(e=>{se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>'}));
+se("trackingFile").addEventListener("change",()=>importTracking().catch(e=>{se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>'}));
+se("importTrackingBtn").addEventListener("click",()=>se("trackingFile").click());
+se("exportBtn").addEventListener("click",exportExcel);
+se("statusPhotoBtn").addEventListener("click",downloadStatusPhoto);
+se("whatsappBtn").addEventListener("click",openWhatsApp);
+se("selectAllRows").addEventListener("change",applySelectAll);
