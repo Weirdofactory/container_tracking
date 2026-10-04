@@ -1,13 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title data-page-title>CargoTrack — Operations Control</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-page-title>CargoTrack — Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./staff.css?v=20261004-v35-pro-polish">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./staff.css?v=20261004-v40-clean">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -17,15 +16,18 @@
 
 <section id="loginScreen" class="login-screen">
   <div class="login-card">
-    <div class="brand-row"><div class="brand-mark"><span data-app-short>CT</span></div><div><b data-app-name>CARGOTRACK</b><small data-app-tagline>SHIPMENT CONTROL CENTER</small></div></div>
-    <div class="login-kicker">SECURE OPERATIONS ACCESS</div>
-    <h1>Run your shipment network from one control tower.</h1>
-    <p>Container movement, milestone control, customs-linked HBL data and operational actions in one professional workspace.</p>
-    <label class="field-label" for="accessCode">ACCESS CODE</label>
-    <div class="login-field"><span>⌁</span><input id="accessCode" class="field" type="password" placeholder="Enter authorized access code" autocomplete="current-password"></div>
-    <button id="loginBtn" class="btn primary login-submit">Enter Control Tower</button>
+    <div class="brand-row">
+      <div class="brand-mark"><span data-app-short>CT</span></div>
+      <div><b data-app-name>CARGOTRACK</b><small data-app-tagline>SHIPMENT CONTROL CENTER</small></div>
+    </div>
+    <div class="login-kicker">STAFF ACCESS</div>
+    <h1>Operations, without the clutter.</h1>
+    <p>A focused workspace for shipment milestones, customs data and daily operations.</p>
+    <label class="field-label" for="accessCode">Access code</label>
+    <input id="accessCode" class="field" type="password" autocomplete="current-password" placeholder="Enter your access code">
+    <button id="loginBtn" class="btn primary login-submit">Sign in</button>
     <div id="loginError" class="login-error"></div>
-    <div class="login-meta"><span>● Secure session</span><span>Live operational source</span></div>
+    <div class="login-meta"><span>Secure session</span><span>Live shipment source</span></div>
   </div>
 </section>
 
@@ -33,77 +35,94 @@
 <header class="topbar">
   <div class="topbar-inner">
     <a class="brand" href="#overview"><div class="brand-mark small"><span data-app-short>CT</span></div><div><b data-app-name>CARGOTRACK</b><small data-app-tagline>SHIPMENT CONTROL CENTER</small></div></a>
-    <div class="top-context"><span class="pulse"></span><div><b id="liveState">LIVE DATA</b><small id="dataSourceStatus">Connected to shipment source</small></div></div>
-    <div class="top-search"><span>⌕</span><input id="opsCommand" placeholder="Search container, MBL, vessel…" autocomplete="off"><kbd>/</kbd></div>
-    <div class="top-actions"><button class="btn" id="refreshBtn">Refresh</button><button class="btn ghost" onclick="location.href='./'">Customer Portal</button><button class="btn danger" id="logoutBtn">Logout</button><div class="user-chip"><span id="staffUsername">STAFF</span><b id="staffRole">Admin</b></div></div>
+    <div class="top-search"><span>⌕</span><input id="opsCommand" placeholder="Search container, MBL or vessel…" autocomplete="off"><kbd>/</kbd></div>
+    <div class="top-right"><div class="live-pill"><i></i><b id="liveState">LIVE</b><small id="dataSourceStatus">Connecting…</small></div><button class="btn" id="refreshBtn">Refresh</button><button class="btn ghost" onclick="location.href='./'">Customer Portal</button><button class="btn danger" id="logoutBtn">Logout</button><div class="user-chip"><span id="staffUsername">STAFF</span><b id="staffRole">Admin</b></div></div>
   </div>
 </header>
 
-<div class="layout">
-<aside class="sidebar">
-  <div class="side-title">WORKSPACE</div>
-  <a class="nav-link active" href="#overview"><span class="nav-dot"></span>Overview</a>
-  <a class="nav-link" href="#shipments"><span class="nav-dot"></span>Shipments</a>
-  <a class="nav-link" href="#exceptions"><span class="nav-dot"></span>Exceptions <b id="sideAlertCount">0</b></a>
-  <a class="nav-link" href="#customs"><span class="nav-dot"></span>Customs / IGM</a>
-  <div class="sidebar-rule"></div>
-  <div class="sidebar-rule"></div>
-  <div class="sidebar-footer"><span>DATA STATUS</span><b id="networkHealth">—</b><small id="healthText">Checking live source…</small><div class="health-bar"><i id="healthBar"></i></div></div><div class="health-bar"><i id="healthBar"></i></div><small id="healthText">Checking data quality…</small></div>
-</aside>
-
-<main class="main">
-<section class="page-head" id="overview">
-  <div><div class="eyebrow">OPERATIONS CONTROL • LIVE</div><h1>Shipment operations</h1><p>One clean view of containers, milestones, exceptions, vessel arrivals and customs activity.</p></div>
-  <div class="page-head-right"><div class="date-box"><span>LOCAL TIME</span><b id="clockNow">--:--:--</b><small id="dateNow">--</small></div><div class="record-box"><span>LIVE RECORDS</span><b id="heroTotal">0</b><small>shipment rows</small></div><div class="record-box compact"><span>ACTIVE</span><b id="heroActive">0</b><small>open</small></div><div class="record-box compact"><span>RETURNED</span><b id="heroReturned">0</b><small>closed</small></div></div>
+<main class="page">
+<section class="intro" id="overview">
+  <div><div class="eyebrow">OPERATIONS CONTROL</div><h1>Shipment operations</h1><p>One calm view of what is moving, what needs attention and what has been completed.</p></div>
+  <div class="intro-time"><span>LOCAL TIME</span><b id="clockNow">--:--:--</b><small id="dateNow">--</small></div>
 </section>
 
-<section class="kpis">
-  <article class="kpi"><div class="kpi-head"><span>ACTIVE</span><i>●</i></div><b id="kActive">0</b><small>Open shipments</small><em>In motion</em></article>
-  <article class="kpi green"><div class="kpi-head"><span>RETURNED</span><i>✓</i></div><b id="kDone">0</b><small>Completed units</small><em>Closed</em></article>
-  <article class="kpi amber"><div class="kpi-head"><span>PORT IN</span><i>↘</i></div><b id="kPortIn">0</b><small>Awaiting port action</small><em>Attention</em></article>
-  <article class="kpi amber"><div class="kpi-head"><span>PORT OUT</span><i>↗</i></div><b id="kPortOut">0</b><small>Release stage</small><em>Attention</em></article>
-  <article class="kpi red"><div class="kpi-head"><span>DESTUFFING</span><i>▤</i></div><b id="kDestuff">0</b><small>Pending de-stuff</small><em>Follow-up</em></article>
-  <article class="kpi"><div class="kpi-head"><span>TOTAL</span><i>Σ</i></div><b id="kTotal">0</b><small>Loaded records</small><em>Source of truth</em></article>
+<section class="summary-row">
+  <div class="summary-main"><span>LIVE SHIPMENTS</span><b id="heroTotal">0</b><small>records in the operational source</small></div>
+  <div><div><span>ACTIVE</span><b id="heroActive">0</b><small>open</small></div></div>
+  <div><div><span>RETURNED</span><b id="heroReturned">0</b><small>completed</small></div></div>
+  <div><div><span>ETA ≤ 3 DAYS</span><b id="heroEtaSoon">0</b><small>upcoming</small></div></div>
+  <div class="health-card"><span>DATA HEALTH</span><b id="networkHealth">—</b><small id="healthText">Checking…</small><div class="health-track"><i id="healthBar"></i></div></div>
 </section>
-
-<section class="diagnostics-strip"><article><span>DATA QUALITY</span><b id="healthMissing">0</b><small>records missing core fields</small></article><article><span>ETA WINDOW</span><b id="etaWindow">0</b><small>arriving within 3 days</small></article><article><span>CFS WORKLOAD</span><b id="cfsWorkload">0</b><small>awaiting de-stuffing</small></article><article><span>COMPLETION</span><b id="completionRate">0%</b><small>returned / total</small></article></section>
 
 <section class="workspace-card" id="shipments">
   <div class="workspace-head">
-    <div><div class="eyebrow dark">LIVE DATA GRID</div><h2>Container shipments</h2><p>Search, select, edit and operate directly on live shipment records.</p></div>
-    <div class="workspace-meta"><span class="status-dot"></span><b id="staffCount">0 shipments</b></div>
+    <div><div class="eyebrow dark">SHIPMENT WORKSPACE</div><h2>Container shipments</h2><p>Search and operate on the live records. Click a container to edit milestones.</p></div>
+    <div class="workspace-count"><span class="status-dot"></span><b id="staffCount">0 shipments</b></div>
   </div>
+
   <div class="action-bar">
     <div class="selection"><span id="selectedCount">0</span> selected</div>
     <div class="actions">
       <button class="btn blue" id="importTrackingBtn">Bulk Import</button>
       <button class="btn" id="exportBtn">Download Excel</button>
-      <button class="btn feature" id="statusPhotoBtn">Status Photo</button>
-      <button class="btn feature" id="whatsappBtn">WhatsApp</button>
-      <button class="btn feature" id="bulkUpdateBtn">Bulk Update</button>
+      <button class="btn" id="statusPhotoBtn">Status Photo</button>
+      <button class="btn" id="whatsappBtn">WhatsApp</button>
+      <button class="btn" id="bulkUpdateBtn">Bulk Update</button>
     </div>
   </div>
+
   <div class="filter-bar">
     <input id="staffSearch" class="field" placeholder="Search container, MBL, vessel, liner, POL or gateway…">
     <select id="statusFilter" class="field"><option value="all">All Status</option><option>IN TRANSIT</option><option>INWARD GRANTED</option><option>PORT IN</option><option>PORT OUT</option><option>CFS IN</option><option>DE-STUFFED</option><option>RETURNED</option><option>PENDING</option></select>
-    <button class="quick-filter active" data-filter="all">All</button><button class="quick-filter" data-filter="open">Open</button><button class="quick-filter" data-filter="attention">Attention</button>
+    <button class="quick-filter active" data-filter="all">All</button>
+    <button class="quick-filter" data-filter="open">Open</button>
+    <button class="quick-filter" data-filter="attention">Attention</button>
   </div>
-  <div class="table-wrap"><table class="data-table"><thead><tr><th class="check-col"><input id="selectAllRows" type="checkbox"></th><th>CONTAINER</th><th>MBL</th><th>LINE</th><th>POL</th><th>GATEWAY</th><th>VESSEL / VOYAGE</th><th>ETA</th><th>STATUS</th></tr></thead><tbody id="staffBody"><tr><td colspan="9" class="table-loading">Loading live shipment data…</td></tr></tbody></table></div>
-  <div class="table-foot"><span>Click a container number to edit milestones</span><span id="tableResultNote">Loading…</span></div>
+
+  <div class="table-wrap">
+    <table class="s-table data-table">
+      <thead><tr><th class="s-check-col check-col"><input id="selectAllRows" type="checkbox"></th><th>CONTAINER</th><th>MBL</th><th>LINE</th><th>POL</th><th>GATEWAY</th><th>VESSEL / VOYAGE</th><th>ETA</th><th>STATUS</th></tr></thead>
+      <tbody id="staffBody"><tr><td colspan="9" class="table-loading">Loading shipment records…</td></tr></tbody>
+    </table>
+  </div>
+  <div class="table-foot"><span>Live source • shipment tracking records</span><span id="tableResultNote">Loading…</span></div>
 </section>
 
 <section class="insights" id="exceptions">
-  <article class="panel"><div class="panel-head"><div><div class="eyebrow dark">SMART OPERATIONS</div><h2>Exceptions & next actions</h2></div><b id="alertCount">0 alerts</b></div><div class="intel-banner"><span class="intel-pulse"></span><div><b>Priority queue</b><small>Rule-based signals from the live shipment dataset</small></div><em>AUTOMATED</em></div><div id="alertsHost" class="alert-list"><div class="empty">Analyzing shipment data…</div></div></article>
-  <article class="panel"><div class="panel-head"><div><div class="eyebrow dark">VESSEL PIPELINE</div><h2>Upcoming arrivals</h2></div><b id="vesselCount">0 vessels</b></div><div class="next-arrival"><div><span>NEXT ETA</span><b id="nextVesselEta">—</b></div><div><span>ROUTE</span><b id="nextVesselRoute">—</b></div></div><div class="mini-table-wrap"><table class="mini-table"><thead><tr><th>VESSEL / VOYAGE</th><th>POL</th><th>GATEWAY</th><th>ETA</th><th>CTR</th></tr></thead><tbody id="vesselBody"></tbody></table></div></article>
+  <article class="panel">
+    <div class="panel-head"><div><div class="eyebrow dark">EXCEPTIONS</div><h2>Needs attention</h2></div><b id="alertCount">0</b></div>
+    <div id="alertsHost" class="alert-list"><div class="empty">Analyzing shipment activity…</div></div>
+  </article>
+  <article class="panel">
+    <div class="panel-head"><div><div class="eyebrow dark">VESSEL PIPELINE</div><h2>Upcoming arrivals</h2></div><b id="vesselCount">0 vessels</b></div>
+    <div class="next-arrival"><div><span>NEXT ETA</span><b id="nextVesselEta">—</b></div><div><span>ROUTE</span><b id="nextVesselRoute">—</b></div></div>
+    <div class="mini-table-wrap"><table class="mini-table"><thead><tr><th>VESSEL / VOYAGE</th><th>POL</th><th>GATEWAY</th><th>ETA</th><th>CTR</th></tr></thead><tbody id="vesselBody"></tbody></table></div>
+  </article>
 </section>
 
 <section class="lower-grid" id="customs">
-  <article class="panel"><div class="panel-head"><div><div class="eyebrow dark">CUSTOMS WORKSPACE</div><h2>IGM / HBL import</h2></div><b>ADMIN / EDITOR</b></div><label class="dropzone" for="igmFile"><span class="drop-icon">↥</span><div><strong>Drop or choose IGM Excel</strong><small>.xls / .xlsx • HBL / IGM / container block detection</small></div><em>Import</em></label><input id="igmFile" type="file" accept=".xls,.xlsx" hidden><input id="trackingFile" type="file" accept=".xlsx,.xls,.csv" hidden><div id="importSummary"></div></article>
-  <article class="panel"><div class="panel-head"><div><div class="eyebrow dark">DATA & ROADMAP</div><h2>Workspace diagnostics</h2></div><b>LIVE</b></div><div class="diag-grid"><div><span>MISSING CORE FIELDS</span><b id="healthMissing">0</b></div><div><span>ETA ≤ 3 DAYS</span><b id="etaWindow">0</b></div><div><span>CFS WORKLOAD</span><b id="cfsWorkload">0</b></div><div><span>COMPLETION RATE</span><b id="completionRate">0%</b></div></div><div class="future-note"><b>Future-ready modules</b><span>Predictive ETA • Workflow Rules • Document Hub • Customer Workspaces</span></div></article>
+  <article class="panel customs-panel">
+    <div class="panel-head"><div><div class="eyebrow dark">CUSTOMS</div><h2>IGM / HBL import</h2></div><b>ADMIN / EDITOR</b></div>
+    <label class="dropzone" for="igmFile"><span class="drop-icon">↥</span><div><strong>Import IGM Excel</strong><small>.xls / .xlsx • HBL / IGM / container block detection</small></div><em>Choose file</em></label>
+    <input id="igmFile" type="file" accept=".xls,.xlsx" hidden>
+    <input id="trackingFile" type="file" accept=".xlsx,.xls,.csv" hidden>
+    <div id="importSummary"></div>
+  </article>
+  <article class="panel">
+    <div class="panel-head"><div><div class="eyebrow dark">OPERATIONS HEALTH</div><h2>Workspace diagnostics</h2></div><b>LIVE</b></div>
+    <div class="diagnostic-grid">
+      <div><span>MISSING CORE FIELDS</span><b id="healthMissing">0</b><small>records</small></div>
+      <div><span>ETA ≤ 3 DAYS</span><b id="etaWindow">0</b><small>arrivals</small></div>
+      <div><span>CFS WORKLOAD</span><b id="cfsWorkload">0</b><small>containers</small></div>
+      <div><span>COMPLETION RATE</span><b id="completionRate">0%</b><small>returned</small></div>
+    </div>
+    <div class="future-line"><b>Future-ready:</b> predictive ETA · workflow rules · document hub · customer workspaces</div>
+  </article>
 </section>
 </main>
-</div></div>
+</div>
 
-<div id="editDrawer" class="drawer"><div class="drawer-panel"><div class="drawer-head"><div><span>SHIPMENT RECORD</span><h2>Edit operational data</h2></div><button class="btn" id="closeEdit">Close</button></div><div id="editFields" class="edit-grid"></div><div class="drawer-foot"><button class="btn blue" id="saveEdit">Save Changes</button></div></div></div>
+<div id="editDrawer" class="drawer"><div class="drawer-panel"><div class="drawer-head"><div><span>SHIPMENT RECORD</span><h2>Edit milestones</h2></div><button class="btn" id="closeEdit">Close</button></div><div id="editFields" class="edit-grid"></div><div class="drawer-foot"><button class="btn blue" id="saveEdit">Save Changes</button></div></div></div>
 <div id="staffNotice" class="notice"></div>
-<script src="./staff.js?v=20261004-v36-login-final"></script></body></html>
+<script src="./staff.js?v=20261004-v36-login-final"></script>
+</body></html>
