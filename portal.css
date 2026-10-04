@@ -72,3 +72,97 @@ linear-gradient(120deg,#052243,#0a4777 58%,#087c9f)}
 @keyframes gmlPulse{0%,100%{transform:translate(-20px,-50%);opacity:.5}50%{transform:translate(20px,-50%);opacity:1}}
 @media(max-width:1050px){.gml-hero-grid{grid-template-columns:1fr}.gml-hero-visual{max-width:520px}.gml-hero-copy{max-width:760px}}
 @media(max-width:780px){.gml-hero-grid{gap:25px}.gml-hero-visual{display:none}}
+
+
+/* GML TYPOGRAPHY & READABILITY v4
+   Intentional enterprise density: readable at 100% browser zoom on desktop and mobile. */
+body{font-size:15px}
+
+/* Customer navigation */
+.gml-brand-copy b{font-size:17px}
+.gml-brand-copy span{font-size:9px}
+.gml-nav-links a{font-size:12px}
+.gml-pill-btn{font-size:11px}
+.gml-eyebrow{font-size:11px}
+.gml-hero p{font-size:17px;line-height:1.72}
+.gml-trust-row span{font-size:11px}
+.gml-search-title strong{font-size:17px}
+.gml-search-title span{font-size:11px}
+.gml-search-status{font-size:10px}
+.gml-search label{font-size:10px}
+.gml-search input,.gml-search select{font-size:14px}
+.gml-search-action,.gml-search-secondary{font-size:12px}
+.gml-search-help{font-size:11px}
+.gml-hero-stats b{font-size:14px}
+.gml-hero-stats span{font-size:9px}
+
+/* Customer results */
+.gml-results-head small{font-size:10px}
+.gml-results-head h2{font-size:30px}
+.gml-results-head p{font-size:12px}
+.gml-results-meta{font-size:11px}
+.gml-count{font-size:10px}
+.gml-empty strong{font-size:16px}
+.gml-empty span{font-size:12px}
+.gml-report-brand b{font-size:13px}
+.gml-report-brand span{font-size:9px}
+.gml-report-date span{font-size:9px}
+.gml-report-date b{font-size:11px}
+.gml-report-hero h3{font-size:32px}
+.gml-report-hero p{font-size:12px}
+.gml-status{font-size:10px}
+.gml-container-box span{font-size:9px}
+.gml-container-box b{font-size:21px}
+.gml-container-box small{font-size:10px}
+.gml-summary-cell span{font-size:9px}
+.gml-summary-cell b{font-size:12px}
+.gml-tab{font-size:11px;padding:12px 14px 14px}
+.gml-card-head b{font-size:10px}
+.gml-card-head span{font-size:9px}
+.gml-info-item label,.gml-info-item span{font-size:10px}
+.gml-info-item b{font-size:12px}
+.gml-hbl-table th{font-size:10px}
+.gml-hbl-table td{font-size:12px}
+.gml-hbl-table td b{font-size:12px}
+.gml-hbl-table td small{font-size:10px}
+.gml-event-time{font-size:10px}
+.gml-event-title{font-size:12px}
+.gml-event-note{font-size:11px}
+.gml-map-legend{font-size:10px}
+.gml-action-btn{font-size:11px}
+.gml-modal-kicker{font-size:10px}
+.gml-modal-head h3{font-size:21px}
+.gml-modal-head p{font-size:11px}
+.gml-multi-input{font-size:13px}
+.gml-multi-tip{font-size:10px}
+.gml-modal-foot .gml-pill-btn{font-size:11px}
+.gml-toast{font-size:11px}
+.gml-service-card h3{font-size:17px}
+.gml-service-card p{font-size:12px;line-height:1.65}
+.gml-section-heading small{font-size:10px}
+.gml-section-heading h2{font-size:30px}
+.gml-section-heading p{font-size:12px}
+.gml-trust-strip b{font-size:13px}
+.gml-trust-strip small{font-size:10px}
+.gml-help-card small{font-size:10px}
+.gml-help-card h3{font-size:22px}
+.gml-help-card p{font-size:12px}
+.gml-help-action{font-size:11px}
+.gml-footer p{font-size:11px}
+.gml-footer-links a{font-size:10px}
+.gml-footer-bottom{font-size:9px}
+
+/* Keep all dense shipment data readable without making cards bulky. */
+.gml-hbl-wrap,.gml-table-wrap{font-size:12px}
+.gml-hbl-table tr{min-height:42px}
+.gml-hbl-table th,.gml-hbl-table td{padding:13px 14px}
+
+/* Mobile tuning */
+@media(max-width:780px){
+  .gml-hero h1{font-size:43px}
+  .gml-hero p{font-size:15px}
+  .gml-search input,.gml-search select{font-size:15px}
+  .gml-tab{font-size:12px}
+  .gml-hbl-table th{font-size:10px}
+  .gml-hbl-table td{font-size:12px}
+}
