@@ -284,28 +284,19 @@ function openBulkUpdate(){
 
 function renderTable(){
   const list=filtered();
-  const count=se("staffCount");if(count)count.textContent=list.length+" shipments";
+  const count=se("staffCount"); if(count) count.textContent=list.length;
   renderKpis(list);
-  try{renderOpsIntel(list)}catch(e){console.warn("Ops intelligence skipped",e)}
-  try{renderSmartMetrics(list)}catch(e){console.warn("Smart metrics skipped",e)}
-  const body=se("staffBody");
-  if(!body)return;
-  if(!list.length){
-    body.innerHTML='<tr><td colspan="9" class="s-table-empty-row">No shipments match the current filters.</td></tr>';
-    const note=se("tableResultNote");if(note)note.textContent="0 matching shipments";
-    updateSelectAll();
-    return;
-  }
+  try{renderOpsIntel(list)}catch(e){console.warn("exception engine",e)}
+  try{renderSmartMetrics(list)}catch(e){console.warn("diagnostics",e)}
+  const body=se("staffBody"); if(!body)return;
+  if(!list.length){body.innerHTML='<tr><td colspan="9" class="s-table-empty-row">No shipments match the current filters.</td></tr>';const note=se("tableResultNote");if(note)note.textContent="0 matching shipments";updateSelectAll();return}
   body.innerHTML=list.slice(0,300).map(r=>{
     const idx=rows.indexOf(r),s=st(r),c=cnum(r),m=sf(r,["MBL NO","MBL"]),v=sf(r,["VESSEL & VOY","VESSEL"]),p=sf(r,["POL"]),g=sf(r,["GATEWAY PORT"]),eta=sf(r,["ETA"]);
-    return '<tr><td class="s-check-col"><input type="checkbox" class="row-check" data-row="'+idx+'" '+(selected.has(idx)?"checked":"")+' aria-label="Select '+sx(c)+'"></td><td><button class="s-link" data-edit="'+idx+'">'+sx(c||"—")+'</button></td><td>'+sx(m||"—")+'</td><td>'+sx(sf(r,["LINER"])||"—")+'</td><td>'+sx(p||"—")+'</td><td>'+sx(g||"—")+'</td><td>'+sx(v||"—")+'</td><td>'+sx(sd(eta))+'</td><td><span class="s-status '+s[1]+'">'+sx(s[0])+'</span></td></tr>';
+    return '<tr><td class="select-col"><input type="checkbox" class="row-check" data-row="'+idx+'" '+(selected.has(idx)?"checked":"")+'></td><td><button class="s-link" data-edit="'+idx+'">'+sx(c||"—")+'</button></td><td>'+sx(m||"—")+'</td><td>'+sx(sf(r,["LINER"])||"—")+'</td><td>'+sx(p||"—")+'</td><td>'+sx(g||"—")+'</td><td>'+sx(v||"—")+'</td><td>'+sx(sd(eta))+'</td><td><span class="s-status '+s[1]+'">'+sx(s[0])+'</span></td></tr>';
   }).join("");
   body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openEditor(Number(b.dataset.edit))));
-  body.querySelectorAll(".row-check").forEach(b=>b.addEventListener("change",()=>{
-    const i=Number(b.dataset.row);b.checked?selected.add(i):selected.delete(i);updateSelectAll();
-  }));
-  const note=se("tableResultNote");
-  if(note)note.textContent=list.length>300?"Showing first 300 of "+list.length+" matches":"Showing "+list.length+" matching shipments";
+  body.querySelectorAll(".row-check").forEach(b=>b.addEventListener("change",()=>{const i=Number(b.dataset.row);b.checked?selected.add(i):selected.delete(i);updateSelectAll()}));
+  const note=se("tableResultNote");if(note)note.textContent=list.length>300?"Showing first 300 of "+list.length+" matches":"Showing "+list.length+" matching shipments";
   updateSelectAll();
 }
 function applySelectAll(){const list=filtered().slice(0,300);const checked=se("selectAllRows").checked;list.forEach(r=>{const i=rows.indexOf(r);checked?selected.add(i):selected.delete(i)});renderTable()}
@@ -315,7 +306,7 @@ loadSession();
 if(session){show("loginScreen",false);show("staffApp",true);bootStaff()}
 se("loginBtn").addEventListener("click",login);se("accessCode").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
 se("logoutBtn").addEventListener("click",logout);
-se("staffSearch").addEventListener("input",renderTable);
+se("staffSearch").addEventListener("input",renderTable);se("opsCommand")?.addEventListener("input",()=>{se("staffSearch").value=se("opsCommand").value;renderTable()});document.addEventListener("keydown",e=>{if(e.key==="/"&&document.activeElement.tagName!=="INPUT"){e.preventDefault();se("opsCommand")?.focus()}});
 se("statusFilter").addEventListener("change",renderTable);
 se("refreshBtn").addEventListener("click",()=>loadRows().catch(e=>notify(e.message)));
 se("saveEdit").addEventListener("click",saveEditor);
