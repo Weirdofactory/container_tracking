@@ -1,10 +1,10 @@
-function updateClock(){const n=new Date();const t=se("clockNow"),d=se("dateNow");if(t)t.textContent=n.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});if(d)d.textContent=n.toLocaleDateString("en-IN",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}
-setInterval(updateClock,1000);updateClock();
 const S_URL="https://ykeucqritoexykqrggzz.supabase.co";
 const S_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const SSB=supabase.createClient(S_URL,S_KEY,{global:{fetch:(input,init={})=>fetch(input,{...init,cache:"no-store"})}});
 const APP=window.GML_APP_CONFIG||{appName:"CargoTrack",appShort:"CT",appTagline:"SHIPMENT CONTROL CENTER",companyName:"",supportEmail:"",supportWhatsApp:""};
 const se=id=>document.getElementById(id);
+function updateClock(){const n=new Date();const t=se("clockNow"),d=se("dateNow");if(t)t.textContent=n.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});if(d)d.textContent=n.toLocaleDateString("en-IN",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}
+setInterval(updateClock,1000);updateClock();
 const sx=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const sf=(r,n)=>{for(const x of n){if(r?.[x]!==undefined&&String(r[x]??"").trim()!=="")return r[x]}return"";
 };
