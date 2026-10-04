@@ -171,7 +171,7 @@ se("loginBtn").addEventListener("click",login);
 se("logoutBtn").addEventListener("click",logout);
 se("staffSearch").addEventListener("input",renderTable);
 se("statusFilter").addEventListener("change",renderTable);
-se("refreshBtn").addEventListener("click",()=>loadRows().catch(e=>alert(e.message)));se("headerRefreshBtn")?.addEventListener("click",()=>loadRows().catch(e=>alert(e.message)));
+se("refreshBtn").addEventListener("click",()=>loadRows().catch(e=>alert(e.message)));
 se("saveEdit").addEventListener("click",saveEditor);
 se("closeEdit").addEventListener("click",()=>se("editDrawer").classList.remove("open"));
 se("igmFile").addEventListener("change",()=>importIgm().catch(e=>{se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>'}));
