@@ -20,3 +20,26 @@ button,input,select{font:inherit}
 .s-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.s-grid2>div{min-width:0}.s-textarea{width:100%;min-height:90px;border:1px solid #cddae7;border-radius:8px;padding:9px;font-size:9px;font-weight:700;resize:vertical}.s-file{display:block;border:2px dashed #bcd8ec;background:#f7fbff;padding:24px;border-radius:11px;text-align:center;color:#6f8398;cursor:pointer;font-size:9px;font-weight:800}.s-file input{display:none}.s-import-result{padding:12px;border:1px solid #cfe4f3;background:#f7fcff;border-radius:10px;font-size:8.5px}.s-import-result b{color:#0a6dac}
 @media(max-width:1100px){.s-kpis{grid-template-columns:repeat(3,1fr)}.s-toolbar{flex-wrap:wrap}.s-toolbar .s-input{min-width:250px}}
 @media(max-width:700px){.s-header-nav{display:none}.s-main{padding:18px 12px 35px}.s-kpis{grid-template-columns:1fr 1fr}.s-toolbar-right{width:100%;flex-wrap:wrap}.s-toolbar-right .s-btn{flex:1}.s-grid2{grid-template-columns:1fr}}
+
+/* GML STAFF CONTROL TOWER v2 */
+body{background:linear-gradient(180deg,#f7fafd 0,#f3f7fb 65%,#eef4f8 100%)}
+.s-header{background:rgba(255,255,255,.96);backdrop-filter:blur(10px);box-shadow:0 2px 14px rgba(7,35,62,.05)}
+.s-main{max-width:1480px;padding:28px 24px 60px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px}
+.s-sidebar{position:sticky;top:94px;height:max-content;background:#fff;border:1px solid var(--s-border);border-radius:14px;padding:11px;box-shadow:0 10px 22px rgba(8,37,64,.04)}
+.s-sidebar-label{padding:6px 8px 8px;color:#93a0ae;font-size:6.8px;letter-spacing:.12em;font-weight:900}
+.s-side-link{display:block;text-decoration:none;padding:9px 9px;border-radius:8px;color:#5f7389;font-size:8px;font-weight:900}
+.s-side-link:hover,.s-side-link.active{background:#edf6ff;color:#0b70bb}
+.s-side-note{margin-top:12px;padding:10px 9px;border:1px solid #e0eaf2;background:#f8fbfe;border-radius:9px}
+.s-side-note b{display:block;font-size:7.5px;color:#264863}.s-side-note span{display:block;margin-top:5px;color:#8797a7;font-size:7px;line-height:1.55}
+.s-content{min-width:0}
+.s-page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:17px}
+.s-page-head h1{margin:4px 0 0}.s-head-actions{display:flex;gap:7px}.s-head-actions .s-btn{white-space:nowrap}
+.s-kpis{gap:11px}.s-kpi{padding:15px;border-radius:13px}.s-kpi b{font-size:24px}.s-kpi small{display:block;margin-top:3px;color:#8b99a8;font-size:6.8px;font-weight:700}
+.s-panel-card{background:#fff;border:1px solid var(--s-border);border-radius:14px;box-shadow:0 10px 24px rgba(8,37,64,.045);padding:14px;margin-top:12px;overflow:hidden}
+.s-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:1px 1px 12px}.s-panel-heading>div>span{display:block;color:#0b76c7;font-size:6.8px;letter-spacing:.13em;font-weight:900}.s-panel-heading h2{margin:3px 0 0;font-size:14px}.s-mini-status{font-size:6.8px;color:#6f8193;letter-spacing:.08em}
+.s-toolbar{margin-bottom:10px;background:#f7fafc;border-color:#e1e9f0;padding:9px}.s-toolbar .s-input{height:41px}
+.s-table-foot{display:flex;justify-content:space-between;gap:10px;color:#8b99a8;font-size:7px;padding:10px 2px 1px}
+.s-file{padding:28px 18px;border:2px dashed #c4ddec;background:linear-gradient(180deg,#f8fcff,#f4f9fd);cursor:pointer}.s-file strong{display:block;color:#235070;font-size:9px}.s-file span{display:block;margin-top:5px;color:#8798a9;font-size:7.5px}
+.s-import-result{font-size:8px}
+@media(max-width:1000px){.s-main{grid-template-columns:1fr}.s-sidebar{position:static;display:flex;align-items:center;gap:4px;overflow:auto}.s-sidebar-label,.s-side-note{display:none}.s-side-link{white-space:nowrap}}
+@media(max-width:700px){.s-main{padding:18px 12px 40px}.s-page-head{align-items:flex-start;flex-direction:column}.s-head-actions{width:100%}.s-head-actions .s-btn{flex:1}.s-table-foot{flex-direction:column}.s-kpis{grid-template-columns:repeat(2,1fr)}}
