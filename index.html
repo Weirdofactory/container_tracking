@@ -1,131 +1,246 @@
-
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#06264c">
-<title data-page-title>CargoTrack | Track &amp; Trace</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f4f6f8">
+<meta name="description" content="Professional ocean shipment tracking portal">
+<title data-page-title>Shipment Tracking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="./portal.css?v=20261004-v7">
+<link rel="stylesheet" href="./portal.css?v=20261004-v20">
+<script src="./app-config.js?v=20261004-v2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-<header class="gml-nav">
-  <div class="gml-nav-inner">
-    <a class="gml-brand" href="#track" aria-label="Shipment tracking portal">
-      <div class="gml-logo"><span data-app-short>CT</span></div>
-      <div class="gml-brand-copy"><b data-app-name>CARGOTRACK</b><span data-app-tagline>SHIPMENT CONTROL CENTER</span></div>
-    </a>
-    <nav class="gml-nav-links" aria-label="Main navigation">
-      <a class="active" href="#track">Track &amp; Trace</a>
-      <a href="#services">Services</a>
-      <a href="#resources">Resources</a>
-      <a href="#help">Contact</a>
-    </nav>
-    <div class="gml-nav-actions">
-      <button class="gml-icon-btn" id="mobileMenuBtn" aria-label="Open menu">☰</button>
-      <button class="gml-pill-btn" onclick="location.href='./staff.html'">🔐 Staff Portal</button>
-    </div>
-  </div>
-  <div class="gml-mobile-nav" id="mobileNav">
-    <a href="#track">Track &amp; Trace</a><a href="#services">Services</a><a href="#resources">Resources</a><a href="#help">Contact</a>
-  </div>
-</header>
 
-<section class="gml-hero" id="track">
-  <div class="gml-hero-overlay"></div>
-  <div class="gml-hero-inner">
-    <div class="gml-hero-grid">
-      <div class="gml-hero-copy">
-        <div class="gml-eyebrow" data-company-context>PRIVATE SHIPMENT VISIBILITY</div>
-        <h1>Track every move.<br><span>Know what happens next.</span></h1>
-        <p>One professional view across ocean freight, containers, port milestones, CFS activity and customs-linked HBL / IGM data.</p>
-        <div class="gml-trust-row"><span>✓ Live shipment status</span><span>✓ Container-level visibility</span><span>✓ HBL &amp; IGM linked</span></div>
+<div class="site-shell">
+  <header class="carrier-header">
+    <div class="carrier-header-inner">
+      <a class="brand-lockup" href="#top" aria-label="Shipment tracking home">
+        <span class="brand-symbol"><span data-app-short>CT</span></span>
+        <span class="brand-words">
+          <strong data-app-name>Shipment Tracking</strong>
+          <small data-app-tagline>OCEAN FREIGHT VISIBILITY</small>
+        </span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Primary navigation">
+        <a class="nav-active" href="#track">Tracking</a>
+        <a href="#how">How it works</a>
+        <a href="#support">Support</a>
+      </nav>
+
+      <div class="header-tools">
+        <span class="live-chip"><i></i> SYSTEM ONLINE</span>
+        <a class="staff-link" href="./staff.html">Staff login <span>↗</span></a>
+        <button class="menu-button" id="mobileMenuBtn" aria-label="Open navigation">☰</button>
       </div>
+    </div>
+    <div class="mobile-nav" id="mobileNav">
+      <a href="#track">Tracking</a>
+      <a href="#how">How it works</a>
+      <a href="#support">Support</a>
+      <a href="./staff.html">Staff login</a>
+    </div>
+  </header>
 
-      <div class="gml-hero-visual" aria-label="Logistics visibility overview">
-        <div class="gml-visual-top"><span>LIVE NETWORK</span><b>OCEAN FREIGHT</b></div>
-        <div class="gml-route-visual">
-          <div class="gml-route-node origin"><i></i><strong>ORIGIN</strong><span>Global Port</span></div>
-          <div class="gml-route-line"><em></em><span>SEA ROUTE</span></div>
-          <div class="gml-ship-orb">⚓</div>
-          <div class="gml-route-node destination"><i></i><strong>DESTINATION</strong><span>India Gateway</span></div>
+  <main id="top">
+    <section class="track-stage" id="track">
+      <div class="stage-grid"></div>
+      <div class="stage-glow"></div>
+      <div class="stage-inner">
+
+        <div class="stage-topline">
+          <div>
+            <span class="section-kicker">GLOBAL SHIPMENT VISIBILITY</span>
+            <h1>Track your shipment.<br><em>See the next milestone.</em></h1>
+            <p class="stage-lead">A carrier-style tracking experience for containers, bills of lading and bookings — with port, CFS and customs-linked events in one place.</p>
+          </div>
+          <div class="network-badge">
+            <span class="badge-label">NETWORK</span>
+            <strong>OCEAN</strong>
+            <small>24 / 7 lookup</small>
+          </div>
         </div>
-        <div class="gml-visual-grid">
-          <div><span>TRACKING</span><b>24 / 7</b></div>
-          <div><span>HBL / IGM</span><b>LINKED</b></div>
-          <div><span>STATUS</span><b>LIVE</b></div>
+
+        <form class="tracking-console" id="trackingForm" onsubmit="return false">
+          <div class="console-tabs" role="tablist" aria-label="Tracking reference type">
+            <button type="button" class="console-tab active" data-track-tab="container">Container</button>
+            <button type="button" class="console-tab" data-track-tab="all">Any reference</button>
+          </div>
+          <div class="console-row">
+            <div class="console-input">
+              <label for="searchInput">TRACKING REFERENCE</label>
+              <div class="input-line">
+                <span class="input-icon">⌕</span>
+                <input id="searchInput" autocomplete="off" spellcheck="false" placeholder="Enter container, MBL, HBL, booking or vessel / voyage">
+                <button type="button" class="clear-input" id="clearSearch" aria-label="Clear tracking reference">×</button>
+              </div>
+            </div>
+            <div class="console-select">
+              <label for="searchType">SEARCH MODE</label>
+              <select id="searchType">
+                <option value="container">Container number</option>
+                <option value="all">All tracking references</option>
+              </select>
+            </div>
+            <button class="track-now" id="trackBtn" type="button">Track shipment <span>→</span></button>
+            <button class="multi-now" id="multipleBtn" type="button"><span>+</span> Multiple</button>
+          </div>
+          <div class="console-foot">
+            <span>Examples: HDMU5601794 · HBL · MBL · Booking</span>
+            <span>Public tracking • No account required</span>
+          </div>
+        </form>
+
+        <div class="quick-strip">
+          <div class="quick-item">
+            <span class="quick-icon">01</span>
+            <div><b>LIVE MILESTONES</b><small>Vessel → Port → CFS → Empty return</small></div>
+          </div>
+          <div class="quick-divider"></div>
+          <div class="quick-item">
+            <span class="quick-icon">02</span>
+            <div><b>REFERENCE SEARCH</b><small>Container / BL / Booking / Vessel</small></div>
+          </div>
+          <div class="quick-divider"></div>
+          <div class="quick-item">
+            <span class="quick-icon">03</span>
+            <div><b>CUSTOMS LINK</b><small>HBL / IGM information where available</small></div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <form class="gml-search" id="trackingForm" onsubmit="return false">
-      <div class="gml-search-title"><div><strong>Track a shipment</strong><span>Use any reference available to you</span></div><div class="gml-search-status">SECURE PUBLIC LOOKUP</div></div>
-      <div class="gml-search-grid">
-        <div><label>Search by</label><select id="searchType"><option value="container">Container Number</option><option value="all">All Tracking References</option></select></div>
-        <div><label>Tracking reference</label><input id="searchInput" placeholder="e.g. HDMU5601794" autocomplete="off"></div>
-        <button id="trackBtn" class="gml-search-action" type="button">🔍 Track</button>
-        <button id="multipleBtn" class="gml-search-secondary" type="button">▦ Multiple Tracking</button>
+    <section class="results-section" id="results">
+      <div class="results-inner">
+        <div class="results-bar">
+          <div>
+            <span class="section-kicker dark">TRACKING RESULTS</span>
+            <h2>Shipment overview</h2>
+            <p>Search to load the latest available operational record.</p>
+          </div>
+          <div class="result-meta">
+            <span class="result-live"><i></i> LIVE DATA</span>
+            <span class="result-count" id="resultCount">0 results</span>
+          </div>
+        </div>
+        <div id="resultHost">
+          <div class="empty-state">
+            <div class="empty-art">
+              <div class="radar"><i></i></div>
+            </div>
+            <div class="empty-copy">
+              <span class="empty-kicker">READY TO TRACK</span>
+              <strong>Enter a shipment reference above</strong>
+              <p>Use a container number for the fastest lookup, or switch to <b>Any reference</b> for MBL, HBL, booking and vessel searches.</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="gml-search-help">Container • HBL • MBL • Booking • Vessel / Voyage • Customer reference</div>
-    </form>
+    </section>
 
-    <div class="gml-hero-stats">
-      <div><b>24/7</b><span>Shipment lookup</span></div><div><b>HBL → IGM</b><span>Linked customs view</span></div><div><b>1 View</b><span>Route to delivery</span></div>
+    <section class="feature-section" id="how">
+      <div class="feature-inner">
+        <div class="feature-intro">
+          <span class="section-kicker dark">DESIGNED AROUND REAL CARRIER FLOWS</span>
+          <h2>Everything important,<br>without the clutter.</h2>
+          <p>The portal is structured around the patterns used by major ocean carriers: search first, show the current status immediately, then expose the route, milestone history and cargo details.</p>
+        </div>
+        <div class="feature-list">
+          <article>
+            <span>01</span><div><b>Current status first</b><p>See the latest milestone, ETA and shipment identity before drilling into details.</p></div>
+          </article>
+          <article>
+            <span>02</span><div><b>Planned vs recorded events</b><p>Milestones stay chronological so it is obvious what has happened and what is still pending.</p></div>
+          </article>
+          <article>
+            <span>03</span><div><b>Operational context</b><p>Route, vessel, gateway, CFS and customs-linked HBL / IGM data sit behind the shipment record.</p></div>
+          </article>
+          <article>
+            <span>04</span><div><b>Multiple tracking</b><p>Load several references in one action when checking a batch of containers or bills.</p></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="support-section" id="support">
+      <div class="support-inner">
+        <div>
+          <span class="section-kicker dark">OPERATIONS SUPPORT</span>
+          <h2>Need help with a shipment?</h2>
+          <p>Keep the container, MBL or booking reference ready when contacting the operations team.</p>
+        </div>
+        <div class="support-actions" id="supportActions">
+          <a class="support-btn primary" id="supportEmailBtn" href="#">Email operations <span>↗</span></a>
+          <a class="support-btn" id="supportWhatsAppBtn" href="#" target="_blank" rel="noopener">WhatsApp <span>↗</span></a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="footer-main">
+        <div class="footer-brand">
+          <span class="brand-symbol mini"><span data-app-short>CT</span></span>
+          <div><strong data-app-name>Shipment Tracking</strong><small data-app-tagline>OCEAN FREIGHT VISIBILITY</small></div>
+        </div>
+        <div class="footer-links"><a href="#track">Tracking</a><a href="#how">How it works</a><a href="#support">Support</a><a href="./staff.html">Staff portal</a></div>
+      </div>
+      <div class="footer-bottom"><span>© 2026 <span data-app-name>Shipment Tracking</span></span><span>Operational tracking portal</span></div>
+    </footer>
+  </main>
+</div>
+
+<!-- Multiple tracking -->
+<div class="modal" id="multiModal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div><span class="section-kicker dark">BATCH TRACKING</span><h3>Track multiple references</h3><p>One container, booking, HBL or MBL per line. Up to 20 references.</p></div>
+      <button class="modal-close" id="closeMulti" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="multiInput" class="multi-input" placeholder="HDMU5601794&#10;HDMU5626895&#10;DSCLCNB26090001"></textarea>
+      <div class="batch-note"><span>⌁</span> Duplicate references are automatically ignored.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="modal-secondary" id="cancelMulti">Cancel</button>
+      <button class="modal-primary" id="runMulti">Track references <span>→</span></button>
     </div>
   </div>
-</section>
+</div>
 
-<main class="gml-main">
-  <div class="gml-results-head">
-    <div><small>SHIPMENT RESULTS</small><h2>Track your cargo</h2><p>Live status, route and customs-linked cargo information in one place.</p></div>
-    <div class="gml-results-meta"><span>Live shipment data</span><span class="gml-count" id="resultCount">0 results</span></div>
+<!-- IGM / HBL -->
+<div class="modal" id="igmModal" aria-hidden="true">
+  <div class="modal-card igm-card">
+    <div class="modal-head">
+      <div><span class="section-kicker dark">CUSTOMS / IGM LINK</span><h3 id="igmModalTitle">HBL Details</h3><p id="igmModalSub">Indian Customs manifest information</p></div>
+      <button class="modal-close" id="closeIgm" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body" id="igmModalBody"></div>
   </div>
-  <div id="resultHost">
-    <div class="gml-empty gml-empty-start"><div><div class="gml-empty-icon">⌕</div><strong>Search for a shipment</strong><span>Enter a container, MBL, HBL or booking reference above to begin.</span></div></div>
-  </div>
-</main>
+</div>
 
-<section class="gml-trust-strip" id="services">
-  <div class="gml-trust-inner">
-    <div><span>01</span><div><b>Container Visibility</b><small>Port, CFS and delivery milestones</small></div></div>
-    <div><span>02</span><div><b>Customs Linked Data</b><small>HBL and IGM information by container</small></div></div>
-    <div><span>03</span><div><b>Operational Support</b><small>Direct access to your operations team</small></div></div>
-  </div>
-</section>
+<div class="toast" id="gmlToast"></div>
 
-<section class="gml-services" id="resources">
-  <div class="gml-section-heading"><small>BUILT FOR LOGISTICS TEAMS</small><h2>One clean view of the shipment lifecycle.</h2><p>From vessel departure to empty return, the customer page is designed around the information your consignee actually needs.</p></div>
-  <div class="gml-service-grid">
-    <article class="gml-service-card"><div class="gml-service-icon">↗</div><h3>Port-to-Port Tracking</h3><p>See origin, loading port, discharge port, gateway and delivery with an interactive route view.</p></article>
-    <article class="gml-service-card"><div class="gml-service-icon">◎</div><h3>Milestone Timeline</h3><p>Follow vessel departure, arrival, inward, port, CFS, de-stuffing and empty return status.</p></article>
-    <article class="gml-service-card"><div class="gml-service-icon">▤</div><h3>HBL / IGM Intelligence</h3><p>Open an HBL from the container and see the linked Indian Customs manifest information.</p></article>
-    <article class="gml-service-card"><div class="gml-service-icon">↥</div><h3>Share &amp; Support</h3><p>Share a shipment link or contact operations directly by email or WhatsApp.</p></article>
-  </div>
-</section>
-
-<section class="gml-help" id="help">
-  <div class="gml-help-card">
-    <div><small>OPERATIONS SUPPORT</small><h3>Need assistance with a shipment?</h3><p>Keep the container, MBL or booking reference ready when contacting the operations team.</p></div>
-    <div class="gml-help-actions" id="supportActions"><a class="gml-help-action primary" id="supportEmailBtn" href="#">✉ Email Operations</a><a class="gml-help-action secondary" id="supportWhatsAppBtn" href="#" target="_blank" rel="noopener">💬 WhatsApp</a></div>
-  </div>
-</section>
-
-<footer class="gml-footer">
-  <div class="gml-footer-inner">
-    <div><div class="gml-brand gml-footer-brand"><div class="gml-logo"><span data-app-short>CT</span></div><div class="gml-brand-copy"><b data-app-name>CARGOTRACK</b><span data-app-tagline>SHIPMENT CONTROL CENTER</span></div></div><p>Private shipment visibility and operations tracking.</p></div>
-    <div class="gml-footer-links"><a href="#track">Track &amp; Trace</a><a href="#services">Services</a><a href="#resources">Resources</a><a href="#help">Contact</a><a href="./staff.html">Staff Portal</a></div>
-  </div>
-  <div class="gml-footer-bottom"><span>© 2026 CargoTrack. All rights reserved.</span><span>Privacy • Terms • Help Center</span></div>
-</footer>
-
-<div class="gml-modal" id="multiModal" aria-hidden="true"><div class="gml-modal-card gml-multi-card"><div class="gml-modal-head"><div><div class="gml-modal-kicker">MULTIPLE TRACKING</div><h3>Track multiple references</h3><p>Enter one container / MBL / HBL / booking number per line.</p></div><button class="gml-modal-close" id="closeMulti">✕</button></div><div class="gml-modal-body"><textarea id="multiInput" class="gml-multi-input" placeholder="HDMU5601794\nHDMU5626895\nDSCLCNB26090001"></textarea><div class="gml-multi-tip">Up to 20 references per search.</div></div><div class="gml-modal-foot"><button class="gml-pill-btn" id="cancelMulti">Cancel</button><button class="gml-pill-btn primary" id="runMulti">Track References</button></div></div></div>
-
-<div class="gml-modal" id="igmModal"><div class="gml-modal-card"><div class="gml-modal-head"><div><div class="gml-modal-kicker">CUSTOMS / IGM LINK</div><h3 id="igmModalTitle">HBL Details</h3><p id="igmModalSub">Indian Customs manifest information</p></div><button class="gml-modal-close" id="closeIgm">✕</button></div><div class="gml-modal-body" id="igmModalBody"></div></div></div>
-
-<div class="gml-toast" id="gmlToast"></div>
-<script src="./portal.js?v=20261004-v11-searoute"></script>
-</body></html>
+<script src="./portal.js?v=20261004-v20-carrier"></script>
+<script>
+document.querySelectorAll(".console-tab").forEach(tab=>{
+  tab.addEventListener("click",()=>{
+    document.querySelectorAll(".console-tab").forEach(x=>x.classList.toggle("active",x===tab));
+    const target=tab.dataset.trackTab;
+    const select=document.getElementById("searchType");
+    if(select) select.value=target;
+    document.querySelector(".console-tabs")?.classList.toggle("any-active",target==="all");
+  });
+});
+document.getElementById("clearSearch")?.addEventListener("click",()=>{
+  const input=document.getElementById("searchInput");
+  if(input){input.value="";input.focus();}
+});
+</script>
+</body>
+</html>
