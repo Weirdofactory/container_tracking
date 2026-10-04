@@ -28,7 +28,14 @@ async function login(){
 function logout(){localStorage.removeItem("gml_staff_session");location.reload()}
 function loadSession(){try{session=JSON.parse(localStorage.getItem("gml_staff_session")||"null")}catch(e){session=null}}
 
-async function loadRows(){const {data,error}=await SSB.from("containers").select("data").eq("id","gml_tracking_records").single();if(error)throw error;rows=Array.isArray(data?.data)?data.data:[];selected.clear();return rows}
+async function loadRows(){
+  const {data,error}=await SSB.from("containers").select("data").eq("id","gml_tracking_records").single();
+  if(error)throw error;
+  rows=Array.isArray(data?.data)?data.data:[];
+  selected.clear();
+  renderTable();
+  return rows
+}
 function renderKpis(list){const vals=list.reduce((a,r)=>{const s=st(r)[0];a.active+=s!=="RETURNED";a.done+=s==="RETURNED";a.portin+=s==="PORT IN";a.portout+=s==="PORT OUT";a.destuff+=s==="DE-STUFFED";return a},{active:0,done:0,portin:0,portout:0,destuff:0});se("kActive").textContent=vals.active;se("kDone").textContent=vals.done;se("kPortIn").textContent=vals.portin;se("kPortOut").textContent=vals.portout;se("kDestuff").textContent=vals.destuff;se("kTotal").textContent=list.length}
 function filtered(){const q=sn(se("staffSearch").value),f=se("statusFilter").value;return rows.filter(r=>{const hay=[cnum(r),sf(r,["MBL NO","MBL"]),sf(r,["VESSEL & VOY","VESSEL"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");return(!q||hay.includes(q))&&(f==="all"||st(r)[0]===f)})}
 
@@ -130,7 +137,7 @@ async function importIgm(){
 }
 
 function applySelectAll(){const list=filtered().slice(0,300);const checked=se("selectAllRows").checked;list.forEach(r=>{const i=rows.indexOf(r);checked?selected.add(i):selected.delete(i)});renderTable()}
-function bootStaff(){applyBrand();se("staffUsername").textContent=session.username||"Staff";se("staffRole").textContent=session.role||"Staff";loadRows().then(renderTable).catch(e=>alert(e.message))}
+function bootStaff(){applyBrand();se("staffUsername").textContent=session.username||"Staff";se("staffRole").textContent=session.role||"Staff";loadRows().catch(e=>alert(e.message))}
 
 loadSession();
 if(session){show("loginScreen",false);show("staffApp",true);bootStaff()}
@@ -138,7 +145,7 @@ se("loginBtn").addEventListener("click",login);
 se("logoutBtn").addEventListener("click",logout);
 se("staffSearch").addEventListener("input",renderTable);
 se("statusFilter").addEventListener("change",renderTable);
-se("refreshBtn").addEventListener("click",()=>loadRows().then(renderTable).catch(e=>alert(e.message)));
+se("refreshBtn").addEventListener("click",()=>loadRows().catch(e=>alert(e.message)));se("headerRefreshBtn")?.addEventListener("click",()=>loadRows().catch(e=>alert(e.message)));
 se("saveEdit").addEventListener("click",saveEditor);
 se("closeEdit").addEventListener("click",()=>se("editDrawer").classList.remove("open"));
 se("igmFile").addEventListener("change",()=>importIgm().catch(e=>{se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>'}));
