@@ -62,8 +62,8 @@ function initMap(id,r){
   const node=$(id); if(!node||typeof L==="undefined")return;
   const pol=clean(field(r,["POL"]))||"BUSAN",pod=clean(field(r,["GATEWAY PORT"]))||"KATTUPALLI";
   const a=coords(pol,[20,80]),b=coords(pod,[13.08,80.27]),mid=[(a[0]+b[0])/2+5,(a[1]+b[1])/2];
-  const map=L.map(id,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
-  const light=L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{maxZoom:18,subdomains:"abcd"}).addTo(map);
+  const map=L.map(id,{zoomControl:false,scrollWheelZoom:false,attributionControl:true});
+  const light=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap contributors"}).addTo(map);
   const sat=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:18});
   const line=L.polyline([a,mid,b],{color:"#0b87df",weight:4}).addTo(map);
   const mk=(text,cls)=>L.divIcon({className:"gml-map-marker",html:'<div style="background:#fff;border:1px solid #d6e1eb;box-shadow:0 5px 12px rgba(8,40,70,.15);padding:6px 8px;border-radius:7px;font:800 10px Plus Jakarta Sans;color:#173b60;white-space:nowrap" class="'+cls+'">'+esc(text)+'</div>',iconSize:null});
