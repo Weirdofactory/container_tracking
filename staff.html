@@ -7,11 +7,44 @@
 </head><body>
 <section class="s-login" id="loginScreen"><div class="s-login-card"><div class="s-brand"><div class="s-mark">GML</div><div><b>GREENWICH MERIDIAN</b><span>OPERATIONS CONTROL</span></div></div><h1>Staff Portal</h1><p>Secure access to shipment operations, container records and customs IGM/HBL data.</p><label class="s-label">Access Code</label><input class="s-input" id="accessCode" type="password" placeholder="Enter authorized access code"><button class="s-btn primary" id="loginBtn" style="width:100%;margin-top:12px">Sign In</button><div id="loginError" style="display:none;color:#b63f3f;font-size:8.5px;margin-top:9px"></div><div style="margin-top:16px;font-size:7.5px;color:#93a0ae">Customer tracking remains available without staff access.</div></div></section>
 <div id="staffApp" style="display:none"><header class="s-header"><div class="s-header-inner"><div class="s-title"><div class="s-mark">GML</div><div><b>Operations Control Tower</b><span>GREENWICH MERIDIAN LOGISTICS</span></div></div><div class="s-header-nav"><button class="s-btn" onclick="location.href='./'">← Customer Portal</button><button class="s-btn" id="refreshBtn">↻ Refresh</button><button class="s-btn danger" id="logoutBtn">Logout</button><div class="s-user"><div class="s-avatar" id="staffUsername">ST</div><span class="s-role" id="staffRole">Staff</span></div></div></div></header>
-<main class="s-main"><div class="s-kicker">OPERATIONS CONTROL</div><h1>Shipment Operations</h1><p class="s-sub">Live container visibility with direct editing and IGM / HBL import.</p>
-<div class="s-kpis"><div class="s-kpi"><span>ACTIVE</span><b id="kActive">0</b></div><div class="s-kpi green"><span>RETURNED</span><b id="kDone">0</b></div><div class="s-kpi amber"><span>PORT IN</span><b id="kPortIn">0</b></div><div class="s-kpi amber"><span>PORT OUT</span><b id="kPortOut">0</b></div><div class="s-kpi red"><span>DESTUFFING</span><b id="kDestuff">0</b></div><div class="s-kpi"><span>TOTAL</span><b id="kTotal">0</b></div></div>
-<div class="s-toolbar"><input class="s-input" id="staffSearch" placeholder="Search container, MBL, vessel, liner, port…"><select class="s-select" id="statusFilter"><option value="all">All Status</option><option>IN TRANSIT</option><option>ETA SCHEDULED</option><option>ARRIVED AT PORT</option><option>PORT OUT</option><option>CFS IN</option><option>DE-STUFFED</option><option>RETURNED</option><option>PENDING</option></select><span class="s-count" id="staffCount">0 shipments</span><div class="s-toolbar-right"><button class="s-btn blue" onclick="document.getElementById('igmFile').click()">🛃 IGM / HBL Import</button></div></div>
-<div id="importSummary" style="margin-bottom:10px"></div>
-<div class="s-table-wrap"><table class="s-table"><thead><tr><th>CONTAINER</th><th>MBL</th><th>LINE</th><th>POL</th><th>GATEWAY</th><th>VESSEL / VOYAGE</th><th>ETA</th><th>STATUS</th></tr></thead><tbody id="staffBody"></tbody></table></div>
+<main class="s-main">
+  <aside class="s-sidebar">
+    <div class="s-sidebar-label">WORKSPACE</div>
+    <a class="s-side-link active" href="#overview">⌂ Overview</a>
+    <a class="s-side-link" href="#shipments">▤ Shipments</a>
+    <a class="s-side-link" href="#customs">▣ Customs / IGM</a>
+    <a class="s-side-link" href="./">↩ Customer Portal</a>
+    <div class="s-side-note"><b>Operations first</b><span>Use the container record as the operational source of truth. Customs IGM data is linked separately at HBL level.</span></div>
+  </aside>
+  <section class="s-content">
+    <div class="s-page-head" id="overview">
+      <div><div class="s-kicker">OPERATIONS CONTROL</div><h1>Shipment Operations</h1><p class="s-sub">A focused control tower for container movements, port milestones and customs-linked HBL data.</p></div>
+      <div class="s-head-actions"><button class="s-btn" id="refreshBtn">↻ Refresh data</button><button class="s-btn blue" onclick="document.getElementById('igmFile').click()">🛃 Import IGM / HBL</button></div>
+    </div>
+
+    <div class="s-kpis">
+      <div class="s-kpi"><span>ACTIVE</span><b id="kActive">0</b><small>Open shipments</small></div>
+      <div class="s-kpi green"><span>RETURNED</span><b id="kDone">0</b><small>Completed units</small></div>
+      <div class="s-kpi amber"><span>PORT IN</span><b id="kPortIn">0</b><small>Awaiting action</small></div>
+      <div class="s-kpi amber"><span>PORT OUT</span><b id="kPortOut">0</b><small>Release stage</small></div>
+      <div class="s-kpi red"><span>DESTUFFING</span><b id="kDestuff">0</b><small>Pending de-stuff</small></div>
+      <div class="s-kpi"><span>TOTAL</span><b id="kTotal">0</b><small>Visible in workspace</small></div>
+    </div>
+
+    <section class="s-panel-card" id="shipments">
+      <div class="s-panel-heading"><div><span>LIVE WORKSPACE</span><h2>Container shipments</h2></div><b class="s-count" id="staffCount">0 shipments</b></div>
+      <div class="s-toolbar"><input class="s-input" id="staffSearch" placeholder="Search container, MBL, vessel, liner, port…"><select class="s-select" id="statusFilter"><option value="all">All Status</option><option>IN TRANSIT</option><option>ETA SCHEDULED</option><option>ARRIVED AT PORT</option><option>PORT OUT</option><option>CFS IN</option><option>DE-STUFFED</option><option>RETURNED</option><option>PENDING</option></select></div>
+      <div class="s-table-wrap"><table class="s-table"><thead><tr><th>CONTAINER</th><th>MBL</th><th>LINE</th><th>POL</th><th>GATEWAY</th><th>VESSEL / VOYAGE</th><th>ETA</th><th>STATUS</th></tr></thead><tbody id="staffBody"></tbody></table></div>
+      <div class="s-table-foot"><span>Click a container to edit operational milestones.</span><span>Live source: GML tracking records</span></div>
+    </section>
+
+    <section class="s-panel-card" id="customs">
+      <div class="s-panel-heading"><div><span>CUSTOMS WORKSPACE</span><h2>IGM / HBL import</h2></div><b class="s-mini-status">ADMIN / EDITOR</b></div>
+      <label class="s-file" for="igmFile"><strong>📥 Drop or choose an IGM Excel file</strong><span>Supports .xls and .xlsx • detects repeating HBL / IGM / container blocks</span></label>
+      <input id="igmFile" type="file" accept=".xls,.xlsx" style="display:none">
+      <div id="importSummary" style="margin-top:10px"></div>
+    </section>
+  </section>
 </main></div>
 <div style="display:none"><input id="igmFile" type="file" accept=".xls,.xlsx"></div>
 <div class="s-drawer" id="editDrawer"><div class="s-panel"><div class="s-panel-head"><b>Edit Shipment</b><button class="s-btn" id="closeEdit">✕</button></div><div class="s-panel-body"><div class="s-grid2" id="editFields"></div></div><div class="s-panel-foot"><button class="s-btn" id="saveEdit">Save Changes</button></div></div></div>
