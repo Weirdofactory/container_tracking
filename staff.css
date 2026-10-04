@@ -63,3 +63,56 @@ body{background:linear-gradient(180deg,#f7fafd 0,#f3f7fb 65%,#eef4f8 100%)}
 .s-file{min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px}
 @media(max-width:1050px){.s-main{grid-template-columns:1fr}.s-kpis{grid-template-columns:repeat(3,1fr)}.s-sidebar{position:static}}
 @media(max-width:700px){.s-kpis{grid-template-columns:repeat(2,1fr)}.s-header-inner{padding:0 13px}.s-main{padding:18px 12px 40px}}
+
+
+/* GML STAFF TYPOGRAPHY & READABILITY v4 */
+body{font-size:14px}
+.s-brand b{font-size:17px}
+.s-brand span{font-size:9px}
+.s-login-card h1{font-size:30px}
+.s-login-card p{font-size:13px}
+.s-label{font-size:10px}
+.s-input{font-size:14px}
+.s-login-card .s-input{height:50px}
+.s-btn{font-size:12px}
+.s-title b{font-size:17px}
+.s-title span{font-size:8px}
+.s-role{font-size:10px}
+.s-kicker{font-size:9px}
+.s-page-head h1{font-size:31px}
+.s-sub{font-size:12px;line-height:1.6}
+.s-kpis{gap:13px}
+.s-kpi{padding:16px}
+.s-kpi span{font-size:10px}
+.s-kpi b{font-size:28px}
+.s-kpi small{font-size:10px}
+.s-panel-heading>div>span{font-size:9px}
+.s-panel-heading h2{font-size:18px}
+.s-count{font-size:10px}
+.s-toolbar .s-input{font-size:13px}
+.s-select{font-size:12px}
+.s-table th{font-size:9px;padding:13px 12px}
+.s-table td{font-size:12px;padding:13px 12px}
+.s-table td b{font-size:12px}
+.s-status{font-size:9px}
+.s-link{font-size:11px}
+.s-table-foot{font-size:10px}
+.s-mini-status{font-size:9px}
+.s-file strong{font-size:12px}
+.s-file span{font-size:10px}
+.s-import-result{font-size:11px}
+.s-panel-head b{font-size:14px}
+.s-textarea{font-size:12px}
+.s-sidebar-label{font-size:9px}
+.s-side-link{font-size:11px;padding:12px 11px}
+.s-side-note b{font-size:10px}
+.s-side-note span{font-size:9px}
+.s-user{font-size:11px}
+
+@media(max-width:700px){
+  .s-page-head h1{font-size:27px}
+  .s-sub{font-size:12px}
+  .s-kpi b{font-size:24px}
+  .s-table th{font-size:9px}
+  .s-table td{font-size:12px}
+}
