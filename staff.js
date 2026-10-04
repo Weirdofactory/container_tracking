@@ -49,7 +49,7 @@ async function loadRows(){
     if(btn){btn.disabled=false;btn.textContent=original||"↻ Refresh Data";}
   }
 }
-function renderKpis(list){const vals=list.reduce((a,r)=>{const s=st(r)[0];a.active+=s!=="RETURNED";a.done+=s==="RETURNED";a.portin+=s==="PORT IN";a.portout+=s==="PORT OUT";a.destuff+=s==="DE-STUFFED";return a},{active:0,done:0,portin:0,portout:0,destuff:0});se("kActive").textContent=vals.active;se("kDone").textContent=vals.done;se("kPortIn").textContent=vals.portin;se("kPortOut").textContent=vals.portout;se("kDestuff").textContent=vals.destuff;se("kTotal").textContent=list.length}
+function renderKpis(list){const vals=list.reduce((a,r)=>{const s=st(r)[0];a.active+=s!=="RETURNED";a.done+=s==="RETURNED";a.portin+=s==="PORT IN";a.portout+=s==="PORT OUT";a.destuff+=s==="DE-STUFFED";return a},{active:0,done:0,portin:0,portout:0,destuff:0});se("kActive").textContent=vals.active;se("kDone").textContent=vals.done;se("kPortIn").textContent=vals.portin;se("kPortOut").textContent=vals.portout;se("kDestuff").textContent=vals.destuff;se("kTotal").textContent=list.length;const ht=se("heroTotal"),ha=se("heroActive"),hr=se("heroReturned");if(ht)ht.textContent=list.length;if(ha)ha.textContent=vals.active;if(hr)hr.textContent=vals.done}
 function filtered(){const q=sn(se("staffSearch").value),f=se("statusFilter").value;se("heroTotal").textContent=list.length;return rows.filter(r=>{const hay=[cnum(r),sf(r,["MBL NO","MBL"]),sf(r,["VESSEL & VOY","VESSEL"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");return(!q||hay.includes(q))&&(f==="all"||st(r)[0]===f)})}
 
 function renderTable(){
@@ -68,16 +68,7 @@ function renderTable(){
   renderKpis(list);
   try{renderOpsIntel(list)}catch(e){console.warn("Operations intelligence render skipped",e)}
   try{renderSmartMetrics(list)}catch(e){console.warn("Smart metrics render skipped",e)}
-  try{
-    const total=list.length||1;
-    const returned=list.filter(r=>st(r)[0]==="RETURNED").length;
-    const eta= list.filter(r=>{const d=parseDateValue(sf(r,["ETA"]));const n=new Date();n.setHours(0,0,0,0);const x=new Date(n);x.setDate(x.getDate()+3);return d&&d>=n&&d<=x}).length;
-    const cfs=list.filter(r=>st(r)[0]==="CFS IN").length;
-    se("snapshotActive").textContent=Math.max(0,total-returned);
-    se("snapshotEta").textContent=eta;
-    se("snapshotCfs").textContent=cfs;
-    se("snapshotRate").textContent=Math.round(returned/total*100)+"%";
-  }catch(e){console.warn("Snapshot render skipped",e)}
+
   updateSelectAll();
 }
 function updateSelectAll(){const list=filtered();const visible=list.slice(0,300).map(r=>rows.indexOf(r));const all=visible.length>0&&visible.every(i=>selected.has(i));const sa=se("selectAllRows");if(sa)sa.checked=all;if(window.__updateSelectedBadge)window.__updateSelectedBadge(selected.size)}
