@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./staff.css?v=20261004-v31-polish">
+<link rel="stylesheet" href="./staff.css?v=20261004-v32-final">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -57,7 +57,7 @@
 <main class="main">
 <section class="page-head" id="overview">
   <div><div class="eyebrow">OPERATIONS CONTROL • LIVE</div><h1>Shipment operations</h1><p>One clean view of containers, milestones, exceptions, vessel arrivals and customs activity.</p></div>
-  <div class="page-head-right"><div class="date-box"><span>LOCAL TIME</span><b id="clockNow">--:--:--</b><small id="dateNow">--</small></div><div class="record-box"><span>LIVE RECORDS</span><b id="heroTotal">0</b><small>shipment rows</small></div></div>
+  <div class="page-head-right"><div class="date-box"><span>LOCAL TIME</span><b id="clockNow">--:--:--</b><small id="dateNow">--</small></div><div class="record-box"><span>LIVE RECORDS</span><b id="heroTotal">0</b><small>shipment rows</small></div><div class="record-box compact"><span>ACTIVE</span><b id="heroActive">0</b><small>open</small></div><div class="record-box compact"><span>RETURNED</span><b id="heroReturned">0</b><small>closed</small></div></div>
 </section>
 
 <section class="kpis">
@@ -68,6 +68,8 @@
   <article class="kpi red"><div class="kpi-head"><span>DESTUFFING</span><i>▤</i></div><b id="kDestuff">0</b><small>Pending de-stuff</small><em>Follow-up</em></article>
   <article class="kpi"><div class="kpi-head"><span>TOTAL</span><i>Σ</i></div><b id="kTotal">0</b><small>Loaded records</small><em>Source of truth</em></article>
 </section>
+
+<section class="diagnostics-strip"><article><span>DATA QUALITY</span><b id="healthMissing">0</b><small>records missing core fields</small></article><article><span>ETA WINDOW</span><b id="etaWindow">0</b><small>arriving within 3 days</small></article><article><span>CFS WORKLOAD</span><b id="cfsWorkload">0</b><small>awaiting de-stuffing</small></article><article><span>COMPLETION</span><b id="completionRate">0%</b><small>returned / total</small></article></section>
 
 <section class="workspace-card" id="shipments">
   <div class="workspace-head">
