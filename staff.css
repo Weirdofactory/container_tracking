@@ -116,3 +116,20 @@ body{font-size:14px}
   .s-table th{font-size:9px}
   .s-table td{font-size:12px}
 }
+
+
+/* GML V5 — LARGE, HUMAN-READABLE STAFF CONTROL TOWER */
+.s-header,.s-main{font-size:15px}
+.s-title b{font-size:19px}.s-title span{font-size:9px}.s-mark{font-size:12px}
+.s-btn{font-size:13px;height:44px;padding:0 16px}
+.s-page-head h1{font-size:34px}.s-sub{font-size:13px;line-height:1.65}.s-kicker{font-size:10px}
+.s-kpis{gap:14px}.s-kpi{min-height:120px;padding:18px}.s-kpi span{font-size:11px}.s-kpi b{font-size:30px}.s-kpi small{font-size:11px}
+.s-panel-heading>div>span{font-size:10px}.s-panel-heading h2{font-size:20px}.s-count{font-size:11px}
+.s-toolbar{padding:12px}.s-toolbar .s-input{height:48px;font-size:14px}.s-select{height:48px;font-size:13px}
+.s-table{min-width:1200px}.s-table th{font-size:11px;padding:14px}.s-table td{font-size:13px;padding:15px 14px}.s-table td b{font-size:13px}.s-status{font-size:10px;padding:7px 10px}.s-link{font-size:13px}
+.s-table-foot{font-size:11px}.s-file strong{font-size:14px}.s-file span{font-size:11px}.s-import-result{font-size:12px}
+.s-label{font-size:11px}.s-input{font-size:14px;height:50px}.s-panel-head b{font-size:16px}.s-textarea{font-size:13px}
+.s-side-link{font-size:12px;padding:13px 12px}.s-sidebar-label{font-size:10px}.s-side-note b{font-size:11px}.s-side-note span{font-size:10px}
+.s-role{font-size:11px}.s-login-card h1{font-size:32px}.s-login-card p{font-size:13px}.s-brand b{font-size:18px}.s-brand span{font-size:9px}
+@media(max-width:1050px){.s-kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.s-page-head h1{font-size:29px}.s-sub{font-size:13px}.s-kpis{grid-template-columns:1fr 1fr}.s-table th{font-size:10px}.s-table td{font-size:13px}}
