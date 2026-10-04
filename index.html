@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#06264c">
-<title>Greenwich Meridian Logistics | Track & Trace</title>
+<title data-page-title>CargoTrack | Track &amp; Trace</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -15,9 +15,9 @@
 <body>
 <header class="gml-nav">
   <div class="gml-nav-inner">
-    <a class="gml-brand" href="#track" aria-label="Greenwich Meridian Logistics">
-      <div class="gml-logo"><span>GML</span></div>
-      <div class="gml-brand-copy"><b>GREENWICH MERIDIAN</b><span>GLOBAL FREIGHT SOLUTIONS</span></div>
+    <a class="gml-brand" href="#track" aria-label="Shipment tracking portal">
+      <div class="gml-logo"><span data-app-short>CT</span></div>
+      <div class="gml-brand-copy"><b data-app-name>CARGOTRACK</b><span data-app-tagline>SHIPMENT CONTROL CENTER</span></div>
     </a>
     <nav class="gml-nav-links" aria-label="Main navigation">
       <a class="active" href="#track">Track &amp; Trace</a>
@@ -40,7 +40,7 @@
   <div class="gml-hero-inner">
     <div class="gml-hero-grid">
       <div class="gml-hero-copy">
-        <div class="gml-eyebrow">GREENWICH MERIDIAN LOGISTICS</div>
+        <div class="gml-eyebrow" data-company-context>PRIVATE SHIPMENT VISIBILITY</div>
         <h1>Track every move.<br><span>Know what happens next.</span></h1>
         <p>One professional view across ocean freight, containers, port milestones, CFS activity and customs-linked HBL / IGM data.</p>
         <div class="gml-trust-row"><span>✓ Live shipment status</span><span>✓ Container-level visibility</span><span>✓ HBL &amp; IGM linked</span></div>
@@ -93,7 +93,7 @@
   <div class="gml-trust-inner">
     <div><span>01</span><div><b>Container Visibility</b><small>Port, CFS and delivery milestones</small></div></div>
     <div><span>02</span><div><b>Customs Linked Data</b><small>HBL and IGM information by container</small></div></div>
-    <div><span>03</span><div><b>Operational Support</b><small>Direct access to the GML operations team</small></div></div>
+    <div><span>03</span><div><b>Operational Support</b><small>Direct access to your operations team</small></div></div>
   </div>
 </section>
 
@@ -109,17 +109,17 @@
 
 <section class="gml-help" id="help">
   <div class="gml-help-card">
-    <div><small>OPERATIONS SUPPORT</small><h3>Need assistance with a shipment?</h3><p>Keep the container, MBL or booking reference ready when contacting the GML operations team.</p></div>
-    <div class="gml-help-actions"><a class="gml-help-action primary" href="mailto:madhan@gmlindia.net">✉ Email Operations</a><a class="gml-help-action secondary" href="https://wa.me/919884070344" target="_blank" rel="noopener">💬 WhatsApp</a></div>
+    <div><small>OPERATIONS SUPPORT</small><h3>Need assistance with a shipment?</h3><p>Keep the container, MBL or booking reference ready when contacting the operations team.</p></div>
+    <div class="gml-help-actions" id="supportActions"><a class="gml-help-action primary" id="supportEmailBtn" href="#">✉ Email Operations</a><a class="gml-help-action secondary" id="supportWhatsAppBtn" href="#" target="_blank" rel="noopener">💬 WhatsApp</a></div>
   </div>
 </section>
 
 <footer class="gml-footer">
   <div class="gml-footer-inner">
-    <div><div class="gml-brand gml-footer-brand"><div class="gml-logo"><span>GML</span></div><div class="gml-brand-copy"><b>GREENWICH MERIDIAN</b><span>GLOBAL FREIGHT SOLUTIONS</span></div></div><p>Customer shipment visibility for Greenwich Meridian Logistics.</p></div>
+    <div><div class="gml-brand gml-footer-brand"><div class="gml-logo"><span data-app-short>CT</span></div><div class="gml-brand-copy"><b data-app-name>CARGOTRACK</b><span data-app-tagline>SHIPMENT CONTROL CENTER</span></div></div><p>Private shipment visibility and operations tracking.</p></div>
     <div class="gml-footer-links"><a href="#track">Track &amp; Trace</a><a href="#services">Services</a><a href="#resources">Resources</a><a href="#help">Contact</a><a href="./staff.html">Staff Portal</a></div>
   </div>
-  <div class="gml-footer-bottom"><span>© 2026 Greenwich Meridian Logistics. All rights reserved.</span><span>Privacy • Terms • Help Center</span></div>
+  <div class="gml-footer-bottom"><span>© 2026 CargoTrack. All rights reserved.</span><span>Privacy • Terms • Help Center</span></div>
 </footer>
 
 <div class="gml-modal" id="multiModal" aria-hidden="true"><div class="gml-modal-card gml-multi-card"><div class="gml-modal-head"><div><div class="gml-modal-kicker">MULTIPLE TRACKING</div><h3>Track multiple references</h3><p>Enter one container / MBL / HBL / booking number per line.</p></div><button class="gml-modal-close" id="closeMulti">✕</button></div><div class="gml-modal-body"><textarea id="multiInput" class="gml-multi-input" placeholder="HDMU5601794\nHDMU5626895\nDSCLCNB26090001"></textarea><div class="gml-multi-tip">Up to 20 references per search.</div></div><div class="gml-modal-foot"><button class="gml-pill-btn" id="cancelMulti">Cancel</button><button class="gml-pill-btn primary" id="runMulti">Track References</button></div></div></div>
