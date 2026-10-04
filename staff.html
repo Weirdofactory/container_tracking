@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title data-page-title>Operations Control</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./staff.css?v=20261004-v140">
+<title data-page-title>Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./staff.css?v=20261004-v160">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -14,172 +14,158 @@
 <body>
 
 <section id="loginScreen" class="login-screen">
-  <div class="login-scene">
-    <div class="scene-noise"></div>
-    <div class="scene-grid"></div>
-    <div class="scene-markers"><span>OPS / 01</span><span>INDIA GATEWAY</span><span>LIVE CONTROL</span></div>
-    <div class="scene-copy">
-      <div class="scene-kicker">PRIVATE LOGISTICS WORKSPACE</div>
-      <h1>Move cargo.<br><strong>Stay ahead.</strong></h1>
-      <p>One operating surface for container execution, vessel planning, milestones, exceptions and customs-linked cargo records.</p>
-      <div class="scene-line"><i></i><span>Operational data sync</span><b>CONNECTED</b></div>
+  <div class="login-visual">
+    <div class="visual-top"><span>PRIVATE OPERATIONS</span><span>CONTROL / 24·7</span></div>
+    <div class="visual-content">
+      <div class="visual-kicker">SHIPMENT OPERATIONS PLATFORM</div>
+      <h1>Everything moving.<br><strong>One place to act.</strong></h1>
+      <p>Track containers, manage milestones, handle exceptions and connect customs data without jumping between screens.</p>
+      <div class="visual-stats"><div><b>LIVE</b><span>Shipment feed</span></div><div><b>REALTIME</b><span>Database sync</span></div><div><b>IGM / HBL</b><span>Linked cargo</span></div></div>
     </div>
-    <div class="scene-route"><span>ORIGIN</span><i></i><span>VESSEL</span><i></i><span>GATEWAY</span><i></i><span>CFS</span></div>
+    <div class="visual-footer"><span>ORIGIN</span><i></i><span>VESSEL</span><i></i><span>GATEWAY</span><i></i><span>CFS</span></div>
   </div>
-
-  <div class="login-panel">
-    <div class="login-panel-top">
-      <div class="brand-lockup"><span class="brand-mark"><span data-app-short>CT</span></span><div><strong data-app-name>CargoTrack</strong><small data-app-tagline>OPERATIONS CONTROL</small></div></div>
-      <span class="login-status"><i></i> SECURE</span>
-    </div>
-    <div class="login-form">
-      <div class="section-kicker dark">STAFF ACCESS</div>
-      <h2>Open the<br>operations desk.</h2>
-      <p>Enter your authorized access code to continue.</p>
+  <div class="login-card">
+    <div class="login-brand"><a class="brand" href="#"><span class="brand-mark"><span data-app-short>CT</span></span><div><strong data-app-name>CargoTrack</strong><small data-app-tagline>OPERATIONS CONTROL</small></div></a><span class="secure">SECURE <i></i></span></div>
+    <div class="login-body">
+      <span class="form-kicker">STAFF SIGN IN</span>
+      <h2>Welcome back.</h2>
+      <p>Enter your access code to open the operations workspace.</p>
       <label for="accessCode">ACCESS CODE</label>
-      <div class="access-field"><span>⌁</span><input id="accessCode" class="input" type="password" autocomplete="current-password" placeholder="Enter access code"><kbd>ENTER</kbd></div>
-      <button id="loginBtn" class="primary-login">Enter workspace <span>→</span></button>
+      <div class="login-input"><span>⌁</span><input id="accessCode" type="password" autocomplete="current-password" placeholder="Enter access code"><kbd>↵</kbd></div>
+      <button id="loginBtn" class="login-submit">Open operations <span>→</span></button>
       <div id="loginError" class="login-error"></div>
     </div>
-    <div class="login-foot"><span>SESSION ENCRYPTED</span><span>LIVE DATABASE</span><span>v2.6</span></div>
+    <div class="login-note"><span>AUTHENTICATED SESSION</span><span>LIVE DATA SOURCE</span></div>
   </div>
 </section>
 
 <div id="staffApp" style="display:none">
-<header class="workspace-head">
-  <div class="workspace-head-inner">
-    <a class="brand-lockup" href="#overview"><span class="brand-mark"><span data-app-short>CT</span></span><div><strong data-app-name>CargoTrack</strong><small>PRIVATE OPERATIONS</small></div></a>
-    <div class="workspace-title"><span>OPERATIONS DESK</span><b id="staffUsername">STAFF</b><em id="staffRole">Admin</em></div>
-    <div class="head-search"><span>⌕</span><input id="opsCommand" placeholder="Search container, MBL or vessel"><kbd>/</kbd></div>
-    <div class="head-actions"><div class="source-state"><i></i><span id="liveState">LIVE</span><small id="dataSourceStatus">Connecting…</small></div><button class="head-btn" id="refreshBtn">Refresh</button><button class="head-btn" onclick="location.href='./'">Customer view</button><button class="head-btn danger" id="logoutBtn">Sign out</button></div>
+<header class="app-header">
+  <div class="app-header-inner">
+    <a class="brand" href="#overview"><span class="brand-mark"><span data-app-short>CT</span></span><div><strong data-app-name>CargoTrack</strong><small>OPERATIONS</small></div></a>
+    <nav class="main-nav">
+      <a class="active" href="#overview">Overview</a>
+      <a href="#shipments">Shipments</a>
+      <a href="#exceptions">Exceptions <em id="sideAlertCount">0</em></a>
+      <a href="#customs">Customs</a>
+    </nav>
+    <div class="header-search"><span>⌕</span><input id="opsCommand" placeholder="Find a container, MBL or vessel"><kbd>/</kbd></div>
+    <div class="header-right">
+      <span class="connection"><i></i><b id="liveState">LIVE</b><small id="dataSourceStatus">Connecting…</small></span>
+      <button class="header-btn" id="refreshBtn">Refresh</button>
+      <button class="header-btn" onclick="location.href='./'">Customer view</button>
+      <button class="header-btn logout" id="logoutBtn">Sign out</button>
+      <div class="user-chip"><b id="staffUsername">STAFF</b><span id="staffRole">Admin</span></div>
+    </div>
   </div>
 </header>
 
-<div class="workspace">
-  <aside class="sidebar">
-    <div class="side-label">WORKSPACE</div>
-    <a class="side-link active" href="#overview"><span class="side-num">01</span><div><b>Overview</b><small>Desk summary</small></div></a>
-    <a class="side-link" href="#shipments"><span class="side-num">02</span><div><b>Shipments</b><small>Live register</small></div></a>
-    <a class="side-link" href="#exceptions"><span class="side-num">03</span><div><b>Exceptions</b><small>Action queue</small></div><em id="sideAlertCount">0</em></a>
-    <a class="side-link" href="#customs"><span class="side-num">04</span><div><b>Customs</b><small>IGM / HBL</small></div></a>
-    <div class="sidebar-divider"></div>
-    <div class="side-note"><span>NETWORK HEALTH</span><strong id="networkHealth">—</strong><p id="healthText">Checking…</p><div class="health-track"><i id="healthBar"></i></div></div>
-    <div class="sidebar-bottom"><span>LOCAL TIME</span><b id="clockNow">--:--</b><small id="dateNow">—</small></div>
-  </aside>
-
-  <main class="desk">
-    <section class="desk-intro" id="overview">
+<main class="page">
+  <div class="page-inner">
+    <section class="page-intro" id="overview">
       <div>
-        <span class="section-kicker dark">CONTROL DESK / LIVE NETWORK</span>
-        <h1>Good evening. Here’s the network.</h1>
-        <p>Use the queue to act, the register to drill down, and the route board to see what is moving next.</p>
+        <div class="breadcrumb">OPERATIONS / OVERVIEW</div>
+        <h1>Shipment control</h1>
+        <p>The live register is the workspace. Search a reference, inspect the record, or act on the queue.</p>
       </div>
-      <div class="desk-date"><span>TODAY</span><b>LIVE NETWORK</b><small>Last sync <strong id="heroPulse">LIVE</strong></small></div>
+      <div class="today-marker"><span>LOCAL TIME</span><b id="clockNow">--:--</b><small id="dateNow">—</small></div>
     </section>
 
-    <section class="control-board">
-      <div class="board-main">
-        <div class="board-top"><div><span>NETWORK BOARD</span><h2>Shipment flow</h2></div><div class="board-live"><i></i> LIVE</div></div>
-        <div class="lane">
-          <div class="lane-stop"><span>01</span><b>ORIGIN</b><small>POL</small></div>
-          <div class="lane-leg"><i></i><span>DEPARTED</span></div>
-          <div class="lane-stop"><span>02</span><b>AT SEA</b><small>VESSEL</small></div>
-          <div class="lane-leg"><i></i><span>ETA</span></div>
-          <div class="lane-stop"><span>03</span><b>GATEWAY</b><small>PORT</small></div>
-          <div class="lane-leg"><i></i><span>RELEASE</span></div>
-          <div class="lane-stop"><span>04</span><b>CFS / DELIVERY</b><small>FINAL MILE</small></div>
-        </div>
-        <div class="board-bottom">
-          <div><span>LIVE SHIPMENTS</span><b id="heroTotal">0</b></div>
-          <div><span>OPEN</span><b id="heroActive">0</b></div>
-          <div><span>RETURNED</span><b id="heroReturned">0</b></div>
-          <div class="board-note"><span>PORT → CFS → RETURN</span><small>Operate from the register below.</small></div>
-        </div>
-      </div>
-
-      <div class="today-panel">
-        <div class="today-head"><div><span>TODAY AT A GLANCE</span><h3>What needs attention</h3></div><b id="alertCount">0</b></div>
-        <div class="today-list" id="alertsHost"></div>
-        <div class="today-footer"><span>Upcoming vessel movements</span><a href="#exceptions">Open intelligence →</a></div>
-      </div>
+    <section class="tracking-bar">
+      <div class="tracking-title"><span>QUICK FIND</span><strong>Search the network</strong></div>
+      <div class="tracking-input"><span>⌕</span><input id="quickSearchMirror" aria-hidden="true" tabindex="-1" placeholder="Search"></div>
+      <div class="tracking-note">Use the header search for live register filtering.</div>
     </section>
 
-    <section class="signal-strip">
-      <div class="signal-primary"><span>LIVE RECORDS</span><strong id="kTotal">0</strong><small id="kTotalMirror">source</small></div>
-      <div><span>ETA / 3 DAYS</span><strong id="heroEtaSoon">0</strong><small>arrivals</small></div>
-      <div><span>PORT IN</span><strong id="kPortIn">0</strong><small>action</small></div>
-      <div><span>PORT OUT</span><strong id="kPortOut">0</strong><small>release</small></div>
-      <div><span>CFS</span><strong id="kDestuff">0</strong><small>de-stuff</small></div>
-      <div class="signal-health"><span>DATA GAPS</span><strong id="healthMissing">0</strong><small>core fields missing</small></div>
+    <section class="metric-ribbon">
+      <div class="metric-main"><span>LIVE RECORDS</span><b id="heroTotal">0</b><small id="kTotal">source</small></div>
+      <div><span>ACTIVE</span><b id="heroActive">0</b><small>open shipments</small></div>
+      <div><span>RETURNED</span><b id="heroReturned">0</b><small>closed shipments</small></div>
+      <div><span>ETA ≤ 3 DAYS</span><b id="heroEtaSoon">0</b><small>arrival window</small></div>
+      <div><span>PORT IN</span><b id="kPortIn">0</b><small>needs release</small></div>
+      <div><span>CFS</span><b id="kDestuff">0</b><small>destuff activity</small></div>
+      <div class="metric-health"><span>DATA GAPS</span><b id="healthMissing">0</b><small>core fields missing</small></div>
       <span id="kActive" class="ghost-stat">0</span><span id="kDone" class="ghost-stat">0</span>
     </section>
 
-    <section class="register-section" id="shipments">
-      <div class="section-head">
-        <div><span class="section-kicker dark">PRIMARY REGISTER</span><h2>Containers in play</h2><p>Search, select and operate directly from the live shipment register.</p></div>
-        <div class="register-total"><strong id="staffCount">0</strong><span>records</span></div>
-      </div>
-
-      <div class="command-row">
-        <div class="selection-readout"><strong id="selectedCount">0</strong><span>selected</span></div>
-        <div class="command-actions">
-          <button class="action-btn primary" id="importTrackingBtn">Import data</button>
-          <button class="action-btn" id="exportBtn">Excel</button>
-          <button class="action-btn" id="statusPhotoBtn">Status image</button>
-          <button class="action-btn" id="whatsappBtn">WhatsApp</button>
-          <button class="action-btn" id="bulkUpdateBtn">Bulk update</button>
+    <section class="work-grid">
+      <article class="workspace-card register-card" id="shipments">
+        <div class="card-titlebar">
+          <div><span>LIVE REGISTER</span><h2>Containers</h2><p>Operational shipment records, one line per container.</p></div>
+          <div class="record-count"><b id="staffCount">0</b><span>records</span></div>
         </div>
-      </div>
 
-      <div class="filter-row">
-        <div class="register-search"><span>⌕</span><input id="staffSearch" placeholder="Search the register…"></div>
-        <select id="statusFilter" class="input"><option value="all">All status</option><option>IN TRANSIT</option><option>INWARD GRANTED</option><option>PORT IN</option><option>PORT OUT</option><option>CFS IN</option><option>DE-STUFFED</option><option>RETURNED</option><option>PENDING</option></select>
-        <button class="filter-chip quick-filter active" data-filter="all">All</button>
-        <button class="filter-chip quick-filter" data-filter="open">Open</button>
-        <button class="filter-chip quick-filter" data-filter="attention">Attention</button>
-      </div>
+        <div class="action-bar">
+          <div class="selection-count"><b id="selectedCount">0</b> selected</div>
+          <div class="action-buttons">
+            <button class="action-btn primary" id="importTrackingBtn">Import data</button>
+            <button class="action-btn" id="exportBtn">Excel</button>
+            <button class="action-btn" id="statusPhotoBtn">Status image</button>
+            <button class="action-btn" id="whatsappBtn">WhatsApp</button>
+            <button class="action-btn" id="bulkUpdateBtn">Bulk update</button>
+          </div>
+        </div>
 
-      <div class="data-window"><table class="data-table"><thead><tr><th class="select-col"><input id="selectAllRows" type="checkbox"></th><th>CONTAINER</th><th>MBL</th><th>LINE</th><th>POL</th><th>GATEWAY</th><th>VESSEL / VOYAGE</th><th>ETA</th><th>STATUS</th></tr></thead><tbody id="staffBody"><tr><td colspan="9" class="loading-row">Loading live register…</td></tr></tbody></table></div>
-      <div class="table-footer"><span>Click a container to open the operational record.</span><span id="tableResultNote">Loading…</span></div>
+        <div class="filter-bar">
+          <div class="register-search"><span>⌕</span><input id="staffSearch" placeholder="Filter containers, MBL, line, vessel or port"></div>
+          <select id="statusFilter" class="input"><option value="all">All status</option><option>IN TRANSIT</option><option>INWARD GRANTED</option><option>PORT IN</option><option>PORT OUT</option><option>CFS IN</option><option>DE-STUFFED</option><option>RETURNED</option><option>PENDING</option></select>
+          <button class="filter-chip quick-filter active" data-filter="all">All</button>
+          <button class="filter-chip quick-filter" data-filter="open">Open</button>
+          <button class="filter-chip quick-filter" data-filter="attention">Attention</button>
+        </div>
+
+        <div class="data-window"><table class="data-table"><thead><tr><th class="select-col"><input id="selectAllRows" type="checkbox"></th><th>CONTAINER</th><th>MBL</th><th>LINE</th><th>POL</th><th>GATEWAY</th><th>VESSEL / VOYAGE</th><th>ETA</th><th>STATUS</th></tr></thead><tbody id="staffBody"><tr><td colspan="9" class="loading-row">Loading live register…</td></tr></tbody></table></div>
+        <div class="table-footer"><span>Click a container to open the operational record.</span><span id="tableResultNote">Loading…</span></div>
+      </article>
+
+      <aside class="workspace-card priority-card" id="exceptions">
+        <div class="card-titlebar compact"><div><span>PRIORITY QUEUE</span><h2>Today</h2><p>Items that deserve an operator glance.</p></div><b class="queue-count" id="alertCount">0</b></div>
+        <div id="alertsHost" class="priority-list"></div>
+        <div class="priority-foot"><span>Vessel intelligence</span><a href="#vessel-panel">View arrivals →</a></div>
+      </aside>
     </section>
 
-    <section class="lower-grid" id="exceptions">
-      <article class="panel-block">
-        <div class="panel-head"><div><span>VESSEL INTELLIGENCE</span><h3>Upcoming movements</h3></div><b id="vesselCount">0</b></div>
-        <div class="arrival-feature"><div><span>NEXT ETA</span><strong id="nextVesselEta">—</strong></div><div><span>ROUTE</span><strong id="nextVesselRoute">—</strong></div></div>
+    <section class="detail-grid" id="vessel-panel">
+      <article class="workspace-card vessel-card">
+        <div class="card-titlebar compact"><div><span>VESSEL INTELLIGENCE</span><h2>Upcoming movements</h2><p>Forward ETA view from active shipment records.</p></div><b class="soft-count" id="vesselCount">0</b></div>
+        <div class="vessel-summary"><div><span>NEXT ETA</span><b id="nextVesselEta">—</b></div><div><span>ROUTE</span><b id="nextVesselRoute">—</b></div></div>
         <div class="mini-wrap"><table class="mini-table"><thead><tr><th>VESSEL / VOYAGE</th><th>POL</th><th>GATEWAY</th><th>ETA</th><th>CTR</th></tr></thead><tbody id="vesselBody"></tbody></table></div>
       </article>
-      <article class="panel-block">
-        <div class="panel-head"><div><span>EXCEPTION ENGINE</span><h3>Action queue</h3></div><b>LIVE</b></div>
-        <div class="exception-list mirror-list" id="alertsHostMirror"></div>
+
+      <article class="workspace-card ops-notes">
+        <div class="card-titlebar compact"><div><span>WORKSPACE HEALTH</span><h2>Data quality</h2><p>Check the fields that drive tracking decisions.</p></div><b class="health-pill">LIVE</b></div>
+        <div class="health-summary"><div><b id="networkHealth">—</b><span>network health</span></div><div><b id="healthMissingMirror">0</b><span>records with gaps</span></div></div>
+        <p id="healthText">Checking the current shipment workspace…</p>
+        <div class="health-line"><i id="healthBar"></i></div>
       </article>
     </section>
 
-    <section class="lower-grid" id="customs">
-      <article class="panel-block customs-block">
-        <div class="panel-head"><div><span>CUSTOMS GATE</span><h3>IGM / HBL intake</h3></div><b>ADMIN / EDITOR</b></div>
-        <label class="dropzone" for="igmFile"><i>↑</i><div><b>Drop an IGM Excel file</b><small>Automatic HBL / container block detection</small></div><em>Browse</em></label>
+    <section class="detail-grid" id="customs">
+      <article class="workspace-card customs-card">
+        <div class="card-titlebar compact"><div><span>CUSTOMS GATE</span><h2>IGM / HBL intake</h2><p>Import manifest rows and connect them to container records.</p></div><b class="soft-count">ADMIN / EDITOR</b></div>
+        <label class="dropzone" for="igmFile"><i>↑</i><div><b>Choose an IGM Excel file</b><small>Automatic HBL / container block detection</small></div><em>Browse</em></label>
         <input id="igmFile" type="file" accept=".xls,.xlsx" hidden>
         <input id="trackingFile" type="file" accept=".xlsx,.xls,.csv" hidden>
         <div id="importSummary"></div>
       </article>
-      <article class="panel-block diagnostics-block">
-        <div class="panel-head"><div><span>SYSTEM TELEMETRY</span><h3>Workspace diagnostics</h3></div><b>LIVE</b></div>
-        <div class="diagnostic-list">
-          <div><span>ETA / 3 DAYS</span><strong id="etaWindow">0</strong><small>arrivals</small></div>
-          <div><span>CFS WORKLOAD</span><strong id="cfsWorkload">0</strong><small>containers</small></div>
-          <div><span>COMPLETION</span><strong id="completionRate">0%</strong><small>returned</small></div>
-          <div><span>MISSING CORE</span><strong id="healthMissingMirror">0</strong><small>records</small></div>
+
+      <article class="workspace-card diagnostics-card">
+        <div class="card-titlebar compact"><div><span>OPERATIONS SIGNAL</span><h2>At a glance</h2><p>A compact view of the next operational numbers.</p></div><b class="health-pill">LIVE</b></div>
+        <div class="signal-grid">
+          <div><span>ETA ≤ 3D</span><b id="etaWindow">0</b><small>arrivals</small></div>
+          <div><span>CFS WORKLOAD</span><b id="cfsWorkload">0</b><small>containers</small></div>
+          <div><span>COMPLETION</span><b id="completionRate">0%</b><small>returned</small></div>
+          <div><span>MISSING CORE</span><b id="healthMissing">0</b><small>records</small></div>
         </div>
-        <div class="roadmap"><span>NEXT</span><b>Predictive ETA</b><b>Workflow automation</b><b>Document hub</b><b>Customer workspaces</b></div>
+        <div class="roadmap"><span>NEXT</span><b>Predictive ETA</b><b>Workflow automation</b><b>Document hub</b></div>
       </article>
     </section>
-  </main>
-</div>
+  </div>
+</main>
 </div>
 
 <div id="editDrawer" class="drawer"><div class="drawer-panel">
-  <div class="drawer-head"><div><span>SHIPMENT RECORD</span><h2>Operational edit</h2><p>Update milestones for the selected container.</p></div><button class="head-btn" id="closeEdit">Close</button></div>
+  <div class="drawer-head"><div><span>SHIPMENT RECORD</span><h2>Operational edit</h2><p>Update milestones for the selected container.</p></div><button class="header-btn" id="closeEdit">Close</button></div>
   <div id="editContext" class="edit-context"></div>
   <section><div class="edit-section-title">REFERENCE</div><div id="editReference" class="edit-grid"></div></section>
   <section><div class="edit-section-title">MILESTONES</div><div id="editMilestones" class="edit-grid"></div></section>
