@@ -59,13 +59,39 @@ function normHeader(v){return norm(v).toLowerCase().replace(/[^a-z0-9]+/g,"")}
 function findCol(headers,cands){const n=headers.map(normHeader);for(const c of cands){const t=normHeader(c),i=n.indexOf(t);if(i>=0)return i}for(const c of cands){const t=normHeader(c),i=n.findIndex(h=>h.includes(t)||t.includes(h));if(i>=0)return i}return-1}
 function parseWorkbookRows(file){return file.arrayBuffer().then(buf=>{const wb=XLSX.read(buf,{type:"array",raw:false,cellDates:false});const sheet=wb.Sheets[wb.SheetNames[0]];const data=XLSX.utils.sheet_to_json(sheet,{defval:"",raw:false});if(!data.length)throw new Error("The selected file contains no rows.");return data})}
 async function importTracking(){
-  if(!["Admin","Editor"].includes(session.role))throw new Error("Admin / Editor access required.");
+  if(!["Admin","Editor"].includes(session.role))throw new Error("Bulk import is available to Admin / Editor users only.");
   const file=se("trackingFile").files[0];if(!file)throw new Error("Select an Excel or CSV file.");
-  const incoming=await parseWorkbookRows(file);const existingBy={};rows.forEach((r,i)=>{const k=sn(cnum(r));if(k)existingBy[k]=i});
+  const incoming=await parseWorkbookRows(file);
+  const canonical=(rec)=>{
+    const out={...rec}, keys=Object.keys(rec);
+    const find=(aliases)=>{const target=aliases.map(normHeader);const key=keys.find(k=>target.includes(normHeader(k))||target.some(t=>normHeader(k).includes(t)||t.includes(normHeader(k))));return key};
+    const containerKey=find(["CONTAINER NO.","CONTAINER NO","CONTAINER","CONTAINER NUMBER","CONTAINERNO","CNTR NO","CNTR NUMBER"]);
+    const mblKey=find(["MBL NO","MBL NUMBER","MBL"]);
+    const vesselKey=find(["VESSEL & VOY","VESSEL / VOYAGE","VESSEL/VOYAGE","VESSEL","VESSEL NAME"]);
+    const lineKey=find(["LINER","LINE","CARRIER","CARRIER / LINE"]);
+    const polKey=find(["POL","PORT OF LOADING","LOADING PORT"]);
+    const gatewayKey=find(["GATEWAY PORT","GATEWAY","POD","PORT OF DISCHARGE"]);
+    const etaKey=find(["ETA","ESTIMATED ARRIVAL"]);
+    const etdKey=find(["ETD","ESTIMATED DEPARTURE"]);
+    if(containerKey)out["CONTAINER NO."]=rec[containerKey];
+    if(mblKey)out["MBL NO"]=rec[mblKey];
+    if(vesselKey)out["VESSEL & VOY"]=rec[vesselKey];
+    if(lineKey)out["LINER"]=rec[lineKey];
+    if(polKey)out["POL"]=rec[polKey];
+    if(gatewayKey)out["GATEWAY PORT"]=rec[gatewayKey];
+    if(etaKey)out["ETA"]=rec[etaKey];
+    if(etdKey)out["ETD"]=rec[etdKey];
+    return out;
+  };
+  const normalized=incoming.map(canonical).filter(r=>sn(cnum(r)));
+  if(!normalized.length)throw new Error("No container numbers were found. Supported headers include Container Number / Container No / CNTR No.");
+  const existingBy={};rows.forEach((r,i)=>{const k=sn(cnum(r));if(k)existingBy[k]=i});
   let added=0,updated=0;
-  incoming.forEach(rec=>{const cleanRec={};Object.keys(rec).forEach(k=>{const key=norm(k);if(key)cleanRec[key]=rec[k]});const k=sn(cnum(cleanRec));if(!k)return;if(existingBy[k]!==undefined){rows[existingBy[k]]={...rows[existingBy[k]],...cleanRec};updated++}else{rows.push(cleanRec);existingBy[k]=rows.length-1;added++}});
-  const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});if(error)throw error;
-  se("importSummary").innerHTML='<div class="s-import-result"><b>Bulk import complete</b><br>'+added+' new shipments added • '+updated+' existing shipments updated.</div>';renderTable();notify("Bulk import saved.");se("trackingFile").value="";
+  normalized.forEach(rec=>{const k=sn(cnum(rec));if(existingBy[k]!==undefined){rows[existingBy[k]]={...rows[existingBy[k]],...rec};updated++}else{rows.push(rec);existingBy[k]=rows.length-1;added++}});
+  const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});
+  if(error)throw new Error("Database save failed: "+error.message);
+  se("importSummary").innerHTML='<div class="s-import-result"><b>Bulk import complete</b><br>'+normalized.length+' rows read • '+added+' new shipments added • '+updated+' existing shipments updated.</div>';
+  renderTable();notify("Bulk import saved.");se("trackingFile").value="";
 }
 function exportExcel(){
   const list=selectedRows();const data=list.length?list:filtered();if(!data.length){notify("No shipment data to export.");return}
@@ -149,7 +175,7 @@ se("refreshBtn").addEventListener("click",()=>loadRows().catch(e=>alert(e.messag
 se("saveEdit").addEventListener("click",saveEditor);
 se("closeEdit").addEventListener("click",()=>se("editDrawer").classList.remove("open"));
 se("igmFile").addEventListener("change",()=>importIgm().catch(e=>{se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>'}));
-se("trackingFile").addEventListener("change",()=>importTracking().catch(e=>{se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>'}));
+se("trackingFile").addEventListener("change",()=>importTracking().catch(e=>{se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>';notify(e.message)}));
 se("importTrackingBtn").addEventListener("click",()=>se("trackingFile").click());
 se("exportBtn").addEventListener("click",exportExcel);
 se("statusPhotoBtn").addEventListener("click",downloadStatusPhoto);
