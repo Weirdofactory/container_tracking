@@ -1,7 +1,7 @@
 
 const S_URL="https://ykeucqritoexykqrggzz.supabase.co";
 const S_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
-const SSB=supabase.createClient(S_URL,S_KEY);
+const SSB=supabase.createClient(S_URL,S_KEY); const APP=window.GML_APP_CONFIG||{appName:"CargoTrack",appShort:"CT",appTagline:"SHIPMENT CONTROL CENTER"};
 const se=id=>document.getElementById(id);
 const sx=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const sf=(r,n)=>{for(const x of n){if(r?.[x]!==undefined&&String(r[x]??"").trim()!=="")return r[x]}return""};
@@ -112,7 +112,7 @@ async function importIgm(){
   let count=0;for(let i=0;i<recs.length;i+=250){const chunk=recs.slice(i,i+250);const {data,error}=await SSB.rpc("import_igm_hbl_rows",{p_user_id:session.user_id,p_rows:chunk});if(error)throw error;count+=Number(data?.imported||chunk.length)}
   se("importSummary").innerHTML='<div class="s-import-result"><b>Import complete</b><br>'+recs.length+' HBL/container rows detected and '+count+' rows submitted to the database.</div>';
 }
-function bootStaff(){se("staffUsername").textContent=session.username||"Staff";se("staffRole").textContent=session.role||"Staff";loadRows().then(renderTable).catch(e=>alert(e.message))}
+function bootStaff(){document.querySelectorAll("[data-app-name]").forEach(el=>el.textContent=APP.appName);document.querySelectorAll("[data-app-short]").forEach(el=>el.textContent=APP.appShort||"CT");document.querySelectorAll("[data-app-tagline]").forEach(el=>el.textContent="OPERATIONS CONTROL");document.querySelectorAll("[data-app-context]").forEach(el=>el.textContent=APP.appTagline||"SHIPMENT CONTROL CENTER");document.querySelectorAll("[data-page-title]").forEach(el=>el.textContent=APP.appName+" — Operations Control");se("staffUsername").textContent=session.username||"Staff";se("staffRole").textContent=session.role||"Staff";loadRows().then(renderTable).catch(e=>alert(e.message))}
 loadSession();
 if(session){show("loginScreen",false);show("staffApp",true);bootStaff()}
 se("loginBtn").addEventListener("click",login);se("logoutBtn").addEventListener("click",logout);se("staffSearch").addEventListener("input",renderTable);se("statusFilter").addEventListener("change",renderTable);
