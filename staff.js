@@ -192,9 +192,18 @@ function renderOpsIntel(list){
   if(alertHost)alertHost.innerHTML=alerts.slice(0,8).map(a=>'<div class="s-alert-row" data-alert-row="'+a.idx+'"><i class="s-alert-dot '+a.kind+'"></i><div><b>'+sx(a.title)+'</b><span>'+sx(a.detail)+'</span></div><time>'+sx(a.date)+'</time></div>').join("")||'<div class="s-alert-empty">✓ No immediate operational exceptions.</div>';
   alertHost?.querySelectorAll("[data-alert-row]").forEach(x=>x.addEventListener("click",()=>openEditor(Number(x.dataset.alertRow))));
   const groups={};
-  list.forEach(r=>{const v=sf(r,["VESSEL & VOY","VESSEL"])||"Unassigned";const key=v+"|"+(sf(r,["POL"])||"—")+"|"+(sf(r,["GATEWAY PORT"])||"—");if(!groups[key])groups[key]={v,pol:sf(r,["POL"])||"—",gw:sf(r,["GATEWAY PORT"])||"—",eta:sf(r,["ETA"])||"",n:0};groups[key].n++});
-  const vessels=Object.values(groups).sort((a,b)=>String(a.eta).localeCompare(String(b.eta)));
-  se("vesselCount").textContent=vessels.length+" vessel"+(vessels.length===1?"":"s");
+  const today=new Date(); today.setHours(0,0,0,0);
+  list.forEach(r=>{
+    if(sf(r,["CONTAINER RETURN DATE"])) return;
+    const eta=sf(r,["ETA"]); const d=parseDateValue(eta);
+    if(!d || d<today) return;
+    const v=sf(r,["VESSEL & VOY","VESSEL"])||"Unassigned";
+    const key=v+"|"+(sf(r,["POL"])||"—")+"|"+(sf(r,["GATEWAY PORT"])||"—");
+    if(!groups[key]) groups[key]={v:v,pol:sf(r,["POL"])||"—",gw:sf(r,["GATEWAY PORT"])||"—",eta:eta,n:0};
+    groups[key].n++;
+  });
+  const vessels=Object.values(groups).sort((a,b)=>{const da=parseDateValue(a.eta),db=parseDateValue(b.eta);return (da?da.getTime():9999999999999)-(db?db.getTime():9999999999999);});
+  se("vesselCount").textContent=vessels.length+" upcoming vessel"+(vessels.length===1?"":"s");
   se("vesselBody").innerHTML=vessels.slice(0,12).map(v=>'<tr><td><b>'+sx(v.v)+'</b></td><td>'+sx(v.pol)+'</td><td>'+sx(v.gw)+'</td><td>'+sx(sd(v.eta))+'</td><td>'+v.n+'</td></tr>').join("")||'<tr><td colspan="5" style="padding:25px;text-align:center;color:#8998a8">No vessel schedule available.</td></tr>';
 }
 function openBulkUpdate(){
