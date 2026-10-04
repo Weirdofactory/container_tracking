@@ -30,10 +30,20 @@
       <div class="s-kpi red"><span>DESTUFFING</span><b id="kDestuff">0</b><small>Pending de-stuff</small></div>
       <div class="s-kpi"><span>TOTAL</span><b id="kTotal">0</b><small>Visible in workspace</small></div>
     </div>
+    <section class="s-intel-grid">
+      <article class="s-panel-card s-intel-card">
+        <div class="s-panel-heading"><div><span>EXCEPTIONS</span><h2>Needs attention</h2></div><b class="s-count" id="alertCount">0 alerts</b></div>
+        <div id="alertsHost" class="s-alert-list"><div class="s-alert-empty">Loading operational exceptions…</div></div>
+      </article>
+      <article class="s-panel-card s-intel-card">
+        <div class="s-panel-heading"><div><span>VESSEL PIPELINE</span><h2>Upcoming vessel schedule</h2></div><b class="s-count" id="vesselCount">0 vessels</b></div>
+        <div class="s-vessel-wrap"><table class="s-vessel-table"><thead><tr><th>VESSEL / VOYAGE</th><th>POL</th><th>GATEWAY</th><th>ETA</th><th>CNTRS</th></tr></thead><tbody id="vesselBody"></tbody></table></div>
+      </article>
+    </section>
 
     <section class="s-panel-card" id="shipments">
       <div class="s-panel-heading"><div><span>LIVE WORKSPACE</span><h2>Container shipments</h2></div><b class="s-count" id="staffCount">0 shipments</b></div>
-      <div class="s-toolbar"><input class="s-input" id="staffSearch" placeholder="Search container, MBL, vessel, liner, port…"><select class="s-select" id="statusFilter"><option value="all">All Status</option><option>IN TRANSIT</option><option>ETA SCHEDULED</option><option>ARRIVED AT PORT</option><option>PORT OUT</option><option>CFS IN</option><option>DE-STUFFED</option><option>RETURNED</option><option>PENDING</option></select><div class="s-toolbar-actions"><button class="s-btn" id="refreshBtn">↻ Refresh Data</button><button class="s-btn blue" id="importTrackingBtn">📥 Bulk Import</button><button class="s-btn" id="exportBtn">📤 Download Excel</button><button class="s-btn feature" id="statusPhotoBtn">📸 Status Photo</button><button class="s-btn feature" id="whatsappBtn">💬 WhatsApp</button></div></div>
+      <div class="s-toolbar"><input class="s-input" id="staffSearch" placeholder="Search container, MBL, vessel, liner, port…"><select class="s-select" id="statusFilter"><option value="all">All Status</option><option>IN TRANSIT</option><option>ETA SCHEDULED</option><option>PORT IN</option><option>PORT OUT</option><option>CFS IN</option><option>DE-STUFFED</option><option>RETURNED</option><option>PENDING</option></select><div class="s-toolbar-actions"><button class="s-btn" id="refreshBtn">↻ Refresh Data</button><button class="s-btn blue" id="importTrackingBtn">📥 Bulk Import</button><button class="s-btn" id="exportBtn">📤 Download Excel</button><button class="s-btn feature" id="statusPhotoBtn">📸 Status Photo</button><button class="s-btn feature" id="whatsappBtn">💬 WhatsApp</button><button class="s-btn feature" id="bulkUpdateBtn">⚡ Bulk Update</button></div></div>
       <div class="s-table-wrap"><table class="s-table"><thead><tr><th class="s-check-col"><input type="checkbox" id="selectAllRows" aria-label="Select all visible shipments"></th><th>CONTAINER</th><th>MBL</th><th>LINE</th><th>POL</th><th>GATEWAY</th><th>VESSEL / VOYAGE</th><th>ETA</th><th>STATUS</th></tr></thead><tbody id="staffBody"></tbody></table></div>
       <div class="s-table-foot"><span>Click a container to edit operational milestones.</span><span>Live source: shipment tracking records</span></div>
     </section>
