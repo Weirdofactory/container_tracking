@@ -168,3 +168,17 @@ body{font-size:14px}
 .s-head-live{display:inline-flex;align-items:center;gap:7px;padding:10px 13px;border:1px solid #cfe5d9;background:#f3fbf6;color:#087c47;border-radius:9px;font-size:11px;font-weight:900;letter-spacing:.04em}
 .s-toolbar-actions{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:2px}
 .s-toolbar-actions .s-btn{min-width:145px}
+
+
+/* GML PHASE 2 — operations intelligence */
+.s-intel-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.s-intel-card{margin-top:0}
+.s-alert-list{display:grid;gap:7px}
+.s-alert-row{display:grid;grid-template-columns:9px minmax(0,1fr) auto;align-items:center;gap:9px;padding:10px 11px;border:1px solid #e4ebf1;border-radius:9px;background:#fbfdff;cursor:pointer}
+.s-alert-row:hover{background:#f5faff;border-color:#cfe1ed}
+.s-alert-dot{width:8px;height:8px;border-radius:50%;background:#e9a21a}.s-alert-dot.bad{background:#dd5353}.s-alert-dot.good{background:#0ca75a}.s-alert-row b{display:block;font-size:11px}.s-alert-row span{display:block;margin-top:2px;color:#8191a2;font-size:10px}.s-alert-row time{color:#6e8194;font-size:10px;font-weight:800;white-space:nowrap}
+.s-alert-empty{padding:30px 10px;text-align:center;color:#8b99a8;font-size:11px}
+.s-vessel-wrap{overflow:auto}.s-vessel-table{width:100%;border-collapse:collapse;min-width:580px}.s-vessel-table th{padding:9px;color:#8594a3;background:#f7fafc;font-size:9px;text-align:left;letter-spacing:.06em}.s-vessel-table td{padding:11px 9px;border-top:1px solid #edf1f4;font-size:11px;color:#274762}.s-vessel-table td b{font-size:11px}
+.s-bulk-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}.s-bulk-form .full{grid-column:1/-1}.s-bulk-help{padding:10px 12px;margin-bottom:11px;border:1px solid #d7e6ef;background:#f7fbfe;border-radius:9px;color:#74889b;font-size:10px;line-height:1.5}
+@media(max-width:1000px){.s-intel-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.s-bulk-form{grid-template-columns:1fr}.s-bulk-form .full{grid-column:auto}}
