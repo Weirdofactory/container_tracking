@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="./portal.css?v=20261004-v2">
+<link rel="stylesheet" href="./portal.css?v=20261004-v3">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
@@ -38,11 +38,28 @@
 <section class="gml-hero" id="track">
   <div class="gml-hero-overlay"></div>
   <div class="gml-hero-inner">
-    <div class="gml-hero-copy">
-      <div class="gml-eyebrow">GLOBAL FREIGHT SOLUTIONS</div>
-      <h1>Track every move.<br><span>Know what happens next.</span></h1>
-      <p>Professional shipment visibility across containers, vessels, ports, CFS milestones and customs IGM / HBL records.</p>
-      <div class="gml-trust-row"><span>✓ Live shipment status</span><span>✓ Container-level visibility</span><span>✓ HBL &amp; IGM linked</span></div>
+    <div class="gml-hero-grid">
+      <div class="gml-hero-copy">
+        <div class="gml-eyebrow">GREENWICH MERIDIAN LOGISTICS</div>
+        <h1>Track every move.<br><span>Know what happens next.</span></h1>
+        <p>One professional view across ocean freight, containers, port milestones, CFS activity and customs-linked HBL / IGM data.</p>
+        <div class="gml-trust-row"><span>✓ Live shipment status</span><span>✓ Container-level visibility</span><span>✓ HBL &amp; IGM linked</span></div>
+      </div>
+
+      <div class="gml-hero-visual" aria-label="Logistics visibility overview">
+        <div class="gml-visual-top"><span>LIVE NETWORK</span><b>OCEAN FREIGHT</b></div>
+        <div class="gml-route-visual">
+          <div class="gml-route-node origin"><i></i><strong>ORIGIN</strong><span>Global Port</span></div>
+          <div class="gml-route-line"><em></em><span>SEA ROUTE</span></div>
+          <div class="gml-ship-orb">⚓</div>
+          <div class="gml-route-node destination"><i></i><strong>DESTINATION</strong><span>India Gateway</span></div>
+        </div>
+        <div class="gml-visual-grid">
+          <div><span>TRACKING</span><b>24 / 7</b></div>
+          <div><span>HBL / IGM</span><b>LINKED</b></div>
+          <div><span>STATUS</span><b>LIVE</b></div>
+        </div>
+      </div>
     </div>
 
     <form class="gml-search" id="trackingForm" onsubmit="return false">
@@ -110,5 +127,5 @@
 <div class="gml-modal" id="igmModal"><div class="gml-modal-card"><div class="gml-modal-head"><div><div class="gml-modal-kicker">CUSTOMS / IGM LINK</div><h3 id="igmModalTitle">HBL Details</h3><p id="igmModalSub">Indian Customs manifest information</p></div><button class="gml-modal-close" id="closeIgm">✕</button></div><div class="gml-modal-body" id="igmModalBody"></div></div></div>
 
 <div class="gml-toast" id="gmlToast"></div>
-<script src="./portal.js?v=20261004-v2"></script>
+<script src="./portal.js?v=20261004-v3"></script>
 </body></html>
