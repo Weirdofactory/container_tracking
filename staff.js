@@ -1,6 +1,6 @@
 const S_URL="https://ykeucqritoexykqrggzz.supabase.co";
 const S_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
-const SSB=supabase.createClient(S_URL,S_KEY);
+const SSB=supabase.createClient(S_URL,S_KEY,{global:{fetch:(input,init={})=>fetch(input,{...init,cache:"no-store"})}});
 const APP=window.GML_APP_CONFIG||{appName:"CargoTrack",appShort:"CT",appTagline:"SHIPMENT CONTROL CENTER",companyName:"",supportEmail:"",supportWhatsApp:""};
 const se=id=>document.getElementById(id);
 const sx=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -29,24 +29,19 @@ function logout(){localStorage.removeItem("gml_staff_session");location.reload()
 function loadSession(){try{session=JSON.parse(localStorage.getItem("gml_staff_session")||"null")}catch(e){session=null}}
 
 async function loadRows(){
-  const btn=se("refreshBtn");
-  const original=btn?.textContent;
+  const btn=se("refreshBtn"),original=btn?.textContent;
   if(btn){btn.disabled=true;btn.textContent="↻ Refreshing…";}
   try{
-    /* Use a cache-busting REST request so Refresh always gets the latest database row. */
-    const url=S_URL+"/rest/v1/containers?id=eq.gml_tracking_records&select=data&_ts="+Date.now();
-    const resp=await fetch(url,{method:"GET",cache:"no-store",headers:{apikey:S_KEY,Authorization:"Bearer "+S_KEY}});
-    if(!resp.ok){
-      const msg=await resp.text();
-      throw new Error("Refresh failed ("+resp.status+"): "+msg.slice(0,180));
-    }
-    const payload=await resp.json();
-    const record=Array.isArray(payload)?payload[0]:null;
-    rows=Array.isArray(record?.data)?record.data:[];
+    const {data,error}=await SSB.from("containers").select("data").eq("id","gml_tracking_records").single();
+    if(error)throw new Error(error.message||"Unable to load shipment data.");
+    rows=Array.isArray(data?.data)?data.data:[];
     selected.clear();
     renderTable();
     notify("Data refreshed • "+rows.length+" shipments loaded.");
     return rows;
+  }catch(e){
+    notify("Refresh failed: "+e.message);
+    throw e;
   }finally{
     if(btn){btn.disabled=false;btn.textContent=original||"↻ Refresh Data";}
   }
