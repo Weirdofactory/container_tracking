@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>GML Customer Portal — Shipment Tracking</title>
+<!-- Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>window.GML_CUSTOMER_PORTAL_V2 = true;</script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./style.css?v=20261003-customer-v24">
+<link rel="stylesheet" href="./customer.css?v=20261003-customer-v24">
+</head>
+<body>
+
+<header class="nav-header">
+  <div class="nav-container nav-multilevel">
+    <div class="brand-box" onclick="resetToLanding()">
+      <div class="brand-logo-icon">⚓</div>
+      <div class="brand-title">Container Tracking Suite</div>
+    </div>
+
+    <div class="header-tools">
+      <div id="opsControls" class="ops-controls-multilevel" style="display:none;">
+        <div class="header-top-row">
+          <div class="header-context">
+            <span class="header-kicker">OPERATIONS CONTROL</span>
+            <span class="header-context-sep">•</span>
+            <span class="header-context-text">Container Operations & Visibility</span>
+          </div>
+          <div class="header-utility">
+            <button class="btn btn-ghost" id="currencyToggleBtn" style="font-family:'JetBrains Mono'; padding:4px 8px;">💱 INR</button>
+            <button class="btn btn-ghost" id="themeBtn" style="padding:4px 8px;">☀️</button>
+            <span id="userBadge" class="tag-badge" style="font-family:'JetBrains Mono'; font-weight:700;">Admin</span>
+            <button class="btn btn-danger" id="logoutBtn" style="padding:4px 8px;" title="Logout">🔒</button>
+          </div>
+        </div>
+
+        <div class="header-bottom-row">
+          <div class="header-segment ops-primary-nav">
+            <button class="btn btn-primary" id="p1v2TowerBtn">🎯 Control Tower</button>
+            <button class="btn btn-ghost" id="headerCsnBtn">📑 SCMTR / CSN</button>
+            <button class="btn btn-ghost" id="headerLfdBtn">⏱️ LFD Rules</button>
+          </div>
+          <div class="header-segment">
+            <button class="btn btn-primary action-editor-only" id="addBtn">+ Container</button>
+          </div>
+          <div class="header-segment">
+            <button class="btn btn-ghost" id="terminalRoutingBtn">🧭 Terminal Routing</button>
+          </div>
+          <div class="nav-dropdown">
+            <button class="btn" id="opsMenuBtn">⚡ Ops Menu ▾</button>
+            <div class="nav-dropdown-content" id="opsMenuDropdown">
+              <button class="dropdown-item" id="openAuditLogBtn">📜 Audit Trail (<span id="auditCountBadge">0</span>)</button>
+              <button class="dropdown-item" id="dailyDispatchBtn">📋 Dispatch Table</button>
+              <button class="dropdown-item action-editor-only" id="vesselEditBtn">🚢 Bulk Vessel Update</button>
+              <button class="dropdown-item" id="openAnalyticsBtn">📊 Turnaround Stats</button>
+            </div>
+          </div>
+          <div class="header-segment">
+            <button class="btn btn-ghost" id="exportBtn" title="Export to Excel">📤 Export</button>
+            <label class="btn btn-ghost action-editor-only" style="cursor:pointer" title="Import container tracking data">📂 Import<input id="excelInput" type="file" accept=".xlsx,.xls,.csv" style="display:none"></label>
+            <label class="btn btn-ghost action-editor-only" id="igmImportLabel" style="cursor:pointer" title="Import IGM / HBL customs data">🛃 IGM / HBL Import<input id="igmImportInput" type="file" accept=".xlsx,.xls" style="display:none"></label>
+          </div>
+        </div>
+      </div>
+
+      <div id="publicControls" style="display:flex; align-items:center; gap:8px;">
+        <nav class="customer-public-nav" aria-label="Customer navigation">
+          <a href="#" onclick="return false;">Track &amp; Trace</a>
+          <a href="#" onclick="return false;">Schedules</a>
+          <a href="#customer-help">Services</a>
+          <a href="#" onclick="return false;">Tools</a>
+          <a href="#" onclick="return false;">Resources</a>
+          <a href="#" onclick="return false;">Company</a>
+          <a href="#customer-help">Contact</a>
+        </nav>
+        <span class="customer-lang">🌐 EN⌄</span>
+        <button class="customer-icon-btn" id="publicThemeBtn" type="button" aria-label="Toggle theme">☀️</button>
+        <button class="customer-portal-btn" id="loginBtn" type="button" onclick="window.openStaffLoginFallback()">🔐 Staff Portal Login</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+
+<section id="publicLandingView" class="fade-in customer-public-page">
+  <div class="customer-hero">
+    <div class="customer-hero-inner">
+      <div class="customer-hero-copy">
+        <div class="customer-eyebrow">GLOBAL FREIGHT SOLUTIONS</div>
+        <h1>Track Your Shipment</h1>
+        <p>Real-time container tracking with global visibility.</p>
+        <button class="customer-hero-login" type="button" onclick="window.openStaffLoginFallback()">🔐 Staff Portal Login</button>
+      </div>
+
+      <div class="customer-search-panel">
+        <div class="customer-search-fields">
+          <div class="customer-field">
+            <label>Search By</label>
+            <select id="publicTrackingType" aria-label="Search Type">
+              <option value="container">Container Number</option>
+              <option value="all">All Tracking References</option>
+            </select>
+          </div>
+          <div class="customer-field">
+            <label style="opacity:0">Tracking Number</label>
+            <input type="text" id="publicSearchInput" autocomplete="off" spellcheck="false" placeholder="MSMU5334429">
+          </div>
+          <button class="customer-track-btn" id="publicSearchBtn" type="button">🔍 Track</button>
+          <button class="customer-multiple-btn" id="publicMultipleBtn" type="button">▦ Multiple Tracking</button>
+        </div>
+        <div class="customer-search-help">Search by Container #, HBL/AWB #, Booking #, Vessel/Voyage # or Customer Ref #.</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="customer-content">
+    <div class="customer-result-bar">
+      <div>
+        <span class="customer-result-kicker">SHIPMENT RESULTS</span>
+        <h2>Track your cargo</h2>
+      </div>
+      <div class="customer-result-meta">
+        <span>Current status &amp; milestone history</span>
+        <span class="customer-result-count" id="publicResultCountBadge">0 results</span>
+      </div>
+    </div>
+    <div id="publicResultContainer" class="customer-result-host"></div>
+  </main>
+
+  <section id="customer-help" class="customer-help-section">
+    <div class="customer-help-card">
+      <div>
+        <h3>Need assistance with a shipment?</h3>
+        <p>Keep the container, MBL or booking number ready when contacting our operations team.</p>
+      </div>
+      <div class="customer-help-actions">
+        <a class="customer-help-btn primary" href="mailto:madhan@gmlindia.net">✉️ Email Operations</a>
+        <a class="customer-help-btn secondary" href="https://wa.me/919884070344" target="_blank" rel="noopener">💬 WhatsApp Operations</a>
+      </div>
+    </div>
+  </section>
+  <footer class="customer-footer">
+    <span>© 2026 Greenwich Meridian Logistics. All rights reserved.</span>
+    <strong>Privacy Policy &nbsp; | &nbsp; Terms &amp; Conditions &nbsp; | &nbsp; Help Center</strong>
+  </footer>
+</section>
+
+<style id="kpi-layout-override">
+#opsDashboardView .kpi-row{
+  display:grid !important;
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  gap:12px !important;
+  width:100% !important;
+  margin:0 0 20px !important;
+}
+#opsDashboardView .kpi-row > .kpi-card{
+  display:flex !important;
+  width:auto !important;
+  min-width:0 !important;
+  min-height:96px !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+}
+@media(max-width:1100px){
+  #opsDashboardView .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+}
+@media(max-width:700px){
+  #opsDashboardView .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+}
+@media(max-width:480px){
+  #opsDashboardView .kpi-row{grid-template-columns:1fr !important;}
+}
+</style>
+<main class="main-wrapper" id="opsDashboardView" style="display:none;">
+  <div class="kpi-row">
+    <div class="kpi-card active-kpi"><small>Active Shipments</small><strong id="kActive">0</strong></div>
+    <div class="kpi-card destuffed-kpi"><small>Returned (Done)</small><strong id="kCompleted" style="color:var(--success)">0</strong></div>
+    <div class="kpi-card port-kpi"><small>Port In Awaiting</small><strong id="kPortInPending" style="color:var(--warning)">0</strong></div>
+    <div class="kpi-card" style="border-top-color:#f97316;"><small>Port Out Pending</small><strong id="kPortOutPending" style="color:#f97316">0</strong></div>
+    <div class="kpi-card" style="border-top-color:var(--danger);"><small>Destuffing Pending</small><strong id="kDestuffingPending" style="color:var(--danger)">0</strong></div>
+    <div class="kpi-card total-cost-kpi"><small>Total Financial Exposure</small><strong id="kTotalExposure" style="color:var(--corporate-pink)">₹0</strong></div>
+  </div>
+  <div class="control-tray">
+    <div class="control-tray-top">
+      <div class="filter-inputs">
+        <div class="search-input-wrapper">
+          <span class="search-input-icon">🔍</span>
+          <input id="search" class="input" autocomplete="off" placeholder="Search container, MBL, vessel, liner, truck...">
+          <button type="button" id="searchClearBtn" class="search-clear-btn" aria-label="Clear search" title="Clear search">✕</button>
+        </div>
+        <span id="searchResultCount" class="search-result-count" aria-live="polite">0 results</span>
+        <button class="btn" onclick="openDrawer()">⚙️ Deep Filters</button>
+      </div>
+      <div class="view-selector">
+        <button class="view-btn active" data-view="cards">Cards</button>
+        <button class="view-btn" data-view="sheet">Table</button>
+        <button class="view-btn" data-view="kanban">Pipeline</button>
+      </div>
+    </div>
+    <div class="control-tray-bottom">
+      <div class="quick-chips-wrapper">
+        <span class="chip" data-filter="all">All</span>
+        <span class="chip active" data-filter="active">Active</span>
+        <span class="chip" data-filter="port_in">Port In</span>
+        <span class="chip" data-filter="port_out">Port Out</span>
+        <span class="chip" data-filter="cfs_in">CFS In</span>
+        <span class="chip" data-filter="empty_pending">Empty Pending</span>
+        <span class="chip" data-filter="completed">Completed</span>
+      </div>
+    </div>
+  </div>
+  <section id="cardsView" class="cards-layout fade-in"></section>
+  <section id="sheetView" class="sheet-box fade-in" style="display:none;">
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th width="35"><input type="checkbox" id="sheetSelectAll"></th>
+          <th>Container No.</th><th>Type</th><th>MBL No</th><th>Liner</th><th>Port</th><th>Port In</th><th>Port Out</th><th>CFS Depot</th><th>Truck No.</th><th>Destuffed</th><th>Empty Return</th><th>Terminal LFD</th><th>Detention LFD</th><th>Exposure</th><th>Remarks</th><th width="80">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="sheetTableBody"></tbody>
+    </table>
+    <div id="paginationWrapper"></div>
+  </section>
+  <section id="kanbanView" class="kanban-layout fade-in" style="display:none;"></section>
+</main>
+
+<div class="drawer-overlay" id="filterDrawerOverlay" onclick="closeDrawer()"></div>
+<div class="filter-drawer" id="filterDrawer">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:16px;">
+    <h3 style="margin:0;font-size:14px;font-weight:800;">⚙️ Advanced Filters</h3>
+    <button class="btn btn-ghost" style="padding:4px 8px;" onclick="closeDrawer()">✕</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <div><label>Vessel</label><select id="vesselFilter" class="select"></select></div>
+    <div><label>Gateway Port</label><select id="gatewayFilter" class="select"><option value="">All Ports</option><option value="CITPL">CITPL (PSA)</option><option value="CCTL">CCTL (DP World)</option><option value="Kattupalli">Kattupalli Port</option><option value="Ennore">Ennore Port</option></select></div>
+    <div><label>CFS Depot</label><select id="cfsFilter" class="select"></select></div>
+  </div>
+</div>
+
+<div id="dragDropOverlay" class="drawer-overlay" style="z-index:9999;flex-direction:column;align-items:center;justify-content:center;color:white;font-size:20px;font-weight:800;background:rgba(2,132,199,.9);backdrop-filter:blur(6px);">
+  <div style="font-size:64px;margin-bottom:16px;">📥</div>Drop Excel File to Import
+  <div style="font-size:12px;font-weight:600;margin-top:8px;opacity:.8;">Updates records automatically</div>
+</div>
+
+<div id="floatingActionBar" class="floating-action-bar">
+  <span id="selectionNotice" style="font-size:11.5px;font-weight:800;color:var(--text-main);padding:0 8px;">0 selected</span>
+  <div style="width:1px;height:20px;background:var(--border);"></div>
+  <button class="btn btn-emerald" id="bulkPhotoBtn">📸 Status Photo (<span id="btnSelectCount">0</span>)</button>
+  <button class="btn btn-purple" id="bulkWhatsAppBtn">💬 Broadcast</button>
+  <button class="btn action-editor-only" id="bulkDestuffBtn" style="background:var(--danger-bg);color:var(--danger);border-color:transparent;">✅ Destuff Today</button>
+  <div style="width:1px;height:20px;background:var(--border);margin-left:4px;"></div>
+  <button class="btn btn-ghost" id="clearSelectionBtn" style="padding:4px 8px;border-radius:50%;" title="Clear Selection">✕</button>
+</div>
+
+<div class="undo-toast" id="undoToast">
+  <span>Container deleted permanently.</span>
+  <button class="undo-btn" onclick="undoDelete()">Undo Action</button>
+</div>
+
+<div class="modal-bg" id="whatsappComposerModalBg">
+  <div class="modal-dialog" style="max-width:540px;">
+    <div class="modal-header"><span>💬 WhatsApp Message Composer</span><button class="btn btn-ghost" id="whatsappComposerClose">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--text-muted);">Formatted text ready for WhatsApp threads:</div>
+      <textarea id="whatsappComposerText" class="input" style="width:100%;height:220px;font-family:'JetBrains Mono';font-size:11.5px;line-height:1.5;resize:vertical;padding:10px;"></textarea>
+    </div>
+    <div class="modal-footer"><button class="btn" id="copyComposerTextBtn">📋 Copy Message</button><a id="openDirectWhatsAppBtn" href="#" target="_blank" class="btn btn-primary">Open in WhatsApp ↗</a></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="auditModalBg">
+  <div class="modal-dialog" style="width:840px;max-width:95vw;">
+    <div class="modal-header"><span>📜 Activity & Change Audit Trail</span><button class="btn btn-ghost" id="auditClose">✕</button></div>
+    <div class="modal-body" style="padding:16px;background:var(--bg-elevated);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;">
+        <input type="text" id="auditSearchInput" class="input" placeholder="Filter audit logs..." style="flex:1;">
+        <button class="btn btn-ghost" id="exportAuditBtn">📤 Export CSV</button>
+        <button class="btn btn-danger" id="clearAuditBtn" style="display:none;">Clear Logs</button>
+      </div>
+      <div style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead style="position:sticky;top:0;background:var(--bg-elevated);border-bottom:1px solid var(--border);z-index:5;">
+            <tr style="text-align:left;color:var(--text-muted);font-size:9.5px;text-transform:uppercase;">
+              <th style="padding:8px 10px;">Timestamp</th>
+              <th style="padding:8px 10px;">Operator</th>
+              <th style="padding:8px 10px;">Action</th>
+              <th style="padding:8px 10px;">Unit</th>
+              <th style="padding:8px 10px;">Field</th>
+              <th style="padding:8px 10px;">Change</th>
+            </tr>
+          </thead>
+          <tbody id="auditTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="mapModalBg">
+  <div class="modal-dialog" style="width:840px;max-width:95vw;">
+    <div class="modal-header"><span id="mapModalTitle">Voyage Tracker</span><button class="btn btn-ghost" id="mapCloseBtn">✕</button></div>
+    <div class="modal-body" style="padding:0;background:#0b1329;">
+      <div id="leafletMap" style="width:100%;height:380px;background:#0b1329;"></div>
+      <div style="padding:10px 16px;font-size:11px;display:flex;justify-content:space-between;align-items:center;background:var(--bg-elevated);">
+        <div><strong id="mapVesselText">Vessel Route</strong></div>
+        <a id="vesselFinderExternalBtn" href="https://www.vesselfinder.com/" target="_blank" class="btn btn-primary" style="padding:4px 10px;font-size:11px;">Open Live AIS ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="loginModalBg">
+  <div class="modal-dialog" style="max-width:380px;">
+    <div class="modal-header"><span>🔐 Staff Portal Login</span><button class="btn btn-ghost" id="loginClose">✕</button></div>
+    <div class="modal-body" style="padding:20px;">
+      <div>
+        <label style="font-size:10.5px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;">Access Code</label>
+        <input type="password" id="loginCodeInput" class="input" style="width:100%;margin-top:6px;font-family:'JetBrains Mono';font-weight:800;font-size:15px;letter-spacing:.1em;text-align:center;height:40px;" placeholder="••••••••">
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;">Please enter your authorized access code.</div>
+    </div>
+    <div class="modal-footer"><button class="btn" id="loginCancel">Cancel</button><button class="btn btn-primary" id="loginSubmit">Sign In</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal-dialog">
+    <div class="modal-header"><span id="modalTitle">Container Details</span><button class="btn btn-ghost" id="modalClose">✕</button></div>
+    <div class="modal-body" id="modalForm" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+    <div class="modal-footer"><button class="btn" id="modalCancel">Cancel</button><button class="btn btn-primary" id="modalSave">Save & Sync</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="vesselModalBg">
+  <div class="modal-dialog" style="max-width:420px;">
+    <div class="modal-header"><span>Bulk Update Vessel Schedule</span><button class="btn btn-ghost" id="vesselModalClose">✕</button></div>
+    <div class="modal-body">
+      <div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Select Vessel</label><select id="targetVesselSelect" class="select" style="width:100%;margin-top:4px;"></select></div>
+      <div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Field</label><select id="targetFieldSelect" class="select" style="width:100%;margin-top:4px;"><option value="GATEWAY PORT">Port</option><option value="POL">POL</option><option value="ETD">ETD</option><option value="ETA">ETA</option><option value="INWARD DATE">Inward Date</option><option value="PORT IN">Port In</option><option value="PORT OUT">Port Out</option><option value="CFS IN">CFS In</option><option value="TRUCK NO.">Truck No.</option><option value="DESTUFFING DATE">Destuffing Date</option><option value="CONTAINER RETURN DATE">Container Return Date</option><option value="CFS NAME">CFS Name</option><option value="LINER">Liner</option></select></div>
+      <div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">New Date or Value</label><input type="text" id="targetNewValue" class="input" style="width:100%;margin-top:4px;" placeholder="YYYY-MM-DD or Text"></div>
+    </div>
+    <div class="modal-footer"><button class="btn" id="vesselModalCancel">Cancel</button><button class="btn btn-primary" id="vesselModalSave">Apply Bulk Update</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="emailModalBg">
+  <div class="modal-dialog" style="width:540px;">
+    <div class="modal-header"><span>✉️ Automated Client Notification</span><button class="btn btn-ghost" id="emailModalClose">✕</button></div>
+    <div class="modal-body">
+      <div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Recipient Email</label><input type="email" id="emailRecipient" class="input" style="width:100%;margin-top:4px;" placeholder="client@company.com"></div>
+      <div><label style="font-size:10.5px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Subject</label><input type="text" id="emailSubject" class="input" style="width:100%;margin-top:4px;"></div>
+      <div><label style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;">Body Text</label><textarea id="emailBody" class="input" style="width:100%;height:130px;margin-top:4px;font-family:'JetBrains Mono';font-size:11px;resize:vertical;padding:8px;"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn" id="copyEmailBtn">📋 Copy Body</button><a id="sendMailtoBtn" href="#" class="btn btn-primary">Open in Mail App ↗</a></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="analyticsModalBg">
+  <div class="modal-dialog" style="width:520px;">
+    <div class="modal-header"><span>Turnaround & Terminal Statistics</span><button class="btn btn-ghost" id="analyticsModalClose">✕</button></div>
+    <div class="modal-body" id="analyticsBody"></div>
+  </div>
+</div>
+
+<div class="toast-popup" id="toast"></div>
+
+<script>
+/* Customer-safe boot fallback: keeps Track/Login usable even if an optional app module fails. */
+(function(){
+  const $=id=>document.getElementById(id);
+  window.openStaffLoginFallback=function(){
+    const m=$('loginModalBg'); if(m)m.classList.add('open');
+    setTimeout(()=>{const x=$('loginCodeInput');if(x)x.focus();},50);
+  };
+  window.performPublicSearchFallback=function(){
+    const input=$('publicSearchInput'), box=$('publicResultContainer');
+    if(!input||!box)return;
+    const q=String(input.value||'').trim().toUpperCase().replace(/\s+/g,'');
+    if(!q){box.innerHTML='<div class="public-empty">Please enter a Container Number.</div>';return;}
+    let rows=[];
+    try{rows=JSON.parse(localStorage.getItem('containerRows')||'[]');}catch(e){}
+    if(!Array.isArray(rows)||!rows.length) rows=[];
+    const hits=rows.filter(r=>String(r['CONTAINER NO.']||r['CONTAINER']||r['CONTAINER NO']||'').toUpperCase().replace(/\s+/g,'')===q);
+    if(!hits.length){box.innerHTML='<div class="public-empty">No shipment found for <b>'+q.replace(/[&<>"]/g,'')+'</b>.</div>';return;}
+    const r=hits[0], val=k=>String(r[k]||'—');
+    box.innerHTML='<div class="public-result-card"><div class="public-result-head"><div><small>CONTAINER</small><h3>'+val('CONTAINER NO.')+'</h3></div><span class="status-pill">Shipment Found</span></div><div class="public-result-grid"><div><small>Vessel / Voyage</small><b>'+val('VESSEL & VOY')+'</b></div><div><small>Gateway Port</small><b>'+val('GATEWAY PORT')+'</b></div><div><small>ETA</small><b>'+val('ETA')+'</b></div><div><small>CFS</small><b>'+val('CFS NAME')+'</b></div></div></div>';
+  };
+  const track=$('publicSearchBtn');
+  if(track) track.onclick=function(){
+    if(window.GML_CUSTOMER_PORTAL_V2){
+      if(typeof window.performPublicSearch==='function') window.performPublicSearch();
+    }else if(typeof window.performPublicSearch==='function'){
+      window.performPublicSearch();
+    }else{
+      window.performPublicSearchFallback();
+    }
+  };
+  const login=$('loginBtn');
+  if(login) login.onclick=function(){window.openStaffLoginFallback();};
+  const submit=$('loginSubmit');
+  if(submit) submit.addEventListener('click',async function(){
+    if(typeof window.sb==='undefined' && typeof window.supabase==='undefined') return;
+    if(typeof window.executeSuccessfulLogin==='function') return;
+    const code=String(($('loginCodeInput')||{}).value||'').trim().toLowerCase();
+    if(!code)return;
+    const btn=submit; btn.disabled=true; btn.textContent='Verifying...';
+    try{
+      const client=window.sb || (window.supabase&&window.supabase.createClient('https://ykeucqritoexykqrggzz.supabase.co','sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ'));
+      const {data,error}=await client.from('user_roles').select('user_id, role, username').eq('access_code',code).single();
+      if(error||!data){alert('Invalid access code.');return;}
+      localStorage.setItem('gml_auth_code_user',JSON.stringify(data)); location.reload();
+    }catch(e){alert('Login service unavailable. Please try again.');}
+    finally{btn.disabled=false;btn.textContent='Sign In';}
+  },true);
+})();
+</script>
+<script src="./app.js?v=20261003-customer-v24"></script>
+<script src="./customer.js?v=20261003-customer-v24"></script>
+<script src="./phase1.js?v=20260924-36"></script>
+<script src="./phase2.js?v=20260924-36"></script>
+</body>
+</html>
