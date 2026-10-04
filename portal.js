@@ -5,7 +5,7 @@ const GML_SB=supabase.createClient(GML_SUPABASE_URL,GML_SUPABASE_KEY);
 
 const PORTS={
   SHEKOU:[22.48,113.91],BUSAN:[35.10,129.04],SHANGHAI:[31.23,121.47],NINGBO:[29.86,121.54],
-  QINGDAO:[36.06,120.38],"JEBEL ALI":[25.0113,55.0610],SINGAPORE:[1.29,103.85],
+  QINGDAO:[36.06,120.38],"HO CHI MINH CITY":[10.77,106.70],"HOCHIMINHCITY":[10.77,106.70],"JEBEL ALI":[25.0113,55.0610],SINGAPORE:[1.29,103.85],
   KATTUPALLI:[13.315,80.345],CHENNAI:[13.0827,80.2707],ENNORE:[13.25,80.332],CCTL:[13.085,80.298],
   CITPL:[13.098,80.305],HOUSTON:[29.7341,-95.1179]
 };
@@ -61,9 +61,16 @@ function coords(name,fallback){
 function routePoints(pol,pod,a,b){
   const p=String(pol||"").toUpperCase(),d=String(pod||"").toUpperCase();
   const indiaGateway=/^(CITPL|KATTUPALLI|CHENNAI|ENNORE|CCTL)$/.test(d);
-  const asiaOrigin=/^(NINGBO|SHANGHAI|QINGDAO|BUSAN|SHEKOU)$/.test(p);
+  const asiaOrigin=/^(NINGBO|SHANGHAI|QINGDAO|BUSAN|SHEKOU|HO CHI MINH CITY|HOCHIMINCITY)$/.test(p);
   if(indiaGateway&&asiaOrigin){
-    // Schematic deep-sea corridor: keeps the visual route over water instead of cutting across China/SE Asia.
+    // Schematic deep-sea corridor. Vietnam origins need a lower-southbound
+    // corridor before turning west toward the Indian Ocean and Chennai.
+    if(/^(HO CHI MINH CITY|HOCHIMINCITY)$/.test(p)){
+      return [
+        a,[9.4,105.2],[7.0,102.8],[4.8,101.6],[1.5,103.8],
+        [4.5,98.0],[7.4,92.0],[10.3,86.1],b
+      ];
+    }
     return [
       a,[26.0,118.0],[21.0,114.0],[15.0,108.0],[8.5,103.5],[2.0,103.8],
       [4.0,97.0],[7.5,91.0],[10.5,86.0],b
