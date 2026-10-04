@@ -35,3 +35,5 @@
 .s-table-empty-row,.s-table-error-row{padding:28px 16px!important;text-align:center!important;color:#8093a5!important;font-size:12px!important;background:#fbfdff!important}
 .s-table-error-row{color:#c44f4f!important;background:#fff7f7!important}
 .future-grid b{font-family:"JetBrains Mono",monospace}
+
+.workspace-count{padding:7px 10px;border:1px solid #d7e4ec;border-radius:999px;background:#f7fafc;color:#5f7488;font-size:10px;font-weight:900;white-space:nowrap}
