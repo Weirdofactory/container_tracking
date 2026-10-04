@@ -51,10 +51,9 @@ async function loadRows(){
     if(btn){btn.disabled=false;btn.textContent=original||"↻ Refresh Data";}
   }
 }
-function renderKpis(list){const vals=list.reduce((a,r)=>{const s=st(r)[0];a.active+=s!=="RETURNED";a.done+=s==="RETURNED";a.portin+=s==="PORT IN";a.portout+=s==="PORT OUT";a.destuff+=s==="DE-STUFFED";return a},{active:0,done:0,portin:0,portout:0,destuff:0});se("kActive").textContent=vals.active;se("kDone").textContent=vals.done;se("kPortIn").textContent=vals.portin;se("kPortOut").textContent=vals.portout;se("kDestuff").textContent=vals.destuff;se("kTotal").textContent=list.length;const ht=se("heroTotal"),ha=se("heroActive"),hr=se("heroReturned");if(ht)ht.textContent=list.length;if(ha)ha.textContent=vals.active;if(hr)hr.textContent=vals.done}
-function filtered(){
-  const q=sn(se("staffSearch").value),f=se("statusFilter").value;
-  return rows.filter(r=>{const hay=[cnum(r),sf(r,["MBL NO","MBL"]),sf(r,["VESSEL & VOY","VESSEL"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");return(!q||hay.includes(q))&&(f==="all"||st(r)[0]===f)});
+function renderKpis(list){
+  const vals=list.reduce((a,r)=>{const s=st(r)[0];a.active+=s!=="RETURNED";a.done+=s==="RETURNED";a.portin+=s==="PORT IN";a.portout+=s==="PORT OUT";a.destuff+=s==="DE-STUFFED";return a},{active:0,done:0,portin:0,portout:0,destuff:0});
+  [["kActive",vals.active],["kDone",vals.done],["kPortIn",vals.portin],["kPortOut",vals.portout],["kDestuff",vals.destuff],["kTotal",list.length],["heroTotal",list.length],["heroActive",vals.active],["heroReturned",vals.done]].forEach(([id,v])=>{const el=se(id);if(el)el.textContent=v});
 }
 function updateSelectAll(){const list=filtered();const visible=list.slice(0,300).map(r=>rows.indexOf(r));const all=visible.length>0&&visible.every(i=>selected.has(i));const sa=se("selectAllRows");if(sa)sa.checked=all;if(window.__updateSelectedBadge)window.__updateSelectedBadge(selected.size)}
 function selectedRows(){return [...selected].map(i=>rows[i]).filter(Boolean)}
