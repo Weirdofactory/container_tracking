@@ -50,14 +50,14 @@ function renderKpis(list){const vals=list.reduce((a,r)=>{const s=st(r)[0];a.acti
 function filtered(){const q=sn(se("staffSearch").value),f=se("statusFilter").value;return rows.filter(r=>{const hay=[cnum(r),sf(r,["MBL NO","MBL"]),sf(r,["VESSEL & VOY","VESSEL"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");return(!q||hay.includes(q))&&(f==="all"||st(r)[0]===f)})}
 
 function renderTable(){
-  const list=filtered();renderKpis(list);renderOpsIntel(list);se("staffCount").textContent=list.length+" shipments";
+  const list=filtered();renderKpis(list);renderOpsIntel(list);renderSmartMetrics(list);se("staffCount").textContent=list.length+" shipments";
   se("staffBody").innerHTML=list.slice(0,300).map(r=>{const idx=rows.indexOf(r),s=st(r),c=cnum(r),m=sf(r,["MBL NO","MBL"]),v=sf(r,["VESSEL & VOY"]),p=sf(r,["POL"]),g=sf(r,["GATEWAY PORT"]),eta=sf(r,["ETA"]);
     return '<tr><td class="s-check-col"><input type="checkbox" class="row-check" data-row="'+idx+'" '+(selected.has(idx)?"checked":"")+' aria-label="Select '+sx(c)+'"></td><td><button class="s-link" data-edit="'+idx+'">'+sx(c||"—")+'</button></td><td>'+sx(m||"—")+'</td><td>'+sx(sf(r,["LINER"])||"—")+'</td><td>'+sx(p||"—")+'</td><td>'+sx(g||"—")+'</td><td>'+sx(v||"—")+'</td><td>'+sx(sd(eta))+'</td><td><span class="s-status '+s[1]+'">'+sx(s[0])+'</span></td></tr>'}).join("")||'<tr><td colspan="9" style="padding:35px;text-align:center;color:#7e8da0">No shipments match the current filter.</td></tr>';
   se("staffBody").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openEditor(Number(b.dataset.edit))));
   se("staffBody").querySelectorAll(".row-check").forEach(b=>b.addEventListener("change",()=>{const i=Number(b.dataset.row);b.checked?selected.add(i):selected.delete(i);updateSelectAll()}));
   updateSelectAll();
 }
-function updateSelectAll(){const list=filtered();const visible=list.slice(0,300).map(r=>rows.indexOf(r));const all=visible.length>0&&visible.every(i=>selected.has(i));const sa=se("selectAllRows");if(sa)sa.checked=all}
+function updateSelectAll(){const list=filtered();const visible=list.slice(0,300).map(r=>rows.indexOf(r));const all=visible.length>0&&visible.every(i=>selected.has(i));const sa=se("selectAllRows");if(sa)sa.checked=all;if(window.__updateSelectedBadge)window.__updateSelectedBadge(selected.size)}
 function selectedRows(){return [...selected].map(i=>rows[i]).filter(Boolean)}
 function requireSelection(){const r=selectedRows();if(!r.length){notify("Select at least one shipment first.");return null}return r}
 
@@ -206,6 +206,38 @@ function renderOpsIntel(list){
   se("vesselCount").textContent=vessels.length+" upcoming vessel"+(vessels.length===1?"":"s");
   se("vesselBody").innerHTML=vessels.slice(0,12).map(v=>'<tr><td><b>'+sx(v.v)+'</b></td><td>'+sx(v.pol)+'</td><td>'+sx(v.gw)+'</td><td>'+sx(sd(v.eta))+'</td><td>'+v.n+'</td></tr>').join("")||'<tr><td colspan="5" style="padding:25px;text-align:center;color:#8998a8">No vessel schedule available.</td></tr>';
 }
+
+function renderSmartMetrics(list){
+  const today=new Date();today.setHours(0,0,0,0);const soon=new Date(today);soon.setDate(soon.getDate()+3);
+  let missing=0,soonCount=0,cfs=0,returned=0;
+  list.forEach(r=>{
+    const eta=parseDateValue(sf(r,["ETA"]));if(eta&&eta>=today&&eta<=soon)soonCount++;
+    if(st(r)[0]==="CFS IN")cfs++;if(st(r)[0]==="RETURNED")returned++;
+    if(!cnum(r)||!sf(r,["ETA"])||!sf(r,["VESSEL & VOY","VESSEL"])||!sf(r,["GATEWAY PORT"]))missing++;
+  });
+  const total=list.length||1;
+  se("healthMissing").textContent=missing;
+  se("etaWindow").textContent=soonCount;
+  se("cfsWorkload").textContent=cfs;
+  se("completionRate").textContent=Math.round(returned/total*100)+"%";
+  const health=Math.max(0,Math.round((1-(missing/total))*100));
+  se("networkHealth").textContent=health+"%";se("healthBar").style.width=health+"%";
+  se("healthText").textContent=missing?missing+" shipment"+(missing===1?" is":"s are")+" missing one or more core fields.":"Core shipment fields are healthy across the current workspace.";
+  const side=se("sideAlertCount");if(side)side.textContent=se("alertCount")?.textContent?.replace(/ .*/,"")||"0";
+}
+function enableRealtime(){
+  try{
+    const channel=SSB.channel("cargotrack-live")
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"containers",filter:"id=eq.gml_tracking_records"},()=>loadRows().catch(()=>{}))
+      .subscribe(status=>{
+        const live=se("liveState"),source=se("dataSourceStatus");
+        if(status==="SUBSCRIBED"){if(live){live.textContent="LIVE";live.parentElement?.classList.add("connected")}if(source)source.textContent="Live source • realtime channel connected";}
+        else {if(live)live.textContent="SYNC";if(source)source.textContent="Live source • refresh fallback enabled";}
+      });
+    window.__cargotrackChannel=channel;
+  }catch(e){console.warn("Realtime unavailable",e)}
+}
+
 function openBulkUpdate(){
   const list=requireSelection();if(!list)return;
   const form='<div class="s-bulk-help">Updating <b>'+list.length+'</b> selected shipment'+(list.length===1?"":"s")+'. Leave a field blank to keep each existing value unchanged.</div><div class="s-bulk-form">'+
@@ -231,7 +263,7 @@ function openBulkUpdate(){
 }
 
 function applySelectAll(){const list=filtered().slice(0,300);const checked=se("selectAllRows").checked;list.forEach(r=>{const i=rows.indexOf(r);checked?selected.add(i):selected.delete(i)});renderTable()}
-function bootStaff(){applyBrand();se("staffUsername").textContent=session.username||"Staff";se("staffRole").textContent=session.role||"Staff";loadRows().catch(e=>alert(e.message))}
+function bootStaff(){applyBrand();se("staffUsername").textContent=session.username||"Staff";se("staffRole").textContent=session.role||"Staff";loadRows().then(()=>enableRealtime()).catch(e=>alert(e.message))}
 
 loadSession();
 if(session){show("loginScreen",false);show("staffApp",true);bootStaff()}
