@@ -29,12 +29,27 @@ function logout(){localStorage.removeItem("gml_staff_session");location.reload()
 function loadSession(){try{session=JSON.parse(localStorage.getItem("gml_staff_session")||"null")}catch(e){session=null}}
 
 async function loadRows(){
-  const {data,error}=await SSB.from("containers").select("data").eq("id","gml_tracking_records").single();
-  if(error)throw error;
-  rows=Array.isArray(data?.data)?data.data:[];
-  selected.clear();
-  renderTable();
-  return rows
+  const btn=se("refreshBtn");
+  const original=btn?.textContent;
+  if(btn){btn.disabled=true;btn.textContent="↻ Refreshing…";}
+  try{
+    /* Use a cache-busting REST request so Refresh always gets the latest database row. */
+    const url=S_URL+"/rest/v1/containers?id=eq.gml_tracking_records&select=data&_ts="+Date.now();
+    const resp=await fetch(url,{method:"GET",cache:"no-store",headers:{apikey:S_KEY,Authorization:"Bearer "+S_KEY}});
+    if(!resp.ok){
+      const msg=await resp.text();
+      throw new Error("Refresh failed ("+resp.status+"): "+msg.slice(0,180));
+    }
+    const payload=await resp.json();
+    const record=Array.isArray(payload)?payload[0]:null;
+    rows=Array.isArray(record?.data)?record.data:[];
+    selected.clear();
+    renderTable();
+    notify("Data refreshed • "+rows.length+" shipments loaded.");
+    return rows;
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent=original||"↻ Refresh Data";}
+  }
 }
 function renderKpis(list){const vals=list.reduce((a,r)=>{const s=st(r)[0];a.active+=s!=="RETURNED";a.done+=s==="RETURNED";a.portin+=s==="PORT IN";a.portout+=s==="PORT OUT";a.destuff+=s==="DE-STUFFED";return a},{active:0,done:0,portin:0,portout:0,destuff:0});se("kActive").textContent=vals.active;se("kDone").textContent=vals.done;se("kPortIn").textContent=vals.portin;se("kPortOut").textContent=vals.portout;se("kDestuff").textContent=vals.destuff;se("kTotal").textContent=list.length}
 function filtered(){const q=sn(se("staffSearch").value),f=se("statusFilter").value;return rows.filter(r=>{const hay=[cnum(r),sf(r,["MBL NO","MBL"]),sf(r,["VESSEL & VOY","VESSEL"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");return(!q||hay.includes(q))&&(f==="all"||st(r)[0]===f)})}
@@ -171,7 +186,7 @@ se("loginBtn").addEventListener("click",login);
 se("logoutBtn").addEventListener("click",logout);
 se("staffSearch").addEventListener("input",renderTable);
 se("statusFilter").addEventListener("change",renderTable);
-se("refreshBtn").addEventListener("click",()=>loadRows().catch(e=>alert(e.message)));
+se("refreshBtn").addEventListener("click",()=>loadRows().catch(e=>notify(e.message)));
 se("saveEdit").addEventListener("click",saveEditor);
 se("closeEdit").addEventListener("click",()=>se("editDrawer").classList.remove("open"));
 se("igmFile").addEventListener("change",()=>importIgm().catch(e=>{se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>'}));
