@@ -1,25 +1,114 @@
+
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Greenwich Meridian Logistics — Shipment Tracking</title>
+<meta name="theme-color" content="#06264c">
+<title>Greenwich Meridian Logistics | Track & Trace</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="./portal.css?v=20261004-v1">
+<link rel="stylesheet" href="./portal.css?v=20261004-v2">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-<header class="gml-nav"><div class="gml-nav-inner">
-<a class="gml-brand" href="./"><div class="gml-logo">⚓</div><div class="gml-brand-copy"><b>GREENWICH MERIDIAN</b><span>GLOBAL FREIGHT SOLUTIONS</span></div></a>
-<nav class="gml-nav-links"><a class="active" href="#track">Track &amp; Trace</a><a href="#help">Services</a><a href="#help">Resources</a><a href="#help">Contact</a></nav>
-<div class="gml-nav-actions"><button class="gml-pill-btn" onclick="location.href='./staff.html'">🔐 Staff Portal</button></div>
-</div></header>
-<section class="gml-hero" id="track"><div class="gml-hero-inner"><div class="gml-eyebrow">GLOBAL FREIGHT SOLUTIONS</div><h1>Track Your Shipment</h1><p>Real-time visibility across containers, vessels, ports and delivery milestones.</p>
-<form class="gml-search" onsubmit="return false"><div class="gml-search-grid"><div><label>Search by</label><select id="searchType"><option value="container">Container Number</option><option value="all">All Tracking References</option></select></div><div><label>Tracking reference</label><input id="searchInput" placeholder="e.g. HDMU5601794" autocomplete="off"></div><button id="trackBtn" class="gml-search-action" type="button">🔍 Track</button><button id="multipleBtn" class="gml-search-secondary" type="button">▦ Multiple Tracking</button></div><div class="gml-search-help">Search by container, HBL, MBL, booking, vessel / voyage or customer reference.</div></form>
-</div></section>
-<main class="gml-main"><div class="gml-results-head"><div><small>SHIPMENT RESULTS</small><h2>Track your cargo</h2></div><div class="gml-results-meta">Live shipment data <span class="gml-count" id="resultCount">0 results</span></div></div><div id="resultHost"></div></main>
-<section class="gml-help" id="help"><div class="gml-help-card"><div><h3>Need assistance with a shipment?</h3><p>Keep your container, MBL or booking reference ready when contacting the operations team.</p></div><div class="gml-help-actions"><a class="gml-help-action primary" href="mailto:madhan@gmlindia.net">✉ Email Operations</a><a class="gml-help-action secondary" href="https://wa.me/919884070344" target="_blank">💬 WhatsApp</a></div></div></section>
-<div class="gml-modal" id="igmModal"><div class="gml-modal-card"><div class="gml-modal-head"><div><div style="font-size:7px;letter-spacing:.12em;font-weight:900;color:#0a75be">CUSTOMS / IGM LINK</div><h3 id="igmModalTitle">HBL Details</h3><p id="igmModalSub">Indian Customs manifest information</p></div><button class="gml-modal-close" id="closeIgm">✕</button></div><div class="gml-modal-body" id="igmModalBody"></div></div></div>
-<script src="./portal.js?v=20261004-v1"></script></body></html>
+<header class="gml-nav">
+  <div class="gml-nav-inner">
+    <a class="gml-brand" href="#track" aria-label="Greenwich Meridian Logistics">
+      <div class="gml-logo"><span>GML</span></div>
+      <div class="gml-brand-copy"><b>GREENWICH MERIDIAN</b><span>GLOBAL FREIGHT SOLUTIONS</span></div>
+    </a>
+    <nav class="gml-nav-links" aria-label="Main navigation">
+      <a class="active" href="#track">Track &amp; Trace</a>
+      <a href="#services">Services</a>
+      <a href="#resources">Resources</a>
+      <a href="#help">Contact</a>
+    </nav>
+    <div class="gml-nav-actions">
+      <button class="gml-icon-btn" id="mobileMenuBtn" aria-label="Open menu">☰</button>
+      <button class="gml-pill-btn" onclick="location.href='./staff.html'">🔐 Staff Portal</button>
+    </div>
+  </div>
+  <div class="gml-mobile-nav" id="mobileNav">
+    <a href="#track">Track &amp; Trace</a><a href="#services">Services</a><a href="#resources">Resources</a><a href="#help">Contact</a>
+  </div>
+</header>
+
+<section class="gml-hero" id="track">
+  <div class="gml-hero-overlay"></div>
+  <div class="gml-hero-inner">
+    <div class="gml-hero-copy">
+      <div class="gml-eyebrow">GLOBAL FREIGHT SOLUTIONS</div>
+      <h1>Track every move.<br><span>Know what happens next.</span></h1>
+      <p>Professional shipment visibility across containers, vessels, ports, CFS milestones and customs IGM / HBL records.</p>
+      <div class="gml-trust-row"><span>✓ Live shipment status</span><span>✓ Container-level visibility</span><span>✓ HBL &amp; IGM linked</span></div>
+    </div>
+
+    <form class="gml-search" id="trackingForm" onsubmit="return false">
+      <div class="gml-search-title"><div><strong>Track a shipment</strong><span>Use any reference available to you</span></div><div class="gml-search-status">SECURE PUBLIC LOOKUP</div></div>
+      <div class="gml-search-grid">
+        <div><label>Search by</label><select id="searchType"><option value="container">Container Number</option><option value="all">All Tracking References</option></select></div>
+        <div><label>Tracking reference</label><input id="searchInput" placeholder="e.g. HDMU5601794" autocomplete="off"></div>
+        <button id="trackBtn" class="gml-search-action" type="button">🔍 Track</button>
+        <button id="multipleBtn" class="gml-search-secondary" type="button">▦ Multiple Tracking</button>
+      </div>
+      <div class="gml-search-help">Container • HBL • MBL • Booking • Vessel / Voyage • Customer reference</div>
+    </form>
+
+    <div class="gml-hero-stats">
+      <div><b>24/7</b><span>Shipment lookup</span></div><div><b>HBL → IGM</b><span>Linked customs view</span></div><div><b>1 View</b><span>Route to delivery</span></div>
+    </div>
+  </div>
+</section>
+
+<main class="gml-main">
+  <div class="gml-results-head">
+    <div><small>SHIPMENT RESULTS</small><h2>Track your cargo</h2><p>Live status, route and customs-linked cargo information in one place.</p></div>
+    <div class="gml-results-meta"><span>Live shipment data</span><span class="gml-count" id="resultCount">0 results</span></div>
+  </div>
+  <div id="resultHost">
+    <div class="gml-empty gml-empty-start"><div><div class="gml-empty-icon">⌕</div><strong>Search for a shipment</strong><span>Enter a container, MBL, HBL or booking reference above to begin.</span></div></div>
+  </div>
+</main>
+
+<section class="gml-trust-strip" id="services">
+  <div class="gml-trust-inner">
+    <div><span>01</span><div><b>Container Visibility</b><small>Port, CFS and delivery milestones</small></div></div>
+    <div><span>02</span><div><b>Customs Linked Data</b><small>HBL and IGM information by container</small></div></div>
+    <div><span>03</span><div><b>Operational Support</b><small>Direct access to the GML operations team</small></div></div>
+  </div>
+</section>
+
+<section class="gml-services" id="resources">
+  <div class="gml-section-heading"><small>BUILT FOR LOGISTICS TEAMS</small><h2>One clean view of the shipment lifecycle.</h2><p>From vessel departure to empty return, the customer page is designed around the information your consignee actually needs.</p></div>
+  <div class="gml-service-grid">
+    <article class="gml-service-card"><div class="gml-service-icon">↗</div><h3>Port-to-Port Tracking</h3><p>See origin, loading port, discharge port, gateway and delivery with an interactive route view.</p></article>
+    <article class="gml-service-card"><div class="gml-service-icon">◎</div><h3>Milestone Timeline</h3><p>Follow vessel departure, arrival, inward, port, CFS, de-stuffing and empty return status.</p></article>
+    <article class="gml-service-card"><div class="gml-service-icon">▤</div><h3>HBL / IGM Intelligence</h3><p>Open an HBL from the container and see the linked Indian Customs manifest information.</p></article>
+    <article class="gml-service-card"><div class="gml-service-icon">↥</div><h3>Share &amp; Support</h3><p>Share a shipment link or contact operations directly by email or WhatsApp.</p></article>
+  </div>
+</section>
+
+<section class="gml-help" id="help">
+  <div class="gml-help-card">
+    <div><small>OPERATIONS SUPPORT</small><h3>Need assistance with a shipment?</h3><p>Keep the container, MBL or booking reference ready when contacting the GML operations team.</p></div>
+    <div class="gml-help-actions"><a class="gml-help-action primary" href="mailto:madhan@gmlindia.net">✉ Email Operations</a><a class="gml-help-action secondary" href="https://wa.me/919884070344" target="_blank" rel="noopener">💬 WhatsApp</a></div>
+  </div>
+</section>
+
+<footer class="gml-footer">
+  <div class="gml-footer-inner">
+    <div><div class="gml-brand gml-footer-brand"><div class="gml-logo"><span>GML</span></div><div class="gml-brand-copy"><b>GREENWICH MERIDIAN</b><span>GLOBAL FREIGHT SOLUTIONS</span></div></div><p>Customer shipment visibility for Greenwich Meridian Logistics.</p></div>
+    <div class="gml-footer-links"><a href="#track">Track &amp; Trace</a><a href="#services">Services</a><a href="#resources">Resources</a><a href="#help">Contact</a><a href="./staff.html">Staff Portal</a></div>
+  </div>
+  <div class="gml-footer-bottom"><span>© 2026 Greenwich Meridian Logistics. All rights reserved.</span><span>Privacy • Terms • Help Center</span></div>
+</footer>
+
+<div class="gml-modal" id="multiModal" aria-hidden="true"><div class="gml-modal-card gml-multi-card"><div class="gml-modal-head"><div><div class="gml-modal-kicker">MULTIPLE TRACKING</div><h3>Track multiple references</h3><p>Enter one container / MBL / HBL / booking number per line.</p></div><button class="gml-modal-close" id="closeMulti">✕</button></div><div class="gml-modal-body"><textarea id="multiInput" class="gml-multi-input" placeholder="HDMU5601794\nHDMU5626895\nDSCLCNB26090001"></textarea><div class="gml-multi-tip">Up to 20 references per search.</div></div><div class="gml-modal-foot"><button class="gml-pill-btn" id="cancelMulti">Cancel</button><button class="gml-pill-btn primary" id="runMulti">Track References</button></div></div></div>
+
+<div class="gml-modal" id="igmModal"><div class="gml-modal-card"><div class="gml-modal-head"><div><div class="gml-modal-kicker">CUSTOMS / IGM LINK</div><h3 id="igmModalTitle">HBL Details</h3><p id="igmModalSub">Indian Customs manifest information</p></div><button class="gml-modal-close" id="closeIgm">✕</button></div><div class="gml-modal-body" id="igmModalBody"></div></div></div>
+
+<div class="gml-toast" id="gmlToast"></div>
+<script src="./portal.js?v=20261004-v2"></script>
+</body></html>
