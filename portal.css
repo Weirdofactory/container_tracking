@@ -225,3 +225,9 @@ body{font-size:15px}
   .gml-main{padding-top:185px}.gml-results-head h2{font-size:29px}.gml-results-head p{font-size:13px}.gml-tab{font-size:12px}
   .gml-summary{grid-template-columns:1fr 1fr}.gml-report-hero h3{font-size:27px}.gml-container-box{min-width:0}.gml-hbl-table th{font-size:11px}.gml-hbl-table td{font-size:13px}
 }
+
+
+/* GML V6 — remove duplicate floating hero stats that collide with the tracking form */
+.gml-hero-stats{display:none !important}
+.gml-search{z-index:20}
+.gml-search-grid{align-items:end}
