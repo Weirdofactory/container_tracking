@@ -58,17 +58,33 @@ function coords(name,fallback){
   const k=String(name||"").trim().toUpperCase();
   return PORTS[k]||fallback;
 }
+function routePoints(pol,pod,a,b){
+  const p=String(pol||"").toUpperCase(),d=String(pod||"").toUpperCase();
+  const indiaGateway=/^(CITPL|KATTUPALLI|CHENNAI|ENNORE|CCTL)$/.test(d);
+  const asiaOrigin=/^(NINGBO|SHANGHAI|QINGDAO|BUSAN|SHEKOU)$/.test(p);
+  if(indiaGateway&&asiaOrigin){
+    // Schematic deep-sea corridor: keeps the visual route over water instead of cutting across China/SE Asia.
+    return [
+      a,[26.0,118.0],[21.0,114.0],[15.0,108.0],[8.5,103.5],[2.0,103.8],
+      [4.0,97.0],[7.5,91.0],[10.5,86.0],b
+    ];
+  }
+  const mid=[(a[0]+b[0])/2-3,(a[1]+b[1])/2+5];
+  return [a,mid,b];
+}
 function initMap(id,r){
   const node=$(id); if(!node||typeof L==="undefined")return;
   const pol=clean(field(r,["POL"]))||"BUSAN",pod=clean(field(r,["GATEWAY PORT"]))||"KATTUPALLI";
-  const a=coords(pol,[20,80]),b=coords(pod,[13.08,80.27]),mid=[(a[0]+b[0])/2+5,(a[1]+b[1])/2];
+  const a=coords(pol,[20,80]),b=coords(pod,[13.08,80.27]),route=routePoints(pol,pod,a,b),shipPoint=route[Math.floor(route.length/2)];
   const map=L.map(id,{zoomControl:false,scrollWheelZoom:false,attributionControl:true});
   const light=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap contributors"}).addTo(map);
   const sat=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:18});
-  const line=L.polyline([a,mid,b],{color:"#0b87df",weight:4}).addTo(map);
-  const mk=(text,cls)=>L.divIcon({className:"gml-map-marker",html:'<div style="background:#fff;border:1px solid #d6e1eb;box-shadow:0 5px 12px rgba(8,40,70,.15);padding:6px 8px;border-radius:7px;font:800 10px Plus Jakarta Sans;color:#173b60;white-space:nowrap" class="'+cls+'">'+esc(text)+'</div>',iconSize:null});
-  L.marker(a,{icon:mk(pol,"")}).addTo(map);L.marker(mid,{icon:mk("🚢 "+(field(r,["VESSEL & VOY"])||"Vessel"),"")}).addTo(map);L.marker(b,{icon:mk(pod,"")}).addTo(map);
-  map.fitBounds(line.getBounds(),{padding:[22,22]});
+  const line=L.polyline(route,{color:"#0b87df",weight:4,lineCap:"round",lineJoin:"round"}).addTo(map);
+  const mk=(text,cls)=>L.divIcon({className:"gml-map-marker",html:'<div style="background:#fff;border:1px solid #d6e1eb;box-shadow:0 5px 12px rgba(8,40,70,.15);padding:7px 9px;border-radius:8px;font:800 11px Plus Jakarta Sans;color:#173b60;white-space:nowrap" class="'+cls+'">'+esc(text)+'</div>',iconSize:null});
+  L.marker(a,{icon:mk(pol,"")}).addTo(map);
+  L.marker(shipPoint,{icon:mk("🚢 "+(field(r,["VESSEL & VOY"])||"Vessel"),"")}).addTo(map);
+  L.marker(b,{icon:mk(pod,"")}).addTo(map);
+  map.fitBounds(line.getBounds(),{padding:[28,28]});
   $(id).dataset.mapReady="1"; window.__gmlMaps=window.__gmlMaps||{};window.__gmlMaps[id]={map,light,sat};
 }
 function toggleMap(id,mode,btn){
