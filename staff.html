@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./staff.css?v=20261004-v30">
+<link rel="stylesheet" href="./staff.css?v=20261004-v31-polish">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -100,7 +100,7 @@
 
 <section class="lower-grid" id="customs">
   <article class="panel"><div class="panel-head"><div><div class="eyebrow dark">CUSTOMS WORKSPACE</div><h2>IGM / HBL import</h2></div><b>ADMIN / EDITOR</b></div><label class="dropzone" for="igmFile"><span class="drop-icon">↥</span><div><strong>Drop or choose IGM Excel</strong><small>.xls / .xlsx • HBL / IGM / container block detection</small></div><em>Import</em></label><input id="igmFile" type="file" accept=".xls,.xlsx" hidden><input id="trackingFile" type="file" accept=".xlsx,.xls,.csv" hidden><div id="importSummary"></div></article>
-  <article class="panel"><div class="panel-head"><div><div class="eyebrow dark">AUTOMATION READY</div><h2>Future-ready foundation</h2></div><b>MODULAR</b></div><div class="future-grid"><div><span>01</span><b>Predictive ETA</b><small>Delay-risk scoring from schedule history.</small></div><div><span>02</span><b>Workflow Rules</b><small>Trigger follow-ups from milestone changes.</small></div><div><span>03</span><b>Document Hub</b><small>Keep shipment files with the operational record.</small></div><div><span>04</span><b>Customer Workspaces</b><small>Expose only the shipments each customer should see.</small></div></div></article>
+  <article class="panel"><div class="panel-head"><div><div class="eyebrow dark">DATA & ROADMAP</div><h2>Workspace diagnostics</h2></div><b>LIVE</b></div><div class="diag-grid"><div><span>MISSING CORE FIELDS</span><b id="healthMissing">0</b></div><div><span>ETA ≤ 3 DAYS</span><b id="etaWindow">0</b></div><div><span>CFS WORKLOAD</span><b id="cfsWorkload">0</b></div><div><span>COMPLETION RATE</span><b id="completionRate">0%</b></div></div><div class="future-note"><b>Future-ready modules</b><span>Predictive ETA • Workflow Rules • Document Hub • Customer Workspaces</span></div></article>
 </section>
 </main>
 </div></div>
