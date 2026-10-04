@@ -143,20 +143,82 @@ function bindReport(report,index,r){
   report.querySelector('[data-action="print"]')?.addEventListener("click",()=>window.print());
   report.querySelector('[data-action="share"]')?.addEventListener("click",async()=>{const url=location.origin+location.pathname+"?cntr="+encodeURIComponent(field(r,["CONTAINER NO."]));if(navigator.share)await navigator.share({title:"GML Shipment Tracking",url});else navigator.clipboard?.writeText(url)});
 }
-async function search(){
-  const q=$("searchInput").value.trim(),type=$("searchType").value;
-  if(!q){$("searchInput").focus();return}
-  $("resultHost").innerHTML='<div class="gml-empty"><div><div class="gml-empty-icon">…</div><strong>Searching live shipment data</strong><span>Please wait.</span></div></div>';
-  try{await loadContainers();const hits=records.filter(r=>searchRecord(r,q,type));$("resultCount").textContent=hits.length+" result"+(hits.length===1?"":"s");if(!hits.length){$("resultHost").innerHTML='<div class="gml-empty"><div><div class="gml-empty-icon">⌕</div><strong>No shipment found</strong><span>Check the container, MBL, HBL or booking reference.</span></div></div>';return}
-    $("resultHost").innerHTML='<div class="gml-result-stack">'+hits.slice(0,20).map(reportHtml).join("")+'</div>';
-    hits.slice(0,20).forEach((r,i)=>{const report=$("gmlReport_"+i);bindReport(report,i,r);hydrateReport(r,i)});
+
+async function search(queryOverride){
+  const input=$("searchInput"),typeEl=$("searchType");
+  const q=String(queryOverride??input.value).trim(),type=typeEl.value;
+  if(!q){input.focus();return}
+  saveRecentSearch(q,type);
+  $("resultHost").innerHTML='<div class="gml-empty"><div><div class="gml-empty-icon">…</div><strong>Searching live shipment data</strong><span>Checking shipment and customs-linked references.</span></div></div>';
+  try{
+    await loadContainers();
+    let hits=records.filter(r=>searchRecord(r,q,type));
+    if(!hits.length && type==="all"){
+      try{
+        const {data,error}=await GML_SB.rpc("search_customer_igm",{p_query:q});
+        if(!error&&Array.isArray(data)&&data.length){
+          const cntrs=[...new Set(data.map(x=>String(x.container_no||"").trim()).filter(Boolean))];
+          hits=records.filter(r=>cntrs.includes(String(field(r,["CONTAINER NO.","CONTAINER","CONTAINER NO"])).trim()));
+          data.forEach(x=>igmCache[String(x.hbl_no||"").toUpperCase()]=x);
+        }
+      }catch(e){console.warn("HBL/IGM search unavailable",e)}
+    }
+    $("resultCount").textContent=hits.length+" result"+(hits.length===1?"":"s");
+    if(!hits.length){
+      $("resultHost").innerHTML='<div class="gml-empty"><div><div class="gml-empty-icon">⌕</div><strong>No shipment found</strong><span>Check the reference and try again.</span></div></div>';
+      return;
+    }
+    const shown=hits.slice(0,20);
+    $("resultHost").innerHTML='<div class="gml-result-stack">'+shown.map(reportHtml).join("")+'</div>';
+    shown.forEach((r,i)=>{const report=$("gmlReport_"+i);bindReport(report,i,r);hydrateReport(r,i)});
     document.querySelector(".gml-results-head")?.scrollIntoView({behavior:"smooth",block:"start"});
-  }catch(e){console.error(e);$("resultHost").innerHTML='<div class="gml-empty"><div><div class="gml-empty-icon">!</div><strong>Tracking service unavailable</strong><span>Please try again.</span></div></div>'}
+  }catch(e){
+    console.error(e);
+    $("resultHost").innerHTML='<div class="gml-empty"><div><div class="gml-empty-icon">!</div><strong>Tracking service unavailable</strong><span>Please try again in a moment.</span></div></div>';
+  }
 }
-$("trackBtn").addEventListener("click",search);
+function saveRecentSearch(q,type){
+  try{
+    const key="gml_recent_searches_v2";
+    let list=JSON.parse(localStorage.getItem(key)||"[]");
+    list=[{q,type,at:Date.now()},...list.filter(x=>x.q!==q)].slice(0,6);
+    localStorage.setItem(key,JSON.stringify(list));
+  }catch(e){}
+}
+function showToast(message){
+  const node=$("gmlToast");if(!node)return;node.textContent=message;node.classList.add("open");
+  clearTimeout(window.__gmlToastTimer);window.__gmlToastTimer=setTimeout(()=>node.classList.remove("open"),2200);
+}
+function openMulti(){const m=$("multiModal"),t=$("multiInput");if(!m||!t)return;m.classList.add("open");m.setAttribute("aria-hidden","false");t.focus()}
+function closeMulti(){const m=$("multiModal");if(!m)return;m.classList.remove("open");m.setAttribute("aria-hidden","true")}
+async function runMultiple(){
+  const raw=String($("multiInput")?.value||"");
+  const refs=[...new Set(raw.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean))].slice(0,20);
+  if(!refs.length){$("multiInput")?.focus();return}
+  closeMulti();$("resultHost").innerHTML='<div class="gml-empty"><div><div class="gml-empty-icon">…</div><strong>Tracking multiple references</strong><span>Preparing '+refs.length+' shipment lookups.</span></div></div>';
+  try{
+    await loadContainers();let hits=[];
+    refs.forEach(ref=>records.forEach(r=>{if(searchRecord(r,ref,"all")&&!hits.includes(r))hits.push(r)}));
+    $("resultCount").textContent=hits.length+" result"+(hits.length===1?"":"s");
+    if(!hits.length){$("resultHost").innerHTML='<div class="gml-empty"><div><div class="gml-empty-icon">⌕</div><strong>No shipments found</strong><span>None of the supplied references matched.</span></div></div>';return}
+    hits=hits.slice(0,20);
+    $("resultHost").innerHTML='<div class="gml-result-stack">'+hits.map(reportHtml).join("")+'</div>';
+    hits.forEach((r,i)=>{const report=$("gmlReport_"+i);bindReport(report,i,r);hydrateReport(r,i)});
+    showToast(hits.length+" shipments loaded");
+  }catch(e){console.error(e);$("resultHost").innerHTML='<div class="gml-empty"><div><div class="gml-empty-icon">!</div><strong>Multiple tracking failed</strong><span>Please try again.</span></div></div>'}
+}
+
+$("trackBtn").addEventListener("click",()=>search());
 $("searchInput").addEventListener("keydown",e=>{if(e.key==="Enter")search()});
-$("multipleBtn").addEventListener("click",()=>{$("searchType").value="all";$("searchInput").focus();});
-$("igmModal").addEventListener("click",e=>{if(e.target.id==="igmModal")$("igmModal").classList.remove("open")});
-$("closeIgm").addEventListener("click",()=>$("igmModal").classList.remove("open"));
-document.addEventListener("keydown",e=>{if(e.key==="Escape")$("igmModal").classList.remove("open")});
-const initial=new URLSearchParams(location.search).get("cntr");if(initial){$("searchInput").value=initial;setTimeout(search,100)};
+$("multipleBtn").addEventListener("click",openMulti);
+$("closeMulti").addEventListener("click",closeMulti);
+$("cancelMulti").addEventListener("click",closeMulti);
+$("runMulti").addEventListener("click",runMultiple);
+$("mobileMenuBtn")?.addEventListener("click",()=>$("mobileNav")?.classList.toggle("open"));
+document.querySelectorAll("#mobileNav a").forEach(a=>a.addEventListener("click",()=>$("mobileNav")?.classList.remove("open")));
+$("multiModal")?.addEventListener("click",e=>{if(e.target.id==="multiModal")closeMulti()});
+$("igmModal")?.addEventListener("click",e=>{if(e.target.id==="igmModal")$("igmModal").classList.remove("open")});
+$("closeIgm")?.addEventListener("click",()=>$("igmModal").classList.remove("open"));
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeMulti();$("igmModal").classList.remove("open")}});
+const initial=new URLSearchParams(location.search).get("cntr");
+if(initial){$("searchInput").value=initial;setTimeout(()=>search(initial),100);}
