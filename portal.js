@@ -2,6 +2,19 @@
 const GML_SUPABASE_URL="https://ykeucqritoexykqrggzz.supabase.co";
 const GML_SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const GML_SB=supabase.createClient(GML_SUPABASE_URL,GML_SUPABASE_KEY);
+const APP=window.GML_APP_CONFIG||{appName:"CargoTrack",appShort:"CT",appTagline:"SHIPMENT CONTROL CENTER",companyName:"",supportEmail:"",supportWhatsApp:""};
+const brandName=()=>APP.companyName?.trim()||APP.appName;
+function applyBranding(){
+  document.querySelectorAll("[data-app-name]").forEach(el=>el.textContent=APP.appName);
+  document.querySelectorAll("[data-app-short]").forEach(el=>el.textContent=APP.appShort);
+  document.querySelectorAll("[data-app-tagline]").forEach(el=>el.textContent=APP.appTagline);
+  document.querySelectorAll("[data-company-context]").forEach(el=>el.textContent=APP.companyName?.trim()||"PRIVATE SHIPMENT VISIBILITY");
+  document.querySelectorAll("[data-page-title]").forEach(el=>el.textContent=APP.appName+" | Track & Trace");
+  const e=document.getElementById("supportEmailBtn"),w=document.getElementById("supportWhatsAppBtn");
+  if(e){if(APP.supportEmail)e.href="mailto:"+APP.supportEmail;else e.style.display="none";}
+  if(w){if(APP.supportWhatsApp)w.href="https://wa.me/"+String(APP.supportWhatsApp).replace(/\D/g,"");else w.style.display="none";}
+}
+applyBranding();
 
 const PORTS={
   SHEKOU:[22.48,113.91],BUSAN:[35.10,129.04],SHANGHAI:[31.23,121.47],NINGBO:[29.86,121.54],
@@ -116,7 +129,7 @@ function reportHtml(r,index){
   const cfs=clean(field(r,["CFS NAME"]))||"—";
   const ms=milestones(r),done=ms.filter(x=>x[2]).length;
   let h='<article class="gml-report" id="gmlReport_'+index+'" data-cntr="'+esc(cntr)+'">';
-  h+='<div class="gml-report-top"><div class="gml-report-brand"><div class="gml-report-mark">GML</div><div><b>GREENWICH MERIDIAN LOGISTICS</b><span>Customer Shipment Tracking</span></div></div><div class="gml-report-date"><span>STATUS REPORT</span><b>'+dateText(new Date())+'</b></div></div>';
+  h+='<div class="gml-report-top"><div class="gml-report-brand"><div class="gml-report-mark">'+esc(APP.appShort)+'</div><div><b>'+esc(brandName())+'</b><span>Customer Shipment Tracking</span></div></div><div class="gml-report-date"><span>STATUS REPORT</span><b>'+dateText(new Date())+'</b></div></div>';
   h+='<div class="gml-report-hero"><div><span class="gml-status">● '+esc(st[0])+'</span><h3>'+esc(st[1])+'</h3><p>Latest operational milestone</p></div><div class="gml-container-box"><span>CONTAINER</span><b>'+esc(cntr)+'</b><small>'+esc(type)+' EQUIPMENT</small></div></div>';
   /* Summary carries only unique operational facts. Do not repeat vessel, liner or MBL from the detail card. */
   h+='<div class="gml-summary"><div class="gml-summary-cell"><span>ORIGIN</span><b>'+esc(pol)+'</b></div><div class="gml-summary-cell"><span>DESTINATION</span><b>'+esc(pod)+'</b></div><div class="gml-summary-cell"><span>ETD</span><b>'+esc(etd)+'</b></div><div class="gml-summary-cell status"><span>ETA</span><b>'+esc(eta)+'</b></div></div>';
@@ -134,7 +147,7 @@ function reportHtml(r,index){
   h+='<section class="gml-pane" data-pane="cargo"><div style="padding:0 18px 18px"><div class="gml-card"><div class="gml-card-head"><b>CARGO & HBL DETAILS</b><span>CLICK HBL FOR IGM</span></div><div id="gmlCargoFull_'+index+'" class="gml-hbl-table" style="padding:12px">Loading…</div></div></div></section>';
   h+='<section class="gml-pane" data-pane="history"><div style="padding:0 18px 18px"><div class="gml-card"><div class="gml-card-head"><b>EVENT HISTORY</b><span>CHRONOLOGICAL</span></div><div class="gml-hbl-table"><table><thead><tr><th>EVENT</th><th>LOCATION</th><th>DATE</th></tr></thead><tbody>'+ms.filter(x=>x[2]).map(x=>'<tr><td>'+esc(x[0])+'</td><td>'+esc(x[1])+'</td><td>'+esc(dateText(x[2]))+'</td></tr>').join("")+'</tbody></table></div></div></div></section>';
   h+='<div class="gml-actions"><button class="gml-action" data-action="print">🖨 Print / PDF</button><button class="gml-action" data-action="share">🔗 Share Tracking</button><a class="gml-action" href="mailto:madhan@gmlindia.net">✉ Email Updates</a><a class="gml-action primary" href="https://wa.me/919884070344" target="_blank">💬 WhatsApp</a></div>';
-  h+='<div class="gml-report-foot"><span>GREENWICH MERIDIAN LOGISTICS • CUSTOMER TRACKING</span><b>'+esc(cntr)+'</b></div></article>';
+  h+='<div class="gml-report-foot"><span>'+esc(brandName())+' • CUSTOMER TRACKING</span><b>'+esc(cntr)+'</b></div></article>';
   return h;
 }
 
@@ -167,7 +180,7 @@ function bindReport(report,index,r){
   }));
   report.querySelectorAll("[data-map]").forEach(b=>b.addEventListener("click",()=>toggleMap("gmlMap_"+index,b.dataset.map,b)));
   report.querySelector('[data-action="print"]')?.addEventListener("click",()=>window.print());
-  report.querySelector('[data-action="share"]')?.addEventListener("click",async()=>{const url=location.origin+location.pathname+"?cntr="+encodeURIComponent(field(r,["CONTAINER NO."]));if(navigator.share)await navigator.share({title:"GML Shipment Tracking",url});else navigator.clipboard?.writeText(url)});
+  report.querySelector('[data-action="share"]')?.addEventListener("click",async()=>{const url=location.origin+location.pathname+"?cntr="+encodeURIComponent(field(r,["CONTAINER NO."]));if(navigator.share)await navigator.share({title:brandName()+" Shipment Tracking",url});else navigator.clipboard?.writeText(url)});
 }
 
 async function search(queryOverride){
