@@ -67,8 +67,22 @@ function updateSelectAll(){const list=filtered();const visible=list.slice(0,300)
 function selectedRows(){return [...selected].map(i=>rows[i]).filter(Boolean)}
 function requireSelection(){const r=selectedRows();if(!r.length){notify("Select at least one shipment first.");return null}return r}
 
-function openEditor(i){editingIndex=i;const r=rows[i]||{};const map=[["CONTAINER NO.","Container Number"],["TYPE","Size / Type"],["MBL NO","MBL Number"],["LINER","Liner"],["GATEWAY PORT","Gateway Port"],["CFS NAME","CFS"],["POL","POL"],["ETD","ETD"],["ETA","ETA"],["INWARD DATE","Inward Date"],["PORT IN","Port In"],["PORT OUT","Port Out"],["CFS IN","CFS In"],["DESTUFFING DATE","Destuffing Date"],["CONTAINER RETURN DATE","Empty Return"],["VESSEL & VOY","Vessel / Voyage"]];se("editFields").innerHTML=map.map(([k,l])=>'<div><label class="s-label">'+sx(l)+'</label><input class="s-input edit-input" data-field="'+sx(k)+'" value="'+sx(r[k]||"")+'"></div>').join("");se("editDrawer").classList.add("open")}
-async function saveEditor(){if(editingIndex<0)return;const r=rows[editingIndex];se("saveEdit").disabled=true;try{se("editFields").querySelectorAll(".edit-input").forEach(x=>r[x.dataset.field]=x.value);if(!["Admin","Editor"].includes(session.role))throw new Error("Editor access required.");const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});if(error)throw error;se("editDrawer").classList.remove("open");notify("Shipment updated.");renderTable()}catch(e){alert(e.message)}finally{se("saveEdit").disabled=false}}
+function openEditor(i){
+  editingIndex=i;
+  const r=rows[i]||{};
+  const reference=[["CONTAINER NO.","Container Number"],["TYPE","Size / Type"],["MBL NO","MBL Number"],["LINER","Liner"],["POL","POL"],["GATEWAY PORT","Gateway Port"],["CFS NAME","CFS"],["VESSEL & VOY","Vessel / Voyage"]];
+  const milestones=[["ETD","ETD"],["ETA","ETA"],["INWARD DATE","Inward Date"],["PORT IN","Port In"],["PORT OUT","Port Out"],["CFS IN","CFS In"],["DESTUFFING DATE","Destuffing Date"],["CONTAINER RETURN DATE","Empty Return"]];
+  const makeFields=(list)=>list.map(([k,l])=>{
+    const isDate=/DATE|ETD|ETA|PORT IN|PORT OUT|CFS IN/.test(k);
+    return '<div class="edit-item"><label class="s-label">'+sx(l)+'</label><input class="s-input edit-input" data-field="'+sx(k)+'" type="'+(isDate?'date':'text')+'" value="'+sx(r[k]||"")+'" '+(k==="CONTAINER NO."||k==="MBL NO"?'spellcheck="false"':'')+'></div>';
+  }).join("");
+  const context=se("editContext");
+  if(context)context.innerHTML='<div class="context-id"><span>CONTAINER</span><b>'+sx(cnum(r)||"—")+'</b></div><div><span>MBL</span><b>'+sx(sf(r,["MBL NO","MBL"])||"—")+'</b></div><div><span>ROUTE</span><b>'+sx((sf(r,["POL"])||"—")+" → "+(sf(r,["GATEWAY PORT"])||"—"))+'</b></div><div><span>STATUS</span><b>'+sx(st(r)[0])+'</b></div>';
+  se("editReference").innerHTML=makeFields(reference);
+  se("editMilestones").innerHTML=makeFields(milestones);
+  se("editDrawer").classList.add("open");
+}
+async function saveEditor(){if(editingIndex<0)return;const r=rows[editingIndex];se("saveEdit").disabled=true;try{se("editDrawer").querySelectorAll(".edit-input").forEach(x=>r[x.dataset.field]=x.value);if(!["Admin","Editor"].includes(session.role))throw new Error("Editor access required.");const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});if(error)throw error;se("editDrawer").classList.remove("open");notify("Shipment updated.");renderTable()}catch(e){alert(e.message)}finally{se("saveEdit").disabled=false}}
 
 function norm(v){return String(v??"").trim()}
 function normHeader(v){return norm(v).toLowerCase().replace(/[^a-z0-9]+/g,"")}
