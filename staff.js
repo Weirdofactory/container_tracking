@@ -1,3 +1,5 @@
+function updateClock(){const n=new Date();const t=se("clockNow"),d=se("dateNow");if(t)t.textContent=n.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});if(d)d.textContent=n.toLocaleDateString("en-IN",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}
+setInterval(updateClock,1000);updateClock();
 const S_URL="https://ykeucqritoexykqrggzz.supabase.co";
 const S_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const SSB=supabase.createClient(S_URL,S_KEY,{global:{fetch:(input,init={})=>fetch(input,{...init,cache:"no-store"})}});
@@ -13,7 +15,7 @@ const st=r=>sf(r,["CONTAINER RETURN DATE"])?["RETURNED","good"]:sf(r,["DESTUFFIN
 const cnum=r=>sf(r,["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]);
 let rows=[],session=null,editingIndex=-1,selected=new Set();
 
-function show(id,on=true){se(id).style.display=on?"":"none"}
+function show(id,on=true){const el=se(id);if(el)el.style.display=on?"":"none"}
 function notify(msg){const n=se("staffNotice");if(!n)return;n.textContent=msg;n.classList.add("open");setTimeout(()=>n.classList.remove("open"),2200)}
 function applyBrand(){document.querySelectorAll("[data-app-name]").forEach(el=>el.textContent=APP.appName);document.querySelectorAll("[data-app-short]").forEach(el=>el.textContent=APP.appShort||"CT");document.querySelectorAll("[data-app-tagline]").forEach(el=>el.textContent="OPERATIONS CONTROL");document.querySelectorAll("[data-app-context]").forEach(el=>el.textContent=APP.appTagline||"SHIPMENT CONTROL CENTER");document.querySelectorAll("[data-page-title]").forEach(el=>el.textContent=APP.appName+" — Operations Control")}
 applyBrand();
