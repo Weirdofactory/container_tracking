@@ -19,3 +19,8 @@
 .page-head-right{align-items:stretch}.record-box.compact{min-width:92px}.record-box.compact b{font-size:15px}
 .diagnostics-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 13px}.diagnostics-strip article{padding:11px 13px;border:1px solid var(--line);background:#fff;border-radius:10px;box-shadow:0 8px 22px rgba(7,29,49,.045)}.diagnostics-strip span{display:block;color:#8c9daa;font-size:7.5px;letter-spacing:.08em;font-weight:900}.diagnostics-strip b{display:block;margin-top:5px;font:800 16px "JetBrains Mono";color:#163b59}.diagnostics-strip small{display:block;margin-top:2px;color:#899aa8;font-size:8px}.top-search{box-shadow:0 6px 18px rgba(7,29,49,.04)}.top-search input::placeholder{color:#9aa8b4}
 @media(max-width:1180px){.diagnostics-strip{grid-template-columns:repeat(2,1fr)}}@media(max-width:680px){.diagnostics-strip{grid-template-columns:1fr 1fr}.page-head-right{display:none}}
+
+/* V35 — decluttered navigation + stable clock/status */
+.top-actions{gap:8px}.top-actions .btn{min-width:112px}
+.sidebar{overflow:hidden}.sidebar-footer{margin-top:auto;padding:11px 10px;border:1px solid #dbe6ed;border-radius:10px;background:#f8fbfd}.sidebar-footer>span{display:block;color:#8999a7;font-size:7.5px;letter-spacing:.1em;font-weight:900}.sidebar-footer>b{display:block;margin-top:4px;color:#0a9559;font:800 15px "JetBrains Mono"}.sidebar-footer small{display:block;margin-top:3px;color:#8798a7;font-size:8px;line-height:1.45}.sidebar-footer .health-bar{margin-top:8px}.capability{display:none}
+.date-box b{white-space:nowrap}
