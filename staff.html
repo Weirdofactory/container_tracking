@@ -3,7 +3,7 @@
 <title>GML — Operations Control Tower</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./staff.css?v=20261004-v1"><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="./staff.css?v=20261004-v2"><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head><body>
 <section class="s-login" id="loginScreen"><div class="s-login-card"><div class="s-brand"><div class="s-mark">GML</div><div><b>GREENWICH MERIDIAN</b><span>OPERATIONS CONTROL</span></div></div><h1>Staff Portal</h1><p>Secure access to shipment operations, container records and customs IGM/HBL data.</p><label class="s-label">Access Code</label><input class="s-input" id="accessCode" type="password" placeholder="Enter authorized access code"><button class="s-btn primary" id="loginBtn" style="width:100%;margin-top:12px">Sign In</button><div id="loginError" style="display:none;color:#b63f3f;font-size:8.5px;margin-top:9px"></div><div style="margin-top:16px;font-size:7.5px;color:#93a0ae">Customer tracking remains available without staff access.</div></div></section>
 <div id="staffApp" style="display:none"><header class="s-header"><div class="s-header-inner"><div class="s-title"><div class="s-mark">GML</div><div><b>Operations Control Tower</b><span>GREENWICH MERIDIAN LOGISTICS</span></div></div><div class="s-header-nav"><button class="s-btn" onclick="location.href='./'">← Customer Portal</button><button class="s-btn" id="refreshBtn">↻ Refresh</button><button class="s-btn danger" id="logoutBtn">Logout</button><div class="s-user"><div class="s-avatar" id="staffUsername">ST</div><span class="s-role" id="staffRole">Staff</span></div></div></div></header>
@@ -50,4 +50,4 @@
 <div class="s-drawer" id="editDrawer"><div class="s-panel"><div class="s-panel-head"><b>Edit Shipment</b><button class="s-btn" id="closeEdit">✕</button></div><div class="s-panel-body"><div class="s-grid2" id="editFields"></div></div><div class="s-panel-foot"><button class="s-btn" id="saveEdit">Save Changes</button></div></div></div>
 <div id="staffNotice" style="position:fixed;right:18px;bottom:18px;background:#082e5a;color:#fff;padding:10px 13px;border-radius:9px;font-size:8px;font-weight:800;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s;z-index:6000"></div>
 <style>#staffNotice.open{opacity:1;transform:translateY(0)}</style>
-<script src="./staff.js?v=20261004-v1"></script></body></html>
+<script src="./staff.js?v=20261004-v2"></script></body></html>
