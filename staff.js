@@ -91,7 +91,7 @@ async function importTracking(){
   const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});
   if(error)throw new Error("Database save failed: "+error.message);
   se("importSummary").innerHTML='<div class="s-import-result"><b>Bulk import complete</b><br>'+normalized.length+' rows read • '+added+' new shipments added • '+updated+' existing shipments updated.</div>';
-  renderTable();notify("Bulk import saved.");se("trackingFile").value="";
+  renderTable();notify("Bulk import saved.");
 }
 function exportExcel(){
   const list=selectedRows();const data=list.length?list:filtered();if(!data.length){notify("No shipment data to export.");return}
@@ -175,7 +175,7 @@ se("refreshBtn").addEventListener("click",()=>loadRows().catch(e=>alert(e.messag
 se("saveEdit").addEventListener("click",saveEditor);
 se("closeEdit").addEventListener("click",()=>se("editDrawer").classList.remove("open"));
 se("igmFile").addEventListener("change",()=>importIgm().catch(e=>{se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>'}));
-se("trackingFile").addEventListener("change",()=>importTracking().catch(e=>{se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>';notify(e.message)}));
+se("trackingFile").addEventListener("change",async()=>{try{await importTracking()}catch(e){se("importSummary").innerHTML='<div class="s-import-result" style="border-color:#e9cccc;background:#fff7f7;color:#b84141">'+sx(e.message)+'</div>';notify(e.message)}finally{se("trackingFile").value=""}});
 se("importTrackingBtn").addEventListener("click",()=>se("trackingFile").click());
 se("exportBtn").addEventListener("click",exportExcel);
 se("statusPhotoBtn").addEventListener("click",downloadStatusPhoto);
