@@ -55,6 +55,14 @@ function renderKpis(list){
   const vals=list.reduce((a,r)=>{const s=st(r)[0];a.active+=s!=="RETURNED";a.done+=s==="RETURNED";a.portin+=s==="PORT IN";a.portout+=s==="PORT OUT";a.destuff+=s==="DE-STUFFED";return a},{active:0,done:0,portin:0,portout:0,destuff:0});
   [["kActive",vals.active],["kDone",vals.done],["kPortIn",vals.portin],["kPortOut",vals.portout],["kDestuff",vals.destuff],["kTotal",list.length],["heroTotal",list.length],["heroActive",vals.active],["heroReturned",vals.done]].forEach(([id,v])=>{const el=se(id);if(el)el.textContent=v});
 }
+function filtered(){
+  const q=sn(se("staffSearch")?.value||"");
+  const f=se("statusFilter")?.value||"all";
+  return rows.filter(r=>{
+    const hay=[cnum(r),sf(r,["MBL NO","MBL"]),sf(r,["VESSEL & VOY","VESSEL"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");
+    return (!q||hay.includes(q))&&(f==="all"||st(r)[0]===f);
+  });
+}
 function updateSelectAll(){const list=filtered();const visible=list.slice(0,300).map(r=>rows.indexOf(r));const all=visible.length>0&&visible.every(i=>selected.has(i));const sa=se("selectAllRows");if(sa)sa.checked=all;if(window.__updateSelectedBadge)window.__updateSelectedBadge(selected.size)}
 function selectedRows(){return [...selected].map(i=>rows[i]).filter(Boolean)}
 function requireSelection(){const r=selectedRows();if(!r.length){notify("Select at least one shipment first.");return null}return r}
