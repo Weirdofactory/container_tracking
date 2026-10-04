@@ -5,7 +5,7 @@
 <title data-page-title>CargoTrack — Operations Control</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./staff.css?v=20261004-v15-nextgen">
+<link rel="stylesheet" href="./staff.css?v=20261004-v16-clean">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -57,14 +57,6 @@
       <a class="s-side-link" href="#shipments"><span>▦</span> Shipments</a>
       <a class="s-side-link" href="#exceptions"><span>!</span> Exceptions <em id="sideAlertCount">0</em></a>
       <a class="s-side-link" href="#customs"><span>⌘</span> Customs / IGM</a>
-    </div>
-    <div class="side-section">
-      <div class="side-label">TOOLS</div>
-      <a class="s-side-link side-action" data-tool="import" href="#shipments"><span>↥</span> Bulk Import</a>
-      <a class="s-side-link side-action" data-tool="export" href="#shipments"><span>⇩</span> Export Data</a>
-      <a class="s-side-link side-action" data-tool="photo" href="#shipments"><span>▣</span> Status Photo</a>
-      <a class="s-side-link side-action" data-tool="whatsapp" href="#shipments"><span>◌</span> WhatsApp</a>
-      <a class="s-side-link side-action" data-tool="bulk" href="#shipments"><span>⚡</span> Bulk Update</a>
     </div>
     <div class="side-status">
       <div class="side-status-top"><span>NETWORK HEALTH</span><b id="networkHealth">100%</b></div>
@@ -161,14 +153,14 @@
         <div id="importSummary" style="margin-top:10px"></div>
       </article>
       <article class="s-panel-card future-card">
-        <div class="future-top"><div><span>ROADMAP READY</span><h2>Next-gen modules</h2></div><b>MODULAR</b></div>
+        <div class="future-top"><div><span>OPERATIONS SNAPSHOT</span><h2>Workspace health</h2></div><b>LIVE</b></div>
         <div class="future-grid">
-          <div><i>⌁</i><b>Predictive ETA</b><small>Delay-risk scoring</small></div>
-          <div><i>◎</i><b>Exception AI</b><small>Priority detection</small></div>
-          <div><i>◇</i><b>Workflow Rules</b><small>Automated actions</small></div>
-          <div><i>▤</i><b>Document Hub</b><small>Shipment file stack</small></div>
+          <div><i>◈</i><b id="snapshotActive">0</b><small>active shipments</small></div>
+          <div><i>◷</i><b id="snapshotEta">0</b><small>arriving within 3 days</small></div>
+          <div><i>▤</i><b id="snapshotCfs">0</b><small>awaiting destuffing</small></div>
+          <div><i>✓</i><b id="snapshotRate">0%</b><small>return completion</small></div>
         </div>
-      </article>
+      </article>ticle>
     </section>
   </section>
 </main>
@@ -176,7 +168,7 @@
 
 <div class="s-drawer" id="editDrawer"><div class="s-panel"><div class="s-panel-head"><b>Edit Shipment</b><button class="s-btn" id="closeEdit">✕</button></div><div class="s-panel-body"><div class="s-grid2" id="editFields"></div></div><div class="s-panel-foot"><button class="s-btn blue" id="saveEdit">Save Changes</button></div></div></div>
 <div id="staffNotice" class="staff-notice"></div>
-<script src="./staff.js?v=20261004-v15-nextgen"></script>
+<script src="./staff.js?v=20261004-v16-clean"></script>
 <script>
 (function(){
   const root=document.documentElement;
