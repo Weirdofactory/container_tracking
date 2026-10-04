@@ -5,7 +5,7 @@
 <title data-page-title>CargoTrack — Operations Control</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./staff.css?v=20261004-v16-clean">
+<link rel="stylesheet" href="./staff.css?v=20261004-v17-null-fix">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -126,7 +126,7 @@
 
     <section class="s-panel-card workspace-card" id="shipments">
       <div class="workspace-head">
-        <div><span>LIVE DATA GRID</span><h2>Container shipments</h2><p>Search, select and act on the same operational source of truth.</p></div>
+        <div><span>LIVE DATA GRID</span><h2>Container shipments</h2><p>Search, select and act on the same operational source of truth.</p></div><b class="workspace-count" id="staffCount">0 shipments</b>
         <div class="workspace-actions">
           <button class="s-btn" id="refreshBtn">↻ Refresh Data</button>
           <button class="s-btn blue" id="importTrackingBtn">↥ Bulk Import</button>
@@ -168,7 +168,7 @@
 
 <div class="s-drawer" id="editDrawer"><div class="s-panel"><div class="s-panel-head"><b>Edit Shipment</b><button class="s-btn" id="closeEdit">✕</button></div><div class="s-panel-body"><div class="s-grid2" id="editFields"></div></div><div class="s-panel-foot"><button class="s-btn blue" id="saveEdit">Save Changes</button></div></div></div>
 <div id="staffNotice" class="staff-notice"></div>
-<script src="./staff.js?v=20261004-v16-clean"></script>
+<script src="./staff.js?v=20261004-v17-null-fix"></script>
 <script>
 (function(){
   const root=document.documentElement;
