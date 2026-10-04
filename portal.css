@@ -166,3 +166,62 @@ body{font-size:15px}
   .gml-hbl-table th{font-size:10px}
   .gml-hbl-table td{font-size:12px}
 }
+
+
+/* GML V5 — LARGE, HUMAN-READABLE ENTERPRISE UI
+   Override all legacy micro-type rules. */
+.gml-nav-inner,.gml-hero-inner,.gml-main,.gml-services,.gml-help,.gml-footer-inner{font-size:16px}
+.gml-nav-links a{font-size:14px}
+.gml-brand-copy b{font-size:19px}.gml-brand-copy span{font-size:10px}.gml-logo span{font-size:12px}
+.gml-pill-btn{font-size:13px;height:44px;padding:0 17px}
+.gml-hero{min-height:560px}
+.gml-hero-inner{padding-top:78px;padding-bottom:145px}
+.gml-eyebrow{font-size:12px}
+.gml-hero-copy{max-width:850px}
+.gml-hero h1{font-size:68px}
+.gml-hero p{font-size:18px;line-height:1.75}
+.gml-trust-row span{font-size:12px;padding:9px 12px}
+.gml-search{left:28px;right:28px;bottom:-72px;padding:22px;border-radius:18px}
+.gml-search-title{padding-bottom:16px}
+.gml-search-title strong{font-size:20px}
+.gml-search-title span{font-size:13px}
+.gml-search-status{font-size:11px;padding:9px 12px}
+.gml-search-grid{grid-template-columns:250px minmax(0,1fr) 145px 175px;gap:12px}
+.gml-search label{font-size:11px;margin-bottom:8px}
+.gml-search input,.gml-search select{height:58px;padding:0 16px;font-size:16px}
+.gml-search-action,.gml-search-secondary{height:58px;font-size:14px}
+.gml-search-help{font-size:12px;margin-top:10px}
+.gml-hero-stats>div{min-width:130px;padding:13px 15px}.gml-hero-stats b{font-size:15px}.gml-hero-stats span{font-size:10px}
+
+.gml-main{padding-top:140px}
+.gml-results-head small{font-size:11px}.gml-results-head h2{font-size:34px}.gml-results-head p{font-size:13px}.gml-results-meta{font-size:12px}.gml-count{font-size:11px;padding:8px 11px}
+.gml-empty strong{font-size:18px}.gml-empty span{font-size:13px}
+.gml-report-top{padding:18px 22px}.gml-report-brand b{font-size:15px}.gml-report-brand span{font-size:10px}.gml-report-date span{font-size:10px}.gml-report-date b{font-size:12px}
+.gml-report-hero{padding:30px 30px;min-height:190px}.gml-report-hero h3{font-size:35px}.gml-report-hero p{font-size:13px}.gml-status{font-size:11px;padding:8px 11px}
+.gml-container-box{min-width:290px;padding:16px 18px}.gml-container-box span{font-size:10px}.gml-container-box b{font-size:23px}.gml-container-box small{font-size:11px}
+.gml-summary-cell{padding:15px 16px}.gml-summary-cell span{font-size:10px}.gml-summary-cell b{font-size:13px}
+.gml-tabs{padding:14px 22px 0}.gml-tab{font-size:13px;padding:13px 15px 15px}
+.gml-card-head{padding:14px 15px}.gml-card-head b{font-size:12px}.gml-card-head span{font-size:10px}
+.gml-info-item{min-height:78px;padding:14px 15px}.gml-info-item span{font-size:10px}.gml-info-item b{font-size:14px}
+.gml-map{height:340px}.gml-map-foot{padding:11px 13px;font-size:10px}
+.gml-milestones{padding:10px 15px 15px}.gml-mile{min-height:46px;gap:10px}.gml-mile b{font-size:11px}.gml-mile small{font-size:10px}.gml-mile time{font-size:10px}.gml-dot{font-size:8px}
+.gml-cargo-grid{grid-template-columns:repeat(3,1fr)}.gml-metric{padding:15px}.gml-metric span{font-size:10px}.gml-metric b{font-size:13px}
+.gml-hbl-table{max-height:430px;overflow:auto}.gml-hbl-table table{font-size:13px}.gml-hbl-table th{padding:13px 15px;font-size:11px}.gml-hbl-table td{padding:14px 15px;font-size:14px}.gml-hbl-link{font-size:13px}
+.gml-actions{padding:14px 22px 20px}.gml-action{height:42px;font-size:12px}.gml-report-foot{padding:11px 22px;font-size:9px}
+.gml-trust-inner b{font-size:14px}.gml-trust-inner small{font-size:11px}
+.gml-section-heading small{font-size:11px}.gml-section-heading h2{font-size:34px}.gml-section-heading p{font-size:13px}
+.gml-service-card{padding:20px}.gml-service-card h3{font-size:18px}.gml-service-card p{font-size:13px}
+.gml-help-card>div:first-child small{font-size:11px}.gml-help-card h3{font-size:24px}.gml-help-card p{font-size:13px}.gml-help-action{font-size:12px;height:42px;padding:0 14px}
+.gml-footer p{font-size:12px}.gml-footer-links a{font-size:11px}.gml-footer-bottom{font-size:10px}
+.gml-modal-kicker{font-size:11px}.gml-modal-head h3{font-size:24px}.gml-modal-head p{font-size:12px}.gml-modal-cell span{font-size:10px}.gml-modal-cell b{font-size:12px}.gml-modal-section h4{font-size:10px}.gml-modal-cargo span{font-size:10px}.gml-modal-cargo b{font-size:12px}.gml-multi-input{font-size:14px}.gml-multi-tip{font-size:11px}.gml-toast{font-size:12px}
+
+@media(max-width:1100px){
+  .gml-search-grid{grid-template-columns:1fr 1fr}
+  .gml-search-action,.gml-search-secondary{width:100%}
+}
+@media(max-width:780px){
+  .gml-hero{min-height:610px}.gml-hero-inner{padding-top:56px;padding-bottom:160px}.gml-hero h1{font-size:46px}.gml-hero p{font-size:16px}
+  .gml-search{left:12px;right:12px;bottom:-155px;padding:16px}.gml-search-grid{grid-template-columns:1fr}.gml-search input,.gml-search select{height:54px;font-size:16px}.gml-search-action,.gml-search-secondary{height:54px}
+  .gml-main{padding-top:185px}.gml-results-head h2{font-size:29px}.gml-results-head p{font-size:13px}.gml-tab{font-size:12px}
+  .gml-summary{grid-template-columns:1fr 1fr}.gml-report-hero h3{font-size:27px}.gml-container-box{min-width:0}.gml-hbl-table th{font-size:11px}.gml-hbl-table td{font-size:13px}
+}
