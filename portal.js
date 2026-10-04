@@ -66,7 +66,7 @@ function initMap(id,r){
   const light=L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{maxZoom:18,subdomains:"abcd"}).addTo(map);
   const sat=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:18});
   const line=L.polyline([a,mid,b],{color:"#0b87df",weight:4}).addTo(map);
-  const mk=(text,cls)=>L.divIcon({className:"gml-map-marker",html:'<div style="background:#fff;border:1px solid #d6e1eb;box-shadow:0 5px 12px rgba(8,40,70,.15);padding:6px 8px;border-radius:7px;font:800 8px Plus Jakarta Sans;color:#173b60;white-space:nowrap" class="'+cls+'">'+esc(text)+'</div>',iconSize:null});
+  const mk=(text,cls)=>L.divIcon({className:"gml-map-marker",html:'<div style="background:#fff;border:1px solid #d6e1eb;box-shadow:0 5px 12px rgba(8,40,70,.15);padding:6px 8px;border-radius:7px;font:800 10px Plus Jakarta Sans;color:#173b60;white-space:nowrap" class="'+cls+'">'+esc(text)+'</div>',iconSize:null});
   L.marker(a,{icon:mk(pol,"")}).addTo(map);L.marker(mid,{icon:mk("🚢 "+(field(r,["VESSEL & VOY"])||"Vessel"),"")}).addTo(map);L.marker(b,{icon:mk(pod,"")}).addTo(map);
   map.fitBounds(line.getBounds(),{padding:[22,22]});
   $(id).dataset.mapReady="1"; window.__gmlMaps=window.__gmlMaps||{};window.__gmlMaps[id]={map,light,sat};
@@ -114,7 +114,7 @@ function reportHtml(r,index){
 
 function renderIgm(index,bundle){
   const cargo=$("gmlCargo_"+index),full=$("gmlCargoFull_"+index); if(!cargo||!full)return;
-  if(!bundle.rows.length){cargo.innerHTML='<div class="gml-metric" style="grid-column:1/-1"><span>IGM / HBL</span><b>No IGM records linked to this container.</b></div>';full.innerHTML='<div style="padding:18px;color:#7e8ea0;font-size:9px">No HBL/IGM records linked to this container.</div>';return;}
+  if(!bundle.rows.length){cargo.innerHTML='<div class="gml-metric" style="grid-column:1/-1"><span>IGM / HBL</span><b>No IGM records linked to this container.</b></div>';full.innerHTML='<div style="padding:18px;color:#7e8ea0;font-size:11px">No HBL/IGM records linked to this container.</div>';return;}
   const types=[...new Set(bundle.rows.map(x=>x.package_code).filter(Boolean))].join(", ")||"—";
   const igm=[...new Set(bundle.rows.map(x=>x.igm_no).filter(Boolean))].join(", ")||"—";
   cargo.innerHTML='<div class="gml-metric"><span>HBL COUNT</span><b>'+bundle.rows.length+'</b></div><div class="gml-metric"><span>PACKAGES</span><b>'+bundle.totalPackages.toLocaleString("en-IN")+'</b></div><div class="gml-metric"><span>GROSS WEIGHT</span><b>'+bundle.totalWeight.toLocaleString("en-IN",{maximumFractionDigits:2})+' KGS</b></div><div class="gml-metric"><span>PACKAGE TYPES</span><b>'+esc(types)+'</b></div><div class="gml-metric"><span>IGM NUMBER</span><b>'+esc(igm)+'</b></div><div class="gml-metric"><span>DESTINATION</span><b>'+esc(bundle.rows[0].port_destination||"—")+'</b></div>';
