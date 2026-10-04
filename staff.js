@@ -55,7 +55,7 @@ function renderKpis(list){const vals=list.reduce((a,r)=>{const s=st(r)[0];a.acti
 function filtered(){const q=sn(se("staffSearch").value),f=se("statusFilter").value;return rows.filter(r=>{const hay=[cnum(r),sf(r,["MBL NO","MBL"]),sf(r,["VESSEL & VOY","VESSEL"]),sf(r,["LINER"]),sf(r,["POL"]),sf(r,["GATEWAY PORT"])].map(sn).join(" ");return(!q||hay.includes(q))&&(f==="all"||st(r)[0]===f)})}
 
 function renderTable(){
-  const list=filtered();renderKpis(list);se("staffCount").textContent=list.length+" shipments";
+  const list=filtered();renderKpis(list);renderOpsIntel(list);se("staffCount").textContent=list.length+" shipments";
   se("staffBody").innerHTML=list.slice(0,300).map(r=>{const idx=rows.indexOf(r),s=st(r),c=cnum(r),m=sf(r,["MBL NO","MBL"]),v=sf(r,["VESSEL & VOY"]),p=sf(r,["POL"]),g=sf(r,["GATEWAY PORT"]),eta=sf(r,["ETA"]);
     return '<tr><td class="s-check-col"><input type="checkbox" class="row-check" data-row="'+idx+'" '+(selected.has(idx)?"checked":"")+' aria-label="Select '+sx(c)+'"></td><td><button class="s-link" data-edit="'+idx+'">'+sx(c||"—")+'</button></td><td>'+sx(m||"—")+'</td><td>'+sx(sf(r,["LINER"])||"—")+'</td><td>'+sx(p||"—")+'</td><td>'+sx(g||"—")+'</td><td>'+sx(v||"—")+'</td><td>'+sx(sd(eta))+'</td><td><span class="s-status '+s[1]+'">'+sx(s[0])+'</span></td></tr>'}).join("")||'<tr><td colspan="9" style="padding:35px;text-align:center;color:#7e8da0">No shipments match the current filter.</td></tr>';
   se("staffBody").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openEditor(Number(b.dataset.edit))));
@@ -177,6 +177,55 @@ async function importIgm(){
   se("importSummary").innerHTML='<div class="s-import-result"><b>Import complete</b><br>'+recs.length+' HBL/container rows detected and '+count+' rows submitted to the database.</div>';
 }
 
+
+function parseDateValue(v){if(!v)return null;const d=new Date(v);if(Number.isNaN(d.getTime()))return null;return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+function renderOpsIntel(list){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const soon=new Date(today); soon.setDate(soon.getDate()+3);
+  const alerts=[];
+  list.forEach((r)=>{
+    const c=cnum(r)||"—",s=st(r)[0],eta=parseDateValue(sf(r,["ETA"]));
+    if(s==="RETURNED")return;
+    if(eta&&eta<today&&!sf(r,["PORT IN"])){alerts.push({kind:"bad",title:"ETA overdue",detail:c+" • ETA "+sd(sf(r,["ETA"])),date:sd(sf(r,["ETA"])),idx:rows.indexOf(r)})}
+    else if(s==="PORT IN"){alerts.push({kind:"warn",title:"Port release pending",detail:c+" • awaiting Port Out",date:"Action",idx:rows.indexOf(r)})}
+    else if(s==="CFS IN"){alerts.push({kind:"warn",title:"Destuffing pending",detail:c+" • received at CFS",date:"Action",idx:rows.indexOf(r)})}
+    else if(s==="DE-STUFFED"){alerts.push({kind:"good",title:"Empty return pending",detail:c+" • destuff completed",date:"Follow-up",idx:rows.indexOf(r)})}
+    else if(eta&&eta>=today&&eta<=soon){alerts.push({kind:"good",title:"ETA within 3 days",detail:c+" • "+sd(sf(r,["ETA"])),date:sd(sf(r,["ETA"])),idx:rows.indexOf(r)})}
+  });
+  const alertHost=se("alertsHost"),alertCount=se("alertCount");
+  if(alertCount)alertCount.textContent=alerts.length+" alert"+(alerts.length===1?"":"s");
+  if(alertHost)alertHost.innerHTML=alerts.slice(0,8).map(a=>'<div class="s-alert-row" data-alert-row="'+a.idx+'"><i class="s-alert-dot '+a.kind+'"></i><div><b>'+sx(a.title)+'</b><span>'+sx(a.detail)+'</span></div><time>'+sx(a.date)+'</time></div>').join("")||'<div class="s-alert-empty">✓ No immediate operational exceptions.</div>';
+  alertHost?.querySelectorAll("[data-alert-row]").forEach(x=>x.addEventListener("click",()=>openEditor(Number(x.dataset.alertRow))));
+  const groups={};
+  list.forEach(r=>{const v=sf(r,["VESSEL & VOY","VESSEL"])||"Unassigned";const key=v+"|"+(sf(r,["POL"])||"—")+"|"+(sf(r,["GATEWAY PORT"])||"—");if(!groups[key])groups[key]={v,pol:sf(r,["POL"])||"—",gw:sf(r,["GATEWAY PORT"])||"—",eta:sf(r,["ETA"])||"",n:0};groups[key].n++});
+  const vessels=Object.values(groups).sort((a,b)=>String(a.eta).localeCompare(String(b.eta)));
+  se("vesselCount").textContent=vessels.length+" vessel"+(vessels.length===1?"":"s");
+  se("vesselBody").innerHTML=vessels.slice(0,12).map(v=>'<tr><td><b>'+sx(v.v)+'</b></td><td>'+sx(v.pol)+'</td><td>'+sx(v.gw)+'</td><td>'+sx(sd(v.eta))+'</td><td>'+v.n+'</td></tr>').join("")||'<tr><td colspan="5" style="padding:25px;text-align:center;color:#8998a8">No vessel schedule available.</td></tr>';
+}
+function openBulkUpdate(){
+  const list=requireSelection();if(!list)return;
+  const form='<div class="s-bulk-help">Updating <b>'+list.length+'</b> selected shipment'+(list.length===1?"":"s")+'. Leave a field blank to keep each existing value unchanged.</div><div class="s-bulk-form">'+
+    '<div><label class="s-label">ETD</label><input class="s-input" id="buETD" placeholder="DD-MMM-YYYY"></div>'+
+    '<div><label class="s-label">ETA</label><input class="s-input" id="buETA" placeholder="DD-MMM-YYYY"></div>'+
+    '<div><label class="s-label">Port In</label><input class="s-input" id="buPortIn" placeholder="DD-MMM-YYYY"></div>'+
+    '<div><label class="s-label">Port Out</label><input class="s-input" id="buPortOut" placeholder="DD-MMM-YYYY"></div>'+
+    '<div><label class="s-label">CFS In</label><input class="s-input" id="buCfsIn" placeholder="DD-MMM-YYYY"></div>'+
+    '<div><label class="s-label">Destuffing Date</label><input class="s-input" id="buDestuff" placeholder="DD-MMM-YYYY"></div>'+
+    '<div><label class="s-label">Empty Return</label><input class="s-input" id="buReturn" placeholder="DD-MMM-YYYY"></div>'+
+    '<div><label class="s-label">Vessel / Voyage</label><input class="s-input" id="buVessel" placeholder="e.g. EVER BRAVE V0104W"></div>'+
+    '<div class="full"><label class="s-label">Gateway Port</label><input class="s-input" id="buGateway" placeholder="e.g. CITPL"></div></div>';
+  const m=makeFeatureModal("bulkUpdateModal","Bulk Shipment Update","Apply the same operational change to the selected containers.",form,'<button class="s-btn" data-close>Cancel</button><button class="s-btn blue" id="applyBulkUpdate">Apply Update</button>');
+  m.classList.add("open");
+  m.querySelector("#applyBulkUpdate").addEventListener("click",async()=>{
+    if(!["Admin","Editor"].includes(session.role)){notify("Admin / Editor access required.");return}
+    const fields={ETD:"buETD",ETA:"buETA","PORT IN":"buPortIn","PORT OUT":"buPortOut","CFS IN":"buCfsIn","DESTUFFING DATE":"buDestuff","CONTAINER RETURN DATE":"buReturn","VESSEL & VOY":"buVessel","GATEWAY PORT":"buGateway"};
+    let changes=0; list.forEach(r=>{Object.entries(fields).forEach(([key,id])=>{const value=se(id)?.value.trim();if(value){r[key]=value;changes++}})});
+    const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});
+    if(error){notify("Bulk update failed: "+error.message);return}
+    m.remove();renderTable();notify(changes+" field updates saved.");
+  });
+}
+
 function applySelectAll(){const list=filtered().slice(0,300);const checked=se("selectAllRows").checked;list.forEach(r=>{const i=rows.indexOf(r);checked?selected.add(i):selected.delete(i)});renderTable()}
 function bootStaff(){applyBrand();se("staffUsername").textContent=session.username||"Staff";se("staffRole").textContent=session.role||"Staff";loadRows().catch(e=>alert(e.message))}
 
@@ -194,5 +243,5 @@ se("trackingFile").addEventListener("change",async()=>{try{await importTracking(
 se("importTrackingBtn").addEventListener("click",()=>se("trackingFile").click());
 se("exportBtn").addEventListener("click",exportExcel);
 se("statusPhotoBtn").addEventListener("click",downloadStatusPhoto);
-se("whatsappBtn").addEventListener("click",openWhatsApp);
+se("whatsappBtn").addEventListener("click",openWhatsApp);se("bulkUpdateBtn").addEventListener("click",openBulkUpdate);
 se("selectAllRows").addEventListener("change",applySelectAll);
