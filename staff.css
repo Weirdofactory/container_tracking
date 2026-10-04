@@ -29,3 +29,9 @@
 @media(max-width:1250px){.s-app{grid-template-columns:210px minmax(0,1fr)}.s-top-command{max-width:430px}.next-kpis{grid-template-columns:repeat(3,1fr)}.s-hero{grid-template-columns:1fr 290px}.workspace-actions .s-btn{min-width:105px}.s-btn{font-size:11px}}
 @media(max-width:1000px){.s-app{grid-template-columns:1fr}.s-sidebar{display:none}.s-hero{grid-template-columns:1fr}.hero-visual{display:none}.s-intelligence-grid,.s-bottom-grid{grid-template-columns:1fr}.s-header-inner{padding:0 16px}.s-title{min-width:auto}.s-top-command{display:none}}
 @media(max-width:760px){.s-app{padding:14px}.s-header-inner{height:64px}.s-header-nav .ghost{display:none}.s-header-nav .s-user{display:none}.s-hero{padding:22px;min-height:310px}.s-hero h1{font-size:32px}.hero-line{align-items:flex-start;flex-direction:column}.hero-date{text-align:left;min-width:0;width:100%}.next-kpis,.s-analytics-strip{grid-template-columns:1fr 1fr}.workspace-head{flex-direction:column}.workspace-actions{justify-content:flex-start}.toolbar-filters{flex-direction:column}.toolbar-filters .s-input{min-width:0;width:100%}.toolbar-filters .s-select{width:100%}.table-meta{align-items:flex-start;flex-direction:column}.s-bottom-grid{margin-top:12px}.s-grid2{grid-template-columns:1fr}.s-login-shell{padding:27px}.s-login h1{font-size:31px}}
+
+/* V16 cleanup — navigation is navigation; operational tools live in the data workspace */
+.side-section{margin-bottom:18px}
+.s-table-empty-row,.s-table-error-row{padding:28px 16px!important;text-align:center!important;color:#8093a5!important;font-size:12px!important;background:#fbfdff!important}
+.s-table-error-row{color:#c44f4f!important;background:#fff7f7!important}
+.future-grid b{font-family:"JetBrains Mono",monospace}
