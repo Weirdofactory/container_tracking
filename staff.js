@@ -64,7 +64,7 @@ function renderTable(){
     body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openEditor(Number(b.dataset.edit))));
     body.querySelectorAll(".row-check").forEach(b=>b.addEventListener("change",()=>{const i=Number(b.dataset.row);b.checked?selected.add(i):selected.delete(i);updateSelectAll()}));
   }
-  se("staffCount").textContent=list.length+" shipments";
+  const countNode=se("staffCount");if(countNode)countNode.textContent=list.length+" shipments";
   renderKpis(list);
   try{renderOpsIntel(list)}catch(e){console.warn("Operations intelligence render skipped",e)}
   try{renderSmartMetrics(list)}catch(e){console.warn("Smart metrics render skipped",e)}
