@@ -59,7 +59,7 @@
 
     <section class="workspace-card" id="shipments">
       <div class="workspace-head"><div><div class="eyebrow dark">SHIPMENT WORKSPACE</div><h2>Container shipments</h2><p>Search, select, edit and operate on the live dataset.</p></div><div class="workspace-count"><span class="status-dot"></span><b id="staffCount">0 shipments</b></div></div>
-      <div class="action-bar"><div class="selection"><span id="selectedCount">0</span> selected</div><div class="actions"><button class="btn blue" id="importTrackingBtn">Bulk Import</button><button class="btn" id="exportBtn">Download Excel</button><button class="btn" id="statusPhotoBtn">Status Photo</button><button class="btn" id="whatsappBtn">WhatsApp</button><button class="btn" id="bulkUpdateBtn">Bulk Update</button></div></div>
+      <div class="action-bar"><div class="selection"><span id="selectedCount">0</span> selected</div><div class="actions"><button class="btn" id="refreshBtn">Refresh</button><button class="btn blue" id="importTrackingBtn">Bulk Import</button><button class="btn" id="exportBtn">Download Excel</button><button class="btn" id="statusPhotoBtn">Status Photo</button><button class="btn" id="whatsappBtn">WhatsApp</button><button class="btn" id="bulkUpdateBtn">Bulk Update</button></div></div>
       <div class="filter-bar"><input id="staffSearch" class="field" placeholder="Search container, MBL, vessel, liner, POL or gateway…"><select id="statusFilter" class="field"><option value="all">All Status</option><option>IN TRANSIT</option><option>INWARD GRANTED</option><option>PORT IN</option><option>PORT OUT</option><option>CFS IN</option><option>DE-STUFFED</option><option>RETURNED</option><option>PENDING</option></select><button class="quick-filter active" data-filter="all">All</button><button class="quick-filter" data-filter="open">Open</button><button class="quick-filter" data-filter="attention">Attention</button></div>
       <div class="table-wrap"><table class="s-table data-table"><thead><tr><th class="s-check-col check-col"><input id="selectAllRows" type="checkbox"></th><th>CONTAINER</th><th>MBL</th><th>LINE</th><th>POL</th><th>GATEWAY</th><th>VESSEL / VOYAGE</th><th>ETA</th><th>STATUS</th></tr></thead><tbody id="staffBody"><tr><td colspan="9" class="table-loading">Loading shipment records…</td></tr></tbody></table></div>
       <div class="table-foot"><span>Live source • shipment tracking records</span><span id="tableResultNote">Loading…</span></div>
@@ -80,6 +80,6 @@
 
 <div id="editDrawer" class="drawer"><div class="drawer-panel"><div class="drawer-head"><div><span>SHIPMENT RECORD</span><h2>Edit milestones</h2></div><button class="btn" id="closeEdit">Close</button></div><div id="editFields" class="edit-grid"></div><div class="drawer-foot"><button class="btn blue" id="saveEdit">Save Changes</button></div></div></div>
 <div id="staffNotice" class="notice"></div>
-<script src="./staff.js?v=20261004-v50-ui"></script>
+<script src="./staff.js?v=20261004-v51-ui"></script>
 </body>
 </html>
