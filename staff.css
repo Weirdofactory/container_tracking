@@ -112,3 +112,28 @@ body{background:var(--carrier-bg)!important;color:#202b34}
 .dropzone{margin:18px!important;min-height:105px!important}.dropzone b{font-size:12px!important}.dropzone small{font-size:9px!important}.dropzone em{font-size:9px!important;padding:10px 14px!important}
 @media(max-width:1250px){.work-grid{grid-template-columns:1fr!important}}
 @media(max-width:900px){.page-inner{padding:24px 14px 45px!important}.data-window{max-height:520px!important}.data-table{min-width:1050px!important}}
+
+
+/* 2026-10-07 HEADER + QUICK FIND CLEANUP */
+.app-header-inner{height:74px!important}
+.header-search{width:300px!important;max-width:300px!important;height:46px!important;flex:0 0 300px!important;margin-left:auto!important}
+.header-search input{font-size:13px!important;min-width:0!important}
+.header-search span{font-size:16px!important}
+.header-right{gap:8px!important}
+.page-inner{padding-top:34px!important}
+.page-intro{padding-top:8px!important}
+.page-intro h1{margin-top:5px!important;font-size:36px!important}
+.tracking-bar{display:grid!important;grid-template-columns:190px minmax(0,1fr) 250px!important;min-height:78px!important;height:78px!important;padding:0!important;align-items:stretch!important}
+.tracking-title{padding:0 20px!important;display:flex!important;flex-direction:column!important;justify-content:center!important}
+.tracking-title strong{font-size:17px!important;line-height:1.15!important}
+.tracking-input{height:auto!important;min-height:0!important;border:0!important;border-left:1px solid var(--line2)!important;border-right:1px solid var(--line2)!important;padding:0 18px!important;display:flex!important;align-items:center!important}
+.tracking-input input{font-size:13px!important;height:48px!important}
+.tracking-note{display:flex!important;align-items:center!important;padding:0 20px!important;font-size:11px!important;line-height:1.4!important}
+@media(max-width:900px){
+  .header-search{display:none!important}
+  .page-inner{padding-top:24px!important}
+  .tracking-bar{grid-template-columns:1fr!important;height:auto!important;min-height:0!important}
+  .tracking-title{padding:16px 18px!important}
+  .tracking-input{border-left:0!important;border-right:0!important;border-top:1px solid var(--line2)!important;padding:12px 18px!important}
+  .tracking-note{padding:12px 18px!important;border-top:1px solid var(--line2)!important}
+}
