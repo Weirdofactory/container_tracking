@@ -137,3 +137,16 @@ body{background:var(--carrier-bg)!important;color:#202b34}
   .tracking-input{border-left:0!important;border-right:0!important;border-top:1px solid var(--line2)!important;padding:12px 18px!important}
   .tracking-note{padding:12px 18px!important;border-top:1px solid var(--line2)!important}
 }
+
+
+/* OPS V3 — compact, functional quick search */
+.tracking-bar{display:grid!important;grid-template-columns:205px minmax(0,1fr) 205px!important;height:72px!important;min-height:72px!important;margin:0 0 18px!important;padding:0!important;border:1px solid #d6dde1!important;box-shadow:0 3px 12px rgba(20,45,62,.04)!important;overflow:hidden!important}
+.tracking-title{padding:0 22px!important;justify-content:center!important}
+.tracking-title span{font-size:9px!important;letter-spacing:.14em!important}
+.tracking-title strong{font-size:17px!important;white-space:nowrap!important}
+.tracking-input{height:100%!important;display:flex!important;align-items:center!important;gap:10px!important;padding:0 14px!important;border-left:1px solid #e1e6e9!important;border-right:1px solid #e1e6e9!important}
+.tracking-input input{height:44px!important;flex:1!important;min-width:0!important;border:0!important;outline:0!important;background:transparent!important;font-size:13px!important;color:#22323c!important}
+.tracking-input button{height:38px!important;padding:0 18px!important;background:#d0005b!important;border:1px solid #d0005b!important;color:#fff!important;font-size:10px!important;font-weight:800!important;cursor:pointer!important}
+.tracking-note{height:100%!important;padding:0 18px!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-direction:column!important;gap:3px!important;font-size:10px!important;line-height:1.2!important}
+.tracking-note b{font:700 9px "IBM Plex Mono"!important;color:#84929a!important}
+@media(max-width:900px){.tracking-bar{grid-template-columns:1fr!important;height:auto!important}.tracking-title{padding:14px 18px!important}.tracking-input{height:62px!important;padding:0 12px!important}.tracking-note{height:50px!important;border-top:1px solid #e1e6e9!important}}
