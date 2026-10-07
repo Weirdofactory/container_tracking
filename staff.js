@@ -306,7 +306,7 @@ loadSession();
 if(session){show("loginScreen",false);show("staffApp",true);bootStaff()}
 se("loginBtn").addEventListener("click",login);se("accessCode").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
 se("logoutBtn").addEventListener("click",logout);
-se("staffSearch").addEventListener("input",renderTable);se("opsCommand")?.addEventListener("input",()=>{se("staffSearch").value=se("opsCommand").value;renderTable()});document.addEventListener("keydown",e=>{if(e.key==="/"&&document.activeElement.tagName!=="INPUT"){e.preventDefault();se("opsCommand")?.focus()}});
+se("staffSearch").addEventListener("input",renderTable);se("opsCommand")?.addEventListener("input",()=>{se("staffSearch").value=se("opsCommand").value;renderTable()});const quick=se("quickSearchMirror");quick?.addEventListener("input",()=>{se("staffSearch").value=quick.value;se("opsCommand").value=quick.value;renderTable()});quick?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();se("staffSearch").value=quick.value;se("opsCommand").value=quick.value;renderTable();quick.blur()}});se("quickSearchBtn")?.addEventListener("click",()=>{se("staffSearch").value=quick.value;se("opsCommand").value=quick.value;renderTable()});document.addEventListener("keydown",e=>{if(e.key==="/"&&document.activeElement.tagName!=="INPUT"){e.preventDefault();se("opsCommand")?.focus()}});
 se("statusFilter").addEventListener("change",renderTable);
 se("refreshBtn").addEventListener("click",()=>loadRows().catch(e=>notify(e.message)));
 se("saveEdit").addEventListener("click",saveEditor);
