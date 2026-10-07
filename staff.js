@@ -125,7 +125,7 @@ async function importTracking(){
 }
 function exportExcel(){
   const list=selectedRows();const data=list.length?list:filtered();if(!data.length){notify("No shipment data to export.");return}
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),"Tracking_Data");XLSX.writeFile(wb,(APP.appName||"CargoTrack")+"_Shipments_"+new Date().toISOString().slice(0,10)+".xlsx");notify("Excel download started.");
+  const clean=data.map(r=>{const o={...r};Object.keys(o).forEach(k=>{if(/DATE|\\bETA\\b|\\bETD\\b|PORT IN|PORT OUT|CFS IN/i.test(k))o[k]=simpleDate(o[k]);});return o;});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(clean),"Tracking_Data");XLSX.writeFile(wb,(APP.appName||"CargoTrack")+"_Shipments_"+new Date().toISOString().slice(0,10)+".xlsx");notify("Excel download started.");
 }
 
 function makeFeatureModal(id,title,subtitle,body,footer){
@@ -193,6 +193,18 @@ async function importIgm(){
 }
 
 
+function simpleDate(v){
+  if(v===null||v===undefined||String(v).trim()==="")return "";
+  const s=String(v).trim();
+  if(/^\\d{1,2}-[A-Za-z]{3}-\\d{4}$/.test(s))return s.replace(/^(\\d{1,2})-([A-Za-z]{3})-(\\d{4})$/,(m,d,mon,y)=>String(d).padStart(2,"0")+"-"+mon+"-"+y);
+  let d;
+  if(/^\\d{4}-\\d{1,2}-\\d{1,2}/.test(s)){const p=s.slice(0,10).split("-");d=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));}
+  else if(/^\\d{1,2}[\\/-]\\d{1,2}[\\/-]\\d{4}/.test(s)){const p=s.slice(0,10).split(/[\\/-]/);d=new Date(Number(p[2]),Number(p[1])-1,Number(p[0]));}
+  else if(/^\\d+(\\.\\d+)?$/.test(s)){const n=Number(s);d=n>30000&&n<70000?new Date(Date.UTC(1899,11,30)+n*86400000):new Date(s);}
+  else d=new Date(s);
+  if(!d||Number.isNaN(d.getTime()))return s;
+  return String(d.getDate()).padStart(2,"0")+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+d.getFullYear();
+}
 function parseDateValue(v){if(!v)return null;const d=new Date(v);if(Number.isNaN(d.getTime()))return null;return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
 function renderOpsIntel(list){
   const today=new Date(); today.setHours(0,0,0,0);
