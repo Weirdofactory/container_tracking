@@ -86,3 +86,29 @@ body{background:var(--carrier-bg)!important;color:#202b34}
 .notice{border-radius:0!important;background:#173c5d!important}
 .login-screen{background:#fff!important}.login-visual{background:#173c5d!important}.login-card{background:#fff!important}.login-submit{background:var(--one-pink)!important}.secure i{background:#18a36a!important}
 @media(max-width:900px){.app-header-inner{height:64px!important;padding:0 14px!important}.main-nav{display:none}.page-inner{padding:28px 15px 50px!important}.work-grid,.detail-grid{grid-template-columns:1fr!important}}
+
+
+/* 2026 OPERATIONS V2 */
+:root{--ops-pink:#d0005b;--ops-navy:#173c5d;--ops-ink:#182731;--ops-line:#d9e0e4}
+.page-inner{max-width:1540px!important;padding:30px 34px 60px!important}
+.page-intro{margin-bottom:18px!important}.page-intro h1{font-size:34px!important;font-weight:800!important}.page-intro p{font-size:13px!important;max-width:720px!important}.breadcrumb{font-size:10px!important}
+.tracking-bar{min-height:72px!important;margin-bottom:18px!important}.tracking-title span,.metric-ribbon span,.card-titlebar>div>span{font-size:10px!important}.tracking-title strong{font-size:18px!important}.tracking-note{font-size:11px!important}
+.metric-ribbon{border:1px solid var(--ops-line)!important;background:#fff!important}
+.metric-ribbon>div{padding:18px 20px!important;border-right:1px solid var(--ops-line)!important}.metric-ribbon b{font-size:25px!important}.metric-ribbon small{font-size:10px!important}
+.work-grid{grid-template-columns:minmax(0,2.35fr) minmax(320px,.85fr)!important;gap:18px!important}
+.workspace-card{border:1px solid var(--ops-line)!important;box-shadow:0 5px 16px rgba(22,52,70,.045)!important}
+.card-titlebar{padding:20px 22px!important}.card-titlebar h2{font-size:21px!important}.card-titlebar p{font-size:11px!important}
+.action-bar{padding:12px 16px!important}.action-btn{height:42px!important;padding:0 16px!important;font-size:10px!important}
+.selection-count{font-size:11px!important}.selection-count b{font-size:18px!important}
+.filter-bar{padding:12px 16px!important;gap:8px!important}.register-search{height:48px!important}.register-search input{font-size:12px!important}.input{height:48px!important;font-size:11px!important}.filter-chip{height:42px!important;padding:0 16px!important;font-size:10px!important}
+.data-window{max-height:640px!important}.data-table th{font-size:10px!important;padding:15px 14px!important;letter-spacing:.08em!important}.data-table td{font-size:11px!important;padding:17px 14px!important;height:58px!important}.s-link{font-size:12px!important}.s-status{font-size:9px!important;padding:7px 9px!important;font-weight:800!important}
+.table-footer{font-size:10px!important;padding:12px 16px!important}
+.priority-card{min-height:0!important}.priority-list{max-height:620px!important;padding:10px!important}.s-alert-row{min-height:66px!important;padding:14px 12px!important;margin-bottom:7px!important}.s-alert-row b{font-size:11px!important}.s-alert-row span,.s-alert-row time{font-size:9px!important}
+.queue-count{font-size:12px!important;padding:7px 10px!important}.priority-foot{font-size:10px!important}
+.detail-grid{gap:18px!important}.mini-table th{font-size:9px!important;padding:11px!important}.mini-table td{font-size:10px!important;padding:12px!important}.mini-table td b{font-size:11px!important}
+.vessel-summary{padding:16px 20px!important}.vessel-summary span{font-size:9px!important}.vessel-summary b{font-size:13px!important}
+.health-summary{padding:18px 20px 12px!important}.health-summary b{font-size:27px!important}.health-summary span{font-size:9px!important}.ops-notes>p{font-size:10px!important}
+.signal-grid{margin:14px 20px!important}.signal-grid b{font-size:20px!important}.signal-grid span{font-size:9px!important}.signal-grid small{font-size:9px!important}
+.dropzone{margin:18px!important;min-height:105px!important}.dropzone b{font-size:12px!important}.dropzone small{font-size:9px!important}.dropzone em{font-size:9px!important;padding:10px 14px!important}
+@media(max-width:1250px){.work-grid{grid-template-columns:1fr!important}}
+@media(max-width:900px){.page-inner{padding:24px 14px 45px!important}.data-window{max-height:520px!important}.data-table{min-width:1050px!important}}
