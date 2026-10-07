@@ -193,3 +193,59 @@ button{cursor:pointer}
   .gml-cargo-grid{grid-template-columns:1fr 1fr}.gml-mile{grid-template-columns:24px minmax(0,1fr)}.gml-mile time{grid-column:2;justify-self:start}
   .gml-actions{flex-wrap:wrap}.gml-action{flex:1;min-width:120px}.gml-modal-grid{grid-template-columns:1fr 1fr}.gml-modal-cell:nth-child(4n){border-right:1px solid var(--line2)}.gml-modal-cell:nth-child(2n){border-right:0}.gml-modal-cargo{grid-template-columns:1fr 1fr}.gml-modal-cargo>div:nth-child(2){border-right:0}.gml-modal-cargo>div:nth-child(-n+2){border-bottom:1px solid var(--line2)}
 }
+
+
+/* 2026 CARRIER-INSPIRED UX REFRESH — reference: modern ocean-carrier tracking flows */
+:root{--one-pink:#d0005b;--one-pink2:#ed176f;--one-blue:#123a63;--carrier-bg:#f4f5f6;--carrier-line:#d9dde1;--carrier-text:#202b34}
+body{background:var(--carrier-bg)!important;color:var(--carrier-text)}
+.carrier-header{background:#fff!important;border-bottom:1px solid #cfd5da!important;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+.carrier-header-inner{max-width:1500px!important;height:76px!important;padding:0 34px!important}
+.brand-symbol{background:var(--one-pink)!important;border-color:var(--one-pink)!important;border-radius:0!important}
+.brand-symbol:before{transform:none!important;border:1px solid rgba(255,255,255,.35)!important;inset:7px!important}
+.desktop-nav{margin-left:auto!important;gap:0!important;height:100%}
+.desktop-nav a{height:76px!important;padding:0 18px!important;font-size:11px!important;font-weight:700!important}
+.desktop-nav a.nav-active{color:var(--one-pink)!important}
+.desktop-nav a.nav-active:after{background:var(--one-pink)!important;height:3px!important}
+.live-chip{color:#596a61!important}
+.staff-link{color:var(--one-blue)!important}
+.track-stage{background:#fff!important;color:var(--carrier-text)!important;border-bottom:1px solid var(--carrier-line)!important}
+.stage-grid{opacity:.28!important;background-image:linear-gradient(#dfe5e9 1px,transparent 1px),linear-gradient(90deg,#dfe5e9 1px,transparent 1px)!important;mask-image:linear-gradient(90deg,#000 0%,#000 48%,transparent 100%)!important}
+.stage-glow{background:radial-gradient(circle,rgba(208,0,91,.10),transparent 65%)!important}
+.stage-inner{max-width:1500px!important;padding:62px 34px 28px!important}
+.section-kicker{color:#7d8790!important}
+.section-kicker.dark{color:var(--one-pink)!important}
+.stage-topline h1{color:#202b34!important;font-size:52px!important}
+.stage-topline h1 em{color:var(--one-pink)!important}
+.stage-lead{color:#66747e!important;max-width:760px!important}
+.network-badge{border:1px solid var(--carrier-line)!important;background:#fafafa!important;color:#263c50!important;border-radius:0!important}
+.badge-label{color:#87939c!important}.network-badge strong{color:var(--one-blue)!important}.network-badge small{color:#8b969d!important}
+.tracking-console{margin-top:34px!important;border:1px solid #cbd3d8!important;box-shadow:0 10px 28px rgba(24,40,53,.08)!important}
+.console-tabs{height:54px!important}
+.console-tab.active{color:var(--one-pink)!important}.console-tab.active:after{background:var(--one-pink)!important}
+.console-row{grid-template-columns:minmax(0,1fr) 220px 150px 120px!important}
+.track-now{background:var(--one-pink)!important}
+.multi-now{background:#fff!important}
+.console-foot{background:#f8f9fa!important}
+.quick-strip{border-color:#dfe4e7!important}
+.quick-item{color:#293a47!important}.quick-item small{color:#7c8992!important}.quick-icon{color:var(--one-pink)!important;border-color:#ccd5da!important}.quick-divider{background:#dfe4e7!important}
+.results-inner{max-width:1500px!important;padding:48px 34px 0!important}
+.results-bar h2{font-size:27px!important}.result-count{border-radius:0!important}
+.result-live i{background:#15945e!important}
+.empty-state{border-radius:0!important;box-shadow:none!important;border-color:var(--carrier-line)!important}
+.feature-section{margin-top:48px!important}.feature-inner{max-width:1500px!important}.feature-intro h2{font-size:29px!important}
+.support-section{background:#eef0f2!important}.site-footer{background:#102b44!important}
+.gml-report{box-shadow:0 8px 24px rgba(21,38,51,.07)!important;border-radius:0!important}
+.gml-report-top{background:#fff!important}.gml-report-mark{background:var(--one-pink)!important;border-radius:0!important}
+.gml-report-hero{background:#fff!important;border-bottom:1px solid var(--carrier-line)!important;min-height:145px!important}
+.gml-report-hero h3{color:#202b34!important}.gml-report-hero p{color:#78858e!important}
+.gml-status{background:#fbe8f0!important;border-color:#f1bfd1!important;color:#b0004d!important}
+.gml-container-box{border-left-color:var(--one-pink)!important}.gml-container-box b{color:#173c5d!important}.gml-container-box span{color:#7e8b94!important}
+.gml-summary{margin:0!important;border-left:0!important;border-right:0!important;box-shadow:none!important}
+.gml-summary-cell.status{background:#f9fafb!important}.gml-summary-cell.status b{color:#173c5d!important}
+.gml-tab.active{color:var(--one-pink)!important}.gml-tab.active:after{background:var(--one-pink)!important}
+.gml-card{border-color:#dce2e6!important;box-shadow:none!important}
+.gml-card-head{background:#f7f8f9!important}
+.gml-mile.done .gml-dot{background:#fbe8f0!important;border-color:#efbfd0!important;color:#b0004d!important}
+.gml-mile.active .gml-dot{background:#edf4fa!important;border-color:#b7d1e2!important;color:#173c5d!important}
+.gml-action.primary{background:var(--one-pink)!important;border-color:var(--one-pink)!important}
+@media(max-width:800px){.carrier-header-inner{padding:0 16px!important}.stage-inner,.results-inner{padding-left:16px!important;padding-right:16px!important}.stage-topline{display:block}.network-badge{margin-top:20px}.stage-topline h1{font-size:39px!important}.console-row{grid-template-columns:1fr!important}.console-input,.console-select{border-right:0;border-bottom:1px solid #e9edef}.track-now,.multi-now{height:48px}.quick-strip{grid-template-columns:1fr}.quick-divider{height:1px;margin:0}.gml-overview{grid-template-columns:1fr}.gml-overview>div+div{border-left:0;border-top:1px solid var(--line2)}}
