@@ -15,6 +15,7 @@ function parseFlexibleDate(v,referenceYear){
   const s=String(v).trim();let m,d;
   const valid=(y,mo,day)=>{const x=new Date(y,mo-1,day);return x.getFullYear()===y&&x.getMonth()===mo-1&&x.getDate()===day?x:null};
   if((m=s.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})(?:[T ].*)?$/)))return valid(+m[1],+m[2],+m[3]);
+  if((m=s.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{2})$/))){const yy=+m[3],y=yy>=70?1900+yy:2000+yy;return valid(y,+m[1],+m[2]);}
   if((m=s.match(/^(\\d{1,2})[-/.](\\d{1,2})[-/.](\\d{4})$/)))return valid(+m[3],+m[2],+m[1]);
   if((m=s.match(/^(\\d{1,2})[- ]([A-Za-z]{3,9})[- ](\\d{4})$/))){d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate())}
   if((m=s.match(/^(\\d{1,2})[- ]([A-Za-z]{3,9})$/))){
