@@ -140,7 +140,27 @@ async function importTracking(){
 }
 function exportExcel(){
   const list=selectedRows();const data=list.length?list:filtered();if(!data.length){notify("No shipment data to export.");return}
-  const clean=data.map(r=>{const o={...r};Object.keys(o).forEach(k=>{if(/DATE|\\bETA\\b|\\bETD\\b|PORT IN|PORT OUT|CFS IN/i.test(k))o[k]=simpleDate(o[k]);});return o;});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(clean),"Tracking_Data");XLSX.writeFile(wb,(APP.appName||"CargoTrack")+"_Shipments_"+new Date().toISOString().slice(0,10)+".xlsx");notify("Excel download started.");
+  const clean=data.map(r=>({...r}));
+  const ws=XLSX.utils.json_to_sheet(clean);
+  const headers=Object.keys(clean[0]||{});
+  const dateCols=headers.map((k,i)=>({k,i})).filter(x=>/DATE|\\bETA\\b|\\bETD\\b|PORT IN|PORT OUT|CFS IN/i.test(x.k));
+  dateCols.forEach(({k,i})=>{
+    for(let r=0;r<clean.length;r++){
+      const cellRef=XLSX.utils.encode_cell({r:r+1,c:i}),cell=ws[cellRef];
+      if(!cell||cell.v===null||cell.v==="")continue;
+      const d=parseFlexibleDate(cell.v);
+      if(!d)continue;
+      cell.t="n";
+      cell.v=(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/86400000;
+      cell.z="dd-mm-yyyy";
+    }
+    const ref=XLSX.utils.encode_col(i);
+    ws[ref+"1"]&&(ws[ref+"1"].s={font:{bold:true}});
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Tracking_Data");
+  XLSX.writeFile(wb,(APP.appName||"CargoTrack")+"_Shipments_"+new Date().toISOString().slice(0,10)+".xlsx");
+  notify("Excel downloaded with normal DD-MM-YYYY date cells.");
 }
 
 function makeFeatureModal(id,title,subtitle,body,footer){
