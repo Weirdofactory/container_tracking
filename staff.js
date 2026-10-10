@@ -157,7 +157,7 @@ function exportExcel(){
     for(const k of headers){
       if(!isDateHeader(k))continue;
       const raw=rec[k];if(!raw)continue;
-      const m=String(raw).match(/(?:^|[^0-9])(20\\d{2})(?:[^0-9]|$)/);
+      const m=String(raw).match(/(?:^|[^0-9])(20\d{2})(?:[^0-9]|$)/);
       if(m)return Number(m[1]);
       if(raw instanceof Date&&!Number.isNaN(raw.getTime()))return raw.getFullYear();
     }
