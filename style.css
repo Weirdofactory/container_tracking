@@ -1347,3 +1347,40 @@ body.public-carrier-mode .one-hero,
   .one-track-panel-head{flex-direction:column}
   .one-result-actions{align-items:flex-start;gap:8px;flex-wrap:wrap}
 }
+
+
+/* === STAFF PORTAL LOGIN — responsive GML refresh === */
+.staff-login-overlay{background:rgba(5,16,34,.72);backdrop-filter:blur(10px);padding:22px}
+.staff-login-dialog{width:min(100%,430px);max-width:430px;overflow:hidden;border:1px solid rgba(148,163,184,.28);border-radius:22px;background:var(--bg-surface);box-shadow:0 30px 90px rgba(0,0,0,.34);animation:staffLoginEnter .24s ease-out}
+@keyframes staffLoginEnter{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+.staff-login-banner{position:relative;overflow:hidden;padding:28px 30px 27px;background:radial-gradient(circle at 95% 0,rgba(45,212,191,.23),transparent 36%),linear-gradient(130deg,#07172d 0%,#103657 66%,#0d5966 100%);color:#fff}
+.staff-login-banner:after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,#22d3ee,#38bdf8,#34d399)}
+.staff-login-close{position:absolute;right:15px;top:13px;width:32px;height:32px;border:1px solid rgba(255,255,255,.2);border-radius:9px;background:rgba(255,255,255,.08);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+.staff-login-brandmark{display:flex;align-items:center;justify-content:center;width:48px;height:42px;margin-bottom:17px;border:1px solid rgba(255,255,255,.25);border-radius:12px;background:rgba(255,255,255,.1);font-size:15px;font-weight:900;letter-spacing:.05em}
+.staff-login-kicker{font-size:9px;font-weight:800;letter-spacing:.16em;color:#8ce7ed}
+.staff-login-banner h2{margin:7px 0 4px;color:#fff;font-size:27px;font-weight:900;letter-spacing:-.04em}
+.staff-login-banner p{color:#c6d9e9;font-size:12px}
+.staff-login-content{padding:25px 30px 21px}
+.staff-login-label{display:block;margin-bottom:8px;color:var(--text-main);font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.staff-code-wrap{display:flex;align-items:center;gap:8px;padding:5px;border:1px solid var(--border);border-radius:12px;background:var(--bg-elevated);transition:border-color .18s,box-shadow .18s}
+.staff-code-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.staff-code-input{min-width:0;width:100%;height:42px!important;padding:0 10px!important;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;color:var(--text-main)!important;font-family:'JetBrains Mono',monospace!important;font-size:14px!important;font-weight:700!important;letter-spacing:.035em!important}
+.staff-code-input:focus{outline:none}
+.staff-code-toggle{flex:0 0 auto;padding:8px 10px;border:0;border-radius:8px;background:var(--bg-active);color:var(--text-main);font-size:11px;font-weight:800;cursor:pointer}
+.staff-code-toggle:hover{background:var(--border)}
+.staff-login-help{display:flex;gap:7px;align-items:flex-start;margin:12px 0 0;color:var(--text-muted);font-size:11px;line-height:1.6}
+.staff-login-feedback{display:none;margin-top:13px;padding:10px 12px;border-radius:9px;font-size:11px;font-weight:700;line-height:1.5}
+.staff-login-feedback.is-visible{display:block}
+.staff-login-feedback.is-error{color:var(--danger);background:var(--danger-bg);border:1px solid color-mix(in srgb,var(--danger) 20%,transparent)}
+.staff-login-feedback.is-info{color:var(--accent);background:var(--accent-glow);border:1px solid color-mix(in srgb,var(--accent) 20%,transparent)}
+.staff-login-feedback.is-success{color:var(--success);background:var(--success-bg);border:1px solid color-mix(in srgb,var(--success) 20%,transparent)}
+.staff-login-actions{display:grid;grid-template-columns:.8fr 1.2fr;gap:10px;margin-top:20px}
+.staff-login-actions .btn{justify-content:center;min-height:42px;border-radius:10px;font-size:12px}
+.staff-login-submit{position:relative;gap:9px}
+.staff-login-submit:disabled{opacity:.78;cursor:wait}
+.staff-login-spinner{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:staffLoginSpin .7s linear infinite}
+.staff-login-submit.is-loading .staff-login-spinner{display:inline-block}
+@keyframes staffLoginSpin{to{transform:rotate(360deg)}}
+.staff-login-footnote{margin-top:20px;padding-top:14px;border-top:1px solid var(--border);color:var(--text-dim);font-size:9px;font-weight:800;letter-spacing:.12em;text-align:center;text-transform:uppercase}
+@media(max-width:768px){.staff-login-overlay{align-items:center;padding:16px}.staff-login-dialog{width:100%;max-width:420px;border-radius:20px}.staff-login-banner{padding:25px 23px 23px}.staff-login-content{padding:22px 23px 19px}.staff-login-banner h2{font-size:25px}}
+@media(prefers-reduced-motion:reduce){.staff-login-dialog{animation:none}.staff-login-spinner{animation-duration:1.5s}}
