@@ -3967,7 +3967,12 @@ renderUI();
         lfd: "headerLfdBtn",
         terminal: "terminalRoutingBtn",
         add: "addBtn",
-        import: "excelInput"
+        import: "excelInput",
+        audit: "openAuditLogBtn",
+        dispatch: "dailyDispatchBtn",
+        analytics: "openAnalyticsBtn",
+        vessel: "vesselEditBtn",
+        export: "exportBtn"
       };
       if (button.classList.contains("staff-side-link")) document.querySelectorAll(".staff-side-link").forEach(link => link.classList.toggle("active", link === button));
       if (target === "dashboard") { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
