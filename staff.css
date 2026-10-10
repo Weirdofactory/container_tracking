@@ -150,3 +150,50 @@ body{background:var(--carrier-bg)!important;color:#202b34}
 .tracking-note{height:100%!important;padding:0 18px!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-direction:column!important;gap:3px!important;font-size:10px!important;line-height:1.2!important}
 .tracking-note b{font:700 9px "IBM Plex Mono"!important;color:#84929a!important}
 @media(max-width:900px){.tracking-bar{grid-template-columns:1fr!important;height:auto!important}.tracking-title{padding:14px 18px!important}.tracking-input{height:62px!important;padding:0 12px!important}.tracking-note{height:50px!important;border-top:1px solid #e1e6e9!important}}
+
+
+/* CARRIER EXPERIENCE REDESIGN — staff operations */
+:root{--ink:#102b46;--ink2:#39546b;--muted:#6b8090;--paper:#f3f6f9;--white:#fff;--navy:#063b70;--blue:#0077c8;--blue2:#00a0df;--line:#d6e1e8;--line2:#e7edf2;--shadow:0 8px 26px rgba(6,43,75,.06)}
+body{background:#f3f6f9!important;color:#102b46!important;font-size:13px!important}
+.app-header{background:#fff!important;border-bottom:1px solid #d9e3ea!important;box-shadow:0 2px 10px rgba(5,42,73,.04)!important}
+.app-header-inner{max-width:1680px!important;min-height:82px!important;padding:0 30px!important;gap:24px!important}
+.brand-mark{background:#063b70!important;border-radius:2px!important}
+.brand strong{font-size:19px!important;color:#102b46!important}
+.main-nav{gap:24px!important}
+.main-nav a{font-size:13px!important;color:#536c80!important}
+.main-nav a.active{color:#0077c8!important}
+.main-nav a.active:after{background:#00a0df!important;height:3px!important}
+.header-search{border:1px solid #d2dfe7!important;border-radius:3px!important;background:#f9fbfc!important}
+.header-search input{font-size:13px!important}
+.header-btn{border-radius:3px!important;font-size:11px!important}
+.header-btn:first-of-type{background:#063b70!important;color:#fff!important;border-color:#063b70!important}
+.page-inner{max-width:1640px!important;padding:34px 30px 60px!important}
+.page-intro{padding:10px 0 26px!important;align-items:flex-end!important}
+.breadcrumb{color:#0077c8!important;font-size:10px!important;letter-spacing:.15em!important}
+.page-intro h1{font-size:42px!important;letter-spacing:-.05em!important;color:#102b46!important}
+.page-intro p{font-size:15px!important;color:#657c8e!important}
+.today-marker{border-left:2px solid #00a0df!important}
+.tracking-bar{border-radius:4px!important;box-shadow:0 4px 16px rgba(5,42,73,.04)!important;background:#fff!important}
+.tracking-title strong{color:#123d5c!important}
+.tracking-input button{background:#0077c8!important;border-color:#0077c8!important;border-radius:3px!important}
+.metric-ribbon{border-radius:4px!important;overflow:hidden!important;box-shadow:0 4px 16px rgba(5,42,73,.04)!important}
+.metric-ribbon>div{background:#fff!important}
+.metric-ribbon b{color:#073f70!important;font-size:28px!important}
+.work-grid{gap:20px!important}
+.workspace-card{border:1px solid #d7e2e9!important;border-radius:4px!important;box-shadow:0 6px 20px rgba(5,42,73,.04)!important;background:#fff!important}
+.card-titlebar{background:#fff!important;border-bottom:1px solid #e4ebf0!important}
+.card-titlebar h2{font-size:22px!important;color:#153b59!important}
+.action-btn{border-radius:3px!important;font-size:11px!important}
+.action-btn.primary{background:#0077c8!important;border-color:#0077c8!important}
+.filter-bar{background:#f8fafb!important}
+.register-search,.input{border-radius:3px!important;border-color:#d2dfe7!important}
+.data-table thead th{background:#073b68!important;color:#fff!important}
+.data-table tbody tr:hover{background:#f0f8fc!important}
+.s-link{color:#0077c8!important}
+.s-status{border-radius:3px!important}
+.s-alert-row{border-radius:3px!important;border-left-color:#00a0df!important}
+.s-btn.blue{background:#0077c8!important;border-color:#0077c8!important}
+.edit-drawer{border-left:3px solid #00a0df!important}
+.login-visual{background:linear-gradient(125deg,rgba(3,38,71,.96),rgba(0,101,159,.9)),url('https://images.unsplash.com/photo-1494412519320-aa613dfb7738?auto=format&fit=crop&w=1800&q=85') center/cover!important}
+.login-submit{background:#0077c8!important;border-radius:3px!important}
+@media(max-width:900px){.app-header-inner{padding:0 14px!important}.page-inner{padding:24px 14px 42px!important}.page-intro h1{font-size:34px!important}.page-intro p{font-size:13px!important}.work-grid{grid-template-columns:1fr!important}}
