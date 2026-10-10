@@ -1097,12 +1097,43 @@ async function performPublicSearch() {
   await cloudDataReady;
   setTimeout(() => {
     btn.classList.remove("btn-loading");
-    const queries = rawInput.split(/[\\s,]+/).filter(Boolean).map(q => q.toLowerCase().replace(/[^a-z0-9]/g, ''));
-    const publicSearchResults = rows.filter(r => {
-      const cntr = (getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "").toLowerCase().replace(/[^a-z0-9]/g, '');
-      const mbl = (getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "").toLowerCase().replace(/[^a-z0-9]/g, '');
-      return queries.some(q => q && (cntr === q || mbl === q || cntr.includes(q) || mbl.includes(q)));
+    const selectedType = (el("publicTrackingType")?.value || "all").toLowerCase();
+    const normalizeRef = value => String(value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const queries = [...new Set(rawInput.split(/[\s,;]+/).map(normalizeRef).filter(Boolean))];
+    const searchableTypes = selectedType === "all" ? ["container", "mbl", "booking", "hbl"] : [selectedType];
+    const fieldsFor = r => ({
+      container: normalizeRef(getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO", "CONTAINER NUMBER"])),
+      mbl: normalizeRef(getField(r, ["MBL NO", "MBL", "MASTER BL", "MASTER BILL OF LADING"])),
+      booking: normalizeRef(getField(r, ["BOOKING NO", "BOOKING NO.", "BOOKING NUMBER", "BOOKING", "BOOKING REF", "BOOKING REFERENCE"])),
+      hbl: normalizeRef(getField(r, ["HBL NO", "HBL NO.", "HOUSE BL", "HOUSE BILL OF LADING", "HBL"]))
     });
+    const matchedRows = new Set();
+    queries.forEach(q => {
+      const exact = rows.filter(r => searchableTypes.some(type => fieldsFor(r)[type] && fieldsFor(r)[type] === q));
+      const candidates = exact.length ? exact : (q.length >= 6
+        ? rows.filter(r => searchableTypes.some(type => fieldsFor(r)[type] && fieldsFor(r)[type].includes(q)))
+        : []);
+      candidates.forEach(r => matchedRows.add(r));
+    });
+    const uniqueShipments = new Map();
+    const completeness = r => Object.values(r || {}).filter(v => String(v ?? "").trim() !== "").length;
+    [...matchedRows].forEach(r => {
+      const f = fieldsFor(r);
+      const vessel = normalizeRef(getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]));
+      const etd = normalizeRef(getField(r, ["ETD", "ATD", "DEPARTURE DATE"]));
+      const key = f.container ? "CNTR:" + f.container + "|MBL:" + f.mbl
+        : (f.mbl ? "MBL:" + f.mbl + "|BOOKING:" + f.booking + "|VESSEL:" + vessel + "|ETD:" + etd
+        : "BOOKING:" + f.booking + "|HBL:" + f.hbl + "|VESSEL:" + vessel + "|ETD:" + etd);
+      const prior = uniqueShipments.get(key);
+      if (!prior) uniqueShipments.set(key, { ...r });
+      else {
+        const keep = completeness(r) > completeness(prior) ? { ...r } : { ...prior };
+        const fill = completeness(r) > completeness(prior) ? prior : r;
+        Object.entries(fill).forEach(([k,v]) => { if (String(keep[k] ?? "").trim() === "" && String(v ?? "").trim() !== "") keep[k] = v; });
+        uniqueShipments.set(key, keep);
+      }
+    });
+    const publicSearchResults = [...uniqueShipments.values()];
     const countBadge = el("publicResultCountBadge");
     if (countBadge) countBadge.textContent = publicSearchResults.length + " result" + (publicSearchResults.length === 1 ? "" : "s");
     if (!publicSearchResults.length) {
