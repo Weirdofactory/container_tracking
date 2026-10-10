@@ -81,6 +81,7 @@ function updateSelectAll(){const list=filtered();const visible=list.slice(0,300)
 function selectedRows(){return [...selected].map(i=>rows[i]).filter(Boolean)}
 function requireSelection(){const r=selectedRows();if(!r.length){notify("Select at least one shipment first.");return null}return r}
 
+function dateInputValue(v){const d=parseFlexibleDate(v);return d?String(d.getFullYear()).padStart(4,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'):'';}
 function openEditor(i){
   editingIndex=i;
   const r=rows[i]||{};
@@ -88,7 +89,7 @@ function openEditor(i){
   const milestones=[["ETD","ETD"],["ETA","ETA"],["INWARD DATE","Inward Date"],["PORT IN","Port In"],["PORT OUT","Port Out"],["CFS IN","CFS In"],["DESTUFFING DATE","Destuffing Date"],["CONTAINER RETURN DATE","Empty Return"]];
   const makeFields=(list)=>list.map(([k,l])=>{
     const isDate=/DATE|ETD|ETA|PORT IN|PORT OUT|CFS IN/.test(k);
-    return '<div class="edit-item"><label class="s-label">'+sx(l)+'</label><input class="s-input edit-input" data-field="'+sx(k)+'" type="'+(isDate?'date':'text')+'" value="'+sx(r[k]||"")+'" '+(k==="CONTAINER NO."||k==="MBL NO"?'spellcheck="false"':'')+'></div>';
+    return '<div class="edit-item"><label class="s-label">'+sx(l)+'</label><input class="s-input edit-input" data-field="'+sx(k)+'" type="'+(isDate?'date':'text')+'" value="'+sx(isDate?dateInputValue(r[k]):(r[k]||""))+'" '+(k==="CONTAINER NO."||k==="MBL NO"?'spellcheck="false"':'')+'></div>';
   }).join("");
   const context=se("editContext");
   if(context)context.innerHTML='<div class="context-id"><span>CONTAINER</span><b>'+sx(cnum(r)||"—")+'</b></div><div><span>MBL</span><b>'+sx(sf(r,["MBL NO","MBL"])||"—")+'</b></div><div><span>ROUTE</span><b>'+sx((sf(r,["POL"])||"—")+" → "+(sf(r,["GATEWAY PORT"])||"—"))+'</b></div><div><span>STATUS</span><b>'+sx(st(r)[0])+'</b></div>';
@@ -96,7 +97,7 @@ function openEditor(i){
   se("editMilestones").innerHTML=makeFields(milestones);
   se("editDrawer").classList.add("open");
 }
-async function saveEditor(){if(editingIndex<0)return;const r=rows[editingIndex];se("saveEdit").disabled=true;try{se("editDrawer").querySelectorAll(".edit-input").forEach(x=>r[x.dataset.field]=x.value);if(!["Admin","Editor"].includes(session.role))throw new Error("Editor access required.");const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});if(error)throw error;se("editDrawer").classList.remove("open");notify("Shipment updated.");renderTable()}catch(e){alert(e.message)}finally{se("saveEdit").disabled=false}}
+async function saveEditor(){if(editingIndex<0)return;const r=rows[editingIndex];se("saveEdit").disabled=true;try{se("editDrawer").querySelectorAll(".edit-input").forEach(x=>{const v=x.value;r[x.dataset.field]=x.type==="date"&&v?simpleDateDisplay(v):v;});if(!["Admin","Editor"].includes(session.role))throw new Error("Editor access required.");const {error}=await SSB.from("containers").upsert({id:"gml_tracking_records",data:rows});if(error)throw error;se("editDrawer").classList.remove("open");notify("Shipment updated.");renderTable()}catch(e){alert(e.message)}finally{se("saveEdit").disabled=false}}
 
 function norm(v){return String(v??"").trim()}
 function normHeader(v){return norm(v).toLowerCase().replace(/[^a-z0-9]+/g,"")}
