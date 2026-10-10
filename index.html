@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20261010-logitrack-match-v6">
+<link rel="stylesheet" href="./style.css?v=20261010-logitrack-match-v7">
 </head>
 <body>
 
@@ -152,6 +152,12 @@
   <button type="button" class="staff-side-link" data-staff-nav="scmtr"><span>▧</span> SCMTR / CSN</button>
   <button type="button" class="staff-side-link" data-staff-nav="lfd"><span>◷</span> LFD Rules</button>
   <button type="button" class="staff-side-link" data-staff-nav="terminal"><span>⚓</span> Terminal Routing</button>
+  <div class="staff-sidebar-label">TOOLS</div>
+  <button type="button" class="staff-side-link" data-staff-nav="audit"><span>◷</span> Audit Trail</button>
+  <button type="button" class="staff-side-link" data-staff-nav="dispatch"><span>▤</span> Dispatch Table</button>
+  <button type="button" class="staff-side-link" data-staff-nav="analytics"><span>▥</span> Turnaround Stats</button>
+  <button type="button" class="staff-side-link action-editor-only" data-staff-nav="vessel"><span>🚢</span> Bulk Vessel Update</button>
+  <button type="button" class="staff-side-link" data-staff-nav="export"><span>⇩</span> Export Records</button>
   <div class="staff-sidebar-spacer"></div>
   <div class="staff-sidebar-help"><span class="staff-help-icon">✦</span><strong>Need assistance?</strong><small>Contact the operations team for help with shipment workflows.</small><a href="mailto:madhan@gmlindia.net">Contact support ↗</a></div>
   <div class="staff-sidebar-foot">GML · STAFF PORTAL</div>
@@ -217,10 +223,10 @@
 <section class="ect-rail-panel"><div class="ect-rail-heading"><span class="ect-rail-icon">◷</span><div><strong>Recent shipments</strong><small>Latest records from your workspace</small></div></div><div id="ectRecentActivity" class="ect-recent-activity"><div class="ect-recent-empty">Recent shipment records will appear here.</div></div></section>
 <section class="ect-rail-panel">
       <div class="ect-rail-heading"><span class="ect-rail-icon">↗</span><div><strong>Quick actions</strong><small>Jump into common workflows</small></div></div>
-      <button type="button" class="ect-quick-action" data-staff-nav="add"><span>＋</span><span><strong>Add container</strong><small>Create a shipment record</small></span><b>→</b></button>
+      <button type="button" class="ect-quick-action action-editor-only" data-staff-nav="add"><span>＋</span><span><strong>Add container</strong><small>Create a shipment record</small></span><b>→</b></button>
       <button type="button" class="ect-quick-action" data-staff-nav="scmtr"><span>▧</span><span><strong>SCMTR / CSN</strong><small>Open compliance workspace</small></span><b>→</b></button>
       <button type="button" class="ect-quick-action" data-staff-nav="terminal"><span>⚓</span><span><strong>Terminal routing</strong><small>Review routing tools</small></span><b>→</b></button>
-      <button type="button" class="ect-quick-action" data-staff-nav="import"><span>⇧</span><span><strong>Import records</strong><small>Upload shipment data</small></span><b>→</b></button>
+      <button type="button" class="ect-quick-action action-editor-only" data-staff-nav="import"><span>⇧</span><span><strong>Import records</strong><small>Upload shipment data</small></span><b>→</b></button>
     </section>
 <section id="dataQualityNotice" class="data-quality-notice" aria-live="polite" hidden></section>
 </aside></div>
@@ -319,7 +325,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20261010-logitrack-match-v6"></script>
+<script src="./app.js?v=20261010-logitrack-match-v7"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
