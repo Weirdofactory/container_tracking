@@ -39,7 +39,7 @@ body{background:var(--ns-bg)!important;color:var(--ns-ink)!important;font-family
 .fresh-hero-foot{display:flex;align-items:center;gap:12px;border-top:1px solid #e1e8f2;margin-top:32px;padding-top:20px}
 .fresh-route-glyph{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:#eaf0ff;color:var(--ns-blue);font-size:23px}
 .fresh-hero-foot b,.fresh-hero-foot small{display:block}.fresh-hero-foot b{font-size:12px}.fresh-hero-foot small{font-size:11px;color:#8290a6;margin-top:3px}
-.fresh-search-card{background:#fff!important;border:1px solid #e0e7f1!important;border-radius:22px!important;padding:28px!important;box-shadow:0 24px 70px #1d3f7512!important;position:relative!important;min-width:0}
+.fresh-search-card{background:#fff!important;border:1px solid #e0e7f1!important;border-radius:22px!important;padding:28px!important;box-shadow:0 24px 70px #1d3f7512!important;position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;width:auto!important;min-width:0}
 .fresh-search-card:before{content:"";position:absolute;top:-1px;left:28px;right:28px;height:3px;background:linear-gradient(90deg,var(--ns-blue),#73a0ff);border-radius:0 0 5px 5px}
 .fresh-search-card .dock-heading{align-items:flex-start!important;margin-bottom:23px!important}
 .fresh-search-card .dock-overline{color:var(--ns-blue)!important;font:10px "DM Mono",monospace!important;letter-spacing:1.4px!important}
