@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="./portal.css?v=20261010-manifest1">
+<link rel="stylesheet" href="./portal.css?v=20261010-nexus1">
 <script src="./app-config.js?v=20261004-v2"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head><body>
 <div class="customer-app manifest-app">
@@ -47,7 +47,7 @@
 <div class="modal" id="multiModal" aria-hidden="true"><div class="modal-card"><div class="modal-head"><div><span class="section-index">BATCH LOOKUP</span><h3>Track multiple references</h3><p>One container, booking, HBL or MBL per line. Up to 20 references.</p></div><button class="modal-close" id="closeMulti" aria-label="Close">×</button></div><div class="modal-body"><textarea id="multiInput" class="multi-input" placeholder="HDMU5601794&#10;HDMU5626895&#10;DSCLCNB26090001"></textarea><div class="batch-note">Duplicate references are ignored automatically.</div></div><div class="modal-foot"><button class="modal-secondary" id="cancelMulti">Cancel</button><button class="modal-primary" id="runMulti">Track references <span>↗</span></button></div></div></div>
 <div class="modal" id="igmModal" aria-hidden="true"><div class="modal-card igm-card"><div class="modal-head"><div><span class="section-index">CUSTOMS / MANIFEST</span><h3 id="igmModalTitle">HBL Details</h3><p id="igmModalSub">Indian Customs manifest information</p></div><button class="modal-close" id="closeIgm" aria-label="Close">×</button></div><div class="modal-body" id="igmModalBody"></div></div></div>
 <div class="toast" id="gmlToast"></div>
-<script src="./portal.js?v=20261010-manifest1"></script>
+<script src="./portal.js?v=20261010-nexus1"></script>
 <script>
 document.querySelectorAll(".console-tab").forEach(tab=>tab.addEventListener("click",()=>{document.querySelectorAll(".console-tab").forEach(x=>x.classList.toggle("active",x===tab));const target=tab.dataset.trackTab;const select=document.getElementById("searchType");if(select)select.value=target;document.querySelector(".track-mode")?.classList.toggle("any-active",target==="all")}));
 document.getElementById("clearSearch")?.addEventListener("click",()=>{const input=document.getElementById("searchInput");if(input){input.value="";input.focus()}});
