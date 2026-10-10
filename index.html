@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20261010-logitrack-match-v2">
+<link rel="stylesheet" href="./style.css?v=20261010-logitrack-match-v3">
 </head>
 <body>
 
@@ -189,7 +189,7 @@
         <span id="searchResultCount" class="search-result-count" aria-live="polite">0 results</span>
         <button class="btn" onclick="openDrawer()">⚙️ Deep Filters</button>
       </div>
-      <div class="view-selector"><button class="view-btn active" data-view="cards">Cards</button><button class="view-btn" data-view="sheet">Table</button><button class="view-btn" data-view="kanban">Pipeline</button></div>
+      <div class="view-selector"><button class="view-btn" data-view="cards">Cards</button><button class="view-btn active" data-view="sheet">Table</button><button class="view-btn" data-view="kanban">Pipeline</button></div>
     </div>
     <div class="control-tray-bottom"><div class="quick-chips-wrapper">
       <span class="chip" data-filter="all">All</span><span class="chip active" data-filter="active">Active</span><span class="chip" data-filter="port_in">Port In</span><span class="chip" data-filter="port_out">Port Out</span><span class="chip" data-filter="cfs_in">CFS In</span><span class="chip" data-filter="empty_pending">Empty Pending</span><span class="chip" data-filter="completed">Completed</span>
@@ -200,14 +200,6 @@
   <section id="kanbanView" class="kanban-layout fade-in" style="display:none;"></section>
   </div>
   <aside class="ect-right-rail" aria-label="Operations summary">
-    <section class="ect-rail-panel">
-      <div class="ect-rail-heading"><span class="ect-rail-icon">◉</span><div><strong>Shipment status</strong><small>Live totals from current records</small></div></div>
-      <div class="ect-status-row"><span class="ect-status-dot blue"></span><span>Active shipments</span><strong id="ectRailActive">0</strong></div>
-      <div class="ect-status-row"><span class="ect-status-dot green"></span><span>Returned / completed</span><strong id="ectRailCompleted">0</strong></div>
-      <div class="ect-status-row"><span class="ect-status-dot amber"></span><span>Port In awaiting</span><strong id="ectRailPortIn">0</strong></div>
-      <div class="ect-status-row"><span class="ect-status-dot orange"></span><span>Port Out pending</span><strong id="ectRailPortOut">0</strong></div>
-      <div class="ect-status-row"><span class="ect-status-dot red"></span><span>Destuffing pending</span><strong id="ectRailDestuffing">0</strong></div>
-    </section>
     <section class="ect-rail-panel">
       <div class="ect-rail-heading"><span class="ect-rail-icon">↗</span><div><strong>Quick actions</strong><small>Jump into common workflows</small></div></div>
       <button type="button" class="ect-quick-action" data-staff-nav="add"><span>＋</span><span><strong>Add container</strong><small>Create a shipment record</small></span><b>→</b></button>
@@ -313,7 +305,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20261010-logitrack-match-v2"></script>
+<script src="./app.js?v=20261010-logitrack-match-v3"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
