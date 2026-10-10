@@ -9,16 +9,21 @@ const sx=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const sf=(r,n)=>{for(const x of n){if(r?.[x]!==undefined&&String(r[x]??"").trim()!=="")return r[x]}return"";
 };
 const sn=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
-function parseFlexibleDate(v){
+function parseFlexibleDate(v,referenceYear){
   if(v===null||v===undefined||String(v).trim()==="")return null;
   if(v instanceof Date&&!Number.isNaN(v.getTime()))return new Date(v.getFullYear(),v.getMonth(),v.getDate());
-  const s=String(v).trim();
-  let m;
-  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ].*)?$/))){const d=new Date(+m[1],+m[2]-1,+m[3]);return Number.isNaN(d.getTime())?null:d;}
-  if((m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/))){const d=new Date(+m[3],+m[2]-1,+m[1]);return Number.isNaN(d.getTime())?null:d;}
-  if((m=s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/))){const d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());}
-  if(/^\d+(\.\d+)?$/.test(s)){const n=Number(s);if(n>30000&&n<70000){const d=new Date(Date.UTC(1899,11,30)+n*86400000);return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());}}
-  const d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const s=String(v).trim();let m,d;
+  const valid=(y,mo,day)=>{const x=new Date(y,mo-1,day);return x.getFullYear()===y&&x.getMonth()===mo-1&&x.getDate()===day?x:null};
+  if((m=s.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})(?:[T ].*)?$/)))return valid(+m[1],+m[2],+m[3]);
+  if((m=s.match(/^(\\d{1,2})[-/.](\\d{1,2})[-/.](\\d{4})$/)))return valid(+m[3],+m[2],+m[1]);
+  if((m=s.match(/^(\\d{1,2})[- ]([A-Za-z]{3,9})[- ](\\d{4})$/))){d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+  if((m=s.match(/^(\\d{1,2})[- ]([A-Za-z]{3,9})$/))){
+    const months={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+    const mo=months[m[2].slice(0,3).toLowerCase()];if(mo===undefined)return null;
+    const y=Number(referenceYear)||new Date().getFullYear();return valid(y,mo+1,+m[1]);
+  }
+  if(/^\\d+(\\.\\d+)?$/.test(s)){const n=Number(s);if(n>30000&&n<70000){const x=new Date(Date.UTC(1899,11,30)+n*86400000);return new Date(x.getUTCFullYear(),x.getUTCMonth(),x.getUTCDate())}}
+  d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
 }
 function simpleDateDisplay(v){
   const d=parseFlexibleDate(v);if(!d)return String(v??"")||"—";
@@ -139,28 +144,41 @@ async function importTracking(){
   renderTable();notify("Bulk import saved.");
 }
 function exportExcel(){
-  const list=selectedRows();const data=list.length?list:filtered();if(!data.length){notify("No shipment data to export.");return}
+  const list=selectedRows();const data=list.length?list:filtered();
+  if(!data.length){notify("No shipment data to export.");return}
   const clean=data.map(r=>({...r}));
   const ws=XLSX.utils.json_to_sheet(clean);
   const headers=Object.keys(clean[0]||{});
-  const dateCols=headers.map((k,i)=>({k,i})).filter(x=>/DATE|\\bETA\\b|\\bETD\\b|PORT IN|PORT OUT|CFS IN/i.test(x.k));
-  dateCols.forEach(({k,i})=>{
-    for(let r=0;r<clean.length;r++){
-      const cellRef=XLSX.utils.encode_cell({r:r+1,c:i}),cell=ws[cellRef];
-      if(!cell||cell.v===null||cell.v==="")continue;
-      const d=parseFlexibleDate(cell.v);
-      if(!d)continue;
-      cell.t="n";
-      cell.v=(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/86400000;
-      cell.z="dd-mm-yyyy";
+  const isDateHeader=k=>{
+    const n=String(k||"").trim().toUpperCase().replace(/[^A-Z0-9]+/g," ");
+    return /(^| )(ETA|ETD|DATE)( |$)/.test(n)||/INWARD|PLANNING|TERMINAL LFD|DETENTION LFD|EMPTY RETURN VALIDITY|PORT IN|PORT OUT|CFS IN/.test(n);
+  };
+  const yearFromRow=(rec)=>{
+    for(const k of headers){
+      if(!isDateHeader(k))continue;
+      const raw=rec[k];if(!raw)continue;
+      const m=String(raw).match(/(?:^|[^0-9])(20\\d{2})(?:[^0-9]|$)/);
+      if(m)return Number(m[1]);
+      if(raw instanceof Date&&!Number.isNaN(raw.getTime()))return raw.getFullYear();
     }
-    const ref=XLSX.utils.encode_col(i);
-    ws[ref+"1"]&&(ws[ref+"1"].s={font:{bold:true}});
+    return new Date().getFullYear();
+  };
+  headers.forEach((key,col)=>{
+    if(!isDateHeader(key))return;
+    for(let r=0;r<clean.length;r++){
+      const cellRef=XLSX.utils.encode_cell({r:r+1,c:col}),cell=ws[cellRef];
+      if(!cell||cell.v===null||cell.v==="")continue;
+      const d=parseFlexibleDate(cell.v,yearFromRow(clean[r]));
+      if(!d)continue;
+      const serial=(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/86400000;
+      cell.t="n";cell.v=serial;cell.z="dd-mm-yyyy";
+    }
+    const head=ws[XLSX.utils.encode_cell({r:0,c:col})];if(head)head.s={font:{bold:true}};
+    for(let r=1;r<=clean.length;r++){const cell=ws[XLSX.utils.encode_cell({r,c:col})];if(cell&&cell.t==="n")cell.z="dd-mm-yyyy";}
   });
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Tracking_Data");
-  XLSX.writeFile(wb,(APP.appName||"CargoTrack")+"_Shipments_"+new Date().toISOString().slice(0,10)+".xlsx");
-  notify("Excel downloaded with normal DD-MM-YYYY date cells.");
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Tracking_Data");
+  XLSX.writeFile(wb,(APP.appName||"CargoTrack")+"_Shipments_"+new Date().toISOString().slice(0,10)+".xlsx",{cellStyles:true});
+  notify("Excel exported: date columns use real Excel dates (DD-MM-YYYY).");
 }
 
 function makeFeatureModal(id,title,subtitle,body,footer){
