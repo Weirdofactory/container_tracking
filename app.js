@@ -44,7 +44,7 @@ const DEFAULT_ROWS = [
   }
 ];
 
-let rows = [...DEFAULT_ROWS];
+let rows = [];
 let cloudDataReady = Promise.resolve();
 
 let currentUser = null;
@@ -1871,32 +1871,100 @@ function renderStaffAnalytics() {
   setTimeout(()=>staffMapInstance&&staffMapInstance.invalidateSize(),100);
 }
 
-function renderUI() {
-  const filtered = getFilteredRows();
-  updateKPIs();
-  updateReferenceRail();
-  renderStaffAnalytics();
 
-  const searchCount = el("searchResultCount");
-  if (searchCount) {
-    searchCount.textContent = searchTokensForDisplay(filtered.length);
+function renderMinimalShipmentTable(items) {
+  const body = el("sheetTableBody");
+  if (!body) return;
+  const list = Array.isArray(items) ? items : [];
+  const visible = list.slice(0, 25);
+  body.innerHTML = visible.map(function (item, idx) {
+    const row = item && item.r && typeof item.r === "object" ? item.r : {};
+    const rowIndex = item && Number.isInteger(item.i) ? item.i : idx;
+    const cn = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO", "CONTAINER NUMBER"]) || "—";
+    const type = getField(row, ["TYPE", "SIZE", "CONTAINER TYPE"]) || "—";
+    const mbl = getField(row, ["MBL NO", "MBL", "MASTER BL"]) || "—";
+    const liner = getField(row, ["LINER", "LINE", "CARRIER"]) || "—";
+    const port = getField(row, ["GATEWAY PORT", "POD", "PORT", "DESTINATION"]) || "—";
+    const portIn = getField(row, ["PORT IN"]) || "—";
+    const portOut = getField(row, ["PORT OUT"]) || "—";
+    const cfs = getField(row, ["CFS NAME", "CFS"]) || "—";
+    const truck = getField(row, ["TRUCK NO.", "TRUCK NO", "VEHICLE NO"]) || "—";
+    const destuff = getField(row, ["DESTUFFING DATE", "DESTUFF DATE"]) || "—";
+    const returned = getField(row, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]) || "—";
+    const remarks = getField(row, ["REMARKS", "NOTES"]) || "—";
+    return "<tr><td><input type='checkbox' class='chk-item' value='" + rowIndex + "'></td>" +
+      "<td><strong>" + esc(cn) + "</strong></td><td>" + esc(type) + "</td><td>" + esc(mbl) +
+      "</td><td>" + esc(liner) + "</td><td>" + esc(port) + "</td><td>" + esc(portIn) +
+      "</td><td>" + esc(portOut) + "</td><td>" + esc(cfs) + "</td><td>" + esc(truck) +
+      "</td><td>" + esc(destuff) + "</td><td>" + esc(returned) + "</td><td>—</td><td>—</td><td>—</td><td>" +
+      esc(remarks) + "</td><td><button class='btn' type='button' onclick='openModal(" + rowIndex + ")'>View / Edit</button></td></tr>";
+  }).join("") || "<tr><td colspan='17' style='padding:28px;text-align:center;color:#64748b'>No shipment records are loaded. Check the Sync status above and retry the cloud connection.</td></tr>";
+  const pager = el("paginationWrapper");
+  if (pager) pager.textContent = list.length > 25 ? "Showing first 25 of " + list.length + " records (recovery view)" : "Recovery view · " + list.length + " records";
+}
+
+
+function renderUI() {
+  const viewElements = { cards: el("cardsView"), sheet: el("sheetView"), kanban: el("kanbanView") };
+  if (!Object.prototype.hasOwnProperty.call(viewElements, currentView) || !viewElements[currentView]) currentView = "sheet";
+
+  // Set the selected panel visible before running optional charts or diagnostics.
+  Object.entries(viewElements).forEach(([mode, node]) => {
+    if (!node) return;
+    const active = mode === currentView;
+    node.style.display = active ? (mode === "sheet" ? "block" : "grid") : "none";
+    if (active) node.classList.add("fade-in");
+  });
+  document.querySelectorAll(".view-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.view === currentView));
+
+  let filtered = [];
+  try {
+    filtered = getFilteredRows();
+  } catch (error) {
+    console.error("Shipment filtering failed; showing the original records in recovery view.", error);
+    filtered = Array.isArray(rows) ? rows.map((r, i) => ({ r: r || {}, i: i })) : [];
   }
 
-  if (currentView === 'cards') renderCards(filtered);
-  else if (currentView === 'sheet') renderSheet(filtered);
-  else if (currentView === 'kanban') renderKanban(filtered);
+  const countNode = el("searchResultCount");
+  if (countNode) countNode.textContent = searchTokensForDisplay(filtered.length);
+  const overviewCount = el("ectVisibleCount");
+  if (overviewCount) overviewCount.textContent = filtered.length.toLocaleString("en-IN");
+
+  try {
+    if (currentView === "cards") renderCards(filtered);
+    else if (currentView === "sheet") renderSheet(filtered);
+    else renderKanban(filtered);
+  } catch (error) {
+    console.error("Full shipment view failed; falling back to a read-only data table.", error);
+    currentView = "sheet";
+    Object.entries(viewElements).forEach(([mode, node]) => {
+      if (node) node.style.display = mode === "sheet" ? "block" : "none";
+    });
+    document.querySelectorAll(".view-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.view === "sheet"));
+    renderMinimalShipmentTable(filtered);
+  }
+
+  // Optional dashboard panels must never prevent the actual shipment table/cards from rendering.
+  try { updateKPIs(); } catch (error) { console.warn("KPI refresh failed.", error); }
+  try { updateDataQualityNotice(); } catch (error) { console.warn("Data integrity notice failed.", error); }
+  try { updateReferenceRail(); } catch (error) { console.warn("Recent shipments summary failed.", error); }
+  try {
+    renderStaffAnalytics();
+  } catch (error) {
+    console.warn("Map or chart could not render; shipment data remains available.", error);
+    const mapNode = el("staffMapCanvas");
+    if (mapNode && !mapNode.querySelector(".staff-map-empty")) {
+      mapNode.innerHTML = '<div class="staff-map-empty">The map is temporarily unavailable. Shipment records remain available in the table below.</div>';
+    }
+  }
 
   const count = selectedIndices.size;
-  const sn = el("selectionNotice");
-  if(sn) sn.textContent = `${count} selected`;
-  const bc = el("btnSelectCount");
-  if(bc) bc.textContent = count;
-  
-  const fab = el("floatingActionBar");
-  if(fab) {
-    if(count > 0) fab.classList.add("show");
-    else fab.classList.remove("show");
-  }
+  const selection = el("selectionNotice");
+  if (selection) selection.textContent = count + " selected";
+  const selectCount = el("btnSelectCount");
+  if (selectCount) selectCount.textContent = count;
+  const actionBar = el("floatingActionBar");
+  if (actionBar) actionBar.classList.toggle("show", count > 0);
 }
 
 function getLfdHtml(daysLeft, isOverdue, label, totalDays) {
@@ -3040,40 +3108,70 @@ function updateKPIs() {
   animateValue(el("kTotalExposure"), 0, totalExposureUSD, 1000, true);
 }
 
-function renderUI() {
-  const filtered = getFilteredRows();
-  const ectCount = el("ectVisibleCount");
-  if (ectCount) ectCount.textContent = filtered.length.toLocaleString("en-IN");
-  updateKPIs();
-  updateDataQualityNotice();
-  updateReferenceRail();
-  renderStaffAnalytics();
 
-  // Critical: the selected content panel must be made visible on initial page load,
-  // not only after a user clicks the view selector.
+function renderUI() {
   const viewElements = { cards: el("cardsView"), sheet: el("sheetView"), kanban: el("kanbanView") };
+  if (!Object.prototype.hasOwnProperty.call(viewElements, currentView) || !viewElements[currentView]) currentView = "sheet";
+
+  // Set the selected panel visible before running optional charts or diagnostics.
   Object.entries(viewElements).forEach(([mode, node]) => {
     if (!node) return;
-    const isActive = mode === currentView;
-    node.style.display = isActive ? (mode === "sheet" ? "block" : "grid") : "none";
-    if (isActive) node.classList.add("fade-in");
-    document.querySelectorAll(".view-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.view === mode));
+    const active = mode === currentView;
+    node.style.display = active ? (mode === "sheet" ? "block" : "grid") : "none";
+    if (active) node.classList.add("fade-in");
   });
+  document.querySelectorAll(".view-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.view === currentView));
 
-  const searchCount = el("searchResultCount");
-  if (searchCount) searchCount.textContent = searchTokensForDisplay(filtered.length);
-  if (currentView === "cards") renderCards(filtered);
-  else if (currentView === "sheet") renderSheet(filtered);
-  else if (currentView === "kanban") renderKanban(filtered);
+  let filtered = [];
+  try {
+    filtered = getFilteredRows();
+  } catch (error) {
+    console.error("Shipment filtering failed; showing the original records in recovery view.", error);
+    filtered = Array.isArray(rows) ? rows.map((r, i) => ({ r: r || {}, i: i })) : [];
+  }
+
+  const countNode = el("searchResultCount");
+  if (countNode) countNode.textContent = searchTokensForDisplay(filtered.length);
+  const overviewCount = el("ectVisibleCount");
+  if (overviewCount) overviewCount.textContent = filtered.length.toLocaleString("en-IN");
+
+  try {
+    if (currentView === "cards") renderCards(filtered);
+    else if (currentView === "sheet") renderSheet(filtered);
+    else renderKanban(filtered);
+  } catch (error) {
+    console.error("Full shipment view failed; falling back to a read-only data table.", error);
+    currentView = "sheet";
+    Object.entries(viewElements).forEach(([mode, node]) => {
+      if (node) node.style.display = mode === "sheet" ? "block" : "none";
+    });
+    document.querySelectorAll(".view-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.view === "sheet"));
+    renderMinimalShipmentTable(filtered);
+  }
+
+  // Optional dashboard panels must never prevent the actual shipment table/cards from rendering.
+  try { updateKPIs(); } catch (error) { console.warn("KPI refresh failed.", error); }
+  try { updateDataQualityNotice(); } catch (error) { console.warn("Data integrity notice failed.", error); }
+  try { updateReferenceRail(); } catch (error) { console.warn("Recent shipments summary failed.", error); }
+  try {
+    renderStaffAnalytics();
+  } catch (error) {
+    console.warn("Map or chart could not render; shipment data remains available.", error);
+    const mapNode = el("staffMapCanvas");
+    if (mapNode && !mapNode.querySelector(".staff-map-empty")) {
+      mapNode.innerHTML = '<div class="staff-map-empty">The map is temporarily unavailable. Shipment records remain available in the table below.</div>';
+    }
+  }
 
   const count = selectedIndices.size;
-  const sn = el("selectionNotice");
-  if (sn) sn.textContent = count + " selected";
-  const bc = el("btnSelectCount");
-  if (bc) bc.textContent = count;
-  const fab = el("floatingActionBar");
-  if (fab) fab.classList.toggle("show", count > 0);
+  const selection = el("selectionNotice");
+  if (selection) selection.textContent = count + " selected";
+  const selectCount = el("btnSelectCount");
+  if (selectCount) selectCount.textContent = count;
+  const actionBar = el("floatingActionBar");
+  if (actionBar) actionBar.classList.toggle("show", count > 0);
 }
+
 function getLfdHtml(daysLeft, isOverdue, label, totalDays) {
   if (isOverdue) return `<div class="lfd-wrap danger"><div class="lfd-label">${label}: OVERDUE</div><div class="lfd-bar"><div class="lfd-fill" style="width:100%"></div></div></div>`;
   if (daysLeft === null) return '';
@@ -3504,10 +3602,13 @@ async function saveAndRefresh() {
 
 function setCloudDataState(state, message) {
   const node = el("ectCloudState");
-  if (!node) return;
-  node.dataset.state = state;
-  node.innerHTML = '<span class="ect-source-dot" aria-hidden="true"></span>' + esc(message);
-  node.title = message;
+  if (node) {
+    node.dataset.state = state;
+    node.innerHTML = '<span class="ect-source-dot" aria-hidden="true"></span>' + esc(message);
+    node.title = message;
+  }
+  const retry = el("ectCloudRetry");
+  if (retry) retry.hidden = !(state === "error" || state === "offline");
 }
 
 async function loadFromCloud() {
@@ -4007,4 +4108,24 @@ renderUI();
   top.addEventListener("input", syncToMain);
   if (button) button.addEventListener("click", syncToMain);
   existing.addEventListener("input", () => { if (top.value !== existing.value) top.value = existing.value; });
+})();
+
+
+(function bindCloudRetry() {
+  const button = el("ectCloudRetry");
+  if (!button) return;
+  button.addEventListener("click", async function () {
+    if (button.disabled) return;
+    button.disabled = true;
+    button.textContent = "Retrying…";
+    try {
+      await loadFromCloud();
+      renderUI();
+    } catch (error) {
+      console.warn("Manual cloud retry failed.", error);
+    } finally {
+      button.disabled = false;
+      button.textContent = "Retry";
+    }
+  });
 })();
