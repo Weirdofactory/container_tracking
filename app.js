@@ -1792,6 +1792,18 @@ function updateReferenceRail() {
     const node = el(id);
     if (node) node.textContent = Number(value).toLocaleString("en-IN");
   });
+  const activity = el("ectRecentActivity");
+  if (activity) {
+    const latest = rows.slice(-4).reverse();
+    activity.innerHTML = latest.length ? latest.map(row => {
+      const container = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CONTAINER NUMBER"]) || "Container record";
+      const vessel = getField(row, ["VESSEL", "VESSEL NAME", "VESSEL / VOYAGE"]) || "";
+      const port = getField(row, ["PORT", "GATEWAY PORT", "POD", "DESTINATION"]) || "";
+      const status = getStatus(row) || "Shipment record";
+      const detail = [vessel, port].filter(Boolean).join(" · ");
+      return '<div class="ect-recent-item"><span class="ect-recent-dot"></span><div><strong>' + esc(container) + '</strong><small>' + esc(detail || "Shipment record") + '</small></div><time>' + esc(status) + '</time></div>';
+    }).join("") : '<div class="ect-recent-empty">No shipment records are available yet.</div>';
+  }
 }
 
 function renderUI() {
