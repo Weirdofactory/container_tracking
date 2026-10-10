@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20261010-data-display-repair-v1">
+<link rel="stylesheet" href="./style.css?v=20261010-data-display-repair-v2">
 </head>
 <body>
 
@@ -171,7 +171,7 @@
     </div>
     <div class="ect-overview-stats">
       <div class="ect-stat"><span>Records in view</span><strong id="ectVisibleCount">0</strong></div>
-      <div class="ect-stat"><span>Sync status</span><strong id="ectCloudState" data-state="loading"><span class="ect-source-dot"></span> Loading records…</strong></div>
+      <div class="ect-stat"><span>Sync status</span><div class="ect-sync-row"><strong id="ectCloudState" data-state="loading"><span class="ect-source-dot"></span> Loading records…</strong><button type="button" id="ectCloudRetry" hidden>Retry</button></div></div>
     </div>
   </section>
   <div class="kpi-row">
@@ -325,7 +325,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20261010-data-display-repair-v1"></script>
+<script src="./app.js?v=20261010-data-display-repair-v2"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
