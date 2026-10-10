@@ -1161,3 +1161,54 @@ body.public-carrier-mode .one-public-shell{padding-left:0;min-height:100vh;backg
 .wa-report-table tbody td:first-child strong{color:#118ac4;font-family:'JetBrains Mono',monospace}
 .wa-report-table .rpt-link{color:#118ac4}
 .wa-report-table .rpt-status{display:inline-block;padding:7px 10px;border-radius:8px;background:#eaf3fb;color:#205a8b;font-size:9px;font-weight:900;white-space:nowrap}
+
+
+/* Customer tracking refinements — Oct 2026 */
+.one-track-panel{box-shadow:0 22px 54px rgba(15,23,42,.13);border:1px solid var(--border);border-radius:18px}
+.one-track-panel-head{gap:14px}
+.one-track-panel-head>div strong{font-size:16px;letter-spacing:-.02em}
+.one-track-panel-head>div span{line-height:1.5}
+.one-track-fields{align-items:end;gap:12px}
+.one-field-group select,.one-field-group input{min-height:46px;border-radius:10px}
+.one-track-button{min-height:46px;border-radius:10px;font-weight:800;letter-spacing:.01em;box-shadow:0 5px 14px rgba(2,132,199,.2)}
+.one-track-button:focus-visible,.one-field-group input:focus-visible,.one-field-group select:focus-visible{outline:3px solid rgba(2,132,199,.22);outline-offset:2px}
+.one-track-help{margin-top:12px;line-height:1.5}
+.one-result-heading{align-items:flex-end;gap:16px}
+.one-result-heading h2{letter-spacing:-.035em}
+.one-results-surface{border-radius:16px;overflow:hidden}
+.carrier-results-shell{background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.public-results-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 16px;background:var(--bg-elevated);border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--text-muted)}
+.carrier-table-wrap{overflow-x:auto;max-width:100%}
+.carrier-one-table{width:100%;min-width:860px;border-collapse:separate;border-spacing:0}
+.carrier-one-table thead th{position:sticky;top:0;background:var(--bg-elevated);color:var(--text-muted);font-size:9px;letter-spacing:.055em;text-transform:uppercase;padding:13px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.carrier-one-table tbody td{padding:13px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.carrier-one-table tbody tr:last-child td{border-bottom:0}
+.carrier-one-table tbody tr.carrier-result-row:hover{background:var(--accent-glow)}
+.carrier-one-table .carrier-subline{display:block;margin-top:4px;color:var(--text-muted);font-size:10px;line-height:1.4;overflow-wrap:anywhere}
+.carrier-one-table .carrier-vessel-value{display:block;min-width:130px;max-width:210px;font-size:11px;font-weight:700;line-height:1.5;overflow-wrap:anywhere}
+.carrier-expand-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-main);cursor:pointer}
+.carrier-expand-btn:hover{border-color:var(--border-focus);color:var(--accent)}
+.carrier-detail-row[hidden]{display:none!important}
+.carrier-detail-panel{margin:6px 0;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--bg-elevated)}
+.carrier-detail-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.carrier-detail-actions{display:flex;gap:6px;flex-wrap:wrap}
+.carrier-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}
+.carrier-detail-grid>div{min-width:0;padding:11px;border:1px solid var(--border);border-radius:10px;background:var(--bg-surface)}
+.carrier-detail-grid small{display:block;margin-bottom:5px;color:var(--text-muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.carrier-detail-grid strong{display:block;overflow-wrap:anywhere;font-size:11px}
+.carrier-empty-state{padding:38px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.carrier-empty-state strong{font-size:15px}
+.carrier-empty-state span,.carrier-empty-state small{color:var(--text-muted);line-height:1.55}
+@media(max-width:760px){
+  .one-track-fields{display:grid;grid-template-columns:1fr;gap:10px}
+  .one-track-fields .one-field-type,.one-track-fields .one-field-input{width:100%}
+  .one-track-button{width:100%}
+  .one-result-heading{align-items:flex-start;flex-direction:column}
+  .one-result-actions{width:100%;justify-content:space-between}
+  .carrier-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .public-results-toolbar{align-items:flex-start;flex-direction:column}
+}
+@media(max-width:420px){
+  .carrier-detail-grid{grid-template-columns:1fr}
+  .carrier-detail-panel{padding:10px}
+}
