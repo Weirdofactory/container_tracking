@@ -1768,9 +1768,36 @@ function searchTokensForDisplay(count) {
   return count + " result" + (count === 1 ? "" : "s");
 }
 
+function updateReferenceRail() {
+  const active = rows.filter(r => !isFullyCompleted(r));
+  const completed = rows.filter(r => isFullyCompleted(r)).length;
+  const portInPending = active.filter(r => !validDate(getField(r, ["PORT IN"]))).length;
+  let portOutPending = 0, destuffingPending = 0;
+  active.forEach(r => {
+    const portIn = validDate(getField(r, ["PORT IN"]));
+    const portOut = validDate(getField(r, ["PORT OUT"]));
+    const destuff = validDate(getField(r, ["DESTUFFING DATE", "DESTUFF DATE"]));
+    if (portIn && !portOut) portOutPending++;
+    if (portOut && !destuff) destuffingPending++;
+  });
+  const values = {
+    ectRailActive: active.length,
+    ectRailCompleted: completed,
+    ectRailPortIn: portInPending,
+    ectRailPortOut: portOutPending,
+    ectRailDestuffing: destuffingPending,
+    ectVisibleCount: getFilteredRows().length
+  };
+  Object.entries(values).forEach(([id,value]) => {
+    const node = el(id);
+    if (node) node.textContent = Number(value).toLocaleString("en-IN");
+  });
+}
+
 function renderUI() {
   const filtered = getFilteredRows();
   updateKPIs();
+  updateReferenceRail();
 
   const searchCount = el("searchResultCount");
   if (searchCount) {
@@ -3786,5 +3813,53 @@ renderUI();
       renderUI();
       syncSearchChrome();
     }
+  });
+})();
+
+
+// Reference-inspired staff sidebar shortcuts. Each action delegates to existing controls.
+(function bindReferenceStaffUI() {
+  const sidebar = document.getElementById("staffReferenceSidebar");
+  const dashboard = document.getElementById("opsDashboardView");
+  const publicView = document.getElementById("publicLandingView");
+  function syncSidebarVisibility() {
+    if (!sidebar) return;
+    const isStaff = dashboard && dashboard.style.display !== "none" && dashboard.style.display !== "";
+    sidebar.style.display = isStaff ? "flex" : "none";
+    document.body.classList.toggle("staff-reference-mode", isStaff);
+  }
+  syncSidebarVisibility();
+  const observer = new MutationObserver(syncSidebarVisibility);
+  if (dashboard) observer.observe(dashboard, { attributes: true, attributeFilter: ["style"] });
+  if (publicView) observer.observe(publicView, { attributes: true, attributeFilter: ["style"] });
+
+  document.querySelectorAll("[data-staff-nav]").forEach(button => {
+    button.addEventListener("click", () => {
+      const target = button.getAttribute("data-staff-nav");
+      const actions = {
+        dashboard: "p1v2TowerBtn",
+        shipments: null,
+        tracking: null,
+        scmtr: "headerCsnBtn",
+        lfd: "headerLfdBtn",
+        terminal: "terminalRoutingBtn",
+        add: "addBtn",
+        import: "excelInput"
+      };
+      document.querySelectorAll(".staff-side-link").forEach(link => link.classList.toggle("active", link === button));
+      if (target === "shipments") {
+        document.getElementById("controlTray")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.querySelector(".control-tray")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      if (target === "tracking") {
+        const search = document.getElementById("search");
+        search?.focus();
+        search?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      const action = actions[target];
+      if (action) document.getElementById(action)?.click();
+    });
   });
 })();
