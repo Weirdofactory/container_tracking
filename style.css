@@ -1781,3 +1781,10 @@ body.staff-reference-mode #opsDashboardView .view-btn.active{background:#fff!imp
 @media(max-width:1450px){body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr) 310px!important}}
 @media(max-width:1200px){body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr)!important}body.staff-reference-mode #opsDashboardView .ect-right-rail{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}body.staff-reference-mode #opsDashboardView .staff-status-panel{grid-column:1/-1}body.staff-reference-mode #opsDashboardView .staff-map-panel{grid-column:1/-1}}
 @media(max-width:760px){body.staff-reference-mode #opsDashboardView .ect-right-rail{display:flex!important}body.staff-reference-mode #opsDashboardView #staffMapCanvas{height:220px!important}body.staff-reference-mode #opsDashboardView .staff-status-panel{grid-column:auto}}
+
+/* Search bar must fill the header's available space at normal desktop zoom */
+body.staff-reference-mode .staff-top-search{left:0!important;right:auto!important;width:calc(100% - 470px)!important;max-width:none!important;min-width:0!important}
+body.staff-reference-mode .staff-top-search input{display:block!important;flex:1 1 auto!important;width:100%!important;min-width:0!important}
+@media(max-width:1350px){body.staff-reference-mode .staff-top-search{width:calc(100% - 405px)!important}}
+@media(max-width:1100px){body.staff-reference-mode .staff-top-search{width:calc(100% - 345px)!important}}
+@media(max-width:760px){body.staff-reference-mode .staff-top-search{left:0!important;right:auto!important;width:calc(100% - 150px)!important}}
