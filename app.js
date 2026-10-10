@@ -2703,7 +2703,7 @@ cloudDataReady = loadFromCloud();
 updateAuditBadge();
 checkActiveSession();
 
-activeQuickFilter = 'active';
+activeQuickFilter = 'all';
 document.querySelectorAll(".chip").forEach(c => {
   c.classList.toggle("active", c.dataset.filter === 'active');
 });
@@ -3896,7 +3896,7 @@ loadFromCloud();
 updateAuditBadge();
 checkActiveSession();
 
-activeQuickFilter = 'active';
+activeQuickFilter = 'all';
 document.querySelectorAll(".chip").forEach(c => {
   c.classList.toggle("active", c.dataset.filter === 'active');
 });
