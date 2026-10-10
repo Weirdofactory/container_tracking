@@ -741,51 +741,104 @@ function downloadMultipleStatusImage(containersList, titleRef = "Status_Report")
   });
 }
 
-/* Staff Login Handlers */
+/* Staff Login Handlers — preserve existing Supabase access-code authentication */
+function setLoginFeedback(message, kind = "info") {
+  const feedback = el("loginFeedback");
+  if (!feedback) return;
+  feedback.textContent = message;
+  feedback.className = "staff-login-feedback is-visible is-" + kind;
+}
+function clearLoginFeedback() {
+  const feedback = el("loginFeedback");
+  if (feedback) { feedback.textContent = ""; feedback.className = "staff-login-feedback"; }
+}
+function setLoginBusy(isBusy) {
+  const button = el("loginSubmit");
+  if (!button) return;
+  button.disabled = isBusy;
+  button.classList.toggle("is-loading", isBusy);
+  button.setAttribute("aria-busy", String(isBusy));
+  const label = button.querySelector(".staff-login-submit-label");
+  if (label) label.textContent = isBusy ? "Verifying…" : "Sign In";
+  else button.textContent = isBusy ? "Verifying…" : "Sign In";
+}
+function closeStaffLogin() {
+  el("loginModalBg").classList.remove("open");
+  clearLoginFeedback();
+  setLoginBusy(false);
+}
 function executeSuccessfulLogin(userObj) {
   currentUser = userObj;
   localStorage.setItem("gml_auth_code_user", JSON.stringify(currentUser));
-  el("loginModalBg").classList.remove("open");
-  el("loginSubmit").textContent = "Sign In";
+  closeStaffLogin();
   setAccessState(true);
-  toast(`Logged in as ${currentUser.id}`);
+  toast("Logged in as " + currentUser.id);
 }
 
 el("loginBtn").addEventListener("click", () => {
   el("loginCodeInput").value = "";
+  clearLoginFeedback();
+  el("loginToggleCode").textContent = "Show";
+  el("loginToggleCode").setAttribute("aria-label", "Show access code");
+  el("loginToggleCode").setAttribute("aria-pressed", "false");
+  el("loginCodeInput").type = "password";
   el("loginModalBg").classList.add("open");
   setTimeout(() => el("loginCodeInput").focus(), 100);
 });
-el("loginClose").addEventListener("click", () => el("loginModalBg").classList.remove("open"));
-el("loginCancel").addEventListener("click", () => el("loginModalBg").classList.remove("open"));
-
-el("loginCodeInput").addEventListener("keypress", (e) => {
-  if (e.key === "Enter") el("loginSubmit").click();
+el("loginClose").addEventListener("click", closeStaffLogin);
+el("loginCancel").addEventListener("click", closeStaffLogin);
+el("loginModalBg").addEventListener("click", (event) => {
+  if (event.target === el("loginModalBg")) closeStaffLogin();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && el("loginModalBg").classList.contains("open")) closeStaffLogin();
+});
+el("loginToggleCode").addEventListener("click", () => {
+  const input = el("loginCodeInput");
+  const reveal = input.type === "password";
+  input.type = reveal ? "text" : "password";
+  el("loginToggleCode").textContent = reveal ? "Hide" : "Show";
+  el("loginToggleCode").setAttribute("aria-label", reveal ? "Hide access code" : "Show access code");
+  el("loginToggleCode").setAttribute("aria-pressed", String(reveal));
+  input.focus();
+});
+el("loginCodeInput").addEventListener("input", clearLoginFeedback);
+el("loginCodeInput").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    el("loginSubmit").click();
+  }
 });
 
 el("loginSubmit").addEventListener("click", async () => {
+  if (el("loginSubmit").disabled) return;
   const code = el("loginCodeInput").value.trim().toLowerCase();
-  if (!code) return alert("Please enter your Access Code.");
+  if (!code) {
+    setLoginFeedback("Enter your staff access code to continue.", "error");
+    el("loginCodeInput").focus();
+    return;
+  }
 
-  const originalBtnText = el("loginSubmit").textContent;
-  el("loginSubmit").textContent = "Verifying...";
+  setLoginBusy(true);
+  setLoginFeedback("Verifying your access code securely…", "info");
 
   try {
-    const { data, error } = await Promise.race([
-      sb.from('user_roles').select('user_id, role, username').eq('access_code', code).single(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 4000))
+    const result = await Promise.race([
+      sb.from("user_roles").select("user_id, role, username").eq("access_code", code).single(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
     ]);
-
+    const data = result.data, error = result.error;
     if (error || !data) {
-      alert("Invalid Access Code.");
-      el("loginSubmit").textContent = originalBtnText;
+      setLoginFeedback("That access code was not recognized. Check it and try again.", "error");
+      el("loginCodeInput").focus();
+      setLoginBusy(false);
     } else {
       executeSuccessfulLogin({ id: data.username || code, role: data.role || "Operator", uid: data.user_id });
     }
   } catch(err) {
     console.warn("Supabase auth error:", err);
-    alert("Database connection slow or failed. Please try again.");
-    el("loginSubmit").textContent = originalBtnText;
+    setLoginFeedback("We couldn’t reach the login service. Check your connection and try again.", "error");
+    setLoginBusy(false);
   }
 });
 
