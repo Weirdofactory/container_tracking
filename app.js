@@ -49,7 +49,7 @@ let cloudDataReady = Promise.resolve();
 
 let currentUser = null;
 let selectedIndices = new Set();
-let currentView = 'cards';
+let currentView = 'sheet';
 let activeQuickFilter = 'all'; 
 let editingIndex = -1;
 let sortField = 'ETA';
@@ -1799,7 +1799,8 @@ function updateReferenceRail() {
       const container = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CONTAINER NUMBER"]) || "Container record";
       const vessel = getField(row, ["VESSEL", "VESSEL NAME", "VESSEL / VOYAGE"]) || "";
       const port = getField(row, ["PORT", "GATEWAY PORT", "POD", "DESTINATION"]) || "";
-      const status = getStatus(row) || "Shipment record";
+      const statusInfo = getStatus(row) || {text:"Shipment record"};
+      const status = typeof statusInfo === "string" ? statusInfo : statusInfo.text;
       const detail = [vessel, port].filter(Boolean).join(" · ");
       return '<div class="ect-recent-item"><span class="ect-recent-dot"></span><div><strong>' + esc(container) + '</strong><small>' + esc(detail || "Shipment record") + '</small></div><time>' + esc(status) + '</time></div>';
     }).join("") : '<div class="ect-recent-empty">No shipment records are available yet.</div>';
