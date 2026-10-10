@@ -2937,6 +2937,8 @@ function updateKPIs() {
 
 function renderUI() {
   const filtered = getFilteredRows();
+  const ectCount = el('ectVisibleCount');
+  if (ectCount) ectCount.textContent = filtered.length.toLocaleString('en-IN');
   updateKPIs();
   updateDataQualityNotice();
 
