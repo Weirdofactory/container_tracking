@@ -1788,3 +1788,13 @@ body.staff-reference-mode .staff-top-search input{display:block!important;flex:1
 @media(max-width:1350px){body.staff-reference-mode .staff-top-search{width:calc(100% - 405px)!important}}
 @media(max-width:1100px){body.staff-reference-mode .staff-top-search{width:calc(100% - 345px)!important}}
 @media(max-width:760px){body.staff-reference-mode .staff-top-search{left:0!important;right:auto!important;width:calc(100% - 150px)!important}}
+
+/* DATA DISPLAY REPAIR V2: status retry + readable controls */
+body.staff-reference-mode .ect-sync-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+body.staff-reference-mode .ect-sync-row strong{min-width:0;white-space:normal}
+body.staff-reference-mode #ectCloudRetry{flex:none;border:1px solid rgba(147,197,253,.45);border-radius:6px;background:rgba(255,255,255,.1);color:#fff;padding:5px 8px;font:800 9px 'Plus Jakarta Sans',sans-serif;cursor:pointer}
+body.staff-reference-mode #ectCloudRetry[hidden]{display:none!important}
+body.staff-reference-mode #ectCloudState[data-state="error"]{color:#fecaca!important}
+body.staff-reference-mode #ectCloudState[data-state="offline"]{color:#fde68a!important}
+body.staff-reference-mode #opsDashboardView .staff-map-empty{min-height:160px}
+@media(min-width:1451px){body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr) 365px!important}}
