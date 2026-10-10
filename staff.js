@@ -9,8 +9,22 @@ const sx=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const sf=(r,n)=>{for(const x of n){if(r?.[x]!==undefined&&String(r[x]??"").trim()!=="")return r[x]}return"";
 };
 const sn=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
-const sd=v=>{if(!v)return"—";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
-};
+function parseFlexibleDate(v){
+  if(v===null||v===undefined||String(v).trim()==="")return null;
+  if(v instanceof Date&&!Number.isNaN(v.getTime()))return new Date(v.getFullYear(),v.getMonth(),v.getDate());
+  const s=String(v).trim();
+  let m;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ].*)?$/))){const d=new Date(+m[1],+m[2]-1,+m[3]);return Number.isNaN(d.getTime())?null:d;}
+  if((m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/))){const d=new Date(+m[3],+m[2]-1,+m[1]);return Number.isNaN(d.getTime())?null:d;}
+  if((m=s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/))){const d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+  if(/^\d+(\.\d+)?$/.test(s)){const n=Number(s);if(n>30000&&n<70000){const d=new Date(Date.UTC(1899,11,30)+n*86400000);return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());}}
+  const d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
+}
+function simpleDateDisplay(v){
+  const d=parseFlexibleDate(v);if(!d)return String(v??"")||"—";
+  return String(d.getDate()).padStart(2,"0")+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+d.getFullYear();
+}
+const sd=v=>{if(!v)return"—";const d=parseFlexibleDate(v);return d?simpleDateDisplay(v):String(v)};
 const st=r=>sf(r,["CONTAINER RETURN DATE"])?["RETURNED","good"]:sf(r,["DESTUFFING DATE"])?["DE-STUFFED","good"]:sf(r,["CFS IN"])?["CFS IN","good"]:sf(r,["PORT OUT"])?["PORT OUT","warn"]:sf(r,["PORT IN"])?["PORT IN","warn"]:sf(r,["INWARD DATE"])?["INWARD GRANTED","warn"]:sf(r,["ETD"])?["IN TRANSIT","warn"]:["PENDING","bad"];
 const cnum=r=>sf(r,["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"]);
 let rows=[],session=null,editingIndex=-1,selected=new Set();
@@ -205,7 +219,7 @@ function simpleDate(v){
   if(!d||Number.isNaN(d.getTime()))return s;
   return String(d.getDate()).padStart(2,"0")+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+d.getFullYear();
 }
-function parseDateValue(v){if(!v)return null;const d=new Date(v);if(Number.isNaN(d.getTime()))return null;return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+function parseDateValue(v){return parseFlexibleDate(v)}
 function renderOpsIntel(list){
   const today=new Date(); today.setHours(0,0,0,0);
   const soon=new Date(today); soon.setDate(soon.getDate()+3);
