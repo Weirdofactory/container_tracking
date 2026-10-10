@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20261010-logitrack-reference-v1">
+<link rel="stylesheet" href="./style.css?v=20261010-logitrack-match-v2">
 </head>
 <body>
 
@@ -26,7 +26,7 @@
       <div class="brand-title">Container Tracking Suite</div>
     </div>
 
-    <div class="header-tools">
+    <div class="header-tools"><div class="staff-top-search" id="staffTopSearchWrap"><span aria-hidden="true">⌕</span><input id="staffTopSearch" type="search" autocomplete="off" placeholder="Search by container, MBL, vessel, liner or truck…"><button type="button" id="staffTopSearchBtn">Search</button></div>
       <div id="opsControls" class="ops-controls-multilevel" style="display:none;">
         <div class="header-top-row">
           <div class="header-context">
@@ -161,7 +161,7 @@
     <div class="ect-overview-copy">
       <div class="ect-eyebrow"><span class="ect-live-dot"></span> OPERATIONS CONTROL TOWER</div>
       <h1>Welcome back, Operations Team <span aria-hidden="true">👋</span></h1>
-      <p>Your logistics control tower for shipment visibility, port milestones, container movement and operational exceptions.</p>
+      <p>Track container movements, review port milestones and manage every shipment from one operations workspace.</p>
     </div>
     <div class="ect-overview-stats">
       <div class="ect-stat"><span>Records in view</span><strong id="ectVisibleCount">0</strong></div>
@@ -215,6 +215,7 @@
       <button type="button" class="ect-quick-action" data-staff-nav="terminal"><span>⚓</span><span><strong>Terminal routing</strong><small>Review routing tools</small></span><b>→</b></button>
       <button type="button" class="ect-quick-action" data-staff-nav="import"><span>⇧</span><span><strong>Import records</strong><small>Upload shipment data</small></span><b>→</b></button>
     </section>
+    <section class="ect-rail-panel"><div class="ect-rail-heading"><span class="ect-rail-icon">◷</span><div><strong>Recent shipments</strong><small>Latest records from your workspace</small></div></div><div id="ectRecentActivity" class="ect-recent-activity"><div class="ect-recent-empty">Recent shipment records will appear here.</div></div></section>
     <section class="ect-rail-note"><span>✓</span><div><strong>Data integrity monitor</strong><p>Review the integrity check above before correcting or importing records. No records are changed automatically.</p></div></section>
   </aside></div>
 </main>
@@ -312,7 +313,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20261010-logitrack-reference-v1"></script>
+<script src="./app.js?v=20261010-logitrack-match-v2"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
