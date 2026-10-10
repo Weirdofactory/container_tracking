@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20260927-report-v3">
+<link rel="stylesheet" href="./style.css?v=20261010-customer-ui-v1">
 </head>
 <body>
 
@@ -93,15 +93,15 @@
       </div>
       <div class="one-track-panel">
         <div class="one-track-panel-head">
-          <div><strong>Track &amp; Trace</strong><span>Enter a container or MBL number to begin</span></div>
+          <div><strong>Track &amp; Trace</strong><span>Enter a container, MBL, booking or HBL number to begin</span></div>
           <span class="one-panel-badge">● ONLINE</span>
         </div>
         <div class="one-track-fields">
           <div class="one-field-group one-field-type"><label>Search Type</label><select id="publicTrackingType" aria-label="Search Type"><option value="all">All References</option><option value="container">Container No.</option><option value="mbl">MBL No.</option><option value="booking">Booking No.</option><option value="hbl">HBL No.</option></select></div>
-          <div class="one-field-group one-field-input"><label>Tracking Number</label><input type="text" id="publicSearchInput" autocomplete="off" spellcheck="false" placeholder="Enter Container / MBL / Booking No."></div>
+          <div class="one-field-group one-field-input"><label>Tracking Number</label><input type="text" id="publicSearchInput" autocomplete="off" spellcheck="false" placeholder="Enter Container / MBL / Booking / HBL No."></div>
           <button class="one-track-button" id="publicSearchBtn" onclick="performPublicSearch()">Search</button>
         </div>
-        <div class="one-track-help">Enter one or multiple tracking numbers. Separate multiple entries with a space or comma.</div>
+        <div class="one-track-help">Enter one or more references. Separate multiple entries with a space, comma or semicolon.</div>
       </div>
     </div>
   </div>
