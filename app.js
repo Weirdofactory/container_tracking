@@ -3863,3 +3863,19 @@ renderUI();
     });
   });
 })();
+
+
+(function bindStaffTopSearch() {
+  const top = document.getElementById("staffTopSearch");
+  const button = document.getElementById("staffTopSearchBtn");
+  const existing = document.getElementById("search");
+  if (!top || !existing) return;
+  const syncToMain = () => {
+    existing.value = top.value;
+    existing.dispatchEvent(new Event("input", { bubbles: true }));
+    if (typeof renderUI === "function") renderUI();
+  };
+  top.addEventListener("input", syncToMain);
+  if (button) button.addEventListener("click", syncToMain);
+  existing.addEventListener("input", () => { if (top.value !== existing.value) top.value = existing.value; });
+})();
