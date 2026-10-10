@@ -1807,10 +1807,74 @@ function updateReferenceRail() {
   }
 }
 
+
+let staffMapInstance = null;
+function normalizedPortName(value) {
+  const raw = String(value || "").trim().toUpperCase();
+  if (!raw) return "";
+  if (PORT_COORDS[raw]) return raw;
+  if (raw.includes("CHENNAI")) return "CHENNAI";
+  if (raw.includes("KATTUPALLI")) return "KATTUPALLI";
+  if (raw.includes("ENNORE")) return "ENNORE";
+  if (raw.includes("SHANGHAI")) return "SHANGHAI";
+  if (raw.includes("NINGBO")) return "NINGBO";
+  if (raw.includes("QINGDAO")) return "QINGDAO";
+  if (raw.includes("SHEKOU") || raw.includes("YANTIAN") || raw.includes("SHENZHEN")) return "SHEKOU";
+  if (raw.includes("SINGAPORE")) return "SINGAPORE";
+  if (raw.includes("BUSAN")) return "BUSAN";
+  if (raw.includes("PORT KLANG") || raw.includes("KLANG")) return "PORT KLANG";
+  return "";
+}
+function renderStaffAnalytics() {
+  const active = rows.filter(r => !isFullyCompleted(r));
+  const completed = rows.filter(r => isFullyCompleted(r));
+  const portPending = active.filter(r => !validDate(getField(r, ["PORT IN"])));
+  const total = rows.length;
+  if (el("staffStatusTotal")) el("staffStatusTotal").textContent = total.toLocaleString("en-IN");
+  [["staffStatusActive",active.length],["staffStatusDone",completed.length],["staffStatusPort",portPending.length]].forEach(pair => { if(el(pair[0])) el(pair[0]).textContent=pair[1].toLocaleString("en-IN"); });
+  [["staffStatusActivePct",active.length],["staffStatusDonePct",completed.length],["staffStatusPortPct",portPending.length]].forEach(pair => { if(el(pair[0])) el(pair[0]).textContent=(total?Math.round(pair[1]*100/total):0)+"%"; });
+  const denominator = active.length+completed.length+portPending.length;
+  const pct1=denominator?active.length*100/denominator:0;
+  const pct2=denominator?(active.length+completed.length)*100/denominator:100;
+  const donut=el("staffStatusDonut");
+  if(donut) donut.style.background="conic-gradient(#1677f2 0 "+pct1+"%,#20bf6b "+pct1+"% "+pct2+"%,#ff8a00 "+pct2+"% 100%)";
+  const portCounts=new Map();
+  rows.forEach(row=>{
+    const origin=normalizedPortName(getField(row,["POL","PORT OF LOADING","ORIGIN"]));
+    const dest=normalizedPortName(getField(row,["GATEWAY PORT","POD","PORT","DESTINATION"]));
+    [origin,dest].filter(Boolean).forEach(p=>portCounts.set(p,(portCounts.get(p)||0)+1));
+  });
+  if(el("staffMapPortCount")) el("staffMapPortCount").textContent=portCounts.size+" mapped ports";
+  if(el("staffMapSummary")) el("staffMapSummary").textContent=portCounts.size?"Locations matched from existing shipment records":"No recognised port names found in the current records";
+  const mapNode=el("staffMapCanvas");
+  if(!mapNode) return;
+  if(typeof L==="undefined"){mapNode.innerHTML='<div class="staff-map-empty">Map service unavailable. Port data remains available in the shipment table.</div>';return;}
+  if(!staffMapInstance){
+    mapNode.innerHTML="";
+    staffMapInstance=L.map(mapNode,{scrollWheelZoom:false,zoomControl:true,attributionControl:true}).setView([24,75],3);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:12,attribution:"© OpenStreetMap"}).addTo(staffMapInstance);
+    const refresh=el("staffMapRefresh");
+    if(refresh) refresh.addEventListener("click",()=>{renderStaffAnalytics();setTimeout(()=>staffMapInstance&&staffMapInstance.invalidateSize(),100);});
+  }
+  if(staffMapInstance._staffMarkers) staffMapInstance._staffMarkers.forEach(marker=>marker.remove());
+  staffMapInstance._staffMarkers=[];
+  const bounds=[];
+  portCounts.forEach((shipmentCount,port)=>{
+    const coords=PORT_COORDS[port];
+    const isIndia=["CCTL","CITPL","CHENNAI","KATTUPALLI","ENNORE"].includes(port);
+    const marker=L.circleMarker(coords,{radius:6,weight:2,color:isIndia?"#20bf6b":"#1677f2",fillColor:isIndia?"#20bf6b":"#1677f2",fillOpacity:.95}).bindPopup("<strong>"+esc(port)+"</strong><br>"+shipmentCount+" shipment reference(s)").addTo(staffMapInstance);
+    staffMapInstance._staffMarkers.push(marker);bounds.push(coords);
+  });
+  if(bounds.length) staffMapInstance.fitBounds(bounds,{padding:[24,24],maxZoom:4});
+  else staffMapInstance.setView([24,75],2);
+  setTimeout(()=>staffMapInstance&&staffMapInstance.invalidateSize(),100);
+}
+
 function renderUI() {
   const filtered = getFilteredRows();
   updateKPIs();
   updateReferenceRail();
+  renderStaffAnalytics();
 
   const searchCount = el("searchResultCount");
   if (searchCount) {
