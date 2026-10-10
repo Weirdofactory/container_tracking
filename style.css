@@ -1384,3 +1384,42 @@ body.public-carrier-mode .one-hero,
 .staff-login-footnote{margin-top:20px;padding-top:14px;border-top:1px solid var(--border);color:var(--text-dim);font-size:9px;font-weight:800;letter-spacing:.12em;text-align:center;text-transform:uppercase}
 @media(max-width:768px){.staff-login-overlay{align-items:center;padding:16px}.staff-login-dialog{width:100%;max-width:420px;border-radius:20px}.staff-login-banner{padding:25px 23px 23px}.staff-login-content{padding:22px 23px 19px}.staff-login-banner h2{font-size:25px}}
 @media(prefers-reduced-motion:reduce){.staff-login-dialog{animation:none}.staff-login-spinner{animation-duration:1.5s}}
+
+
+/* === ENTERPRISE CONTROL TOWER — staff dashboard refinement === */
+:root{--ect-ink:#14243a;--ect-navy:#0a2540;--ect-blue:#0284c7;--ect-line:#dbe5f0}
+#opsDashboardView{max-width:1780px;margin:0 auto;padding:26px clamp(16px,2vw,36px) 48px}
+#opsDashboardView .kpi-row{gap:14px!important;margin-bottom:16px!important}
+#opsDashboardView .kpi-card{position:relative;overflow:hidden;min-height:116px!important;padding:22px 22px 18px!important;border:1px solid var(--border)!important;border-top:3px solid var(--ect-blue)!important;border-radius:18px!important;background:linear-gradient(155deg,var(--bg-surface),var(--bg-elevated))!important;box-shadow:0 5px 16px rgba(15,35,65,.055)!important;transition:transform .18s ease,box-shadow .18s ease}
+#opsDashboardView .kpi-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,35,65,.09)!important}
+#opsDashboardView .kpi-card small{display:block;margin-bottom:13px;color:var(--text-muted);font-size:10px!important;font-weight:900!important;letter-spacing:.085em;line-height:1.45;text-transform:uppercase}
+#opsDashboardView .kpi-card strong{font-family:'JetBrains Mono',monospace;font-size:clamp(25px,2vw,32px)!important;line-height:1.1;letter-spacing:-.045em}
+#opsDashboardView .kpi-card.destuffed-kpi{border-top-color:#059669!important}
+#opsDashboardView .kpi-card.port-kpi{border-top-color:#d97706!important}
+#opsDashboardView .kpi-card.total-cost-kpi{border-top-color:var(--corporate-pink)!important}
+#opsDashboardView .control-tray{margin:0 0 24px!important;padding:18px 20px!important;border:1px solid var(--border)!important;border-radius:20px!important;background:var(--bg-surface)!important;box-shadow:0 7px 24px rgba(15,35,65,.045)!important}
+#opsDashboardView .control-tray-top{gap:14px!important;align-items:center}
+#opsDashboardView .filter-inputs{gap:10px!important}
+#opsDashboardView .search-input-wrapper{min-height:48px;border-radius:12px!important;background:var(--bg-elevated)!important;border:1px solid var(--border)!important}
+#opsDashboardView .search-input-wrapper:focus-within{border-color:var(--accent)!important;box-shadow:0 0 0 3px var(--accent-glow)}
+#opsDashboardView .search-input-wrapper .input,#opsDashboardView .search-input-wrapper input{min-height:46px;font-size:13px;font-weight:600}
+#opsDashboardView .view-selector{padding:4px!important;border:1px solid var(--border)!important;border-radius:12px!important;background:var(--bg-elevated)!important;gap:3px}
+#opsDashboardView .view-btn{min-height:36px;padding:8px 13px!important;border-radius:9px!important;font-weight:800}
+#opsDashboardView .view-btn.active{background:var(--bg-surface)!important;color:var(--primary)!important;box-shadow:0 2px 6px rgba(15,35,65,.09)!important}
+#opsDashboardView .control-tray-bottom{margin-top:15px;padding-top:14px;border-top:1px solid var(--border)}
+#opsDashboardView .quick-chips-wrapper{gap:8px!important}
+#opsDashboardView .chip{padding:8px 13px!important;border:1px solid var(--border)!important;border-radius:999px!important;background:var(--bg-elevated);font-size:11px;font-weight:800;transition:all .15s ease}
+#opsDashboardView .chip.active{border-color:var(--accent)!important;background:var(--accent-glow)!important;color:var(--primary)!important}
+#opsDashboardView .cards-layout{gap:18px!important}
+#opsDashboardView .container-card,#opsDashboardView .shipment-card{border-radius:18px!important;border:1px solid var(--border)!important;box-shadow:0 5px 18px rgba(15,35,65,.055)!important}
+.data-quality-notice{display:flex;align-items:flex-start;gap:12px;margin:0 0 16px;padding:13px 16px;border:1px solid var(--border);border-radius:14px;background:var(--bg-surface);color:var(--text-main);font-size:11px;line-height:1.55}
+.data-quality-notice[hidden]{display:none!important}
+.data-quality-icon{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9px;background:var(--accent-glow);color:var(--accent);font-size:15px;font-weight:900}
+.data-quality-notice.has-issues{border-color:rgba(217,119,6,.35);background:var(--warning-bg)}
+.data-quality-notice.has-issues .data-quality-icon{background:rgba(217,119,6,.13);color:var(--warning)}
+.data-quality-copy{min-width:0;flex:1}
+.data-quality-title{display:block;margin-bottom:2px;font-weight:900}
+.data-quality-meta{color:var(--text-muted)}
+@media(max-width:1100px){#opsDashboardView{padding:20px 16px 36px}#opsDashboardView .kpi-row{gap:10px!important}#opsDashboardView .kpi-card{padding:17px!important;min-height:102px!important}}
+@media(max-width:760px){#opsDashboardView{padding:14px 10px 30px}#opsDashboardView .control-tray{padding:12px!important;border-radius:15px!important}#opsDashboardView .control-tray-top{align-items:stretch}#opsDashboardView .filter-inputs{width:100%}#opsDashboardView .view-selector{width:100%;justify-content:space-between}#opsDashboardView .view-btn{flex:1}#opsDashboardView .cards-layout{gap:12px!important}}
+@media(prefers-reduced-motion:reduce){#opsDashboardView .kpi-card{transition:none}}
