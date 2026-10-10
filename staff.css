@@ -105,3 +105,25 @@ body{background:#f7f9fc!important;color:#172b4d!important;font-family:"DM Sans",
 @media(max-width:1250px){#staffApp .ops-metrics{grid-template-columns:repeat(3,minmax(0,1fr))!important}#staffApp .ops-command{grid-template-columns:1fr!important}#staffApp .command-hint{display:none!important}}
 @media(max-width:900px){#staffApp .ops-topbar{position:relative!important;left:auto!important;top:auto!important;bottom:auto!important;width:100%!important;height:auto!important;min-height:0!important;display:grid!important;grid-template-columns:1fr auto!important;gap:12px!important;padding:14px 18px!important;overflow:visible!important}#staffApp .ops-topbar .brand{padding:0!important;border:0!important}#staffApp .workspace-name{display:none!important}#staffApp .ops-nav{grid-column:1/-1!important;display:flex!important;flex-direction:row!important;overflow:auto!important}#staffApp .ops-nav a{white-space:nowrap!important;padding:9px 11px!important}#staffApp .topbar-search{grid-column:1/-1!important;order:2!important}#staffApp .topbar-actions{grid-column:1/-1!important;display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:center!important;margin:0!important;padding-top:12px!important}#staffApp .connection{display:none!important}#staffApp .header-btn{width:auto!important;flex:1 1 auto!important}#staffApp .user-chip{margin:0!important;gap:10px!important}#staffApp .ops-page{margin-left:0!important;width:100%!important;padding:26px 18px 45px!important}#staffApp .ops-welcome{display:block!important}#staffApp .welcome-side{margin-top:18px!important}}
 @media(max-width:560px){#staffApp .ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}#staffApp .ops-page{padding:20px 12px 36px!important}#staffApp .ops-command{padding:16px!important}#staffApp .ops-welcome h1{font-size:32px!important}#staffApp .ops-card-head{padding:16px!important}#staffApp .register-actions{flex-wrap:wrap!important}#staffApp .action-buttons{display:flex!important;flex-wrap:wrap!important;gap:7px!important}#staffApp .action-btn{flex:1 1 42%!important}#staffApp .data-window{overflow-x:auto!important}}
+
+/* Public staff sign-in shares the Northstar visual language. */
+.login-screen{background:#f7f9fc!important;color:#172b4d!important}
+.login-visual{background:#172b4d!important;color:#fff!important}
+.login-visual .brand-mark{background:#fff!important;color:#2359d8!important;border-radius:12px!important}
+.login-visual .brand strong{color:#fff!important}
+.login-visual .brand small{color:#9eb1d0!important}
+.login-visual .eyebrow{color:#9dbbff!important}
+.login-visual-copy h1{font:800 clamp(38px,5vw,68px)/1.02 Manrope,sans-serif!important;letter-spacing:-2.5px!important}
+.login-visual-copy h1 em{color:#9ebcff!important}
+.login-visual-copy p{color:#c0cce0!important}
+.login-stat-row>div{border-color:#ffffff24!important}
+.login-stat-row b{color:#fff!important}
+.login-stat-row span,.login-visual-foot{color:#9eb1d0!important}
+.login-card{background:#fff!important;border:1px solid #e0e7f1!important;border-radius:20px!important;box-shadow:0 20px 60px #172b4d12!important}
+.login-card .section-index,.login-kicker{color:#2359d8!important}
+.login-body h2{font:800 34px/1.1 Manrope,sans-serif!important;letter-spacing:-1.4px!important;color:#172b4d!important}
+.login-body p{color:#7b8aa1!important}
+.login-input{border:1px solid #dce5f1!important;border-radius:10px!important;background:#fbfcfe!important}
+.login-input input{color:#172b4d!important}
+.login-submit{background:#2359d8!important;border-radius:10px!important}
+.login-card-foot{border-color:#edf1f6!important;color:#8492a7!important}
