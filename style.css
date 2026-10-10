@@ -1598,3 +1598,83 @@ body:has(#opsDashboardView:not([style*="display: none"])) .nav-header{margin-lef
 @media(max-width:1050px){.staff-reference-sidebar{width:190px}.staff-sidebar-brand{padding-left:5px}body:has(#opsDashboardView[style*="display: block"]) .nav-header,body:has(#opsDashboardView:not([style*="display: none"])) .nav-header{margin-left:190px!important}#opsDashboardView.main-wrapper{margin-left:190px!important}#opsDashboardView .ect-workspace-grid{grid-template-columns:1fr}#opsDashboardView .ect-right-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}#opsDashboardView .ect-rail-note{grid-column:1/-1}}
 @media(max-width:760px){.staff-reference-sidebar{width:58px;padding:12px 7px}.staff-sidebar-brand{justify-content:center;padding:0 0 18px}.staff-sidebar-brand>span:last-child,.staff-sidebar-label,.staff-side-link:not(.active),.staff-sidebar-help,.staff-sidebar-foot{display:none}.staff-side-link{justify-content:center;padding:8px 4px;font-size:0}.staff-side-link>span{font-size:17px}.staff-side-link.active{font-size:0}body:has(#opsDashboardView[style*="display: block"]) .nav-header,body:has(#opsDashboardView:not([style*="display: none"])) .nav-header{margin-left:58px!important;padding:8px 10px!important}#opsDashboardView.main-wrapper{margin-left:58px!important;padding:13px 10px 28px!important}#opsDashboardView .ect-overview{padding:20px!important;min-height:150px!important}#opsDashboardView .ect-overview h1{font-size:24px!important}#opsDashboardView .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}#opsDashboardView .kpi-card{min-height:84px!important;padding:12px!important}#opsDashboardView .kpi-card strong{font-size:23px!important}#opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr)}#opsDashboardView .ect-right-rail{grid-template-columns:1fr}#opsDashboardView .ect-rail-note{grid-column:auto}#opsDashboardView .cards-layout{grid-template-columns:minmax(0,1fr)!important}#opsDashboardView .control-tray-top{gap:10px}#opsDashboardView .filter-inputs{width:100%}#opsDashboardView .view-selector{width:100%;display:flex}#opsDashboardView .view-btn{flex:1;padding:8px 7px!important}}
 @media(max-width:420px){.staff-reference-sidebar{width:46px;padding:10px 4px}body:has(#opsDashboardView[style*="display: block"]) .nav-header,body:has(#opsDashboardView:not([style*="display: none"])) .nav-header{margin-left:46px!important}#opsDashboardView.main-wrapper{margin-left:46px!important;padding:10px 7px!important}#opsDashboardView .ect-overview{padding:16px!important}#opsDashboardView .ect-overview p{font-size:11px!important}}
+
+/* REFERENCE MATCH V2: top bar, ship banner, KPI row, main workspace and activity rail */
+body.staff-reference-mode{--ref-navy:#0b1d32;--ref-blue:#0878d1;background:#f3f6fb!important}
+body.staff-reference-mode .nav-header{position:sticky!important;top:0!important;z-index:100!important;height:61px!important;min-height:61px!important;margin:0 0 0 226px!important;padding:0 22px!important;border-bottom:1px solid #e0e7f0!important;background:rgba(255,255,255,.97)!important;backdrop-filter:blur(16px)!important;box-shadow:0 2px 10px rgba(15,35,65,.04)!important}
+body.staff-reference-mode .nav-container{display:flex!important;max-width:none!important;width:100%!important;min-height:60px!important;gap:0!important}
+body.staff-reference-mode .brand-box{display:none!important}
+body.staff-reference-mode .header-tools{display:flex!important;align-items:center!important;gap:16px!important;flex:1!important;min-width:0!important}
+body.staff-reference-mode .staff-top-search{display:flex;align-items:center;gap:9px;flex:1;min-width:150px;max-width:760px;height:38px;padding:0 8px 0 13px;border:1px solid #e1e7ef;border-radius:8px;background:#f7f9fc;color:#6c7b90}
+body.staff-reference-mode .staff-top-search>span{font-size:22px;line-height:1}
+body.staff-reference-mode .staff-top-search input{flex:1;min-width:0;height:34px;border:0;outline:0;background:transparent;color:#162943;font:500 11px 'Plus Jakarta Sans',sans-serif}
+body.staff-reference-mode .staff-top-search input::placeholder{color:#687b91}
+body.staff-reference-mode .staff-top-search button{height:31px;padding:0 15px;border:0;border-radius:6px;background:#073a76;color:#fff;font:800 10px 'Plus Jakarta Sans',sans-serif;cursor:pointer}
+body.staff-reference-mode .ops-controls-multilevel{display:flex!important;flex-direction:row!important;align-items:center!important;gap:14px!important;flex:0 0 auto!important}
+body.staff-reference-mode .header-top-row{padding:0!important;min-height:0!important}
+body.staff-reference-mode .header-context{display:none!important}
+body.staff-reference-mode .header-utility{gap:8px!important}
+body.staff-reference-mode .header-utility .btn{min-height:30px!important}
+body.staff-reference-mode .header-bottom-row{padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;display:flex!important;gap:0!important}
+body.staff-reference-mode .header-bottom-row .ops-primary-nav{display:none!important}
+body.staff-reference-mode .header-bottom-row .header-segment{padding:0!important}
+body.staff-reference-mode .header-bottom-row #addBtn{min-height:34px!important;padding:7px 11px!important}
+body.staff-reference-mode .header-bottom-row #terminalRoutingBtn,body.staff-reference-mode .header-bottom-row #opsMenuBtn,body.staff-reference-mode .header-bottom-row #exportBtn,body.staff-reference-mode .header-bottom-row label[title="Import from Excel"],body.staff-reference-mode .header-bottom-row .nav-dropdown{display:none!important}
+body.staff-reference-mode #opsDashboardView.main-wrapper{margin:0 0 0 226px!important;padding:14px 15px 28px!important;max-width:none!important;width:auto!important}
+body.staff-reference-mode #opsDashboardView .ect-overview{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:208px!important;gap:22px!important;margin:0 0 13px!important;padding:24px 26px!important;overflow:hidden;border:0!important;border-radius:10px!important;background:linear-gradient(90deg,rgba(7,28,52,.98) 0%,rgba(7,28,52,.88) 33%,rgba(7,28,52,.18) 75%),url('https://images.unsplash.com/photo-1494412519320-aa613dfb7738?auto=format&fit=crop&w=1800&q=85') center 54%/cover no-repeat,#0b3557!important;box-shadow:0 4px 12px rgba(8,30,58,.1)!important}
+body.staff-reference-mode #opsDashboardView .ect-overview:before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,24,43,.23),transparent 65%);pointer-events:none}
+body.staff-reference-mode #opsDashboardView .ect-overview:after{display:none!important}
+body.staff-reference-mode #opsDashboardView .ect-overview-copy{max-width:560px}
+body.staff-reference-mode #opsDashboardView .ect-eyebrow{font-size:9px!important;letter-spacing:.15em!important;color:#a8dcff!important}
+body.staff-reference-mode #opsDashboardView .ect-overview h1{margin:11px 0 7px!important;font-size:clamp(24px,2.3vw,33px)!important;line-height:1.15!important;letter-spacing:-.045em!important}
+body.staff-reference-mode #opsDashboardView .ect-overview p{max-width:430px!important;color:#f0f6fc!important;font-size:11px!important;line-height:1.7!important}
+body.staff-reference-mode #opsDashboardView .ect-overview-stats{display:flex!important;align-self:flex-end;gap:0!important;padding:8px 4px!important;border:1px solid rgba(255,255,255,.19)!important;border-radius:8px!important;background:rgba(5,23,43,.78)!important;backdrop-filter:blur(10px)!important}
+body.staff-reference-mode #opsDashboardView .ect-stat{min-width:105px!important;padding:9px 12px!important;border:0!important;border-radius:0!important;background:transparent!important}
+body.staff-reference-mode #opsDashboardView .ect-stat+.ect-stat{border-left:1px solid rgba(255,255,255,.25)!important}
+body.staff-reference-mode #opsDashboardView .ect-stat>span{font-size:8px!important;color:#e2edf7!important;letter-spacing:.02em!important}
+body.staff-reference-mode #opsDashboardView .ect-stat strong{font-size:17px!important;color:#fff!important}
+body.staff-reference-mode #opsDashboardView .kpi-row{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:10px!important;margin-bottom:13px!important}
+body.staff-reference-mode #opsDashboardView .kpi-card{min-height:90px!important;padding:14px 15px!important;border:1px solid #e1e7ef!important;border-top:1px solid #e1e7ef!important;border-radius:10px!important;background:#fff!important;box-shadow:0 2px 7px rgba(15,35,65,.035)!important}
+body.staff-reference-mode #opsDashboardView .kpi-card:before{top:0!important;height:3px!important}
+body.staff-reference-mode #opsDashboardView .kpi-card:after{display:none!important}
+body.staff-reference-mode #opsDashboardView .kpi-card small{margin-bottom:8px!important;color:#687b92!important;font-size:9px!important;font-weight:700!important;letter-spacing:0!important;text-transform:none!important}
+body.staff-reference-mode #opsDashboardView .kpi-card strong{font-size:27px!important;line-height:1!important}
+body.staff-reference-mode #opsDashboardView .data-quality-notice{margin:0 0 13px!important;padding:10px 14px!important;border-radius:9px!important;font-size:10px!important}
+body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr) 300px!important;gap:13px!important}
+body.staff-reference-mode #opsDashboardView .ect-workspace-main{display:flex;flex-direction:column;gap:12px;min-width:0}
+body.staff-reference-mode #opsDashboardView .control-tray{margin:0!important;padding:13px!important;border:1px solid #e1e7ef!important;border-radius:10px!important;background:#fff!important;box-shadow:none!important}
+body.staff-reference-mode #opsDashboardView .control-tray-top{gap:10px!important}
+body.staff-reference-mode #opsDashboardView .search-input-wrapper{min-width:180px!important;height:40px!important;border-radius:7px!important;background:#f7f9fc!important}
+body.staff-reference-mode #opsDashboardView .search-input-wrapper input{height:38px!important;font-size:10px!important}
+body.staff-reference-mode #opsDashboardView .search-result-count{padding:7px 9px!important;font-size:9px!important}
+body.staff-reference-mode #opsDashboardView .control-tray .btn{min-height:36px!important;padding:7px 10px!important;font-size:10px!important}
+body.staff-reference-mode #opsDashboardView .view-selector{padding:3px!important;border-radius:8px!important}
+body.staff-reference-mode #opsDashboardView .view-btn{min-height:31px!important;padding:6px 9px!important;font-size:10px!important}
+body.staff-reference-mode #opsDashboardView .control-tray-bottom{margin-top:11px!important;padding-top:11px!important}
+body.staff-reference-mode #opsDashboardView .chip{padding:7px 10px!important;font-size:9px!important}
+body.staff-reference-mode #opsDashboardView .cards-layout{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+body.staff-reference-mode #opsDashboardView .card-box{padding:13px!important;border:1px solid #e2e8f0!important;border-radius:10px!important;background:#fff!important;box-shadow:0 2px 8px rgba(15,35,65,.035)!important}
+body.staff-reference-mode #opsDashboardView .card-box:before{width:3px!important}
+body.staff-reference-mode #opsDashboardView .card-cntr-code{font-size:13px!important}
+body.staff-reference-mode #opsDashboardView .card-vessel{font-size:10px!important}
+body.staff-reference-mode #opsDashboardView .ect-right-rail{gap:12px!important}
+body.staff-reference-mode #opsDashboardView .ect-rail-panel{padding:13px!important;border:1px solid #e1e7ef!important;border-radius:10px!important;background:#fff!important;box-shadow:none!important}
+body.staff-reference-mode #opsDashboardView .ect-rail-heading{padding-bottom:10px!important;margin-bottom:5px!important}
+body.staff-reference-mode #opsDashboardView .ect-rail-heading strong{font-size:11px!important}
+body.staff-reference-mode #opsDashboardView .ect-rail-heading small{font-size:8px!important}
+body.staff-reference-mode #opsDashboardView .ect-status-row{padding:8px 0!important;font-size:9px!important}
+body.staff-reference-mode #opsDashboardView .ect-quick-action{padding:9px 0!important}
+body.staff-reference-mode #opsDashboardView .ect-recent-activity{display:flex;flex-direction:column;gap:0}
+body.staff-reference-mode #opsDashboardView .ect-recent-item{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:9px;align-items:start;padding:10px 0;border-bottom:1px solid #edf1f6}
+body.staff-reference-mode #opsDashboardView .ect-recent-item:last-child{border-bottom:0}
+body.staff-reference-mode #opsDashboardView .ect-recent-dot{width:8px;height:8px;margin-top:4px;border-radius:50%;background:#0878d1;box-shadow:0 0 0 3px #eaf4ff}
+body.staff-reference-mode #opsDashboardView .ect-recent-item strong{display:block;overflow-wrap:anywhere;color:#14243a;font-size:9px;line-height:1.5}
+body.staff-reference-mode #opsDashboardView .ect-recent-item small{display:block;margin-top:3px;color:#718198;font-size:8px}
+body.staff-reference-mode #opsDashboardView .ect-recent-item time{color:#718198;font-size:8px;white-space:nowrap}
+body.staff-reference-mode #opsDashboardView .ect-recent-empty{padding:12px 0;color:#718198;font-size:9px;line-height:1.6}
+body.staff-reference-mode #opsDashboardView .ect-rail-note{padding:11px!important;border-radius:9px!important}
+body.staff-reference-mode #opsDashboardView .ect-rail-note strong{font-size:9px!important}
+body.staff-reference-mode #opsDashboardView .ect-rail-note p{font-size:8px!important}
+@media(max-width:1450px){body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr) 260px!important}body.staff-reference-mode #opsDashboardView .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))!important}body.staff-reference-mode #opsDashboardView .ect-overview-stats{display:none!important}}
+@media(max-width:1100px){body.staff-reference-mode .nav-header{margin-left:190px!important}body.staff-reference-mode #opsDashboardView.main-wrapper{margin-left:190px!important}body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr)!important}body.staff-reference-mode #opsDashboardView .ect-right-rail{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}body.staff-reference-mode #opsDashboardView .ect-rail-note{grid-column:1/-1}}
+@media(max-width:760px){body.staff-reference-mode .nav-header{margin-left:58px!important;padding:0 9px!important}body.staff-reference-mode .staff-top-search{gap:4px;padding-left:8px}body.staff-reference-mode .staff-top-search button{padding:0 8px}body.staff-reference-mode .header-utility #currencyToggleBtn,body.staff-reference-mode .header-utility #themeBtn,body.staff-reference-mode .header-utility #userBadge{display:none!important}body.staff-reference-mode #opsDashboardView.main-wrapper{margin-left:58px!important;padding:10px!important}body.staff-reference-mode #opsDashboardView .ect-overview{min-height:175px!important;padding:18px!important}body.staff-reference-mode #opsDashboardView .ect-overview h1{font-size:23px!important}body.staff-reference-mode #opsDashboardView .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}body.staff-reference-mode #opsDashboardView .kpi-card{min-height:78px!important;padding:12px!important}body.staff-reference-mode #opsDashboardView .kpi-card strong{font-size:23px!important}body.staff-reference-mode #opsDashboardView .ect-right-rail{grid-template-columns:minmax(0,1fr)!important}body.staff-reference-mode #opsDashboardView .cards-layout{grid-template-columns:minmax(0,1fr)!important}}
