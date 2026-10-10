@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20261010-logitrack-match-v4">
+<link rel="stylesheet" href="./style.css?v=20261010-logitrack-match-v5">
 </head>
 <body>
 
@@ -165,7 +165,7 @@
     </div>
     <div class="ect-overview-stats">
       <div class="ect-stat"><span>Records in view</span><strong id="ectVisibleCount">0</strong></div>
-      <div class="ect-stat"><span>Data source</span><strong><span class="ect-source-dot"></span> Connected view</strong></div>
+      <div class="ect-stat"><span>Sync status</span><strong id="ectCloudState" data-state="loading"><span class="ect-source-dot"></span> Loading records…</strong></div>
     </div>
   </section>
   <div class="kpi-row">
@@ -176,23 +176,14 @@
     <div class="kpi-card" style="border-top-color:var(--danger);"><small>Destuffing Pending</small><strong id="kDestuffingPending" style="color:var(--danger)">0</strong></div>
     <div class="kpi-card total-cost-kpi"><small>Total Financial Exposure</small><strong id="kTotalExposure" style="color:var(--corporate-pink)">₹0</strong></div>
   </div>
-  <section id="dataQualityNotice" class="data-quality-notice" aria-live="polite" hidden></section>
-  <section class="staff-analytics-grid" id="staffAnalyticsGrid">
-    <section class="staff-map-panel">
+  
+  <div class="ect-workspace-grid"><div class="ect-workspace-main">
+<section class="staff-map-panel">
       <div class="staff-panel-heading"><div><span class="staff-panel-icon">⌖</span><strong>Shipment Map</strong><small id="staffMapSummary">Ports represented by available shipment data</small></div><button type="button" id="staffMapRefresh" class="staff-map-action">Refresh view ↗</button></div>
       <div id="staffMapCanvas" role="img" aria-label="Map of known ports in current shipment records"></div>
       <div class="staff-map-legend"><span><i class="legend-blue"></i> Origin / loading port</span><span><i class="legend-green"></i> India gateway / terminal</span><span id="staffMapPortCount">0 mapped ports</span></div>
     </section>
-    <section class="staff-status-panel">
-      <div class="staff-panel-heading"><div><span class="staff-panel-icon">◉</span><strong>Shipment Status</strong><small>Calculated from recorded milestones</small></div></div>
-      <div class="staff-status-content"><div class="staff-donut" id="staffStatusDonut"><div><strong id="staffStatusTotal">0</strong><small>Total</small></div></div><div class="staff-status-legend">
-        <div><i class="status-blue"></i><span>In progress</span><strong id="staffStatusActive">0</strong><small id="staffStatusActivePct">0%</small></div>
-        <div><i class="status-green"></i><span>Completed</span><strong id="staffStatusDone">0</strong><small id="staffStatusDonePct">0%</small></div>
-        <div><i class="status-orange"></i><span>Awaiting port in</span><strong id="staffStatusPort">0</strong><small id="staffStatusPortPct">0%</small></div>
-      </div></div>
-    </section>
-  </section>
-  <div class="ect-workspace-grid"><div class="ect-workspace-main">
+
   <div class="control-tray">
     <div class="control-tray-top">
       <div class="filter-inputs">
@@ -215,16 +206,24 @@
   <section id="kanbanView" class="kanban-layout fade-in" style="display:none;"></section>
   </div>
   <aside class="ect-right-rail" aria-label="Operations summary">
-    <section class="ect-rail-panel">
+<section class="staff-status-panel">
+      <div class="staff-panel-heading"><div><span class="staff-panel-icon">◉</span><strong>Shipment Status</strong><small>Calculated from recorded milestones</small></div></div>
+      <div class="staff-status-content"><div class="staff-donut" id="staffStatusDonut"><div><strong id="staffStatusTotal">0</strong><small>Total</small></div></div><div class="staff-status-legend">
+        <div><i class="status-blue"></i><span>In progress</span><strong id="staffStatusActive">0</strong><small id="staffStatusActivePct">0%</small></div>
+        <div><i class="status-green"></i><span>Completed</span><strong id="staffStatusDone">0</strong><small id="staffStatusDonePct">0%</small></div>
+        <div><i class="status-orange"></i><span>Awaiting port in</span><strong id="staffStatusPort">0</strong><small id="staffStatusPortPct">0%</small></div>
+      </div></div>
+    </section>
+<section class="ect-rail-panel"><div class="ect-rail-heading"><span class="ect-rail-icon">◷</span><div><strong>Recent shipments</strong><small>Latest records from your workspace</small></div></div><div id="ectRecentActivity" class="ect-recent-activity"><div class="ect-recent-empty">Recent shipment records will appear here.</div></div></section>
+<section class="ect-rail-panel">
       <div class="ect-rail-heading"><span class="ect-rail-icon">↗</span><div><strong>Quick actions</strong><small>Jump into common workflows</small></div></div>
       <button type="button" class="ect-quick-action" data-staff-nav="add"><span>＋</span><span><strong>Add container</strong><small>Create a shipment record</small></span><b>→</b></button>
       <button type="button" class="ect-quick-action" data-staff-nav="scmtr"><span>▧</span><span><strong>SCMTR / CSN</strong><small>Open compliance workspace</small></span><b>→</b></button>
       <button type="button" class="ect-quick-action" data-staff-nav="terminal"><span>⚓</span><span><strong>Terminal routing</strong><small>Review routing tools</small></span><b>→</b></button>
       <button type="button" class="ect-quick-action" data-staff-nav="import"><span>⇧</span><span><strong>Import records</strong><small>Upload shipment data</small></span><b>→</b></button>
     </section>
-    <section class="ect-rail-panel"><div class="ect-rail-heading"><span class="ect-rail-icon">◷</span><div><strong>Recent shipments</strong><small>Latest records from your workspace</small></div></div><div id="ectRecentActivity" class="ect-recent-activity"><div class="ect-recent-empty">Recent shipment records will appear here.</div></div></section>
-    <section class="ect-rail-note"><span>✓</span><div><strong>Data integrity monitor</strong><p>Review the integrity check above before correcting or importing records. No records are changed automatically.</p></div></section>
-  </aside></div>
+<section id="dataQualityNotice" class="data-quality-notice" aria-live="polite" hidden></section>
+</aside></div>
 </main>
 
 <div class="drawer-overlay" id="filterDrawerOverlay" onclick="closeDrawer()"></div>
@@ -320,7 +319,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20261010-logitrack-match-v4"></script>
+<script src="./app.js?v=20261010-logitrack-match-v5"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
