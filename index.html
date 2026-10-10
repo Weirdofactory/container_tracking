@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20261010-customer-ui-v2">
+<link rel="stylesheet" href="./style.css?v=20261010-staff-login-v1">
 </head>
 <body>
 
@@ -188,7 +188,31 @@
 
 <div class="modal-bg" id="mapModalBg"><div class="modal-dialog" style="width:840px;max-width:95vw;"><div class="modal-header"><span id="mapModalTitle">Voyage Tracker</span><button class="btn btn-ghost" id="mapCloseBtn">✕</button></div><div class="modal-body" style="padding:0;background:#0b1329;"><div id="leafletMap" style="width:100%;height:380px;background:#0b1329;"></div><div style="padding:10px 16px;font-size:11px;display:flex;justify-content:space-between;align-items:center;background:var(--bg-elevated);"><div><strong id="mapVesselText">Vessel Route</strong></div><a id="vesselFinderExternalBtn" href="https://www.vesselfinder.com/" target="_blank" class="btn btn-primary" style="padding:4px 10px;font-size:11px;">Open Live AIS ↗</a></div></div></div></div>
 
-<div class="modal-bg" id="loginModalBg"><div class="modal-dialog" style="max-width:380px;"><div class="modal-header"><span>🔐 Staff Portal Login</span><button class="btn btn-ghost" id="loginClose">✕</button></div><div class="modal-body" style="padding:20px;"><div><label style="font-size:10.5px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;">Access Code</label><input type="password" id="loginCodeInput" class="input" style="width:100%;margin-top:6px;font-family:'JetBrains Mono';font-weight:800;font-size:15px;letter-spacing:.1em;text-align:center;height:40px;" placeholder="••••••••"></div><div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;">Please enter your authorized access code.</div></div><div class="modal-footer"><button class="btn" id="loginCancel">Cancel</button><button class="btn btn-primary" id="loginSubmit">Sign In</button></div></div></div>
+<div class="modal-bg staff-login-overlay" id="loginModalBg" role="dialog" aria-modal="true" aria-labelledby="staffLoginTitle">
+  <div class="staff-login-dialog">
+    <div class="staff-login-banner">
+      <button type="button" class="staff-login-close" id="loginClose" aria-label="Close login">×</button>
+      <div class="staff-login-brandmark" aria-hidden="true">GML</div>
+      <div class="staff-login-kicker">GREENWICH MERIDIAN LOGISTICS</div>
+      <h2 id="staffLoginTitle">Staff Portal</h2>
+      <p>Secure access to container operations</p>
+    </div>
+    <div class="staff-login-content">
+      <label class="staff-login-label" for="loginCodeInput">Access code</label>
+      <div class="staff-code-wrap">
+        <input type="password" id="loginCodeInput" class="input staff-code-input" autocomplete="current-password" autocapitalize="none" spellcheck="false" aria-describedby="loginHelp loginFeedback" placeholder="Enter your access code">
+        <button type="button" class="staff-code-toggle" id="loginToggleCode" aria-label="Show access code" aria-pressed="false">Show</button>
+      </div>
+      <p class="staff-login-help" id="loginHelp"><span aria-hidden="true">🔒</span> Use the access code provided by your administrator.</p>
+      <div class="staff-login-feedback" id="loginFeedback" role="status" aria-live="polite"></div>
+      <div class="staff-login-actions">
+        <button type="button" class="btn staff-login-cancel" id="loginCancel">Cancel</button>
+        <button type="button" class="btn btn-primary staff-login-submit" id="loginSubmit"><span class="staff-login-submit-label">Sign In</span><span class="staff-login-spinner" aria-hidden="true"></span></button>
+      </div>
+      <div class="staff-login-footnote">Authorized personnel only</div>
+    </div>
+  </div>
+</div>
 
 <div class="modal-bg" id="modalBg"><div class="modal-dialog"><div class="modal-header"><span id="modalTitle">Container Details</span><button class="btn btn-ghost" id="modalClose">✕</button></div><div class="modal-body" id="modalForm" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div><div class="modal-footer"><button class="btn" id="modalCancel">Cancel</button><button class="btn btn-primary" id="modalSave">Save & Sync</button></div></div></div>
 
@@ -242,7 +266,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20261010-search-integrity-v2"></script>
+<script src="./app.js?v=20261010-staff-login-v1"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
