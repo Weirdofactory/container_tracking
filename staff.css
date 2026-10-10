@@ -15,3 +15,93 @@
 @media(max-width:1250px){.ops-topbar{width:205px;padding:20px 12px}.ops-page{width:calc(100% - 205px);margin-left:205px;padding:0 18px 45px}.ops-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.metric-card:nth-child(3){border-right:0}.metric-card{border-bottom:1px solid #e2e7de}.ops-workgrid,.ops-lowergrid{grid-template-columns:minmax(0,1fr)}.ops-command{grid-template-columns:minmax(0,1fr) auto}.command-title{grid-column:1/-1}.command-input{grid-column:1}.command-hint{grid-column:2}.ops-welcome{align-items:flex-start;flex-direction:column}.welcome-side{width:100%;flex-wrap:wrap}.login-screen{grid-template-columns:minmax(0,1fr) minmax(320px,.8fr)}}
 @media(max-width:700px){.login-screen{padding:0;display:flex;flex-direction:column;gap:0;background:var(--paper)}.login-visual{min-height:330px;padding:20px}.login-visual-top{align-items:flex-start}.login-status{display:none}.login-visual-copy{margin:30px 0}.login-visual-copy h1{font-size:43px}.login-visual-copy p{font-size:10px}.login-stat-row{gap:14px;margin-top:20px}.login-stat-row b{font-size:16px}.login-stat-row span{font-size:6px}.login-visual-foot{font-size:6px;gap:6px}.login-visual-foot i{width:13px}.login-card{width:calc(100% - 26px);margin:-12px auto 18px;padding:21px;border:1px solid #e2e9dd}.login-body{padding:24px 0}.login-body h2{font-size:30px}
 .ops-topbar{position:relative;left:auto;top:auto;bottom:auto;width:100%;height:auto;min-height:0;padding:12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0;overflow:visible}.ops-topbar .brand{padding:0;border:0}.ops-topbar .brand small{display:none}.ops-nav{grid-column:1/-1;order:4;flex-direction:row;overflow:auto;padding:10px 0 0;margin-top:10px;border-top:1px solid #ffffff1b;border-bottom:0}.ops-nav:before{display:none}.ops-nav a{padding:9px 10px;white-space:nowrap;font-size:8px}.topbar-search{grid-column:1/-1;order:2;margin:12px 0 0;height:38px}.topbar-actions{grid-column:1/-1;order:3;flex-direction:row;flex-wrap:wrap;gap:5px;margin-top:8px;padding-top:0;border-top:0}.connection{display:none}.header-btn{height:33px;padding:0 8px;font-size:8px}.user-chip{margin-left:auto;padding:5px 8px}.ops-page{width:100%;margin:0;padding:0 12px 32px}.ops-welcome{padding:28px 0 17px;gap:15px}.ops-welcome h1{font-size:39px}.welcome-side{gap:6px}.welcome-clock{min-width:120px;flex:1;padding:10px}.welcome-status{flex:1;min-width:145px;padding:10px}.ops-command{grid-template-columns:minmax(0,1fr);padding:14px;gap:10px}.command-title,.command-input,.command-hint{grid-column:1}.command-input{height:auto;min-height:46px;flex-wrap:wrap;padding:7px}.command-input input{min-height:30px}.command-input button{width:100%}.command-hint{display:none}.ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:0}.metric-card{min-height:100px;padding:13px;border-right:1px solid #e2e7de!important;border-bottom:1px solid #e2e7de}.metric-card:nth-child(even){border-right:0!important}.metric-card b{font-size:27px}.ops-card-head{padding:15px}.register-actions{align-items:flex-start;flex-direction:column;padding:11px}.action-buttons{width:100%}.action-btn{flex:1 1 30%;padding:0 6px;font-size:7px}.register-filter{padding:10px}.register-search{flex-basis:100%}.register-filter .input{flex:1}.data-table{min-width:820px}.table-footer{padding:10px}.ops-lowergrid{gap:11px;margin-top:11px}.edit-context,.edit-grid{grid-template-columns:1fr}.drawer-panel>section{padding:14px}.drawer-foot{align-items:flex-start;flex-direction:column}.drawer-foot .action-btn{width:100%;min-height:40px}.s-status-row{grid-template-columns:1fr 1fr}.s-feature-foot{flex-wrap:wrap}.s-bulk-form{grid-template-columns:1fr}.s-bulk-form .full{grid-column:auto}.signal-grid{padding:11px}.dropzone{margin:11px;padding:12px}.dropzone em{display:none}.s-status-canvas{width:100%}.notice{left:50%}}
+
+/* NORTHSTAR CONTROL — compact vertical navigation + open operations canvas. */
+:root{--ink:#172b4d;--forest:#172b4d;--forest2:#203e70;--paper:#f7f9fc;--white:#fff;--line:#e0e7f1;--muted:#71809a;--lime:#80a8ff;--blue:#2359d8;--red:#d95757;--shadow:0 12px 36px #203c6b0b}
+body{background:#f7f9fc!important;color:#172b4d!important;font-family:"DM Sans",sans-serif!important}
+#staffApp .ops-topbar{position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:244px!important;height:100vh!important;min-height:100vh!important;z-index:80!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:19px!important;padding:24px 17px!important;overflow-y:auto!important;background:#172b4d!important;color:#fff!important;border-right:1px solid #2c4264!important;box-shadow:8px 0 30px #172b4d0a!important}
+#staffApp .ops-topbar .brand{gap:11px!important;padding:0 4px 20px!important;border-bottom:1px solid #ffffff20!important}
+#staffApp .ops-topbar .brand-mark{background:#fff!important;color:#2359d8!important;border-radius:12px!important;width:41px!important;height:41px!important}
+#staffApp .ops-topbar .brand strong{font:800 16px Manrope,sans-serif!important;letter-spacing:-.4px!important;color:#fff!important}
+#staffApp .ops-topbar .brand small{color:#9eb1d0!important;font:9px "DM Mono",monospace!important;letter-spacing:1.1px!important}
+#staffApp .topbar-divider{display:none!important}
+#staffApp .workspace-name{display:block!important;padding:0 5px!important;margin:0!important;border:0!important}
+#staffApp .workspace-name>span{display:block!important;font:9px "DM Mono",monospace!important;letter-spacing:1.3px!important;color:#8da4c8!important}
+#staffApp .workspace-name>b{display:block!important;margin-top:5px!important;color:#fff!important;font:700 13px Manrope,sans-serif!important}
+#staffApp .ops-nav{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:5px!important;margin:0!important;padding:0!important}
+#staffApp .ops-nav a{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:12px 12px!important;border-radius:10px!important;color:#b6c5dd!important;font-size:12px!important;font-weight:700!important;border:1px solid transparent!important}
+#staffApp .ops-nav a.active,#staffApp .ops-nav a:hover{background:#ffffff12!important;color:#fff!important;border-color:#ffffff12!important}
+#staffApp .ops-nav a em{background:#31558b!important;color:#fff!important;border-radius:20px!important;padding:2px 7px!important;font-size:10px!important;font-style:normal!important}
+#staffApp .topbar-search{display:flex!important;order:0!important;width:100%!important;min-width:0!important;margin:0!important;padding:0 10px!important;height:42px!important;background:#21395d!important;border:1px solid #355076!important;border-radius:10px!important}
+#staffApp .topbar-search span{color:#a8c1ed!important}
+#staffApp .topbar-search input{width:100%!important;min-width:0!important;color:#fff!important;font-size:11px!important}
+#staffApp .topbar-search input::placeholder{color:#9eb1cc!important}
+#staffApp .topbar-search kbd{display:none!important}
+#staffApp .topbar-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important;margin-top:auto!important;padding-top:17px!important;border-top:1px solid #ffffff20!important}
+#staffApp .connection{display:grid!important;grid-template-columns:8px 1fr!important;column-gap:8px!important;align-items:center!important;padding:8px 5px 12px!important}
+#staffApp .connection i{grid-row:span 2!important}
+#staffApp .connection b{color:#e4edfb!important;font:10px "DM Mono",monospace!important;letter-spacing:1px!important}
+#staffApp .connection small{color:#93a8c8!important;font-size:10px!important}
+#staffApp .header-btn{width:100%!important;justify-content:center!important;min-height:39px!important;border-radius:9px!important;font-size:11px!important}
+#staffApp .header-btn.refresh{background:#fff!important;color:#203e70!important;border-color:#fff!important}
+#staffApp .header-btn.customer{background:#29476f!important;color:#fff!important;border-color:#3c5b84!important}
+#staffApp .header-btn.logout{background:transparent!important;color:#c5d2e7!important;border-color:#3b5376!important}
+#staffApp .user-chip{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:12px 9px!important;border-radius:10px!important;background:#ffffff10!important;color:#fff!important;margin-top:4px!important}
+#staffApp .user-chip b{color:#fff!important;font-size:11px!important}
+#staffApp .user-chip span{color:#9fb5d7!important;font-size:10px!important}
+#staffApp .ops-page{margin-left:244px!important;width:calc(100% - 244px)!important;max-width:none!important;padding:34px clamp(22px,3vw,48px) 60px!important;background:#f7f9fc!important}
+#staffApp .ops-page-inner{max-width:1600px!important;margin:0 auto!important}
+#staffApp .ops-welcome{background:transparent!important;border:0!important;box-shadow:none!important;padding:8px 0 25px!important;gap:25px!important}
+#staffApp .ops-welcome .section-index{color:#2359d8!important;font:10px "DM Mono",monospace!important;letter-spacing:1.2px!important}
+#staffApp .ops-welcome h1{font:800 clamp(32px,3vw,45px)/1.12 Manrope,sans-serif!important;letter-spacing:-1.8px!important;color:#172b4d!important}
+#staffApp .ops-welcome h1 span{color:#2359d8!important}
+#staffApp .ops-welcome p{color:#75849b!important;font-size:13px!important}
+#staffApp .welcome-clock,#staffApp .welcome-status{background:#fff!important;border:1px solid #e0e7f1!important;border-radius:13px!important;box-shadow:0 7px 24px #203c6b06!important}
+#staffApp .welcome-clock span{color:#8794a9!important}
+#staffApp .welcome-clock b{color:#172b4d!important;font-family:Manrope,sans-serif!important}
+#staffApp .welcome-status{padding:13px 15px!important}
+#staffApp .welcome-status b{color:#172b4d!important}
+#staffApp .welcome-status span{color:#8290a5!important}
+#staffApp .ops-command{display:grid!important;grid-template-columns:minmax(220px,.7fr) minmax(0,1.3fr) auto!important;align-items:center!important;gap:20px!important;margin:0 0 22px!important;padding:20px 22px!important;border:1px solid #e0e7f1!important;border-radius:16px!important;background:#fff!important;box-shadow:0 8px 28px #203c6b07!important}
+#staffApp .ops-command .section-index{color:#2359d8!important}
+#staffApp .ops-command h2{font:800 21px Manrope,sans-serif!important;letter-spacing:-.6px!important;color:#172b4d!important;margin:5px 0!important}
+#staffApp .ops-command p{font-size:11px!important;color:#8290a5!important;margin:0!important}
+#staffApp .command-input{height:47px!important;border:1px solid #dce5f1!important;border-radius:10px!important;background:#fbfcfe!important}
+#staffApp .command-input input{color:#172b4d!important;font-size:12px!important}
+#staffApp .command-input button{background:#2359d8!important;color:#fff!important;border-radius:8px!important}
+#staffApp .command-hint{color:#8794a9!important}
+#staffApp .ops-metrics{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:12px!important;margin-bottom:22px!important}
+#staffApp .metric-card{background:#fff!important;border:1px solid #e0e7f1!important;border-radius:14px!important;box-shadow:0 6px 22px #203c6b06!important;padding:17px!important;min-width:0!important}
+#staffApp .metric-card>span{font:9px "DM Mono",monospace!important;letter-spacing:.5px!important;color:#8290a5!important}
+#staffApp .metric-card>b{display:block!important;font:800 29px Manrope,sans-serif!important;color:#172b4d!important;margin:8px 0 3px!important}
+#staffApp .metric-card small{font-size:10px!important;color:#8794a9!important}
+#staffApp .metric-card i{color:#2359d8!important}
+#staffApp .metric-total{background:#2359d8!important;border-color:#2359d8!important}
+#staffApp .metric-total>span,#staffApp .metric-total>b,#staffApp .metric-total small,#staffApp .metric-total i{color:#fff!important}
+#staffApp .metric-lime,#staffApp .metric-orange,#staffApp .metric-alert{background:#fff!important;border-color:#e0e7f1!important}
+#staffApp .ops-card{background:#fff!important;border:1px solid #e0e7f1!important;border-radius:16px!important;box-shadow:0 8px 28px #203c6b06!important;min-width:0!important}
+#staffApp .ops-card-head{padding:21px 21px 16px!important;border-bottom:1px solid #edf1f6!important}
+#staffApp .ops-card-head .section-index{color:#2359d8!important;font:9px "DM Mono",monospace!important;letter-spacing:1px!important}
+#staffApp .ops-card-head h2{font:800 20px Manrope,sans-serif!important;letter-spacing:-.6px!important;color:#172b4d!important}
+#staffApp .ops-card-head p{color:#8290a5!important;font-size:11px!important}
+#staffApp .action-btn.primary{background:#2359d8!important;border-color:#2359d8!important}
+#staffApp .action-btn,#staffApp .input,#staffApp .register-search{border-radius:8px!important}
+#staffApp .register-search,#staffApp .register-filter select{background:#fbfcfe!important;border-color:#dce5f1!important}
+#staffApp .data-window{border-top:1px solid #edf1f6!important}
+#staffApp .data-table th{background:#f5f8fc!important;color:#7c8ba2!important;font:9px "DM Mono",monospace!important;letter-spacing:.6px!important}
+#staffApp .data-table td{border-color:#edf1f6!important;color:#344968!important}
+#staffApp .data-table tbody tr:hover{background:#f4f7fd!important}
+#staffApp .exception-total,#staffApp .pill-count,#staffApp .health-pill{border-radius:20px!important;background:#eef3ff!important;color:#2359d8!important;border-color:#dce7ff!important}
+#staffApp .priority-list .priority-item{border-color:#edf1f6!important}
+#staffApp .vessel-summary>div,#staffApp .health-summary>div{background:#f5f8fc!important;border:1px solid #e8eef6!important;border-radius:10px!important}
+#staffApp .mini-table th{background:#f5f8fc!important;color:#7c8ba2!important}
+#staffApp .login-screen{background:#f7f9fc!important}
+#staffApp .login-visual{background:#172b4d!important}
+#staffApp .login-visual .brand-mark{background:#fff!important;color:#2359d8!important;border-radius:12px!important}
+#staffApp .login-visual .eyebrow{color:#9dbbff!important}
+#staffApp .login-visual-copy h1{font:800 clamp(38px,5vw,68px)/1.02 Manrope,sans-serif!important;letter-spacing:-2.5px!important}
+#staffApp .login-visual-copy h1 em{color:#9ebcff!important}
+#staffApp .login-card{border:1px solid #e0e7f1!important;border-radius:20px!important;box-shadow:0 20px 60px #172b4d12!important}
+@media(max-width:1250px){#staffApp .ops-metrics{grid-template-columns:repeat(3,minmax(0,1fr))!important}#staffApp .ops-command{grid-template-columns:1fr!important}#staffApp .command-hint{display:none!important}}
+@media(max-width:900px){#staffApp .ops-topbar{position:relative!important;left:auto!important;top:auto!important;bottom:auto!important;width:100%!important;height:auto!important;min-height:0!important;display:grid!important;grid-template-columns:1fr auto!important;gap:12px!important;padding:14px 18px!important;overflow:visible!important}#staffApp .ops-topbar .brand{padding:0!important;border:0!important}#staffApp .workspace-name{display:none!important}#staffApp .ops-nav{grid-column:1/-1!important;display:flex!important;flex-direction:row!important;overflow:auto!important}#staffApp .ops-nav a{white-space:nowrap!important;padding:9px 11px!important}#staffApp .topbar-search{grid-column:1/-1!important;order:2!important}#staffApp .topbar-actions{grid-column:1/-1!important;display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:center!important;margin:0!important;padding-top:12px!important}#staffApp .connection{display:none!important}#staffApp .header-btn{width:auto!important;flex:1 1 auto!important}#staffApp .user-chip{margin:0!important;gap:10px!important}#staffApp .ops-page{margin-left:0!important;width:100%!important;padding:26px 18px 45px!important}#staffApp .ops-welcome{display:block!important}#staffApp .welcome-side{margin-top:18px!important}}
+@media(max-width:560px){#staffApp .ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}#staffApp .ops-page{padding:20px 12px 36px!important}#staffApp .ops-command{padding:16px!important}#staffApp .ops-welcome h1{font-size:32px!important}#staffApp .ops-card-head{padding:16px!important}#staffApp .register-actions{flex-wrap:wrap!important}#staffApp .action-buttons{display:flex!important;flex-wrap:wrap!important;gap:7px!important}#staffApp .action-btn{flex:1 1 42%!important}#staffApp .data-window{overflow-x:auto!important}}
