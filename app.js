@@ -2705,7 +2705,7 @@ checkActiveSession();
 
 activeQuickFilter = 'all';
 document.querySelectorAll(".chip").forEach(c => {
-  c.classList.toggle("active", c.dataset.filter === 'active');
+  c.classList.toggle("active", c.dataset.filter === 'all');
 });
 renderUI();
 
