@@ -3042,28 +3042,38 @@ function updateKPIs() {
 
 function renderUI() {
   const filtered = getFilteredRows();
-  const ectCount = el('ectVisibleCount');
-  if (ectCount) ectCount.textContent = filtered.length.toLocaleString('en-IN');
+  const ectCount = el("ectVisibleCount");
+  if (ectCount) ectCount.textContent = filtered.length.toLocaleString("en-IN");
   updateKPIs();
   updateDataQualityNotice();
+  updateReferenceRail();
+  renderStaffAnalytics();
 
-  if (currentView === 'cards') renderCards(filtered);
-  else if (currentView === 'sheet') renderSheet(filtered);
-  else if (currentView === 'kanban') renderKanban(filtered);
+  // Critical: the selected content panel must be made visible on initial page load,
+  // not only after a user clicks the view selector.
+  const viewElements = { cards: el("cardsView"), sheet: el("sheetView"), kanban: el("kanbanView") };
+  Object.entries(viewElements).forEach(([mode, node]) => {
+    if (!node) return;
+    const isActive = mode === currentView;
+    node.style.display = isActive ? (mode === "sheet" ? "block" : "grid") : "none";
+    if (isActive) node.classList.add("fade-in");
+    document.querySelectorAll(".view-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.view === mode));
+  });
+
+  const searchCount = el("searchResultCount");
+  if (searchCount) searchCount.textContent = searchTokensForDisplay(filtered.length);
+  if (currentView === "cards") renderCards(filtered);
+  else if (currentView === "sheet") renderSheet(filtered);
+  else if (currentView === "kanban") renderKanban(filtered);
 
   const count = selectedIndices.size;
   const sn = el("selectionNotice");
-  if(sn) sn.textContent = `${count} selected`;
+  if (sn) sn.textContent = count + " selected";
   const bc = el("btnSelectCount");
-  if(bc) bc.textContent = count;
-  
+  if (bc) bc.textContent = count;
   const fab = el("floatingActionBar");
-  if(fab) {
-    if(count > 0) fab.classList.add("show");
-    else fab.classList.remove("show");
-  }
+  if (fab) fab.classList.toggle("show", count > 0);
 }
-
 function getLfdHtml(daysLeft, isOverdue, label, totalDays) {
   if (isOverdue) return `<div class="lfd-wrap danger"><div class="lfd-label">${label}: OVERDUE</div><div class="lfd-bar"><div class="lfd-fill" style="width:100%"></div></div></div>`;
   if (daysLeft === null) return '';
@@ -3491,18 +3501,53 @@ async function saveAndRefresh() {
   }
 }
 
-async function loadFromCloud() {
-  try {
-    const { data, error } = await sb.from('containers').select('data').eq('id', 'gml_tracking_records').single();
-    if (!error && data && Array.isArray(data.data) && data.data.length > 0) {
-      rows = data.data;
-      localStorage.setItem("containerRows", JSON.stringify(rows));
-      populateFilters();
-      renderUI();
-    }
-  } catch(err){}
+
+function setCloudDataState(state, message) {
+  const node = el("ectCloudState");
+  if (!node) return;
+  node.dataset.state = state;
+  node.innerHTML = '<span class="ect-source-dot" aria-hidden="true"></span>' + esc(message);
+  node.title = message;
 }
 
+async function loadFromCloud() {
+  setCloudDataState("loading", "Loading cloud data…");
+  try {
+    const { data, error } = await sb.from("containers").select("data").eq("id", "gml_tracking_records").single();
+    if (error) {
+      console.warn("Container data cloud read failed:", error);
+      const cached = localStorage.getItem("containerRows");
+      setCloudDataState(cached ? "offline" : "error", cached ? "Saved records · offline" : "Cloud read failed");
+      return;
+    }
+    if (data && Array.isArray(data.data) && data.data.length > 0) {
+      rows = data.data.map(item => ({
+        "PORT OUT": "",
+        "CONTAINER RETURN DATE": "",
+        "TRUCK NO.": "",
+        "DRIVER CONTACT": "",
+        ...item
+      }));
+      try { localStorage.setItem("containerRows", JSON.stringify(rows)); } catch (storageError) {
+        console.warn("Could not cache shipment records:", storageError);
+      }
+      populateFilters();
+      setCloudDataState("connected", "Cloud synced · " + rows.length + " records");
+      renderUI();
+      return;
+    }
+    const cached = localStorage.getItem("containerRows");
+    if (cached) {
+      setCloudDataState("offline", "Saved records · cloud dataset empty");
+    } else {
+      setCloudDataState("error", "No cloud records returned");
+    }
+  } catch (err) {
+    console.warn("Container data cloud load failed:", err);
+    const cached = localStorage.getItem("containerRows");
+    setCloudDataState(cached ? "offline" : "error", cached ? "Saved records · offline" : "Cloud connection failed");
+  }
+}
 function populateFilters() {
   const vSet = new Set(), cSet = new Set();
   rows.forEach(r => {
@@ -3915,7 +3960,7 @@ renderUI();
     button.addEventListener("click", () => {
       const target = button.getAttribute("data-staff-nav");
       const actions = {
-        dashboard: "p1v2TowerBtn",
+        dashboard: null,
         shipments: null,
         tracking: null,
         scmtr: "headerCsnBtn",
@@ -3924,14 +3969,15 @@ renderUI();
         add: "addBtn",
         import: "excelInput"
       };
-      document.querySelectorAll(".staff-side-link").forEach(link => link.classList.toggle("active", link === button));
+      if (button.classList.contains("staff-side-link")) document.querySelectorAll(".staff-side-link").forEach(link => link.classList.toggle("active", link === button));
+      if (target === "dashboard") { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
       if (target === "shipments") {
         document.getElementById("controlTray")?.scrollIntoView({ behavior: "smooth", block: "start" });
         document.querySelector(".control-tray")?.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
       if (target === "tracking") {
-        const search = document.getElementById("search");
+        const search = document.getElementById("staffTopSearch") || document.getElementById("search");
         search?.focus();
         search?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
