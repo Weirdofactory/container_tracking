@@ -1621,7 +1621,7 @@ body.staff-reference-mode .header-bottom-row .header-segment{padding:0!important
 body.staff-reference-mode .header-bottom-row #addBtn{min-height:34px!important;padding:7px 11px!important}
 body.staff-reference-mode .header-bottom-row #terminalRoutingBtn,body.staff-reference-mode .header-bottom-row #opsMenuBtn,body.staff-reference-mode .header-bottom-row #exportBtn,body.staff-reference-mode .header-bottom-row label[title="Import from Excel"],body.staff-reference-mode .header-bottom-row .nav-dropdown{display:none!important}
 body.staff-reference-mode #opsDashboardView.main-wrapper{margin:0 0 0 226px!important;padding:14px 15px 28px!important;max-width:none!important;width:auto!important}
-body.staff-reference-mode #opsDashboardView .ect-overview{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:208px!important;gap:22px!important;margin:0 0 13px!important;padding:24px 26px!important;overflow:hidden;border:0!important;border-radius:10px!important;background:linear-gradient(90deg,rgba(7,28,52,.98) 0%,rgba(7,28,52,.88) 33%,rgba(7,28,52,.18) 75%),url('https://images.unsplash.com/photo-1494412519320-aa613dfb7738?auto=format&fit=crop&w=1800&q=85') center 54%/cover no-repeat,#0b3557!important;box-shadow:0 4px 12px rgba(8,30,58,.1)!important}
+body.staff-reference-mode #opsDashboardView .ect-overview{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:208px!important;gap:22px!important;margin:0 0 13px!important;padding:24px 26px!important;overflow:hidden;border:0!important;border-radius:10px!important;background:linear-gradient(90deg,rgba(7,28,52,.98) 0%,rgba(7,28,52,.88) 33%,rgba(7,28,52,.18) 75%),url('https://ykeucqritoexykqrggzz.supabase.co/storage/v1/object/public/website-assets/chennai-port-hero.png') center 54%/cover no-repeat,#0b3557!important;box-shadow:0 4px 12px rgba(8,30,58,.1)!important}
 body.staff-reference-mode #opsDashboardView .ect-overview:before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,24,43,.23),transparent 65%);pointer-events:none}
 body.staff-reference-mode #opsDashboardView .ect-overview:after{display:none!important}
 body.staff-reference-mode #opsDashboardView .ect-overview-copy{max-width:560px}
@@ -1744,3 +1744,40 @@ body.staff-reference-mode #opsDashboardView .sheet-table th{font-size:11px!impor
 body.staff-reference-mode #opsDashboardView .sheet-table td,body.staff-reference-mode #opsDashboardView .sheet-table .cell-input{font-size:11px!important}
 @media(max-width:1200px){body.staff-reference-mode #opsDashboardView .staff-analytics-grid{grid-template-columns:minmax(0,1fr)}body.staff-reference-mode #opsDashboardView .staff-status-content{min-height:180px}body.staff-reference-mode #opsDashboardView #staffMapCanvas{height:220px}}
 @media(max-width:760px){body.staff-reference-mode #opsDashboardView .staff-status-content{justify-content:flex-start;flex-wrap:wrap}body.staff-reference-mode #opsDashboardView .staff-donut{width:110px;height:110px}body.staff-reference-mode #opsDashboardView .control-tray-top{align-items:stretch!important;flex-direction:column!important}body.staff-reference-mode #opsDashboardView .filter-inputs{flex-wrap:wrap!important}body.staff-reference-mode #opsDashboardView .search-input-wrapper{flex-basis:100%!important}}
+
+/* V5: reference layout correction + robust display states */
+body.staff-reference-mode #opsDashboardView .ect-workspace-grid{display:grid!important;grid-template-columns:minmax(0,1fr) 365px!important;align-items:start!important;gap:13px!important}
+body.staff-reference-mode #opsDashboardView .ect-workspace-main{display:flex!important;flex-direction:column!important;gap:12px!important;min-width:0!important}
+body.staff-reference-mode #opsDashboardView .staff-map-panel{display:block!important;margin:0!important}
+body.staff-reference-mode #opsDashboardView #staffMapCanvas{height:285px!important}
+body.staff-reference-mode #opsDashboardView .ect-right-rail{display:flex!important;flex-direction:column!important;gap:12px!important;min-width:0!important}
+body.staff-reference-mode #opsDashboardView .staff-status-content{min-height:195px!important}
+body.staff-reference-mode #opsDashboardView .staff-donut{width:116px!important;height:116px!important}
+body.staff-reference-mode #opsDashboardView .staff-donut:before{inset:15px!important}
+body.staff-reference-mode #opsDashboardView .ect-rail-panel{flex:none!important}
+body.staff-reference-mode #opsDashboardView .data-quality-notice{margin:0!important}
+body.staff-reference-mode #opsDashboardView .control-tray{margin:0!important}
+body.staff-reference-mode #opsDashboardView .control-tray-top .filter-inputs .search-input-wrapper,
+body.staff-reference-mode #opsDashboardView .control-tray-top .filter-inputs .search-result-count{display:none!important}
+body.staff-reference-mode #opsDashboardView .control-tray-top .filter-inputs{justify-content:flex-start!important}
+body.staff-reference-mode #opsDashboardView .control-tray-top{align-items:center!important}
+body.staff-reference-mode #opsDashboardView .control-tray-bottom{margin-top:10px!important}
+body.staff-reference-mode #opsDashboardView .sheet-box{display:block;max-width:100%;overflow:auto}
+body.staff-reference-mode #opsDashboardView #sheetView{display:block}
+body.staff-reference-mode #opsDashboardView .sheet-table{width:100%;min-width:980px}
+body.staff-reference-mode #opsDashboardView .ect-recent-item{grid-template-columns:8px minmax(0,1fr)!important}
+body.staff-reference-mode #opsDashboardView .ect-recent-item time{grid-column:2;white-space:normal!important}
+body.staff-reference-mode #opsDashboardView .staff-map-panel .leaflet-container{font-family:'Plus Jakarta Sans',sans-serif}
+body.staff-reference-mode .staff-top-search{right:420px!important}
+body.staff-reference-mode .staff-top-search{height:39px!important}
+body.staff-reference-mode .staff-top-search input{min-width:0!important}
+body.staff-reference-mode .ect-stat strong{max-width:100%;font-size:13px!important;white-space:nowrap}
+body.staff-reference-mode #ectCloudState .ect-source-dot{width:6px;height:6px;display:inline-block;margin-right:5px;border-radius:50%;background:#93a4b8}
+body.staff-reference-mode #ectCloudState[data-state="connected"] .ect-source-dot{background:#20bf6b}
+body.staff-reference-mode #ectCloudState[data-state="loading"] .ect-source-dot{background:#f59e0b}
+body.staff-reference-mode #ectCloudState[data-state="offline"] .ect-source-dot,
+body.staff-reference-mode #ectCloudState[data-state="error"] .ect-source-dot{background:#ef4444}
+body.staff-reference-mode #opsDashboardView .view-btn.active{background:#fff!important;color:#0878d1!important}
+@media(max-width:1450px){body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr) 310px!important}}
+@media(max-width:1200px){body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr)!important}body.staff-reference-mode #opsDashboardView .ect-right-rail{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}body.staff-reference-mode #opsDashboardView .staff-status-panel{grid-column:1/-1}body.staff-reference-mode #opsDashboardView .staff-map-panel{grid-column:1/-1}}
+@media(max-width:760px){body.staff-reference-mode #opsDashboardView .ect-right-rail{display:flex!important}body.staff-reference-mode #opsDashboardView #staffMapCanvas{height:220px!important}body.staff-reference-mode #opsDashboardView .staff-status-panel{grid-column:auto}}
