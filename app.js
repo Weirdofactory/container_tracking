@@ -2866,6 +2866,48 @@ function getFilteredRows() {
   return filtered;
 }
 
+function updateDataQualityNotice() {
+  const box = el("dataQualityNotice");
+  if (!box) return;
+  const list = Array.isArray(rows) ? rows : [];
+  const normalize = value => String(value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const seen = new Map();
+  let missingContainer = 0;
+  let emptyRows = 0;
+  list.forEach((row, index) => {
+    if (!row || typeof row !== "object" || Array.isArray(row) || Object.keys(row).length === 0) {
+      emptyRows++;
+      return;
+    }
+    const cn = normalize(getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO", "CONTAINER NUMBER"]));
+    if (!cn) { missingContainer++; return; }
+    if (!seen.has(cn)) seen.set(cn, []);
+    seen.get(cn).push(index);
+  });
+  const duplicateGroups = [...seen.entries()].filter(([,indices]) => indices.length > 1);
+  const duplicateRows = duplicateGroups.reduce((sum,[,indices]) => sum + indices.length - 1, 0);
+  const issueCount = duplicateGroups.length + missingContainer + emptyRows;
+  if (!list.length) {
+    box.hidden = false;
+    box.className = "data-quality-notice has-issues";
+    box.innerHTML = '<span class="data-quality-icon" aria-hidden="true">!</span><div class="data-quality-copy"><strong class="data-quality-title">Shipment data not loaded</strong><span class="data-quality-meta">No shipment rows are currently available. Check the cloud connection before editing or importing records.</span></div>';
+    return;
+  }
+  if (!issueCount) {
+    box.hidden = false;
+    box.className = "data-quality-notice";
+    box.innerHTML = '<span class="data-quality-icon" aria-hidden="true">✓</span><div class="data-quality-copy"><strong class="data-quality-title">Data integrity check</strong><span class="data-quality-meta">' + list.length + ' records checked · no missing container numbers, empty rows or repeated container identifiers detected. This is a client-side structural check, not a server audit.</span></div>';
+    return;
+  }
+  const parts = [];
+  if (duplicateGroups.length) parts.push(duplicateGroups.length + " repeated container number(s) affecting " + duplicateRows + " extra row(s)");
+  if (missingContainer) parts.push(missingContainer + " row(s) missing container number");
+  if (emptyRows) parts.push(emptyRows + " empty or invalid row(s)");
+  box.hidden = false;
+  box.className = "data-quality-notice has-issues";
+  box.innerHTML = '<span class="data-quality-icon" aria-hidden="true">!</span><div class="data-quality-copy"><strong class="data-quality-title">Review data before release</strong><span class="data-quality-meta">' + parts.map(esc).join(" · ") + '. No records were changed or removed automatically. Check whether repeated container numbers are legitimate before correcting them.</span></div>';
+}
+
 function updateKPIs() {
   const active = rows.filter(r => !isFullyCompleted(r));
   let portOutPending = 0;
@@ -2896,6 +2938,7 @@ function updateKPIs() {
 function renderUI() {
   const filtered = getFilteredRows();
   updateKPIs();
+  updateDataQualityNotice();
 
   if (currentView === 'cards') renderCards(filtered);
   else if (currentView === 'sheet') renderSheet(filtered);
