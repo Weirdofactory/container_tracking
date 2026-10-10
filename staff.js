@@ -14,16 +14,16 @@ function parseFlexibleDate(v,referenceYear){
   if(v instanceof Date&&!Number.isNaN(v.getTime()))return new Date(v.getFullYear(),v.getMonth(),v.getDate());
   const s=String(v).trim();let m,d;
   const valid=(y,mo,day)=>{const x=new Date(y,mo-1,day);return x.getFullYear()===y&&x.getMonth()===mo-1&&x.getDate()===day?x:null};
-  if((m=s.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})(?:[T ].*)?$/)))return valid(+m[1],+m[2],+m[3]);
-  if((m=s.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{2})$/))){const yy=+m[3],y=yy>=70?1900+yy:2000+yy;return valid(y,+m[1],+m[2]);}
-  if((m=s.match(/^(\\d{1,2})[-/.](\\d{1,2})[-/.](\\d{4})$/)))return valid(+m[3],+m[2],+m[1]);
-  if((m=s.match(/^(\\d{1,2})[- ]([A-Za-z]{3,9})[- ](\\d{4})$/))){d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate())}
-  if((m=s.match(/^(\\d{1,2})[- ]([A-Za-z]{3,9})$/))){
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ].*)?$/)))return valid(+m[1],+m[2],+m[3]);
+  if((m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/))){const yy=+m[3],y=yy>=70?1900+yy:2000+yy;return valid(y,+m[1],+m[2]);}
+  if((m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/)))return valid(+m[3],+m[2],+m[1]);
+  if((m=s.match(/^(\d{1,2})[- ]([A-Za-z]{3,9})[- ](\d{4})$/))){d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+  if((m=s.match(/^(\d{1,2})[- ]([A-Za-z]{3,9})$/))){
     const months={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
     const mo=months[m[2].slice(0,3).toLowerCase()];if(mo===undefined)return null;
     const y=Number(referenceYear)||new Date().getFullYear();return valid(y,mo+1,+m[1]);
   }
-  if(/^\\d+(\\.\\d+)?$/.test(s)){const n=Number(s);if(n>30000&&n<70000){const x=new Date(Date.UTC(1899,11,30)+n*86400000);return new Date(x.getUTCFullYear(),x.getUTCMonth(),x.getUTCDate())}}
+  if(/^\d+(\.\d+)?$/.test(s)){const n=Number(s);if(n>30000&&n<70000){const x=new Date(Date.UTC(1899,11,30)+n*86400000);return new Date(x.getUTCFullYear(),x.getUTCMonth(),x.getUTCDate())}}
   d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
 }
 function simpleDateDisplay(v){
