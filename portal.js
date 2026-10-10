@@ -27,7 +27,22 @@ const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const clean=v=>{const s=String(v??"").trim();return !s||/^(n\/a|na|unknown|null|-)$/i.test(s)?"":s};
 const field=(r,names)=>{for(const n of names){if(r&&r[n]!==undefined&&String(r[n]??"").trim()!=="")return r[n]}return""};
-const dateText=v=>{if(!v)return"—";const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v);return d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})};
+function parseFlexibleDate(v){
+  if(v===null||v===undefined||String(v).trim()==="")return null;
+  if(v instanceof Date&&!Number.isNaN(v.getTime()))return new Date(v.getFullYear(),v.getMonth(),v.getDate());
+  const s=String(v).trim();
+  let m;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ].*)?$/))){const d=new Date(+m[1],+m[2]-1,+m[3]);return Number.isNaN(d.getTime())?null:d;}
+  if((m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/))){const d=new Date(+m[3],+m[2]-1,+m[1]);return Number.isNaN(d.getTime())?null:d;}
+  if((m=s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/))){const d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+  if(/^\d+(\.\d+)?$/.test(s)){const n=Number(s);if(n>30000&&n<70000){const d=new Date(Date.UTC(1899,11,30)+n*86400000);return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());}}
+  const d=new Date(s);return Number.isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
+}
+function simpleDateDisplay(v){
+  const d=parseFlexibleDate(v);if(!d)return String(v??"")||"—";
+  return String(d.getDate()).padStart(2,"0")+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+d.getFullYear();
+}
+const dateText=v=>simpleDateDisplay(v);
 const statusFor=r=>{
   if(field(r,["CONTAINER RETURN DATE"]))return["RETURNED","Empty container returned"];
   if(field(r,["DESTUFFING DATE"]))return["DE-STUFFED","Cargo de-stuff completed"];
