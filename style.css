@@ -1704,3 +1704,43 @@ body.staff-reference-mode #opsDashboardView .ect-workspace-main{gap:12px!importa
 @media(max-width:1350px){body.staff-reference-mode .staff-top-search{right:370px!important}body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr) 255px!important}}
 @media(max-width:1100px){body.staff-reference-mode .staff-top-search{right:310px!important}body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr)!important}}
 @media(max-width:760px){body.staff-reference-mode .staff-top-search{left:0!important;right:150px!important;top:10px!important;height:38px!important}body.staff-reference-mode .staff-top-search input{font-size:10px!important}body.staff-reference-mode .staff-top-search button{padding:0 7px!important}body.staff-reference-mode .ops-controls-multilevel{max-width:140px!important}body.staff-reference-mode #opsDashboardView .sheet-table{min-width:950px}}
+
+/* V4 reference composition: live port map, milestone donut and more readable dashboard */
+body.staff-reference-mode #opsDashboardView .staff-analytics-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:12px;margin:0 0 13px}
+body.staff-reference-mode #opsDashboardView .staff-map-panel,body.staff-reference-mode #opsDashboardView .staff-status-panel{min-width:0;overflow:hidden;border:1px solid #e1e7ef;border-radius:10px;background:#fff;box-shadow:0 2px 7px rgba(15,35,65,.035)}
+body.staff-reference-mode #opsDashboardView .staff-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 15px 10px}
+body.staff-reference-mode #opsDashboardView .staff-panel-heading>div{display:grid;grid-template-columns:23px minmax(0,1fr);align-items:center;column-gap:7px}
+body.staff-reference-mode #opsDashboardView .staff-panel-icon{grid-row:span 2;display:grid;place-items:center;width:23px;height:23px;border-radius:6px;background:#edf6ff;color:#0878d1;font-size:15px}
+body.staff-reference-mode #opsDashboardView .staff-panel-heading strong{color:#14243a;font-size:12px;font-weight:800}
+body.staff-reference-mode #opsDashboardView .staff-panel-heading small{grid-column:2;color:#8190a4;font-size:9px}
+body.staff-reference-mode #opsDashboardView .staff-map-action{border:1px solid #d9e8fa;border-radius:6px;background:#fff;padding:7px 10px;color:#0878d1;font-size:9px;font-weight:800;cursor:pointer}
+body.staff-reference-mode #opsDashboardView #staffMapCanvas{height:250px;width:100%;background:#eaf5ff}
+body.staff-reference-mode #opsDashboardView #staffMapCanvas .leaflet-control-attribution{font-size:8px}
+body.staff-reference-mode #opsDashboardView .staff-map-legend{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:9px 13px;border-top:1px solid #edf1f6;color:#5f7188;font-size:9px}
+body.staff-reference-mode #opsDashboardView .staff-map-legend span{display:inline-flex;align-items:center;gap:5px}
+body.staff-reference-mode #opsDashboardView .staff-map-legend i,body.staff-reference-mode #opsDashboardView .staff-status-legend i{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+body.staff-reference-mode #opsDashboardView .legend-blue,body.staff-reference-mode #opsDashboardView .status-blue{background:#1677f2}
+body.staff-reference-mode #opsDashboardView .legend-green,body.staff-reference-mode #opsDashboardView .status-green{background:#20bf6b}
+body.staff-reference-mode #opsDashboardView .status-orange{background:#ff8a00}
+body.staff-reference-mode #opsDashboardView .staff-status-content{display:flex;align-items:center;justify-content:space-evenly;gap:12px;padding:14px 14px 20px;min-height:250px}
+body.staff-reference-mode #opsDashboardView .staff-donut{width:132px;height:132px;flex:none;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#1677f2 0 50%,#20bf6b 50% 75%,#ff8a00 75% 100%);position:relative}
+body.staff-reference-mode #opsDashboardView .staff-donut:before{content:"";position:absolute;inset:17px;border-radius:50%;background:#fff}
+body.staff-reference-mode #opsDashboardView .staff-donut>div{z-index:1;display:flex;flex-direction:column;align-items:center}
+body.staff-reference-mode #opsDashboardView .staff-donut strong{font-size:22px;color:#13243b;line-height:1.15}
+body.staff-reference-mode #opsDashboardView .staff-donut small{font-size:9px;color:#728198}
+body.staff-reference-mode #opsDashboardView .staff-status-legend{display:flex;flex-direction:column;gap:14px;min-width:0;flex:1}
+body.staff-reference-mode #opsDashboardView .staff-status-legend>div{display:grid;grid-template-columns:9px minmax(70px,1fr) auto auto;align-items:center;gap:7px;color:#2c3e55;font-size:9px}
+body.staff-reference-mode #opsDashboardView .staff-status-legend strong{font-size:10px;color:#14243a}
+body.staff-reference-mode #opsDashboardView .staff-status-legend small{color:#718198;font-size:8px}
+body.staff-reference-mode #opsDashboardView .staff-map-empty{height:250px;display:grid;place-items:center;padding:25px;text-align:center;color:#536b83;background:linear-gradient(135deg,#eaf5ff,#f7fbff);font-size:11px}
+body.staff-reference-mode #opsDashboardView .control-tray{margin-top:0!important}
+body.staff-reference-mode #opsDashboardView .control-tray-top{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important}
+body.staff-reference-mode #opsDashboardView .filter-inputs{flex:1!important;min-width:0!important;display:flex!important;align-items:center!important;gap:10px!important}
+body.staff-reference-mode #opsDashboardView .search-input-wrapper{flex:1!important;min-width:180px!important}
+body.staff-reference-mode #opsDashboardView .view-selector{flex:none!important}
+body.staff-reference-mode #opsDashboardView .kpi-card small{font-size:11px!important}
+body.staff-reference-mode #opsDashboardView .control-tray .btn,body.staff-reference-mode #opsDashboardView .view-btn,body.staff-reference-mode #opsDashboardView .chip{font-size:11px!important}
+body.staff-reference-mode #opsDashboardView .sheet-table th{font-size:11px!important}
+body.staff-reference-mode #opsDashboardView .sheet-table td,body.staff-reference-mode #opsDashboardView .sheet-table .cell-input{font-size:11px!important}
+@media(max-width:1200px){body.staff-reference-mode #opsDashboardView .staff-analytics-grid{grid-template-columns:minmax(0,1fr)}body.staff-reference-mode #opsDashboardView .staff-status-content{min-height:180px}body.staff-reference-mode #opsDashboardView #staffMapCanvas{height:220px}}
+@media(max-width:760px){body.staff-reference-mode #opsDashboardView .staff-status-content{justify-content:flex-start;flex-wrap:wrap}body.staff-reference-mode #opsDashboardView .staff-donut{width:110px;height:110px}body.staff-reference-mode #opsDashboardView .control-tray-top{align-items:stretch!important;flex-direction:column!important}body.staff-reference-mode #opsDashboardView .filter-inputs{flex-wrap:wrap!important}body.staff-reference-mode #opsDashboardView .search-input-wrapper{flex-basis:100%!important}}
