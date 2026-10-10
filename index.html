@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20261010-enterprise-control-tower-v1">
+<link rel="stylesheet" href="./style.css?v=20261010-enterprise-control-tower-v2">
 </head>
 <body>
 
@@ -143,6 +143,17 @@
 }
 </style>
 <main class="main-wrapper" id="opsDashboardView" style="display:none;">
+  <section class="ect-overview" id="enterpriseOverview" aria-label="Operations overview">
+    <div class="ect-overview-copy">
+      <div class="ect-eyebrow"><span class="ect-live-dot"></span> OPERATIONS CONTROL TOWER</div>
+      <h1>Shipment overview</h1>
+      <p>Monitor container movement, port milestones and operational exceptions in one place.</p>
+    </div>
+    <div class="ect-overview-stats">
+      <div class="ect-stat"><span>Records in view</span><strong id="ectVisibleCount">0</strong></div>
+      <div class="ect-stat"><span>Data source</span><strong><span class="ect-source-dot"></span> Connected view</strong></div>
+    </div>
+  </section>
   <div class="kpi-row">
     <div class="kpi-card active-kpi"><small>Active Shipments</small><strong id="kActive">0</strong></div>
     <div class="kpi-card destuffed-kpi"><small>Returned (Done)</small><strong id="kCompleted" style="color:var(--success)">0</strong></div>
@@ -267,7 +278,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20261010-enterprise-integrity-v1"></script>
+<script src="./app.js?v=20261010-enterprise-integrity-v2"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
