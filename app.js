@@ -1151,6 +1151,8 @@ async function performPublicSearch() {
       const latestEvent = getLatestPublicEvent(r);
       const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "—";
       const mbl = getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "—";
+      const booking = getField(r, ["BOOKING NO", "BOOKING NO.", "BOOKING NUMBER", "BOOKING", "BOOKING REF", "BOOKING REFERENCE"]) || "—";
+      const hbl = getField(r, ["HBL NO", "HBL NO.", "HOUSE BL", "HOUSE BILL OF LADING", "HBL"]) || "—";
       const liner = getField(r, ["LINER", "LINE", "SHIPPING LINE"]) || "—";
       const originPort = getField(r, ["POL", "PORT OF LOADING"]) || "—";
       const gwInfo = getGatewayPortInfo(r);
@@ -1165,13 +1167,13 @@ async function performPublicSearch() {
       return `
         <tr class="carrier-result-row cascade-item">
           <td class="carrier-expand-cell"><button class="carrier-expand-btn" type="button" aria-expanded="false" onclick="togglePublicShipmentDetail('${detailId}', this)">⌄</button></td>
-          <td><span class="carrier-booking-ref">${esc(mbl)}</span></td>
+          <td><span class="carrier-booking-ref">${esc(booking)}</span><small class="carrier-subline">MBL: ${esc(mbl)}</small></td>
           <td><button class="carrier-container-link" type="button" onclick="togglePublicShipmentDetail('${detailId}', this)">${esc(cntr)}</button><small class="carrier-subline">${esc(type)}</small></td>
           <td><div class="carrier-place"><strong>${esc(latestEvent.place || gwPort)}</strong><small>${esc(liner)}</small></div></td>
           <td><div class="carrier-event"><strong>${esc(latestEvent.label)}</strong><small>${esc(latestEvent.date)}</small></div></td>
           <td><div class="carrier-arrival"><strong>${esc(getField(r, ["POD", "PORT OF DISCHARGE", "DISCHARGE PORT"]) || vessel)}</strong><small>${esc(eta)}</small></div></td>
-          <td><span class="carrier-sensitive">${esc(getField(r, ["SEAL NO.", "SEAL NO", "SEAL"]) || "—")}</span></td>
-          <td><span class="carrier-sensitive">${esc(getField(r, ["PURCHASE ORDER NO.", "PURCHASE ORDER", "PO NO", "P/O NO."]) || "—")}</span></td>
+          <td><span class="carrier-vessel-value">${esc(vessel)}</span></td>
+          <td><span class="carrier-sensitive">${esc(hbl)}</span></td>
         </tr>
         <tr id="${detailId}" class="carrier-detail-row" hidden>
           <td colspan="8">
@@ -1193,7 +1195,7 @@ async function performPublicSearch() {
         <div class="public-results-toolbar"><span>${publicSearchResults.length} shipment${publicSearchResults.length === 1 ? "" : "s"} found</span><span>Search: ${esc(rawInput)}</span></div>
         <div class="carrier-table-wrap">
           <table class="carrier-results-table carrier-one-table">
-            <thead><tr><th class="carrier-expand-head"></th><th>Booking Ref</th><th>Container No.</th><th>Latest Place</th><th>Latest Event Status / Time</th><th>POD / Vessel Arrival</th><th>Seal No.</th><th>Purchase Order No.</th></tr></thead>
+            <thead><tr><th class="carrier-expand-head"></th><th>Booking / MBL</th><th>Container No.</th><th>Latest Place</th><th>Latest Event Status / Time</th><th>POD / ETA</th><th>Vessel / Voyage</th><th>HBL No.</th></tr></thead>
             <tbody>${rowsHtml}</tbody>
           </table>
         </div>
