@@ -1837,3 +1837,9 @@ body.staff-reference-mode #opsDashboardView .sheet-table td[data-label="Transshi
 body.staff-reference-mode #opsDashboardView .sheet-table td[data-label="Transshipment Port(s)"] .cell-input{width:145px!important;min-width:130px!important}
 body.staff-reference-mode #opsDashboardView .sheet-table td[data-label="Transshipment Port(s)"] .cell-input::placeholder{color:#8a9ab0;font-size:10px}
 body.staff-reference-mode #opsDashboardView .staff-map-legend #staffMapRouteStatus{white-space:normal;line-height:1.5}
+
+/* Per-shipment route controls */
+.staff-shipment-map-btn{border:1px solid #c9def5!important;background:#eef6ff!important;color:#0a5cac!important;font-size:10px!important;font-weight:800!important;border-radius:7px!important}
+.staff-shipment-map-btn:hover{background:#dceeff!important;border-color:#8cbbe9!important;transform:translateY(-1px)}
+body.staff-reference-mode #opsDashboardView .sheet-table td[data-label="Actions"]{min-width:115px}
+body.staff-reference-mode #opsDashboardView .sheet-table td[data-label="Actions"]>div{gap:4px!important}
