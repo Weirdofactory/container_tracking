@@ -1828,6 +1828,7 @@ function updateReferenceRail() {
 let staffMapInstance = null;
 let staffMapRouteLayer = null;
 let staffSelectedRoutePort = "";
+let staffSelectedShipmentIndex = null;
 function normalizedPortName(value) {
   const raw = String(value || "").trim().toUpperCase();
   if (!raw) return "";
@@ -1958,6 +1959,7 @@ function buildMaritimeRoute(origin, destination, startCoords, endCoords, transsh
 function drawStaffRoutesForPort(port) {
   if (!staffMapInstance || !staffMapRouteLayer || !port) return;
   staffSelectedRoutePort = port;
+  staffSelectedShipmentIndex = null;
   staffMapRouteLayer.clearLayers();
 
   const routeGroups = new Map();
@@ -2099,6 +2101,102 @@ function drawStaffRoutesForPort(port) {
   }
 }
 
+function showShipmentRoute(index) {
+  if (!Number.isInteger(Number(index)) || !rows[Number(index)]) {
+    toast("Shipment record not found.");
+    return;
+  }
+  const idx = Number(index);
+  if (!staffMapInstance || !staffMapRouteLayer) renderStaffAnalytics();
+  if (!staffMapInstance || !staffMapRouteLayer || typeof L === "undefined") {
+    toast("Map is unavailable. Please try again when the map loads.");
+    return;
+  }
+
+  const row = rows[idx];
+  const container = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CONTAINER NUMBER"]) || ("Shipment " + (idx + 1));
+  const rawOrigin = getField(row, ["POL", "PORT OF LOADING", "ORIGIN"]);
+  const origin = normalizedPortName(rawOrigin);
+  const rawGateway = getField(row, ["GATEWAY PORT", "GATEWAY", "POD", "PORT", "DESTINATION"]);
+  const gatewayInfo = getGatewayPortInfo(row);
+  const destination = normalizedPortName(gatewayInfo && gatewayInfo.key) || normalizedPortName(rawGateway);
+  const transshipmentPorts = getTransshipmentPorts(row);
+  const vessel = getField(row, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "Vessel not recorded";
+  const originCoords = PORT_COORDS[origin];
+  const destinationCoords = PORT_COORDS[destination];
+
+  staffSelectedShipmentIndex = idx;
+  staffSelectedRoutePort = "";
+  staffMapRouteLayer.clearLayers();
+
+  const status = el("staffMapRouteStatus");
+  const summary = el("staffMapSummary");
+  const portCount = el("staffMapPortCount");
+  if (summary) summary.textContent = "Selected shipment · " + container;
+  if (portCount) portCount.textContent = (1 + transshipmentPorts.length + (destination ? 1 : 0)) + " route stop(s)";
+
+  if (!origin || !destination || !originCoords || !destinationCoords) {
+    if (status) status.textContent = "Cannot draw " + container + " yet: confirm the POL and final gateway port, and ensure both are mapped.";
+    if (el("staffMapCanvas")) el("staffMapCanvas").scrollIntoView({behavior:"smooth",block:"center"});
+    return;
+  }
+
+  const route = buildMaritimeRoute(origin, destination, originCoords, destinationCoords, transshipmentPorts);
+  if (!route || !Array.isArray(route.points) || route.points.length < 2) {
+    if (status) status.textContent = "No supported sea-lane definition is available for " + container + "'s route via " + (transshipmentPorts.join(" → ") || "direct") + ". No line was drawn across land.";
+    if (el("staffMapCanvas")) el("staffMapCanvas").scrollIntoView({behavior:"smooth",block:"center"});
+    return;
+  }
+
+  L.polyline(route.points, {
+    color:"#ffffff", weight:9, opacity:.94, lineCap:"round", lineJoin:"round", interactive:false
+  }).addTo(staffMapRouteLayer);
+  const line = L.polyline(route.points, {
+    color:"#0878e8", weight:4.5, opacity:1, lineCap:"round", lineJoin:"round"
+  }).addTo(staffMapRouteLayer);
+  const routeLabel = [origin, ...transshipmentPorts, destination].join(" → ");
+  line.bindTooltip(
+    "<strong>" + esc(container) + "</strong><br>" + esc(routeLabel) + "<br>" + esc(vessel),
+    {sticky:true,direction:"top",opacity:.98,className:"staff-route-tooltip"}
+  );
+
+  const bounds = [originCoords, destinationCoords];
+  L.circleMarker(originCoords,{radius:7,color:"#fff",weight:2,fillColor:"#0878e8",fillOpacity:1})
+    .bindTooltip("<strong>POL</strong><br>"+esc(origin),{direction:"top",className:"staff-route-tooltip"})
+    .addTo(staffMapRouteLayer);
+  route.stopPoints.forEach(function(stop, stopIndex) {
+    L.circleMarker(stop.coords,{radius:7,color:"#fff",weight:2,fillColor:"#f59e0b",fillOpacity:1})
+      .bindTooltip("<strong>Transshipment "+(stopIndex+1)+"</strong><br>"+esc(stop.port),{direction:"top",className:"staff-route-tooltip"})
+      .addTo(staffMapRouteLayer);
+    bounds.push(stop.coords);
+  });
+  L.circleMarker(destinationCoords,{radius:7,color:"#fff",weight:2,fillColor:"#19b875",fillOpacity:1})
+    .bindTooltip("<strong>Final gateway</strong><br>"+esc(destination),{direction:"top",className:"staff-route-tooltip"})
+    .addTo(staffMapRouteLayer);
+
+  const arrowIndex = Math.min(route.points.length-2,Math.max(1,Math.floor(route.points.length*.63)));
+  const before=route.points[arrowIndex-1], after=route.points[arrowIndex+1];
+  const latScale=Math.cos(route.points[arrowIndex][0]*Math.PI/180);
+  const angle=Math.atan2(-(after[0]-before[0]),(after[1]-before[1])*latScale)*180/Math.PI;
+  const arrowIcon=L.divIcon({
+    className:"staff-route-direction-wrap",
+    html:'<span class="staff-route-direction" style="transform:rotate('+angle.toFixed(1)+'deg)" aria-label="Route direction">➤</span>',
+    iconSize:[25,25],iconAnchor:[12,12]
+  });
+  L.marker(route.points[arrowIndex],{icon:arrowIcon,interactive:false,keyboard:false}).addTo(staffMapRouteLayer);
+
+  const shipIcon=L.divIcon({
+    className:"staff-route-vessel-wrap",
+    html:'<span class="staff-route-vessel" title="Schematic route marker — not a live AIS position" aria-label="Vessel route marker">🚢</span>',
+    iconSize:[30,30],iconAnchor:[15,15]
+  });
+  L.marker(route.points[Math.floor(route.points.length*.48)],{icon:shipIcon,interactive:false,keyboard:false}).addTo(staffMapRouteLayer);
+
+  if (status) status.textContent = container + " · " + routeLabel + " · route shown for this shipment only (schematic, not live AIS).";
+  if (el("staffMapCanvas")) el("staffMapCanvas").scrollIntoView({behavior:"smooth",block:"center"});
+  staffMapInstance.fitBounds(bounds,{padding:[36,36],maxZoom:4,animate:true});
+}
+
 function renderStaffAnalytics() {
   const active = rows.filter(r => !isFullyCompleted(r));
   const completed = rows.filter(r => isFullyCompleted(r));
@@ -2150,11 +2248,13 @@ function renderStaffAnalytics() {
   });
   if(bounds.length) staffMapInstance.fitBounds(bounds,{padding:[24,24],maxZoom:4});
   else staffMapInstance.setView([24,75],2);
-  if (staffSelectedRoutePort && portCounts.has(staffSelectedRoutePort)) {
+  if (staffSelectedShipmentIndex !== null && rows[staffSelectedShipmentIndex]) {
+    showShipmentRoute(staffSelectedShipmentIndex);
+  } else if (staffSelectedRoutePort && portCounts.has(staffSelectedRoutePort)) {
     drawStaffRoutesForPort(staffSelectedRoutePort);
   } else {
     staffSelectedRoutePort = "";
-    if (el("staffMapRouteStatus")) el("staffMapRouteStatus").textContent = "Click a port marker to show connected route(s)";
+    if (el("staffMapRouteStatus")) el("staffMapRouteStatus").textContent = "Select Map on a shipment row/card to show its own route, or click a port to see related shipments.";
   }
   setTimeout(()=>staffMapInstance&&staffMapInstance.invalidateSize(),100);
 }
@@ -2363,6 +2463,7 @@ function renderCards(items) {
         <div>
           <input type="text" class="input" style="width:100%; margin-bottom:6px; height:32px;" value="${esc(r["REMARKS"] || "")}" placeholder="Remark..." onchange="updateRemark(${i}, this.value)" ${isViewer ? 'readonly' : ''}>
           <div class="card-footer-btns photo-exclude">
+            <button class="btn staff-shipment-map-btn" style="padding:4px 8px;" onclick="showShipmentRoute(${i})">🗺️ Map Route</button>
             <button class="btn" style="padding:4px 8px;" onclick="openEmailModal(${i})">✉️ Email</button>
             ${!isViewer ? `<button class="btn" style="padding:4px 8px;" onclick="openModal(${i})">✏️ Edit</button>` : ''}
             ${currentUser && currentUser.role === 'Admin' ? `<button class="btn btn-danger" style="padding:4px 8px;" onclick="deleteRow(${i})">🗑️</button>` : ''}
@@ -2430,7 +2531,8 @@ function renderSheet(items) {
         <td data-label="Exposure" style="font-weight:800; font-family:'JetBrains Mono'; color:${fees.totalCostUSD > 0 ? 'var(--danger)' : 'var(--success)'};">${formatCurrency(fees.totalCostUSD)}</td>
         <td data-label="Remarks"><input class="cell-input" value="${esc(r["REMARKS"] || "")}" onchange="inlineEdit(${i}, 'REMARKS', this.value)" ${editableAttrText}></td>
         <td data-label="Actions">
-          <div style="display:flex; gap:3px;">
+          <div style="display:flex; gap:3px; flex-wrap:wrap;">
+            <button class="btn staff-shipment-map-btn" style="padding:3px 6px; color:var(--primary)" title="Show only this shipment route on the map" onclick="showShipmentRoute(${i})">🗺️ Map</button>
             ${!isViewer ? `<button class="btn" style="padding:2px 5px; color:var(--accent)" title="Mark Returned" onclick="markSingleReturned(${i})">🔄</button>` : ''}
             ${currentUser && currentUser.role === 'Admin' ? `<button class="btn btn-danger" style="padding:2px 5px;" onclick="deleteRow(${i})">🗑️</button>` : ''}
           </div>
