@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20261011-shipment-wise-map-v1">
+<link rel="stylesheet" href="./style.css?v=20261012-map-visible-v2">
 </head>
 <body>
 
@@ -185,7 +185,7 @@
   
   <div class="ect-workspace-grid"><div class="ect-workspace-main">
 <section class="staff-map-panel">
-      <div class="staff-panel-heading"><div><span class="staff-panel-icon">⌖</span><strong>Shipment Map</strong><small id="staffMapSummary">Ports represented by available shipment data</small></div><button type="button" id="staffMapRefresh" class="staff-map-action">Refresh view ↗</button></div>
+      <div class="staff-panel-heading"><div><span class="staff-panel-icon">⌖</span><strong>Shipment Map</strong><small id="staffMapSummary">Ports represented by available shipment data</small></div><div class="staff-map-heading-actions"><button type="button" id="staffMapShow" class="staff-map-action">🗺️ Show Map</button><button type="button" id="staffMapRefresh" class="staff-map-action">Refresh view ↗</button></div></div>
       <div id="staffMapCanvas" role="img" aria-label="Shipment map. Select Map Route on a shipment row or card to display an individual shipment route."></div>
       <div class="staff-map-legend"><span><i class="legend-blue"></i> Origin / loading port</span><span><i class="legend-green"></i> India gateway / terminal</span><span id="staffMapPortCount">0 mapped ports</span><span id="staffMapRouteStatus" aria-live="polite">Click a port marker to show connected route(s)</span></div>
     </section>
@@ -325,7 +325,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20261011-shipment-wise-map-v1"></script>
+<script src="./app.js?v=20261012-map-visible-v2"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
