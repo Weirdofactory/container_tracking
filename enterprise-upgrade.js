@@ -129,7 +129,6 @@
     if(go)go.addEventListener("click",()=>{hubSearch=(search&&search.value)||"";render();audit("Ran advanced search",hubSearch);});
     if(clear)clear.addEventListener("click",()=>{hubSearch="";render();});
     const auditClear=$("euAuditClear");if(auditClear)auditClear.addEventListener("click",()=>{try{localStorage.removeItem(auditKey);}catch(_){}render();});
-    root.querySelectorAll(".eu-detail-toolbar .eu-btn[data-eu-row]").forEach(b=>b.addEventListener("click",()=>{const i=Number(b.dataset.euRow);closeHub();if(typeof showShipmentRoute==="function")showShipmentRoute(i);}));
   }
   function mount(){
     if(!$("opsDashboardView")||$("euHub"))return;
