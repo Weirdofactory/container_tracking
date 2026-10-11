@@ -14,7 +14,7 @@ let activeCurrency = localStorage.getItem("gml_curr") || "INR";
 
 const COLS = [
   'CONTAINER NO.', 'TYPE', 'MBL NO', 'LINER', 'GATEWAY PORT', 'CFS NAME', 
-  'POL', 'ETD', 'FREE DAYS', 'SEAL NO.', 'VESSEL & VOY', 
+  'POL', 'TRANSSHIPMENT PORT', 'ETD', 'FREE DAYS', 'SEAL NO.', 'VESSEL & VOY', 
   'ETA', 'SPLIT DATE', 'INWARD DATE', 'PORT IN', 'PORT OUT', 'CFS IN', 'TRUCK NO.', 
   'DRIVER CONTACT', 'PLANNING', 'DESTUFFING DATE', 'EMPTY RETURN VALIDITY', 'CONTAINER RETURN DATE', 'REMARKS'
 ];
@@ -1853,6 +1853,13 @@ function normalizedPortName(value) {
   if (raw.includes("PORT KLANG") || raw.includes("KLANG")) return "PORT KLANG";
   return "";
 }
+function getTransshipmentPorts(row) {
+  const raw = getField(row, ["TRANSSHIPMENT PORT", "TRANSHIPMENT PORT", "TRANS-SHIPMENT PORT", "T/S PORT", "TS PORT", "TRANSSHIPMENT"]);
+  if (!raw) return [];
+  return [...new Set(String(raw).split(/[;,>→|]+/).map(function (value) {
+    return normalizedPortName(value);
+  }).filter(Boolean))];
+}
 const MARITIME_ROUTE_WAYPOINTS = {
   // East China Sea and Taiwan/Luzon passages, then South China Sea, Singapore Strait, Malacca Strait and Bay of Bengal.
   "SHANGHAI": [[30.9,123.0],[28.8,124.1],[26.2,123.5],[24.0,122.3],[22.0,120.8],[20.0,118.0],[17.5,115.0],[15.0,112.5],[12.3,110.0],[9.0,106.8],[6.0,104.5],[4.3,104.1],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
@@ -1874,26 +1881,78 @@ const MARITIME_ROUTE_WAYPOINTS = {
   "GENOVA": [[43.9,8.4],[42.8,7.5],[41.5,7.2],[39.5,7.5],[37.5,8.6],[36.5,12.5],[35.5,18.0],[33.8,26.0],[31.3,32.2],[29.9,32.55],[27.0,34.0],[22.0,38.0],[16.0,41.0],[12.8,43.5],[12.0,48.0],[11.0,55.0],[10.0,64.0],[9.3,72.0],[11.0,77.5],[13.35,80.75]]
 };
 
-function buildMaritimeRoute(origin, destination, startCoords, endCoords) {
+function buildMaritimeRoute(origin, destination, startCoords, endCoords, transshipmentPorts = []) {
   const indiaGateways = new Set(["CCTL", "CITPL", "KATTUPALLI", "ENNORE", "CHENNAI"]);
   if (!indiaGateways.has(destination)) return null;
 
-  const waypoints = MARITIME_ROUTE_WAYPOINTS[origin];
-  if (!waypoints || !Array.isArray(waypoints)) return null;
+  const baseWaypoints = MARITIME_ROUTE_WAYPOINTS[origin];
+  if (!baseWaypoints || !Array.isArray(baseWaypoints)) return null;
+  let waypoints = baseWaypoints.map(point => point.slice());
+  const via = [...new Set((transshipmentPorts || []).filter(Boolean))];
 
-  // Replace guessed city-centre points with coastal port approaches for inland-named ports.
+  // Explicit route via Colombo swings west of Sri Lanka and returns north along its eastern coast.
+  if (via.includes("COLOMBO")) {
+    const singaporeIndex = waypoints.findIndex(point =>
+      Math.abs(point[0] - 1.35) < 1.0 && Math.abs(point[1] - 103.65) < 2.0
+    );
+    if (singaporeIndex < 0) return null;
+    waypoints = waypoints.slice(0, singaporeIndex + 1).concat([
+      [1.4,102.5],[2.8,100.0],[4.8,97.0],[6.5,92.5],[8.2,87.0],
+      [8.7,83.0],[7.8,81.0],[6.93,79.85],[7.4,79.6],[9.0,79.7],
+      [11.0,80.0],[12.2,80.15],[13.25,80.35]
+    ]);
+  }
+
+  // Explicit southern approach into Hong Kong for East Asian origins before joining the South China Sea corridor.
+  if (via.includes("HONG KONG") && ["SHANGHAI","NINGBO","QINGDAO","TIANJIN","BUSAN","TAIWAN"].includes(origin)) {
+    const southernIndex = waypoints.findIndex(point => point[0] <= 17.5);
+    const approachIndex = waypoints.findIndex(point => point[0] <= 22.1);
+    if (southernIndex < 0 || approachIndex < 0) return null;
+    waypoints = waypoints.slice(0, approachIndex + 1).concat([
+      [21.2,120.2],[20.8,117.8],[21.4,115.8],[22.1,114.6],PORT_COORDS["HONG KONG"]
+    ], waypoints.slice(southernIndex));
+  }
+
+  // Insert the nominated transfer ports only when they sit close to this known sea corridor.
+  // If a transfer port is not on a supported safe corridor, fail closed rather than drawing across land.
+  const stopInsertion = [];
+  via.forEach(function (port) {
+    const coords = PORT_COORDS[port];
+    if (!coords) { stopInsertion.push({ unsupported: port }); return; }
+    let bestIndex = -1, bestDistance = Infinity;
+    waypoints.forEach(function (point, index) {
+      const avgLat = ((point[0] + coords[0]) / 2) * Math.PI / 180;
+      const dLat = point[0] - coords[0];
+      const dLng = (point[1] - coords[1]) * Math.cos(avgLat);
+      const distance = Math.sqrt(dLat * dLat + dLng * dLng);
+      if (distance < bestDistance) { bestDistance = distance; bestIndex = index; }
+    });
+    if (bestDistance > 2.6) stopInsertion.push({ unsupported: port });
+    else stopInsertion.push({ port, coords, index: bestIndex, distance: bestDistance });
+  });
+  if (stopInsertion.some(item => item.unsupported)) return null;
+
+  stopInsertion.sort((a,b) => a.index - b.index);
+  for (let i = stopInsertion.length - 1; i >= 0; i--) {
+    const stop = stopInsertion[i];
+    if (!stop) continue;
+    const current = waypoints[stop.index];
+    if (current && Math.abs(current[0] - stop.coords[0]) < 0.08 && Math.abs(current[1] - stop.coords[1]) < 0.08) continue;
+    waypoints.splice(stop.index + 1, 0, stop.coords);
+  }
+
   const path = [startCoords, ...waypoints, endCoords];
   const dense = [];
   for (let i = 0; i < path.length - 1; i++) {
     const a = path[i], b = path[i + 1];
-    const steps = Math.max(2, Math.ceil(Math.max(Math.abs(b[0]-a[0]), Math.abs(b[1]-a[1])) / 1.2));
+    const steps = Math.max(2, Math.ceil(Math.max(Math.abs(b[0]-a[0]), Math.abs(b[1]-a[1])) / 1.0));
     for (let k = 0; k < steps; k++) {
       const t = k / steps;
       dense.push([a[0] + (b[0]-a[0])*t, a[1] + (b[1]-a[1])*t]);
     }
   }
   dense.push(path[path.length - 1]);
-  return dense;
+  return { points: dense, stopPoints: via.map(port => ({port, coords: PORT_COORDS[port]})) };
 }
 
 function drawStaffRoutesForPort(port) {
@@ -1907,7 +1966,8 @@ function drawStaffRoutesForPort(port) {
   rows.forEach(function (row) {
     const origin = normalizedPortName(getField(row, ["POL", "PORT OF LOADING", "ORIGIN"]));
     const destination = normalizedPortName(getField(row, ["GATEWAY PORT", "POD", "PORT", "DESTINATION"]));
-    if (origin !== port && destination !== port) return;
+    const transshipmentPorts = getTransshipmentPorts(row);
+    if (origin !== port && destination !== port && !transshipmentPorts.includes(port)) return;
 
     const originCoords = PORT_COORDS[origin];
     const destinationCoords = PORT_COORDS[destination];
@@ -1916,13 +1976,14 @@ function drawStaffRoutesForPort(port) {
       return;
     }
 
-    const key = origin + "→" + destination;
+    const key = [origin, ...transshipmentPorts, destination].join("→");
     if (!routeGroups.has(key)) {
       routeGroups.set(key, {
         origin,
         destination,
         originCoords,
         destinationCoords,
+        transshipmentPorts,
         containers: [],
         vessels: []
       });
@@ -1938,8 +1999,9 @@ function drawStaffRoutesForPort(port) {
   let routeUnavailableCount = 0;
   let routesDrawn = 0;
   routeGroups.forEach(function (route) {
-    const points = buildMaritimeRoute(route.origin, route.destination, route.originCoords, route.destinationCoords);
-    if (!points) { routeUnavailableCount++; return; }
+    const builtRoute = buildMaritimeRoute(route.origin, route.destination, route.originCoords, route.destinationCoords, route.transshipmentPorts);
+    if (!builtRoute) { routeUnavailableCount++; return; }
+    const points = builtRoute.points;
     routesDrawn++;
     // Marine route follows explicit sea-lane waypoints instead of a generic land-crossing arc.
     L.polyline(points, {
@@ -1962,11 +2024,21 @@ function drawStaffRoutesForPort(port) {
     const vesselText = route.vessels.slice(0, 4).join(", ");
     const moreVessels = route.vessels.length > 4 ? " +" + (route.vessels.length - 4) + " more" : "";
     const routeSummary = route.containers.length + " shipment" + (route.containers.length === 1 ? "" : "s");
+    const viaText = route.transshipmentPorts.length ? "<br>Via: " + esc(route.transshipmentPorts.join(" → ")) : "";
     const tooltipHtml =
       "<strong>" + esc(route.origin) + " → " + esc(route.destination) + "</strong><br>" +
-      esc(routeSummary) +
+      esc(routeSummary) + viaText +
       (vesselText ? "<br>" + esc(vesselText + moreVessels) : "");
     line.bindTooltip(tooltipHtml, { sticky: true, direction: "top", opacity: 0.98, className: "staff-route-tooltip" });
+
+    builtRoute.stopPoints.forEach(function (stop, stopIndex) {
+      const stopMarker = L.circleMarker(stop.coords, {
+        radius: 7, color: "#ffffff", weight: 2, fillColor: "#f59e0b", fillOpacity: 1
+      }).bindTooltip("<strong>Transshipment</strong><br>" + esc(stop.port) + "<br>Stop " + (stopIndex + 1), {
+        direction: "top", offset: [0, -5], className: "staff-route-tooltip"
+      }).addTo(staffMapRouteLayer);
+      routeBounds.push(stop.coords);
+    });
 
     const destinationIsIndia = ["CCTL", "CITPL", "CHENNAI", "KATTUPALLI", "ENNORE"].includes(route.destination);
     const originMarker = L.circleMarker(route.originCoords, {
@@ -2045,7 +2117,8 @@ function renderStaffAnalytics() {
   rows.forEach(row=>{
     const origin=normalizedPortName(getField(row,["POL","PORT OF LOADING","ORIGIN"]));
     const dest=normalizedPortName(getField(row,["GATEWAY PORT","POD","PORT","DESTINATION"]));
-    [origin,dest].filter(Boolean).forEach(p=>portCounts.set(p,(portCounts.get(p)||0)+1));
+    const via=getTransshipmentPorts(row);
+    [...new Set([origin,dest,...via].filter(Boolean))].forEach(p=>portCounts.set(p,(portCounts.get(p)||0)+1));
   });
   if(el("staffMapPortCount")) el("staffMapPortCount").textContent=portCounts.size+" mapped ports";
   if(el("staffMapSummary")) el("staffMapSummary").textContent=portCounts.size?"Locations matched from existing shipment records":"No recognised port names found in the current records";
@@ -2069,7 +2142,7 @@ function renderStaffAnalytics() {
     if (!coords) return;
     const isIndia=["CCTL","CITPL","CHENNAI","KATTUPALLI","ENNORE"].includes(port);
     const marker=L.circleMarker(coords,{radius:7,weight:2,color:isIndia?"#20bf6b":"#1677f2",fillColor:isIndia?"#20bf6b":"#1677f2",fillOpacity:.96});
-    marker.bindPopup("<strong>"+esc(port)+"</strong><br>"+shipmentCount+" shipment reference(s)<br><small>Click this port to show connected routes</small>");
+    marker.bindPopup("<strong>"+esc(port)+"</strong><br>"+shipmentCount+" shipment reference(s)<br><small>Click this port to show connected route(s), including transshipments</small>");
     marker.on("click",function(){ drawStaffRoutesForPort(port); });
     marker.addTo(staffMapInstance);
     staffMapInstance._staffMarkers.push(marker);
@@ -2100,6 +2173,7 @@ function renderMinimalShipmentTable(items) {
     const mbl = getField(row, ["MBL NO", "MBL", "MASTER BL"]) || "—";
     const liner = getField(row, ["LINER", "LINE", "CARRIER"]) || "—";
     const port = getField(row, ["GATEWAY PORT", "POD", "PORT", "DESTINATION"]) || "—";
+    const transshipment = getField(row, ["TRANSSHIPMENT PORT", "TRANSHIPMENT PORT", "TRANS-SHIPMENT PORT", "T/S PORT", "TS PORT"]) || "—";
     const portIn = getField(row, ["PORT IN"]) || "—";
     const portOut = getField(row, ["PORT OUT"]) || "—";
     const cfs = getField(row, ["CFS NAME", "CFS"]) || "—";
@@ -2109,11 +2183,11 @@ function renderMinimalShipmentTable(items) {
     const remarks = getField(row, ["REMARKS", "NOTES"]) || "—";
     return "<tr><td><input type='checkbox' class='chk-item' value='" + rowIndex + "'></td>" +
       "<td><strong>" + esc(cn) + "</strong></td><td>" + esc(type) + "</td><td>" + esc(mbl) +
-      "</td><td>" + esc(liner) + "</td><td>" + esc(port) + "</td><td>" + esc(portIn) +
+      "</td><td>" + esc(liner) + "</td><td>" + esc(port) + "</td><td>" + esc(transshipment) + "</td><td>" + esc(portIn) +
       "</td><td>" + esc(portOut) + "</td><td>" + esc(cfs) + "</td><td>" + esc(truck) +
       "</td><td>" + esc(destuff) + "</td><td>" + esc(returned) + "</td><td>—</td><td>—</td><td>—</td><td>" +
       esc(remarks) + "</td><td><button class='btn' type='button' onclick='openModal(" + rowIndex + ")'>View / Edit</button></td></tr>";
-  }).join("") || "<tr><td colspan='17' style='padding:28px;text-align:center;color:#64748b'>No shipment records are loaded. Check the Sync status above and retry the cloud connection.</td></tr>";
+  }).join("") || "<tr><td colspan="18" style='padding:28px;text-align:center;color:#64748b'>No shipment records are loaded. Check the Sync status above and retry the cloud connection.</td></tr>";
   const pager = el("paginationWrapper");
   if (pager) pager.textContent = list.length > 25 ? "Showing first 25 of " + list.length + " records (recovery view)" : "Recovery view · " + list.length + " records";
 }
@@ -2308,7 +2382,7 @@ function renderSheet(items) {
   const editableAttrSelect = isViewer ? 'disabled' : 'disabled ondblclick="this.disabled=false; this.focus();" onblur="this.disabled=true;"';
 
   if (!items.length) {
-    el("sheetTableBody").innerHTML = `<tr><td colspan="17" style="text-align:center; padding:40px; color:var(--text-muted);">No records found.</td></tr>`;
+    el("sheetTableBody").innerHTML = `<tr><td colspan="18" style="text-align:center; padding:40px; color:var(--text-muted);">No records found.</td></tr>`;
     el("paginationWrapper").innerHTML = "";
     return;
   }
@@ -2344,6 +2418,7 @@ function renderSheet(items) {
             <option value="Ennore" ${gwPort.key === 'Ennore' ? 'selected' : ''}>Ennore</option>
           </select>
         </td>
+        <td data-label="Transshipment Port(s)"><input class="cell-input" style="width:145px;min-width:130px;" value="${esc(getField(r, ["TRANSSHIPMENT PORT", "TRANSHIPMENT PORT", "TRANS-SHIPMENT PORT", "T/S PORT", "TS PORT"]) || "")}" placeholder="e.g. Singapore" title="Enter intermediate port(s) in sailing order, separated by commas" onchange="inlineEdit(${i}, 'TRANSSHIPMENT PORT', this.value)" ${editableAttrText}></td>
         <td data-label="Port In"><input class="cell-input" type="date" value="${getField(r, ["PORT IN"]) || ""}" onchange="inlineEdit(${i}, 'PORT IN', this.value)" ${editableAttrText}></td>
         <td data-label="Port Out"><input class="cell-input" type="date" value="${getField(r, ["PORT OUT"]) || ""}" onchange="inlineEdit(${i}, 'PORT OUT', this.value)" ${editableAttrText}></td>
         <td data-label="CFS Depot"><input class="cell-input" style="width:80px;" value="${esc(getField(r, ["CFS NAME", "CFS"]) || "")}" onchange="inlineEdit(${i}, 'CFS NAME', this.value)" ${editableAttrText}></td>
@@ -3515,7 +3590,7 @@ function renderSheet(items) {
   const editableAttrSelect = isViewer ? 'disabled' : 'disabled ondblclick="this.disabled=false; this.focus();" onblur="this.disabled=true;"';
 
   if (!items.length) {
-    el("sheetTableBody").innerHTML = `<tr><td colspan="17" style="text-align:center; padding:40px; color:var(--text-muted);">No records found.</td></tr>`;
+    el("sheetTableBody").innerHTML = `<tr><td colspan="18" style="text-align:center; padding:40px; color:var(--text-muted);">No records found.</td></tr>`;
     el("paginationWrapper").innerHTML = "";
     return;
   }
