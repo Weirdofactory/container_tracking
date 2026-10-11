@@ -2229,7 +2229,9 @@ function renderStaffAnalytics() {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:12,attribution:"© OpenStreetMap"}).addTo(staffMapInstance);
     staffMapRouteLayer = L.layerGroup().addTo(staffMapInstance);
     const refresh=el("staffMapRefresh");
-    if(refresh) refresh.addEventListener("click",()=>{renderStaffAnalytics();setTimeout(()=>staffMapInstance&&staffMapInstance.invalidateSize(),100);});
+    if(refresh && !refresh.dataset.bound) { refresh.dataset.bound="1"; refresh.addEventListener("click",()=>{renderStaffAnalytics();setTimeout(()=>staffMapInstance&&staffMapInstance.invalidateSize(),100);}); }
+    const showMap=el("staffMapShow");
+    if(showMap && !showMap.dataset.bound) { showMap.dataset.bound="1"; showMap.addEventListener("click",()=>{ const panel=showMap.closest(".staff-map-panel"); if(panel) panel.scrollIntoView({behavior:"smooth",block:"start"}); setTimeout(()=>staffMapInstance&&staffMapInstance.invalidateSize(),180); }); }
   }
   if(staffMapInstance._staffMarkers) staffMapInstance._staffMarkers.forEach(marker=>marker.remove());
   staffMapInstance._staffMarkers=[];
