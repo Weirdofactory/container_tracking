@@ -4447,6 +4447,29 @@ renderUI();
     document.body.classList.toggle("staff-reference-mode", isStaff);
   }
   syncSidebarVisibility();
+
+  const sidebarToggle = document.getElementById("staffSidebarToggle");
+  const sidebarStorageKey = "gmlStaffSidebarCollapsed";
+  function applySidebarState(collapsed) {
+    document.body.classList.toggle("staff-sidebar-collapsed", !!collapsed);
+    if (!sidebarToggle) return;
+    sidebarToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    sidebarToggle.setAttribute("aria-label", collapsed ? "Expand navigation" : "Collapse navigation");
+    sidebarToggle.title = collapsed ? "Expand navigation" : "Collapse navigation";
+    const icon = sidebarToggle.querySelector("span[aria-hidden='true']");
+    if (icon) icon.textContent = collapsed ? "›" : "‹";
+    const label = sidebarToggle.querySelector(".staff-sidebar-toggle-label");
+    if (label) label.textContent = collapsed ? "Expand menu" : "Collapse menu";
+  }
+  let sidebarInitiallyCollapsed = false;
+  try { sidebarInitiallyCollapsed = window.localStorage.getItem(sidebarStorageKey) === "1"; } catch (_) {}
+  applySidebarState(sidebarInitiallyCollapsed);
+  if (sidebarToggle) sidebarToggle.addEventListener("click", function () {
+    const collapsed = !document.body.classList.contains("staff-sidebar-collapsed");
+    applySidebarState(collapsed);
+    try { window.localStorage.setItem(sidebarStorageKey, collapsed ? "1" : "0"); } catch (_) {}
+  });
+
   const observer = new MutationObserver(syncSidebarVisibility);
   if (dashboard) observer.observe(dashboard, { attributes: true, attributeFilter: ["style"] });
   if (publicView) observer.observe(publicView, { attributes: true, attributeFilter: ["style"] });
