@@ -1843,3 +1843,9 @@ body.staff-reference-mode #opsDashboardView .staff-map-legend #staffMapRouteStat
 .staff-shipment-map-btn:hover{background:#dceeff!important;border-color:#8cbbe9!important;transform:translateY(-1px)}
 body.staff-reference-mode #opsDashboardView .sheet-table td[data-label="Actions"]{min-width:115px}
 body.staff-reference-mode #opsDashboardView .sheet-table td[data-label="Actions"]>div{gap:4px!important}
+
+/* Make map controls obvious and keep the map visible in all staff layouts */
+body.staff-reference-mode #opsDashboardView .staff-map-heading-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+body.staff-reference-mode #opsDashboardView .staff-map-panel{display:block!important;visibility:visible!important;opacity:1!important;min-height:320px;position:relative;z-index:1}
+body.staff-reference-mode #opsDashboardView #staffMapCanvas{display:block!important;visibility:visible!important;min-height:250px}
+body.staff-reference-mode #opsDashboardView .staff-map-action{white-space:nowrap}
