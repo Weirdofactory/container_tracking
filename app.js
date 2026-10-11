@@ -71,10 +71,27 @@ try {
 } catch(e) {}
 
 const PORT_COORDS = {
-  "SHEKOU": [22.48, 113.91], "BUSAN": [35.10, 129.04], "SHANGHAI": [31.23, 121.47],
-  "NINGBO": [29.86, 121.54], "QINGDAO": [36.06, 120.38], "SINGAPORE": [1.29, 103.85],
-  "PORT KLANG": [3.00, 101.40], "CCTL": [13.085, 80.298], "CITPL": [13.098, 80.305],
-  "KATTUPALLI": [13.315, 80.345], "ENNORE": [13.250, 80.332], "CHENNAI": [13.0827, 80.2707]
+  "SHEKOU": [22.48, 113.91],
+  "HONG KONG": [22.3193, 114.1694],
+  "BUSAN": [35.10, 129.04],
+  "SHANGHAI": [31.23, 121.47],
+  "NINGBO": [29.86, 121.54],
+  "QINGDAO": [36.06, 120.38],
+  "TIANJIN": [38.9897, 117.701],
+  "TAIWAN": [22.6273, 120.3014],
+  "HO CHI MINH CITY": [10.8231, 106.6297],
+  "BANGKOK": [13.7563, 100.5018],
+  "LAEM CHABANG": [13.0903, 100.8831],
+  "SINGAPORE": [1.29, 103.85],
+  "PORT KLANG": [3.00, 101.40],
+  "COLOMBO": [6.9271, 79.8612],
+  "HAMBURG": [53.5461, 9.9661],
+  "GENOVA": [44.4056, 8.9463],
+  "CCTL": [13.085, 80.298],
+  "CITPL": [13.098, 80.305],
+  "KATTUPALLI": [13.315, 80.345],
+  "ENNORE": [13.250, 80.332],
+  "CHENNAI": [13.0827, 80.2707]
 };
 
 const el = id => document.getElementById(id);
@@ -1821,6 +1838,15 @@ function normalizedPortName(value) {
   if (raw.includes("SHANGHAI")) return "SHANGHAI";
   if (raw.includes("NINGBO")) return "NINGBO";
   if (raw.includes("QINGDAO")) return "QINGDAO";
+  if (raw.includes("TIANJIN")) return "TIANJIN";
+  if (raw.includes("HONG KONG") || raw.includes("HONGKONG")) return "HONG KONG";
+  if (raw.includes("HO CHI MINH") || raw.includes("SAIGON")) return "HO CHI MINH CITY";
+  if (raw.includes("BANGKOK")) return "BANGKOK";
+  if (raw.includes("LAEM CHABANG")) return "LAEM CHABANG";
+  if (raw.includes("COLOMBO")) return "COLOMBO";
+  if (raw.includes("HAMBURG")) return "HAMBURG";
+  if (raw.includes("GENOVA") || raw.includes("GENOA")) return "GENOVA";
+  if (raw.includes("TAIWAN") || raw.includes("KAOHSIUNG") || raw.includes("KEELUNG")) return "TAIWAN";
   if (raw.includes("SHEKOU") || raw.includes("YANTIAN") || raw.includes("SHENZHEN")) return "SHEKOU";
   if (raw.includes("SINGAPORE")) return "SINGAPORE";
   if (raw.includes("BUSAN")) return "BUSAN";
