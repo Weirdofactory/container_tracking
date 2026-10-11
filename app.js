@@ -1809,6 +1809,8 @@ function updateReferenceRail() {
 
 
 let staffMapInstance = null;
+let staffMapRouteLayer = null;
+let staffSelectedRoutePort = "";
 function normalizedPortName(value) {
   const raw = String(value || "").trim().toUpperCase();
   if (!raw) return "";
@@ -1825,6 +1827,74 @@ function normalizedPortName(value) {
   if (raw.includes("PORT KLANG") || raw.includes("KLANG")) return "PORT KLANG";
   return "";
 }
+function drawStaffRoutesForPort(port) {
+  if (!staffMapInstance || !staffMapRouteLayer || !port) return;
+  staffSelectedRoutePort = port;
+  staffMapRouteLayer.clearLayers();
+
+  const matched = [];
+  const noGeometry = [];
+  rows.forEach(function (row) {
+    const origin = normalizedPortName(getField(row, ["POL", "PORT OF LOADING", "ORIGIN"]));
+    const destination = normalizedPortName(getField(row, ["GATEWAY PORT", "POD", "PORT", "DESTINATION"]));
+    if (origin !== port && destination !== port) return;
+
+    const originCoords = PORT_COORDS[origin];
+    const destinationCoords = PORT_COORDS[destination];
+    const container = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CONTAINER NUMBER"]) || "Shipment";
+    const vessel = getField(row, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "";
+    if (!origin || !destination || !originCoords || !destinationCoords || origin === destination) {
+      noGeometry.push(container);
+      return;
+    }
+    matched.push({
+      origin: origin,
+      destination: destination,
+      originCoords: originCoords,
+      destinationCoords: destinationCoords,
+      container: container,
+      vessel: vessel
+    });
+  });
+
+  const routeBounds = [];
+  matched.forEach(function (route) {
+    const line = L.polyline([route.originCoords, route.destinationCoords], {
+      color: "#0878d1",
+      weight: 3,
+      opacity: 0.9,
+      dashArray: "8 7",
+      lineCap: "round",
+      lineJoin: "round"
+    }).addTo(staffMapRouteLayer);
+
+    line.bindTooltip(
+      "<strong>" + esc(route.container) + "</strong><br>" +
+      esc(route.origin) + " → " + esc(route.destination) +
+      (route.vessel ? "<br>" + esc(route.vessel) : ""),
+      { sticky: true, direction: "top", opacity: 0.98 }
+    );
+    routeBounds.push(route.originCoords, route.destinationCoords);
+  });
+
+  const status = el("staffMapRouteStatus");
+  if (status) {
+    if (matched.length) {
+      status.textContent = matched.length + " route" + (matched.length === 1 ? "" : "s") +
+        " shown from " + port + (noGeometry.length ? " · " + noGeometry.length + " record(s) need mapped port details" : "");
+    } else if (noGeometry.length) {
+      status.textContent = "Found " + noGeometry.length + " shipment record(s) for " + port +
+        ", but their origin/destination pair is incomplete or not mapped.";
+    } else {
+      status.textContent = "No complete shipment routes found for " + port + " in the current records.";
+    }
+  }
+
+  if (routeBounds.length) {
+    staffMapInstance.fitBounds(routeBounds, { padding: [36, 36], maxZoom: 4, animate: true });
+  }
+}
+
 function renderStaffAnalytics() {
   const active = rows.filter(r => !isFullyCompleted(r));
   const completed = rows.filter(r => isFullyCompleted(r));
@@ -1854,20 +1924,33 @@ function renderStaffAnalytics() {
     mapNode.innerHTML="";
     staffMapInstance=L.map(mapNode,{scrollWheelZoom:false,zoomControl:true,attributionControl:true}).setView([24,75],3);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:12,attribution:"© OpenStreetMap"}).addTo(staffMapInstance);
+    staffMapRouteLayer = L.layerGroup().addTo(staffMapInstance);
     const refresh=el("staffMapRefresh");
     if(refresh) refresh.addEventListener("click",()=>{renderStaffAnalytics();setTimeout(()=>staffMapInstance&&staffMapInstance.invalidateSize(),100);});
   }
   if(staffMapInstance._staffMarkers) staffMapInstance._staffMarkers.forEach(marker=>marker.remove());
   staffMapInstance._staffMarkers=[];
+  if (staffMapRouteLayer) staffMapRouteLayer.clearLayers();
   const bounds=[];
   portCounts.forEach((shipmentCount,port)=>{
     const coords=PORT_COORDS[port];
+    if (!coords) return;
     const isIndia=["CCTL","CITPL","CHENNAI","KATTUPALLI","ENNORE"].includes(port);
-    const marker=L.circleMarker(coords,{radius:6,weight:2,color:isIndia?"#20bf6b":"#1677f2",fillColor:isIndia?"#20bf6b":"#1677f2",fillOpacity:.95}).bindPopup("<strong>"+esc(port)+"</strong><br>"+shipmentCount+" shipment reference(s)").addTo(staffMapInstance);
-    staffMapInstance._staffMarkers.push(marker);bounds.push(coords);
+    const marker=L.circleMarker(coords,{radius:7,weight:2,color:isIndia?"#20bf6b":"#1677f2",fillColor:isIndia?"#20bf6b":"#1677f2",fillOpacity:.96});
+    marker.bindPopup("<strong>"+esc(port)+"</strong><br>"+shipmentCount+" shipment reference(s)<br><small>Click this port to show connected routes</small>");
+    marker.on("click",function(){ drawStaffRoutesForPort(port); });
+    marker.addTo(staffMapInstance);
+    staffMapInstance._staffMarkers.push(marker);
+    bounds.push(coords);
   });
   if(bounds.length) staffMapInstance.fitBounds(bounds,{padding:[24,24],maxZoom:4});
   else staffMapInstance.setView([24,75],2);
+  if (staffSelectedRoutePort && portCounts.has(staffSelectedRoutePort)) {
+    drawStaffRoutesForPort(staffSelectedRoutePort);
+  } else {
+    staffSelectedRoutePort = "";
+    if (el("staffMapRouteStatus")) el("staffMapRouteStatus").textContent = "Click a port marker to show connected route(s)";
+  }
   setTimeout(()=>staffMapInstance&&staffMapInstance.invalidateSize(),100);
 }
 
