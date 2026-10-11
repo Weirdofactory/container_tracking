@@ -2288,7 +2288,7 @@ function renderMinimalShipmentTable(items) {
       "</td><td>" + esc(liner) + "</td><td>" + esc(port) + "</td><td>" + esc(transshipment) + "</td><td>" + esc(portIn) +
       "</td><td>" + esc(portOut) + "</td><td>" + esc(cfs) + "</td><td>" + esc(truck) +
       "</td><td>" + esc(destuff) + "</td><td>" + esc(returned) + "</td><td>—</td><td>—</td><td>—</td><td>" +
-      esc(remarks) + "</td><td><button class='btn' type='button' onclick='openModal(" + rowIndex + ")'>View / Edit</button></td></tr>";
+      esc(remarks) + "</td><td><div class='staff-recovery-actions'><button class='btn staff-shipment-map-btn' type='button' onclick='showShipmentRoute(" + rowIndex + ")'>🗺️ Map</button><button class='btn' type='button' onclick='openModal(" + rowIndex + ")'>View / Edit</button></div></td></tr>";
   }).join("") || "<tr><td colspan=\'18\' style=\'padding:28px;text-align:center;color:#64748b\'>No shipment records are loaded. Check the Sync status above and retry the cloud connection.</td></tr>";
   const pager = el("paginationWrapper");
   if (pager) pager.textContent = list.length > 25 ? "Showing first 25 of " + list.length + " records (recovery view)" : "Recovery view · " + list.length + " records";
