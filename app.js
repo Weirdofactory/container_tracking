@@ -1853,13 +1853,35 @@ function normalizedPortName(value) {
   if (raw.includes("PORT KLANG") || raw.includes("KLANG")) return "PORT KLANG";
   return "";
 }
+function buildCurvedSeaRoute(startCoords, endCoords, steps = 48) {
+  const startLat = Number(startCoords[0]), startLng = Number(startCoords[1]);
+  const endLat = Number(endCoords[0]), endLng = Number(endCoords[1]);
+  const dLng = endLng - startLng;
+  const dLat = endLat - startLat;
+  const span = Math.sqrt(dLng * dLng * Math.cos(((startLat + endLat) / 2) * Math.PI / 180) ** 2 + dLat * dLat);
+  const bend = Math.max(2.2, Math.min(9.5, span * 0.14));
+  // Keep the schematic arc offshore and avoid an unnatural straight chord.
+  const controlLat = (startLat + endLat) / 2 + bend;
+  const controlLng = (startLng + endLng) / 2;
+  const points = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const mt = 1 - t;
+    const lat = mt * mt * startLat + 2 * mt * t * controlLat + t * t * endLat;
+    const lng = mt * mt * startLng + 2 * mt * t * controlLng + t * t * endLng;
+    points.push([lat, lng]);
+  }
+  return points;
+}
+
 function drawStaffRoutesForPort(port) {
   if (!staffMapInstance || !staffMapRouteLayer || !port) return;
   staffSelectedRoutePort = port;
   staffMapRouteLayer.clearLayers();
 
-  const matched = [];
-  const noGeometry = [];
+  const routeGroups = new Map();
+  let incompleteCount = 0;
+
   rows.forEach(function (row) {
     const origin = normalizedPortName(getField(row, ["POL", "PORT OF LOADING", "ORIGIN"]));
     const destination = normalizedPortName(getField(row, ["GATEWAY PORT", "POD", "PORT", "DESTINATION"]));
@@ -1867,49 +1889,104 @@ function drawStaffRoutesForPort(port) {
 
     const originCoords = PORT_COORDS[origin];
     const destinationCoords = PORT_COORDS[destination];
-    const container = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CONTAINER NUMBER"]) || "Shipment";
-    const vessel = getField(row, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "";
     if (!origin || !destination || !originCoords || !destinationCoords || origin === destination) {
-      noGeometry.push(container);
+      incompleteCount++;
       return;
     }
-    matched.push({
-      origin: origin,
-      destination: destination,
-      originCoords: originCoords,
-      destinationCoords: destinationCoords,
-      container: container,
-      vessel: vessel
-    });
+
+    const key = origin + "→" + destination;
+    if (!routeGroups.has(key)) {
+      routeGroups.set(key, {
+        origin,
+        destination,
+        originCoords,
+        destinationCoords,
+        containers: [],
+        vessels: []
+      });
+    }
+    const group = routeGroups.get(key);
+    const container = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CONTAINER NUMBER"]);
+    const vessel = getField(row, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+    if (container && !group.containers.includes(container)) group.containers.push(container);
+    if (vessel && !group.vessels.includes(vessel)) group.vessels.push(vessel);
   });
 
   const routeBounds = [];
-  matched.forEach(function (route) {
-    const line = L.polyline([route.originCoords, route.destinationCoords], {
-      color: "#0878d1",
-      weight: 3,
-      opacity: 0.9,
-      dashArray: "8 7",
+  routeGroups.forEach(function (route) {
+    const points = buildCurvedSeaRoute(route.originCoords, route.destinationCoords);
+    // Pale casing gives the route a clear, polished appearance over the map tiles.
+    L.polyline(points, {
+      color: "#ffffff",
+      weight: 8,
+      opacity: 0.88,
+      lineCap: "round",
+      lineJoin: "round",
+      interactive: false
+    }).addTo(staffMapRouteLayer);
+
+    const line = L.polyline(points, {
+      color: "#0878e8",
+      weight: 4,
+      opacity: 0.98,
       lineCap: "round",
       lineJoin: "round"
     }).addTo(staffMapRouteLayer);
 
-    line.bindTooltip(
-      "<strong>" + esc(route.container) + "</strong><br>" +
-      esc(route.origin) + " → " + esc(route.destination) +
-      (route.vessel ? "<br>" + esc(route.vessel) : ""),
-      { sticky: true, direction: "top", opacity: 0.98 }
-    );
+    const vesselText = route.vessels.slice(0, 4).join(", ");
+    const moreVessels = route.vessels.length > 4 ? " +" + (route.vessels.length - 4) + " more" : "";
+    const routeSummary = route.containers.length + " shipment" + (route.containers.length === 1 ? "" : "s");
+    const tooltipHtml =
+      "<strong>" + esc(route.origin) + " → " + esc(route.destination) + "</strong><br>" +
+      esc(routeSummary) +
+      (vesselText ? "<br>" + esc(vesselText + moreVessels) : "");
+    line.bindTooltip(tooltipHtml, { sticky: true, direction: "top", opacity: 0.98, className: "staff-route-tooltip" });
+
+    const destinationIsIndia = ["CCTL", "CITPL", "CHENNAI", "KATTUPALLI", "ENNORE"].includes(route.destination);
+    const originMarker = L.circleMarker(route.originCoords, {
+      radius: 5, color: "#ffffff", weight: 2, fillColor: "#0878e8", fillOpacity: 1
+    }).bindTooltip(esc(route.origin), { direction: "top", offset: [0, -5] }).addTo(staffMapRouteLayer);
+    const destinationMarker = L.circleMarker(route.destinationCoords, {
+      radius: 5, color: "#ffffff", weight: 2,
+      fillColor: destinationIsIndia ? "#19b875" : "#f59e0b", fillOpacity: 1
+    }).bindTooltip(esc(route.destination), { direction: "top", offset: [0, -5] }).addTo(staffMapRouteLayer);
+
+    // Direction marker along the route is illustrative only; it is not a live AIS position.
+    const arrowIndex = Math.min(points.length - 2, Math.max(1, Math.floor(points.length * 0.64)));
+    const before = points[arrowIndex - 1];
+    const after = points[arrowIndex + 1];
+    const latitudeScale = Math.cos(points[arrowIndex][0] * Math.PI / 180);
+    const angle = Math.atan2(-(after[0] - before[0]), (after[1] - before[1]) * latitudeScale) * 180 / Math.PI;
+    const arrowIcon = L.divIcon({
+      className: "staff-route-direction-wrap",
+      html: '<span class="staff-route-direction" style="transform:rotate(' + angle.toFixed(1) + 'deg)" aria-label="Route direction">➤</span>',
+      iconSize: [25, 25],
+      iconAnchor: [12, 12]
+    });
+    L.marker(points[arrowIndex], { icon: arrowIcon, interactive: false, keyboard: false }).addTo(staffMapRouteLayer);
+
+    // Vessel glyph identifies the route visually; the app does not claim a current ship position.
+    const vesselIcon = L.divIcon({
+      className: "staff-route-vessel-wrap",
+      html: '<span class="staff-route-vessel" title="Route indicator only — live AIS position not connected" aria-label="Vessel route indicator">🚢</span>',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    });
+    const shipIndex = Math.floor(points.length * 0.48);
+    L.marker(points[shipIndex], { icon: vesselIcon, interactive: false, keyboard: false }).addTo(staffMapRouteLayer);
+
     routeBounds.push(route.originCoords, route.destinationCoords);
   });
 
   const status = el("staffMapRouteStatus");
   if (status) {
-    if (matched.length) {
-      status.textContent = matched.length + " route" + (matched.length === 1 ? "" : "s") +
-        " shown from " + port + (noGeometry.length ? " · " + noGeometry.length + " record(s) need mapped port details" : "");
-    } else if (noGeometry.length) {
-      status.textContent = "Found " + noGeometry.length + " shipment record(s) for " + port +
+    const routeCount = routeGroups.size;
+    if (routeCount) {
+      status.textContent = routeCount + " solid route path" + (routeCount === 1 ? "" : "s") +
+        " from " + port + " · schematic route only, not live AIS" +
+        (incompleteCount ? " · " + incompleteCount + " record(s) need mapped port details" : "");
+    } else if (incompleteCount) {
+      status.textContent = "Found " + incompleteCount + " shipment record(s) for " + port +
         ", but their origin/destination pair is incomplete or not mapped.";
     } else {
       status.textContent = "No complete shipment routes found for " + port + " in the current records.";
