@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=20261012-normal-zoom-readable-v1">
+<link rel="stylesheet" href="./style.css?v=20261012-collapsible-sidebar-v1">
 </head>
 <body>
 
@@ -144,6 +144,7 @@
 </style>
 <aside class="staff-reference-sidebar" id="staffReferenceSidebar" aria-label="Staff navigation">
   <div class="staff-sidebar-brand"><span class="staff-sidebar-mark">⚓</span><span><strong>GML OPERATIONS</strong><small>LOGISTICS CONTROL</small></span></div>
+  <button type="button" id="staffSidebarToggle" class="staff-sidebar-toggle" aria-label="Collapse navigation" aria-expanded="true" title="Collapse navigation"><span aria-hidden="true">‹</span><span class="staff-sidebar-toggle-label">Collapse menu</span></button>
   <div class="staff-sidebar-label">WORKSPACE</div>
   <button type="button" class="staff-side-link active" data-staff-nav="dashboard"><span>▦</span> Control Tower</button>
   <button type="button" class="staff-side-link" data-staff-nav="shipments"><span>▤</span> Shipments</button>
@@ -325,7 +326,7 @@
   },true);
 })();
 </script>
-<script src="./app.js?v=20261012-map-actions-visible-v3"></script>
+<script src="./app.js?v=20261012-collapsible-sidebar-v1"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 </body>
