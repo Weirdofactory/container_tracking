@@ -2008,3 +2008,18 @@ body.staff-reference-mode #opsDashboardView .ect-right-rail{
     grid-template-columns:minmax(0,1fr)!important;
   }
 }
+
+/* User-controlled collapsible operations sidebar */
+.staff-sidebar-toggle{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:34px;margin:0 0 12px;padding:6px 10px;border:1px solid rgba(173,205,232,.2);border-radius:8px;background:rgba(255,255,255,.055);color:#e8f3ff;font:700 11px 'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:background .18s,border-color .18s}
+.staff-sidebar-toggle:hover{background:rgba(255,255,255,.12);border-color:rgba(173,205,232,.45)}
+.staff-sidebar-toggle>span:first-child{display:inline-flex;align-items:center;justify-content:center;width:19px;font-size:24px;line-height:1}
+body.staff-sidebar-collapsed .staff-reference-sidebar{width:68px!important;padding:16px 7px 12px!important}
+body.staff-sidebar-collapsed .staff-sidebar-brand{justify-content:center!important;gap:0!important;padding:2px 0 14px!important}
+body.staff-sidebar-collapsed .staff-sidebar-brand>span:last-child,body.staff-sidebar-collapsed .staff-sidebar-label,body.staff-sidebar-collapsed .staff-sidebar-help,body.staff-sidebar-collapsed .staff-sidebar-foot{display:none!important}
+body.staff-sidebar-collapsed .staff-sidebar-toggle{justify-content:center;padding:5px 2px!important}
+body.staff-sidebar-collapsed .staff-sidebar-toggle-label{display:none!important}
+body.staff-sidebar-collapsed .staff-side-link{justify-content:center!important;gap:0!important;padding:9px 3px!important;font-size:0!important}
+body.staff-sidebar-collapsed .staff-side-link>span{width:24px!important;font-size:17px!important}
+body.staff-sidebar-collapsed .nav-header,body:has(#opsDashboardView[style*="display: block"]).staff-sidebar-collapsed .nav-header,body:has(#opsDashboardView:not([style*="display: none"])).staff-sidebar-collapsed .nav-header{margin-left:68px!important}
+body.staff-sidebar-collapsed #opsDashboardView.main-wrapper{margin-left:68px!important;width:calc(100% - 68px)!important}
+@media(max-width:760px){body.staff-sidebar-collapsed .staff-reference-sidebar{width:58px!important;padding:12px 6px!important}body.staff-sidebar-collapsed .nav-header,body:has(#opsDashboardView[style*="display: block"]).staff-sidebar-collapsed .nav-header,body:has(#opsDashboardView:not([style*="display: none"])).staff-sidebar-collapsed .nav-header{margin-left:58px!important}body.staff-sidebar-collapsed #opsDashboardView.main-wrapper{margin-left:58px!important;width:calc(100% - 58px)!important}}
