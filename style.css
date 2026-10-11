@@ -1849,3 +1849,10 @@ body.staff-reference-mode #opsDashboardView .staff-map-heading-actions{display:f
 body.staff-reference-mode #opsDashboardView .staff-map-panel{display:block!important;visibility:visible!important;opacity:1!important;min-height:320px;position:relative;z-index:1}
 body.staff-reference-mode #opsDashboardView #staffMapCanvas{display:block!important;visibility:visible!important;min-height:250px}
 body.staff-reference-mode #opsDashboardView .staff-map-action{white-space:nowrap}
+
+/* Recovery-table map action and clearly readable map header controls */
+.staff-recovery-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;min-width:150px}
+.staff-recovery-actions .btn{white-space:nowrap;min-height:28px}
+body.staff-reference-mode #opsDashboardView .staff-map-heading-actions{display:flex!important;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto;min-width:max-content}
+body.staff-reference-mode #opsDashboardView .staff-map-heading-actions .staff-map-action{display:inline-flex!important;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;width:auto!important;min-width:92px;padding:8px 11px!important;white-space:nowrap;overflow:visible}
+body.staff-reference-mode #opsDashboardView .staff-map-heading-actions #staffMapShow{min-width:104px}
