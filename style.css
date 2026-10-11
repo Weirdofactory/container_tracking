@@ -1804,3 +1804,28 @@ body.staff-reference-mode #opsDashboardView .staff-map-empty{min-height:160px}
 body.staff-reference-mode #opsDashboardView #staffMapCanvas .leaflet-interactive{cursor:pointer}
 body.staff-reference-mode #opsDashboardView .staff-map-legend #staffMapRouteStatus{flex-basis:100%;margin-top:2px;padding-top:7px;border-top:1px solid #edf1f6;color:#334b66;font-weight:800}
 body.staff-reference-mode #opsDashboardView #staffMapCanvas .leaflet-tooltip{border:1px solid #cfe2f5;border-radius:7px;box-shadow:0 5px 15px rgba(8,30,58,.14);font:10px/1.5 'Plus Jakarta Sans',sans-serif;padding:7px 9px}
+
+
+/* Solid curved vessel-route styling, inspired by modern vessel-tracking maps */
+body.staff-reference-mode #opsDashboardView .staff-route-direction-wrap,
+body.staff-reference-mode #opsDashboardView .staff-route-vessel-wrap{
+  background:transparent!important;border:0!important;
+}
+body.staff-reference-mode #opsDashboardView .staff-route-direction{
+  display:flex;align-items:center;justify-content:center;width:24px;height:24px;
+  border:2px solid #fff;border-radius:50%;background:#0878e8;color:#fff;
+  box-shadow:0 2px 9px rgba(2,48,100,.3);font-size:15px;font-weight:900;line-height:1;
+}
+body.staff-reference-mode #opsDashboardView .staff-route-vessel{
+  display:flex;align-items:center;justify-content:center;width:28px;height:28px;
+  border:2px solid #fff;border-radius:50%;background:#092f59;color:#fff;
+  box-shadow:0 3px 12px rgba(2,32,65,.35);font-size:14px;line-height:1;
+}
+body.staff-reference-mode #opsDashboardView .staff-route-tooltip{
+  padding:7px 10px!important;border:1px solid #cfe1f4!important;border-radius:8px!important;
+  box-shadow:0 5px 16px rgba(10,35,65,.15)!important;font:10px/1.55 'Plus Jakarta Sans',sans-serif!important;
+}
+body.staff-reference-mode #opsDashboardView .staff-route-tooltip strong{color:#073b75;font-weight:900}
+body.staff-reference-mode #opsDashboardView .staff-map-legend #staffMapRouteStatus{
+  color:#24425f;font-size:9px;font-weight:800;
+}
