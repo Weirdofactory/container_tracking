@@ -2024,9 +2024,34 @@ body.staff-sidebar-collapsed .nav-header,body:has(#opsDashboardView[style*="disp
 body.staff-sidebar-collapsed #opsDashboardView.main-wrapper{margin-left:68px!important;width:calc(100% - 68px)!important}
 @media(max-width:760px){body.staff-sidebar-collapsed .staff-reference-sidebar{width:58px!important;padding:12px 6px!important}body.staff-sidebar-collapsed .nav-header,body:has(#opsDashboardView[style*="display: block"]).staff-sidebar-collapsed .nav-header,body:has(#opsDashboardView:not([style*="display: none"])).staff-sidebar-collapsed .nav-header{margin-left:58px!important}body.staff-sidebar-collapsed #opsDashboardView.main-wrapper{margin-left:58px!important;width:calc(100% - 58px)!important}}
 
-/* Fix staff sidebar scrolling at 100% zoom: keep all navigation reachable on short viewports. */
-.staff-reference-sidebar{overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain;scrollbar-width:thin;scrollbar-color:rgba(148,190,220,.38) transparent;}
-.staff-reference-sidebar::-webkit-scrollbar{width:6px;}
-.staff-reference-sidebar::-webkit-scrollbar-track{background:transparent;}
-.staff-reference-sidebar::-webkit-scrollbar-thumb{background:rgba(148,190,220,.38);border-radius:999px;}
-.staff-sidebar-brand,.staff-sidebar-toggle,.staff-sidebar-help,.staff-sidebar-foot{flex-shrink:0;}
+/* Robust staff sidebar scrolling: constrain the flex viewport and let the sidebar itself scroll. */
+.staff-reference-sidebar{
+  position:fixed!important;
+  top:0!important;
+  bottom:0!important;
+  height:100vh!important;
+  height:100dvh!important;
+  min-height:0!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(148,190,220,.48) transparent;
+}
+.staff-reference-sidebar::-webkit-scrollbar{width:6px}
+.staff-reference-sidebar::-webkit-scrollbar-track{background:transparent}
+.staff-reference-sidebar::-webkit-scrollbar-thumb{background:rgba(148,190,220,.48);border-radius:999px}
+.staff-sidebar-brand,.staff-sidebar-toggle,.staff-sidebar-label,.staff-side-link,.staff-sidebar-help,.staff-sidebar-foot{flex-shrink:0}
+.staff-sidebar-spacer{flex:0 0 12px!important;min-height:12px!important}
+@media(max-height:620px){
+  .staff-reference-sidebar{padding-top:10px!important;padding-bottom:10px!important}
+  .staff-sidebar-brand{padding-bottom:10px!important}
+  .staff-sidebar-toggle{margin-bottom:6px!important}
+  .staff-side-link{min-height:34px!important;margin:1px 0!important;padding-top:7px!important;padding-bottom:7px!important}
+  .staff-sidebar-spacer{flex-basis:6px!important;min-height:6px!important}
+}
