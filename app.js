@@ -79,8 +79,8 @@ const PORT_COORDS = {
   "QINGDAO": [36.06, 120.38],
   "TIANJIN": [38.9897, 117.701],
   "TAIWAN": [22.6273, 120.3014],
-  "HO CHI MINH CITY": [10.8231, 106.6297],
-  "BANGKOK": [13.7563, 100.5018],
+  "HO CHI MINH CITY": [10.35, 107.08],
+  "BANGKOK": [13.10, 100.88],
   "LAEM CHABANG": [13.0903, 100.8831],
   "SINGAPORE": [1.29, 103.85],
   "PORT KLANG": [3.00, 101.40],
@@ -1853,25 +1853,49 @@ function normalizedPortName(value) {
   if (raw.includes("PORT KLANG") || raw.includes("KLANG")) return "PORT KLANG";
   return "";
 }
-function buildCurvedSeaRoute(startCoords, endCoords, steps = 48) {
-  const startLat = Number(startCoords[0]), startLng = Number(startCoords[1]);
-  const endLat = Number(endCoords[0]), endLng = Number(endCoords[1]);
-  const dLng = endLng - startLng;
-  const dLat = endLat - startLat;
-  const span = Math.sqrt(dLng * dLng * Math.cos(((startLat + endLat) / 2) * Math.PI / 180) ** 2 + dLat * dLat);
-  const bend = Math.max(2.2, Math.min(9.5, span * 0.14));
-  // Keep the schematic arc offshore and avoid an unnatural straight chord.
-  const controlLat = (startLat + endLat) / 2 + bend;
-  const controlLng = (startLng + endLng) / 2;
-  const points = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const mt = 1 - t;
-    const lat = mt * mt * startLat + 2 * mt * t * controlLat + t * t * endLat;
-    const lng = mt * mt * startLng + 2 * mt * t * controlLng + t * t * endLng;
-    points.push([lat, lng]);
+const MARITIME_ROUTE_WAYPOINTS = {
+  // East China Sea → Taiwan/Luzon approaches → South China Sea → Singapore Strait → Malacca Strait → Andaman Sea → Bay of Bengal
+  "SHANGHAI": [[30.9,123.0],[28.8,124.1],[26.2,123.5],[24.0,122.3],[22.0,120.8],[20.0,118.0],[17.5,115.0],[15.0,112.5],[12.3,110.0],[9.0,106.8],[6.0,104.5],[4.3,104.1],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  "NINGBO": [[29.2,123.0],[27.0,124.1],[24.8,123.4],[22.3,121.0],[20.0,118.0],[17.5,115.0],[15.0,112.5],[12.3,110.0],[9.0,106.8],[6.0,104.5],[4.3,104.1],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  "QINGDAO": [[34.5,123.0],[31.8,125.0],[29.1,125.0],[26.5,123.5],[24.0,122.3],[22.0,120.8],[20.0,118.0],[17.5,115.0],[15.0,112.5],[12.3,110.0],[9.0,106.8],[6.0,104.5],[4.3,104.1],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  "TIANJIN": [[38.6,119.5],[37.0,121.8],[34.2,124.3],[31.0,125.2],[27.5,124.0],[24.0,122.3],[22.0,120.8],[20.0,118.0],[17.5,115.0],[15.0,112.5],[12.3,110.0],[9.0,106.8],[6.0,104.5],[4.3,104.1],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  "BUSAN": [[33.7,129.5],[31.3,128.6],[28.8,126.5],[26.2,124.0],[24.0,122.3],[22.0,120.8],[20.0,118.0],[17.5,115.0],[15.0,112.5],[12.3,110.0],[9.0,106.8],[6.0,104.5],[4.3,104.1],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  "TAIWAN": [[21.2,119.5],[18.7,117.2],[15.3,113.6],[12.0,110.4],[9.0,107.0],[6.0,104.5],[4.3,104.1],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  // South China Sea exits are kept offshore before joining the Malacca / Andaman corridor
+  "SHEKOU": [[21.8,114.6],[20.4,114.6],[18.4,113.2],[16.1,111.8],[13.5,110.6],[11.0,108.7],[8.0,106.4],[6.0,104.5],[4.3,104.1],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  "HONG KONG": [[21.7,114.6],[20.1,114.4],[18.0,113.4],[15.5,112.0],[13.0,110.4],[10.2,108.0],[7.3,105.5],[4.3,104.1],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  // Vietnam, Gulf of Thailand and Malay Peninsula routes join the sea corridor from the south
+  "HO CHI MINH CITY": [[9.6,107.0],[8.0,105.8],[5.8,104.7],[3.6,104.0],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  "BANGKOK": [[11.7,102.0],[9.0,103.5],[6.0,104.2],[3.5,104.0],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  "LAEM CHABANG": [[11.7,102.0],[9.0,103.5],[6.0,104.2],[3.5,104.0],[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  "SINGAPORE": [[1.35,103.65],[1.4,102.5],[2.8,100.0],[4.8,97.0],[6.7,93.5],[8.9,88.5],[10.8,84.8],[12.6,81.5],[13.35,80.75]],
+  "PORT KLANG": [[2.9,100.5],[3.8,98.5],[5.8,95.0],[8.5,90.3],[10.7,85.0],[12.6,81.5],[13.35,80.75]],
+  "COLOMBO": [[5.7,80.2],[5.5,81.5],[6.6,82.3],[8.8,82.4],[11.2,81.7],[13.1,80.8]],
+  // Europe → Atlantic/Strait of Gibraltar → Mediterranean/Suez → Red Sea → Arabian Sea
+  "GENOVA": [[42.2,10.5],[39.0,15.0],[36.0,20.0],[33.8,26.0],[31.3,32.2],[29.9,32.55],[27.0,34.0],[22.0,38.0],[16.0,41.0],[12.8,43.5],[12.0,48.0],[11.0,55.0],[10.0,64.0],[9.3,72.0],[11.0,77.5],[13.35,80.75]],
+  "HAMBURG": [[53.7,7.5],[53.2,5.0],[51.5,2.5],[49.0,-2.0],[45.0,-7.5],[39.0,-9.5],[36.0,-6.0],[36.0,0.0],[35.0,8.0],[33.8,20.0],[31.3,32.2],[29.9,32.55],[27.0,34.0],[22.0,38.0],[16.0,41.0],[12.8,43.5],[12.0,48.0],[11.0,55.0],[10.0,64.0],[9.3,72.0],[11.0,77.5],[13.35,80.75]]
+};
+
+function buildMaritimeRoute(origin, destination, startCoords, endCoords) {
+  const indiaGateways = new Set(["CCTL", "CITPL", "KATTUPALLI", "ENNORE", "CHENNAI"]);
+  if (!indiaGateways.has(destination)) return null;
+
+  const waypoints = MARITIME_ROUTE_WAYPOINTS[origin];
+  if (!waypoints || !Array.isArray(waypoints)) return null;
+
+  // Replace guessed city-centre points with coastal port approaches for inland-named ports.
+  const path = [startCoords, ...waypoints, endCoords];
+  const dense = [];
+  for (let i = 0; i < path.length - 1; i++) {
+    const a = path[i], b = path[i + 1];
+    const steps = Math.max(2, Math.ceil(Math.max(Math.abs(b[0]-a[0]), Math.abs(b[1]-a[1])) / 1.2));
+    for (let k = 0; k < steps; k++) {
+      const t = k / steps;
+      dense.push([a[0] + (b[0]-a[0])*t, a[1] + (b[1]-a[1])*t]);
+    }
   }
-  return points;
+  dense.push(path[path.length - 1]);
+  return dense;
 }
 
 function drawStaffRoutesForPort(port) {
@@ -1913,9 +1937,13 @@ function drawStaffRoutesForPort(port) {
   });
 
   const routeBounds = [];
+  let routeUnavailableCount = 0;
+  let routesDrawn = 0;
   routeGroups.forEach(function (route) {
-    const points = buildCurvedSeaRoute(route.originCoords, route.destinationCoords);
-    // Pale casing gives the route a clear, polished appearance over the map tiles.
+    const points = buildMaritimeRoute(route.origin, route.destination, route.originCoords, route.destinationCoords);
+    if (!points) { routeUnavailableCount++; return; }
+    routesDrawn++;
+    // Marine route follows explicit sea-lane waypoints instead of a generic land-crossing arc.
     L.polyline(points, {
       color: "#ffffff",
       weight: 8,
@@ -1980,10 +2008,11 @@ function drawStaffRoutesForPort(port) {
 
   const status = el("staffMapRouteStatus");
   if (status) {
-    const routeCount = routeGroups.size;
+    const routeCount = routesDrawn;
     if (routeCount) {
-      status.textContent = routeCount + " solid route path" + (routeCount === 1 ? "" : "s") +
-        " from " + port + " · schematic route only, not live AIS" +
+      status.textContent = routeCount + " sea-lane route path" + (routeCount === 1 ? "" : "s") +
+        " from " + port + " · schematic corridor, not live AIS" +
+        (routeUnavailableCount ? " · " + routeUnavailableCount + " route pair(s) need a sea-lane definition" : "") +
         (incompleteCount ? " · " + incompleteCount + " record(s) need mapped port details" : "");
     } else if (incompleteCount) {
       status.textContent = "Found " + incompleteCount + " shipment record(s) for " + port +
