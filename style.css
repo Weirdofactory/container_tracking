@@ -1798,3 +1798,9 @@ body.staff-reference-mode #ectCloudState[data-state="error"]{color:#fecaca!impor
 body.staff-reference-mode #ectCloudState[data-state="offline"]{color:#fde68a!important}
 body.staff-reference-mode #opsDashboardView .staff-map-empty{min-height:160px}
 @media(min-width:1451px){body.staff-reference-mode #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr) 365px!important}}
+
+
+/* Clickable shipment routes on staff map */
+body.staff-reference-mode #opsDashboardView #staffMapCanvas .leaflet-interactive{cursor:pointer}
+body.staff-reference-mode #opsDashboardView .staff-map-legend #staffMapRouteStatus{flex-basis:100%;margin-top:2px;padding-top:7px;border-top:1px solid #edf1f6;color:#334b66;font-weight:800}
+body.staff-reference-mode #opsDashboardView #staffMapCanvas .leaflet-tooltip{border:1px solid #cfe2f5;border-radius:7px;box-shadow:0 5px 15px rgba(8,30,58,.14);font:10px/1.5 'Plus Jakarta Sans',sans-serif;padding:7px 9px}
