@@ -2187,7 +2187,7 @@ function renderMinimalShipmentTable(items) {
       "</td><td>" + esc(portOut) + "</td><td>" + esc(cfs) + "</td><td>" + esc(truck) +
       "</td><td>" + esc(destuff) + "</td><td>" + esc(returned) + "</td><td>—</td><td>—</td><td>—</td><td>" +
       esc(remarks) + "</td><td><button class='btn' type='button' onclick='openModal(" + rowIndex + ")'>View / Edit</button></td></tr>";
-  }).join("") || "<tr><td colspan="18" style='padding:28px;text-align:center;color:#64748b'>No shipment records are loaded. Check the Sync status above and retry the cloud connection.</td></tr>";
+  }).join("") || "<tr><td colspan=\'18\' style=\'padding:28px;text-align:center;color:#64748b\'>No shipment records are loaded. Check the Sync status above and retry the cloud connection.</td></tr>";
   const pager = el("paginationWrapper");
   if (pager) pager.textContent = list.length > 25 ? "Showing first 25 of " + list.length + " records (recovery view)" : "Recovery view · " + list.length + " records";
 }
