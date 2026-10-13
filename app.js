@@ -717,7 +717,7 @@ function downloadMultipleStatusImage(containersList, titleRef = "Status_Report")
   requestAnimationFrame(() => {
     setTimeout(() => {
       html2canvas(target, {
-        scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
+        scale: 3,
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#f4f4f5",
@@ -3362,12 +3362,7 @@ el("bulkWhatsAppBtn").addEventListener("click", () => {
   openWhatsAppComposer(-1, Array.from(selectedIndices));
 });
 
-// Bind the Snapshot button
-el("bulkPhotoBtn").addEventListener("click", () => {
-  if (!selectedIndices.size) return alert("Select at least one container!");
-  const selectedRows = Array.from(selectedIndices).map(idx => rows[idx]);
-  downloadMultipleStatusImage(selectedRows, "Bulk_Snapshot");
-});
+// Snapshot button is bound once above. Do not attach a second click handler here.
 
 function getFilteredRows() {
   const q = el("search").value.toLowerCase().replace(/[^a-z0-9]/g, '');
