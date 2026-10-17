@@ -2031,6 +2031,8 @@ body.staff-sidebar-collapsed .nav-header,body:has(#opsDashboardView[style*="disp
 body.staff-sidebar-collapsed #opsDashboardView.main-wrapper{margin-left:68px!important;width:calc(100% - 68px)!important}
 @media(max-width:760px){body.staff-sidebar-collapsed .staff-reference-sidebar{width:58px!important;padding:12px 6px!important}body.staff-sidebar-collapsed .nav-header,body:has(#opsDashboardView[style*="display: block"]).staff-sidebar-collapsed .nav-header,body:has(#opsDashboardView:not([style*="display: none"])).staff-sidebar-collapsed .nav-header{margin-left:58px!important}body.staff-sidebar-collapsed #opsDashboardView.main-wrapper{margin-left:58px!important;width:calc(100% - 58px)!important}}
 
+/* Keep the internal staff navigation out of the public tracking landing page. */
+body:not(.staff-reference-mode) .staff-reference-sidebar{display:none!important}
 /* Robust staff sidebar scrolling: constrain the flex viewport and let the sidebar itself scroll. */
 .staff-reference-sidebar{
   position:fixed!important;
