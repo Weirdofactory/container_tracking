@@ -698,13 +698,13 @@ function generateCleanManifestHtml(containersList) {
   };
   const totalTEU=containersList.reduce((sum,r)=>sum+(String(getField(r,["TYPE","SIZE"])||"").includes("40")?2:1),0);
   return `
-  <div id="manifestCaptureContainer" style="width:1600px;background:#fff;padding:${containersList.length>1?"24px 28px 20px":"42px 44px 36px};font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#1b2c46;box-sizing:border-box;border:1px solid #d7e0ea;border-radius:16px">
+  <div id="manifestCaptureContainer" style="width:1600px;background:#fff;padding:${containersList.length>1 ? "24px 28px 20px" : "42px 44px 36px"};font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#1b2c46;box-sizing:border-box;border:1px solid #d7e0ea;border-radius:16px">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:4px 0 22px;border-bottom:3px solid #15284a">
-      <div><div style="font-size:${containersList.length>1?"25px":"32px};font-weight:900;letter-spacing:.025em;color:#10264a">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</div><div style="font-size:${containersList.length>1?"15px":"20px};color:#667891;font-weight:700;margin-top:8px">Live Status Report • Chennai Operations Desk</div></div>
+      <div><div style="font-size:${containersList.length>1 ? "25px" : "32px"};font-weight:900;letter-spacing:.025em;color:#10264a">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</div><div style="font-size:${containersList.length>1 ? "15px" : "20px"};color:#667891;font-weight:700;margin-top:8px">Live Status Report • Chennai Operations Desk</div></div>
       <div style="font-size:${containersList.length>1?"15px":"20px};color:#1188c1;font-weight:900">${esc(generatedDate)}</div>
     </div>
-    <div style="margin-top:${containersList.length>1?"6px":"12px}">${containersList.map(renderMobileCard).join("")}</div>
-    <div style="display:flex;justify-content:flex-end;gap:28px;padding:${containersList.length>1?"10px 4px 0":"18px 4px 0};font-size:${containersList.length>1?"11px":"13px};color:#6b7c92;font-weight:800">
+    <div style="margin-top:${containersList.length>1 ? "6px" : "12px"}">${containersList.map(renderMobileCard).join("")}</div>
+    <div style="display:flex;justify-content:flex-end;gap:28px;padding:${containersList.length>1 ? "10px 4px 0" : "18px 4px 0"};font-size:${containersList.length>1 ? "11px" : "13px"};color:#6b7c92;font-weight:800">
       <span>Total Containers: <b style="color:#243955">${containersList.length}</b></span>
       <span>Total TEU: <b style="color:#243955">${totalTEU}</b></span>
     </div>
