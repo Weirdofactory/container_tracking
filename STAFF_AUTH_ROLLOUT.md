@@ -16,7 +16,7 @@
 - The migration is not applied and the Edge Function is not deployed.
 - The legacy operations dashboard is not yet migrated to Supabase Auth. The new admin and customer pages are separate entry points and do not change the existing dashboard login or data queries.
 - No rate limiting is implemented here. Add gateway/WAF rate limiting before public deployment.
-- Creating a link currently validates the container identifier's shape but does not verify that the container exists in the source dataset. The lookup endpoint returns not found for unknown containers.
+- Before issuing a link, the admin function now verifies the normalized container number exists in the shared tracking source dataset. A missing source dataset returns a service-unavailable response; an unknown container is rejected without creating a token.
 
 ## Admin function request shapes
 - Create: `{ "action": "create", "containerNo": "ABCD1234567", "label": "Customer / shipment", "expiresInDays": 30 }`
@@ -29,7 +29,7 @@ Every action requires a valid Supabase Auth bearer token and an active `Admin` p
 1. Create staff accounts in Supabase Auth through a trusted administrator process; do not enable public sign-up.
 2. Apply this migration in staging, then provision staff profile rows using a trusted SQL/admin path. Verify that only active Admin profiles can call the admin function.
 3. Deploy both customer-tracking functions to staging with JWT verification enabled. Configure CUSTOMER_TRACKING_ALLOWED_ORIGIN to the exact app origin.
-4. Test missing/invalid JWT, inactive staff, Editor/Viewer/Operator denial, create/list/revoke, expired links, unknown container, CORS, and no-store headers.
+4. Test missing/invalid JWT, inactive staff, Editor/Viewer/Operator denial, create/list/revoke, expired links, unknown-container rejection without token creation, missing source dataset, CORS, and no-store headers.
 5. Test `tracking-link-admin.html` with provisioned Admin and non-Admin accounts; test customer links in a clean browser session, including expired/revoked/unknown-container cases. Browser-script syntax was checked, but no live integration tests have been run.
 6. Build and test the main operations dashboard's Supabase Auth session flow. Keep the existing login available until staff workflows have parity.
 7. Migrate every required staff data operation to authenticated, role-checked server paths. Then plan a separate reversible RLS migration after auditing all app queries and writes.
