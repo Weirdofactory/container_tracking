@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>GML Secure Shipment Tracking</title>
+<style>
+:root{color-scheme:light;--ink:#14263d;--muted:#61738a;--line:#dbe4ef;--blue:#1459a6;--pale:#f3f7fc;--green:#147d58}
+*{box-sizing:border-box}body{margin:0;background:var(--pale);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink)}
+header{background:#102b4e;color:white;padding:22px 20px}header .inner,main{max-width:920px;margin:auto}header strong{font-size:18px;letter-spacing:.02em}header p{margin:5px 0 0;color:#d7e5f6}
+main{padding:26px 16px 50px}.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:16px;box-shadow:0 8px 24px #1938580b}
+h1{font-size:clamp(24px,4vw,34px);margin:0 0 6px}h2{font-size:18px;margin:0 0 14px}.muted{color:var(--muted)}.status{display:inline-flex;padding:6px 10px;border-radius:999px;background:#e8f7f0;color:var(--green);font-weight:700;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.field{padding:13px;border:1px solid var(--line);border-radius:10px;background:#fff;min-width:0}.field small{display:block;color:var(--muted);font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.04em;margin-bottom:5px}.field strong{overflow-wrap:anywhere}.timeline{display:grid;gap:10px}.step{display:flex;gap:12px;align-items:start;padding:12px;border:1px solid var(--line);border-radius:10px}.dot{width:10px;height:10px;border-radius:50%;background:var(--blue);margin-top:6px;flex:0 0 auto}.step strong{display:block}.step small{color:var(--muted)}
+.notice{padding:14px;border-radius:10px;background:#fff5df;color:#77551b}.error{background:#fff0f0;color:#9b2424}.hidden{display:none!important}footer{text-align:center;color:var(--muted);font-size:12px;padding:8px 0 20px}
+</style></head>
+<body>
+<header><div class="inner"><strong>⚓ GML · GREENWICH MERIDIAN LOGISTICS</strong><p>Secure, shipment-specific tracking</p></div></header>
+<main>
+<section class="panel"><span class="status">PRIVATE TRACKING LINK</span><h1 style="margin-top:12px">Shipment status</h1><p class="muted">This page displays only the shipment associated with the secure link provided to you.</p><div id="message" class="notice">Verifying your tracking link…</div></section>
+<section id="shipmentPanel" class="panel hidden"><h2 id="shipmentTitle">Shipment details</h2><div id="shipmentFields" class="grid"></div></section>
+<section id="timelinePanel" class="panel hidden"><h2>Milestone history</h2><div id="timeline" class="timeline"></div></section>
+<footer>For assistance, contact your GML operations representative. Do not forward this private tracking link to others.</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+ const SUPABASE_URL="https://ykeucqritoexykqrggzz.supabase.co";
+ const SUPABASE_ANON_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
+ const message=document.getElementById("message");
+ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ const params=new URLSearchParams(location.search);
+ const token=params.get("token")||"";
+ const niceDate=value=>{if(!value)return "";const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"2-digit"})};
+ const fields=[
+  ["container","Container"],["type","Equipment"],["status","Status"],["shippingLine","Shipping line"],
+  ["mbl","MBL number"],["booking","Booking number"],["vessel","Vessel & voyage"],["pol","Port of loading"],
+  ["pod","Port of discharge"],["gateway","Gateway / terminal"],["cfs","CFS"],["etd","ETD"],["eta","ETA"]
+ ];
+ const milestones=[["inwardDate","Inward granted"],["portIn","Vessel berthed"],["portOut","Port discharged"],["cfsIn","CFS in-gate"],["destuffingDate","Destuffed"],["emptyReturnDate","Empty returned"]];
+ function fail(text){message.textContent=text;message.classList.add("error");}
+ async function run(){
+  if(!token||token.length<40){fail("This tracking link is missing or invalid. Please request a new link from your GML contact.");return}
+  try{
+   const response=await fetch(SUPABASE_URL+"/functions/v1/customer-tracking",{
+    method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+SUPABASE_ANON_KEY},
+    body:JSON.stringify({token}),cache:"no-store"
+   });
+   const result=await response.json().catch(()=>({}));
+   if(!response.ok||!result.shipment){fail(response.status===404?"This tracking link is invalid, expired, revoked, or no longer available. Please contact GML.":"Tracking is temporarily unavailable. Please try again later.");return}
+   const s=result.shipment;
+   document.getElementById("shipmentTitle").textContent="Container "+(s.container||"shipment");
+   document.getElementById("shipmentFields").innerHTML=fields.filter(([key])=>s[key]).map(([key,label])=>'<div class="field"><small>'+esc(label)+'</small><strong>'+esc(["etd","eta"].includes(key)?niceDate(s[key]):s[key])+'</strong></div>').join("");
+   const completed=milestones.filter(([key])=>s[key]);
+   document.getElementById("timeline").innerHTML=completed.length?completed.map(([key,label])=>'<div class="step"><span class="dot"></span><div><strong>'+esc(label)+'</strong><small>'+esc(niceDate(s[key]))+'</small></div></div>').join(""):'<p class="muted">No operational milestones have been recorded yet.</p>';
+   document.getElementById("shipmentPanel").classList.remove("hidden");
+   document.getElementById("timelinePanel").classList.remove("hidden");
+   message.textContent="Your shipment-specific tracking details are ready.";
+   message.classList.remove("error");
+  }catch(e){fail("Could not connect to the tracking service. Please try again later.")}
+ }
+ run();
+})();
+</script></body></html>
