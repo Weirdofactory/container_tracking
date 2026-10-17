@@ -8,12 +8,21 @@ const customerPage = read("../customer-tracking.html");
 const adminPage = read("../tracking-link-admin.html");
 const tokenMigration = read("../supabase/migrations/202610170001_customer_tracking_tokens.sql");
 const staffMigration = read("../supabase/migrations/202610170002_staff_profiles.sql");
+const rateLimitMigration = read("../supabase/migrations/202610170003_edge_rate_limits.sql");
 
 // Token grants must store only a digest and never expose the full tracking row.
 assert.match(lookup, /\.eq\("token_hash", tokenHash\)/);
 assert.match(lookup, /\.is\("revoked_at", null\)/);
 assert.match(lookup, /grant\.expires_at.*Date\.now\(\)/s);
 assert.match(lookup, /return response\(200, \{ shipment \}\)/);
+assert.match(lookup, /consume_edge_rate_limit/);
+assert.match(lookup, /status: 429/);
+assert.match(admin, /consume_edge_rate_limit/);
+assert.match(admin, /status: 429/);
+assert.match(rateLimitMigration, /enable row level security/);
+assert.match(rateLimitMigration, /force row level security/);
+assert.match(rateLimitMigration, /grant execute on function public\.consume_edge_rate_limit\(text, integer, integer\) to service_role/i);
+assert.match(rateLimitMigration, /revoke all on function public\.consume_edge_rate_limit\(text, integer, integer\) from public, anon, authenticated/i);
 assert.match(lookup, /Explicit allow-list/);
 assert.doesNotMatch(lookup, /return response\(200,\s*matched\)/);
 assert.match(tokenMigration, /token_hash text not null unique/);
