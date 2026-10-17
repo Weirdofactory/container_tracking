@@ -1,0 +1,68 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const allowedOrigin = () => Deno.env.get("CUSTOMER_TRACKING_ALLOWED_ORIGIN") ?? "https://weirdofactory.github.io";
+function reply(status: number, body: Record<string, unknown>, origin: string | null) {
+  const configured = allowedOrigin();
+  return new Response(JSON.stringify(body), { status, headers: {
+    "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store, private",
+    "Vary": "Origin", "Access-Control-Allow-Origin": configured,
+    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  }});
+}
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+}
+function normalize(value: unknown): string { return String(value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+function makeToken(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  let binary = "";
+  bytes.forEach(byte => binary += String.fromCharCode(byte));
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+Deno.serve(async (req: Request) => {
+  const origin = req.headers.get("origin");
+  if (req.method === "OPTIONS") return new Response("ok", { headers: {
+    "Access-Control-Allow-Origin": allowedOrigin(), "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+    "Access-Control-Allow-Methods": "POST, OPTIONS", "Vary": "Origin",
+  }});
+  if (req.method !== "POST") return reply(405, { error: "Method not allowed" }, origin);
+  if (origin && origin !== allowedOrigin()) return reply(403, { error: "Forbidden" }, origin);
+  const authHeader = req.headers.get("authorization") ?? "";
+  if (!authHeader.startsWith("Bearer ")) return reply(401, { error: "Authentication required" }, origin);
+  const url = Deno.env.get("SUPABASE_URL"), anonKey = Deno.env.get("SUPABASE_ANON_KEY"), serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !anonKey || !serviceKey) return reply(503, { error: "Service unavailable" }, origin);
+  const caller = createClient(url, anonKey, { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false, autoRefreshToken: false } });
+  const { data: userData, error: userError } = await caller.auth.getUser();
+  if (userError || !userData.user) return reply(401, { error: "Authentication required" }, origin);
+  const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data: profile, error: profileError } = await admin.from("staff_profiles").select("role, is_active").eq("user_id", userData.user.id).maybeSingle();
+  if (profileError || !profile || !profile.is_active || profile.role !== "Admin") return reply(403, { error: "Administrator access required" }, origin);
+  let payload: { action?: unknown; containerNo?: unknown; label?: unknown; expiresInDays?: unknown; tokenId?: unknown };
+  try { payload = await req.json(); } catch { return reply(400, { error: "Invalid request" }, origin); }
+  if (payload.action === "create") {
+    const containerNo = typeof payload.containerNo === "string" ? payload.containerNo.trim() : "";
+    const normalized = normalize(containerNo);
+    if (normalized.length < 7 || normalized.length > 15) return reply(400, { error: "Enter a valid container number" }, origin);
+    const days = Number(payload.expiresInDays ?? 30);
+    if (!Number.isInteger(days) || days < 1 || days > 90) return reply(400, { error: "Expiry must be 1–90 days" }, origin);
+    const token = makeToken(), expiresAt = new Date(Date.now() + days * 86400000).toISOString();
+    const { error } = await admin.from("customer_tracking_tokens").insert({
+      token_hash: await sha256Hex(token), container_no: normalized,
+      label: typeof payload.label === "string" ? payload.label.trim().slice(0, 120) : null,
+      expires_at: expiresAt, created_by: userData.user.id,
+    });
+    if (error) return reply(500, { error: "Could not create tracking link" }, origin);
+    return reply(201, { token, containerNo: normalized, expiresAt, note: "Copy this token now; it is not stored in readable form." }, origin);
+  }
+  if (payload.action === "revoke") {
+    const tokenId = typeof payload.tokenId === "string" ? payload.tokenId : "";
+    if (!/^[0-9a-f-]{36}$/i.test(tokenId)) return reply(400, { error: "Invalid token reference" }, origin);
+    const { data, error } = await admin.from("customer_tracking_tokens").update({ revoked_at: new Date().toISOString() }).eq("id", tokenId).is("revoked_at", null).select("id").maybeSingle();
+    if (error) return reply(500, { error: "Could not revoke tracking link" }, origin);
+    if (!data) return reply(404, { error: "Active tracking link not found" }, origin);
+    return reply(200, { revoked: true }, origin);
+  }
+  return reply(400, { error: "Unsupported action" }, origin);
+});
