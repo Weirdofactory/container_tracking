@@ -1,0 +1,50 @@
+/* GML portal redesign — visual layer only; preserves existing data workflows. */
+:root{--gml-ink:#14263d;--gml-muted:#657a92;--gml-line:#dce6f0;--gml-blue:#087db8;--gml-navy:#0a213b;--gml-surface:#fff;--gml-shadow:0 12px 34px rgba(18,48,79,.07)}
+body:has(#opsDashboardView) {font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif!important;background:#f2f6fb!important;color:var(--gml-ink)}
+body:has(#opsDashboardView) .nav-header{background:rgba(255,255,255,.96)!important;border-bottom:1px solid #dfe8f1!important;box-shadow:0 5px 20px rgba(15,43,70,.05)!important;backdrop-filter:blur(16px)}
+body:has(#opsDashboardView) .brand-title{font-weight:800!important;letter-spacing:-.025em}
+#opsDashboardView.main-wrapper{max-width:none!important;padding:24px 28px 36px!important}
+#enterpriseOverview.ect-overview{border:1px solid #dce8f2!important;border-radius:20px!important;padding:26px 28px!important;background:radial-gradient(circle at 90% 10%,rgba(55,185,223,.19),transparent 28%),linear-gradient(120deg,#0a213b,#10476d)!important;box-shadow:0 18px 42px rgba(8,32,58,.13)!important;color:#fff!important;margin-bottom:20px!important}
+#enterpriseOverview .ect-eyebrow{color:#85e4f2!important;font-weight:800!important;letter-spacing:.15em!important}
+#enterpriseOverview h1{font-family:"Plus Jakarta Sans",sans-serif!important;font-size:clamp(23px,2.3vw,34px)!important;letter-spacing:-.04em!important;color:#fff!important;font-weight:800!important}
+#enterpriseOverview p{color:#c5d9e9!important;font-size:13px!important;max-width:680px}
+#enterpriseOverview .ect-stat{background:#ffffff12!important;border:1px solid #ffffff20!important;border-radius:14px!important;padding:14px 16px!important}
+#enterpriseOverview .ect-stat span{color:#bed6e8!important}
+#enterpriseOverview .ect-stat strong{color:#fff!important}
+#opsDashboardView .kpi-row{gap:14px!important;margin-bottom:22px!important}
+#opsDashboardView .kpi-row>.kpi-card{background:#fff!important;border:1px solid #dce6f0!important;border-top:3px solid var(--gml-blue)!important;border-radius:15px!important;box-shadow:0 7px 22px rgba(15,43,70,.045)!important;padding:17px!important;transition:transform .18s ease,box-shadow .18s ease}
+#opsDashboardView .kpi-row>.kpi-card:hover{transform:translateY(-2px);box-shadow:var(--gml-shadow)!important}
+#opsDashboardView .kpi-card small{font-size:10px!important;font-weight:800!important;letter-spacing:.07em!important;text-transform:uppercase!important;color:#71839a!important}
+#opsDashboardView .kpi-card strong{font-size:27px!important;font-weight:800!important;letter-spacing:-.04em!important}
+#opsDashboardView .ect-workspace-grid{gap:20px!important;align-items:start}
+#opsDashboardView .ect-workspace-main,#opsDashboardView .ect-right-rail{gap:18px!important}
+#opsDashboardView .staff-map-panel,#opsDashboardView .staff-status-panel,#opsDashboardView .ect-rail-panel,#opsDashboardView .control-tray,#opsDashboardView .sheet-box,#opsDashboardView .cards-layout,#opsDashboardView .kanban-layout{border:1px solid #dce6f0!important;border-radius:17px!important;background:#fff!important;box-shadow:0 7px 24px rgba(15,43,70,.045)!important;overflow:hidden}
+#opsDashboardView .staff-panel-heading,#opsDashboardView .ect-rail-heading{padding:18px 20px!important;border-bottom:1px solid #e8eef5!important}
+#opsDashboardView .staff-panel-heading strong,#opsDashboardView .ect-rail-heading strong{font-size:13px!important;font-weight:800!important;letter-spacing:-.02em}
+#opsDashboardView .control-tray{padding:18px!important;margin-bottom:18px!important}
+#opsDashboardView .control-tray-top{gap:14px!important}
+#opsDashboardView .search-input-wrapper input,#opsDashboardView .input,#opsDashboardView .select{border:1px solid #d9e4ef!important;border-radius:11px!important;background:#f8fafc!important;min-height:40px}
+#opsDashboardView .btn{border-radius:10px!important;font-weight:700!important;transition:transform .15s ease,box-shadow .15s ease}
+#opsDashboardView .btn:hover{transform:translateY(-1px)}
+#opsDashboardView .view-selector{padding:4px!important;background:#f3f7fb!important;border:1px solid #e1e9f2!important;border-radius:12px!important}
+#opsDashboardView .view-btn{border-radius:9px!important;padding:9px 13px!important;font-weight:800!important}
+#opsDashboardView .view-btn.active{background:#fff!important;box-shadow:0 2px 8px #102e4d12!important;color:#087bb8!important}
+#opsDashboardView .quick-chips-wrapper{gap:8px!important}
+#opsDashboardView .chip{border:1px solid #dce6f0!important;border-radius:999px!important;padding:8px 13px!important;background:#f8fafc!important;font-weight:700!important}
+#opsDashboardView .chip.active{background:#e5f5ff!important;border-color:#8dd7f2!important;color:#087bb8!important}
+#opsDashboardView .sheet-table th{background:#f4f8fc!important;color:#536980!important;font-size:9px!important;letter-spacing:.07em!important;font-weight:800!important;border-bottom:1px solid #dce6f0!important}
+#opsDashboardView .sheet-table td{padding-top:13px!important;padding-bottom:13px!important;border-bottom:1px solid #eaf0f6!important}
+#opsDashboardView .sheet-table tr:hover td{background:#f7fbff!important}
+#opsDashboardView .ect-quick-action{padding:13px 15px!important;border-radius:11px!important;margin:3px 9px!important;transition:background .15s ease}
+#opsDashboardView .ect-quick-action:hover{background:#f1f8fd!important}
+#opsDashboardView .staff-status-content{padding:18px!important}
+#opsDashboardView .data-quality-notice{border-radius:13px!important}
+.staff-reference-sidebar{background:linear-gradient(180deg,#0a213b,#0c2e4d)!important;border-right:1px solid #193d5c!important}
+.staff-sidebar-brand{border-bottom:1px solid #ffffff18!important}
+.staff-sidebar-label{color:#81a9c8!important;font-size:9px!important;letter-spacing:.15em!important}
+.staff-side-link{border-radius:10px!important;margin:3px 9px!important;color:#c5d7e6!important;font-weight:700!important;transition:background .15s ease,color .15s ease}
+.staff-side-link:hover{background:#ffffff12!important;color:#fff!important}
+.staff-side-link.active{background:linear-gradient(100deg,#087db8,#0d6594)!important;color:#fff!important;box-shadow:0 7px 18px #006da52b!important}
+.staff-sidebar-help{background:#ffffff0b!important;border:1px solid #ffffff18!important;border-radius:13px!important;margin:12px!important;padding:13px!important}
+@media(max-width:900px){#opsDashboardView.main-wrapper{padding:16px 12px 28px!important}#enterpriseOverview.ect-overview{padding:20px!important}#opsDashboardView .ect-workspace-grid{gap:14px!important}}
+@media(prefers-reduced-motion:reduce){#opsDashboardView *, .staff-reference-sidebar *{transition:none!important;scroll-behavior:auto!important}}
