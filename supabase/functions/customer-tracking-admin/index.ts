@@ -53,6 +53,25 @@ Deno.serve(async (req: Request) => {
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: profile, error: profileError } = await admin.from("staff_profiles").select("role, is_active").eq("user_id", userData.user.id).maybeSingle();
   if (profileError || !profile || !profile.is_active || profile.role !== "Admin") return reply(403, { error: "Administrator access required" }, origin);
+
+  // Limit all authenticated admin actions per staff identity, shared across
+  // Edge Function instances. Fail closed if the limiter cannot be reached.
+  const bucketKey = await sha256Hex(`customer-tracking-admin:${userData.user.id}`);
+  const { data: rateRows, error: rateError } = await admin.rpc("consume_edge_rate_limit", {
+    p_bucket_key: bucketKey,
+    p_window_seconds: 60,
+    p_limit: 60,
+  });
+  if (rateError || !Array.isArray(rateRows) || !rateRows[0]) {
+    return reply(503, { error: "Service unavailable" }, origin);
+  }
+  if (!rateRows[0].allowed) {
+    return new Response(JSON.stringify({ error: "Too many requests" }), {
+      status: 429,
+      headers: { ...corsHeaders(origin), "Retry-After": String(rateRows[0].retry_after_seconds || 60) },
+    });
+  }
+
   let payload: { action?: unknown; containerNo?: unknown; label?: unknown; expiresInDays?: unknown; tokenId?: unknown; limit?: unknown; offset?: unknown };
   try {
     const parsed = await req.json();
