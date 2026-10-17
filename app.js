@@ -1349,7 +1349,7 @@ async function performPublicSearch() {
     }).join("");
     container.innerHTML = `
       <div class="carrier-results-shell">
-        <div class="public-results-toolbar"><span>${publicSearchResults.length} shipment${publicSearchResults.length === 1 ? "" : "s"} found</span><span>Search: ${esc(rawInput)}</span></div>
+        <div class="public-results-toolbar"><span>${publicSearchResults.length} shipment${publicSearchResults.length === 1 ? "" : "s"} found</span><span>Search: ${esc(rawInput)}</span><button type="button" class="btn btn-ghost" onclick="this.closest(\'.carrier-results-shell\').classList.toggle(\'show-table-view\');this.textContent=this.closest(\'.carrier-results-shell\').classList.contains(\'show-table-view\')?\'Card view\':\'Table view\'">Table view</button></div>
         <div class="carrier-table-wrap">
           <table class="carrier-results-table carrier-one-table">
             <thead><tr><th class="carrier-expand-head"></th><th>Booking / MBL</th><th>Container No.</th><th>Latest Place</th><th>Latest Event Status / Time</th><th>POD / ETA</th><th>Vessel / Voyage</th><th>HBL No.</th></tr></thead>
