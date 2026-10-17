@@ -68,16 +68,17 @@ for (const [name, html] of [["customer page", customerPage], ["admin page", admi
 // Parse the large dashboard script as JavaScript without executing DOM or network calls.
 new Function(dashboard);
 // Operations data endpoint is JWT-authenticated and enforces active staff and write roles server-side.
-assert.match(operations, /caller\\.auth\\.getUser\\(\\)/);
-assert.match(operations, /!profile\\.is_active/);
-assert.match(operations, /\\["Admin", "Editor", "Operator"\\]\\.includes\\(profile\\.role\\)/);
-assert.match(operations, /payload\\.action === "read"/);
-assert.match(operations, /payload\\.action === "write"/);
-assert.match(operations, /consume_edge_rate_limit/);
-assert.match(supabaseConfig, /\\[functions\\.operations-data\\]\\s+verify_jwt = true/);
-assert.match(dashboard, /sb\\.auth\\.signInWithPassword/);
-assert.match(dashboard, /sb\\.functions\\.invoke\\("operations-data"/);
-assert.match(indexPage, /id="staffEmailInput"/);
-assert.match(indexPage, /id="staffPasswordInput"/);
-assert.match(indexPage, /id="legacyAccessCodePanel"/);
+assert.ok(operations.includes("caller.auth.getUser()"));
+assert.ok(operations.includes("!profile.is_active"));
+assert.ok(operations.includes('["Admin", "Editor", "Operator"].includes(profile.role)'));
+assert.ok(operations.includes('payload.action === "read"'));
+assert.ok(operations.includes('payload.action === "write"'));
+assert.ok(operations.includes("consume_edge_rate_limit"));
+assert.ok(supabaseConfig.includes("[functions.operations-data]"));
+assert.ok(supabaseConfig.includes("verify_jwt = true"));
+assert.ok(dashboard.includes("sb.auth.signInWithPassword"));
+assert.ok(dashboard.includes('sb.functions.invoke("operations-data"'));
+assert.ok(indexPage.includes('id="staffEmailInput"'));
+assert.ok(indexPage.includes('id="staffPasswordInput"'));
+assert.ok(indexPage.includes('id="legacyAccessCodePanel"'));
 console.log("Security smoke checks passed.");
