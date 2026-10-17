@@ -1296,6 +1296,33 @@ async function performPublicSearch() {
           </td>
         </tr>`;
     }).join("");
+    const mobileCardsHtml = publicSearchResults.map((r) => {
+      const st = getStatus(r);
+      const latestEvent = getLatestPublicEvent(r);
+      const cntr = getField(r, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO"]) || "—";
+      const mbl = getField(r, ["MBL NO", "MBL", "MASTER BL"]) || "—";
+      const booking = getField(r, ["BOOKING NO", "BOOKING NO.", "BOOKING NUMBER", "BOOKING", "BOOKING REF", "BOOKING REFERENCE"]) || "—";
+      const hbl = getField(r, ["HBL NO", "HBL NO.", "HOUSE BL", "HOUSE BILL OF LADING", "HBL"]) || "—";
+      const liner = getField(r, ["LINER", "LINE", "SHIPPING LINE"]) || "—";
+      const originPort = getField(r, ["POL", "PORT OF LOADING"]) || "—";
+      const gwInfo = getGatewayPortInfo(r);
+      const gwPort = gwInfo.name || getField(r, ["GATEWAY PORT", "GATEWAY"]) || "—";
+      const vessel = getField(r, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]) || "—";
+      const eta = formatDate(getField(r, ["ETA"])) || "—";
+      const cfs = getField(r, ["CFS NAME", "CFS"]) || "—";
+      const type = getField(r, ["TYPE", "EQUIPMENT TYPE", "CONTAINER TYPE", "SIZE"]) || "—";
+      const publicUrl = window.location.href.split('?')[0] + '?cntr=' + encodeURIComponent(cntr);
+      const timeline = generatePublicVoyageTimelineHtml(r);
+      const statusText = String(st.text || "PENDING").replace(/<[^>]*>/g, "");
+      const statusClass = /RETURNED|COMPLETED/i.test(statusText) ? "done" : /PENDING/i.test(statusText) ? "pending" : "active";
+      return '<article class="premium-track-card">' +
+        '<div class="premium-track-card-head"><div><span class="premium-track-kicker">CONTAINER TRACKING</span><h3>' + esc(cntr) + '</h3><p>' + esc(booking) + ' · ' + esc(type) + '</p></div><span class="premium-track-status ' + statusClass + '">' + esc(statusText) + '</span></div>' +
+        '<div class="premium-track-route"><div><small>LAST REPORTED LOCATION</small><strong>' + esc(latestEvent.place || gwPort) + '</strong><span>' + esc(latestEvent.label) + ' · ' + esc(latestEvent.date) + '</span></div><div><small>ESTIMATED ARRIVAL</small><strong>' + esc(eta) + '</strong><span>' + esc(getField(r, ["POD", "PORT OF DISCHARGE", "DISCHARGE PORT"]) || "Destination not recorded") + '</span></div></div>' +
+        '<div class="premium-track-meta"><div><small>Vessel / Voyage</small><strong>' + esc(vessel) + '</strong></div><div><small>Shipping line</small><strong>' + esc(liner) + '</strong></div><div><small>Master B/L</small><strong>' + esc(mbl) + '</strong></div><div><small>House B/L</small><strong>' + esc(hbl) + '</strong></div><div><small>Gateway</small><strong>' + esc(gwPort) + '</strong></div><div><small>CFS</small><strong>' + esc(cfs) + '</strong></div></div>' +
+        '<details class="premium-track-timeline"><summary>View shipment milestone timeline</summary><div class="premium-track-timeline-body">' + timeline + '</div></details>' +
+        '<div class="premium-track-card-actions"><button type="button" class="btn btn-ghost" onclick="copyText(\'' + esc(publicUrl) + '\')">🔗 Copy tracking link</button><button type="button" class="btn btn-ghost" onclick="window.print()">🖨️ Print status</button><button type="button" class="btn" onclick="openRouteMap(\'' + esc(originPort) + '\', \'' + esc(gwPort) + ', INDIA\', \'' + esc(vessel) + '\')">🗺️ Route</button></div>' +
+        '</article>';
+    }).join("");
     container.innerHTML = `
       <div class="carrier-results-shell">
         <div class="public-results-toolbar"><span>${publicSearchResults.length} shipment${publicSearchResults.length === 1 ? "" : "s"} found</span><span>Search: ${esc(rawInput)}</span></div>
@@ -1305,6 +1332,7 @@ async function performPublicSearch() {
             <tbody>${rowsHtml}</tbody>
           </table>
         </div>
+        <div class="premium-track-mobile-list" aria-label="Shipment tracking cards">${mobileCardsHtml}</div>
       </div>`;
     setTimeout(() => {
       document.querySelectorAll('.timeline-stepper').forEach(stepper => {
