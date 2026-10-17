@@ -9,6 +9,10 @@ const adminPage = read("../tracking-link-admin.html");
 const tokenMigration = read("../supabase/migrations/202610170001_customer_tracking_tokens.sql");
 const staffMigration = read("../supabase/migrations/202610170002_staff_profiles.sql");
 const rateLimitMigration = read("../supabase/migrations/202610170003_edge_rate_limits.sql");
+const operations = read("../supabase/functions/operations-data/index.ts");
+const dashboard = read("../app.js");
+const indexPage = read("../index.html");
+const supabaseConfig = read("../supabase/config.toml");
 
 // Token grants must store only a digest and never expose the full tracking row.
 assert.match(lookup, /\.eq\("token_hash", tokenHash\)/);
@@ -50,7 +54,7 @@ assert.match(customerPage, /JSON\.stringify\(\{token\}\)/);
 assert.match(customerPage, /esc\(\[.*?\]\)/s);
 
 // Parse every inline browser script to catch syntax errors without a browser.
-for (const [name, html] of [["customer page", customerPage], ["admin page", adminPage]]) {
+for (const [name, html] of [["customer page", customerPage], ["admin page", adminPage], ["dashboard page", indexPage]]) {
   const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
     .map((match) => match[1])
     .filter((script) => script.trim());
@@ -61,4 +65,6 @@ for (const [name, html] of [["customer page", customerPage], ["admin page", admi
   assert.ok(scripts.length > 0, `${name} should contain an inline script`);
 }
 
+// Parse the large dashboard script as JavaScript without executing DOM or network calls.
+new Function(dashboard);
 console.log("Security smoke checks passed.");
