@@ -21,6 +21,14 @@ async function sha256Hex(value: string): Promise<string> {
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
 }
 function normalize(value: unknown): string { return String(value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+function field(record: Record<string, unknown>, names: string[]): string {
+  const normalizeKey = (key: string) => key.toLowerCase().replace(/[^a-z0-9]/g, "");
+  for (const name of names) {
+    const key = Object.keys(record).find(k => normalizeKey(k) === normalizeKey(name));
+    if (key && record[key] !== null && record[key] !== undefined && String(record[key]).trim()) return String(record[key]).trim();
+  }
+  return "";
+}
 function makeToken(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   let binary = "";
@@ -70,6 +78,19 @@ Deno.serve(async (req: Request) => {
     if (normalized.length < 7 || normalized.length > 15) return reply(400, { error: "Enter a valid container number" }, origin);
     const days = Number(payload.expiresInDays ?? 30);
     if (!Number.isInteger(days) || days < 1 || days > 90) return reply(400, { error: "Expiry must be 1–90 days" }, origin);
+
+    // Do not issue a grant for a typo or a container that is absent from the live source dataset.
+    const { data: source, error: sourceError } = await admin.from("containers")
+      .select("data").eq("id", "gml_tracking_records").maybeSingle();
+    if (sourceError || !Array.isArray(source?.data)) return reply(503, { error: "Tracking source unavailable" }, origin);
+    const exists = source.data.some((item: unknown) => {
+      if (!item || typeof item !== "object") return false;
+      return normalize(field(item as Record<string, unknown>, [
+        "CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO", "CONTAINER NUMBER",
+      ])) === normalized;
+    });
+    if (!exists) return reply(404, { error: "Container not found in tracking records" }, origin);
+
     const token = makeToken(), expiresAt = new Date(Date.now() + days * 86400000).toISOString();
     const { data, error } = await admin.from("customer_tracking_tokens").insert({
       token_hash: await sha256Hex(token), container_no: normalized,
