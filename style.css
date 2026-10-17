@@ -2064,3 +2064,11 @@ body:not(.staff-reference-mode) .staff-reference-sidebar{display:none!important}
   .staff-side-link{min-height:34px!important;margin:1px 0!important;padding-top:7px!important;padding-bottom:7px!important}
   .staff-sidebar-spacer{flex-basis:6px!important;min-height:6px!important}
 }
+
+/* Definitive public/staff mode separation.
+   The dashboard uses inline style="display:none" (without a space), so older
+   :has([style*="display: none"]) selectors could mistakenly reserve sidebar space. */
+body.public-carrier-mode .staff-reference-sidebar{display:none!important}
+body.public-carrier-mode .nav-header{margin-left:0!important;width:100%!important;box-sizing:border-box!important}
+body.public-carrier-mode #opsDashboardView.main-wrapper{margin-left:0!important;width:100%!important;max-width:1440px!important}
+body.public-carrier-mode #publicLandingView{margin-left:0!important;width:100%!important;max-width:none!important;box-sizing:border-box!important}
