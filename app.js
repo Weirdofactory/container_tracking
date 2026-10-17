@@ -671,18 +671,33 @@ function generateCleanManifestHtml(containersList) {
         <td><strong>${esc(remarks)}</strong></td>
       </tr>`;
   };
+  const renderMobileCard = r => {
+    const container=getField(r,["CONTAINER NO.","CONTAINER","CONTAINER NO","CNTR NO"])||"—";
+    const type=getField(r,["TYPE","SIZE"])||"—";
+    const mbl=getField(r,["MBL NO","MBL","MASTER BL"])||"—";
+    const liner=getField(r,["LINER","LINE"])||detectLinerFromMBL(mbl)||"—";
+    const pol=clean(getField(r,["POL","PORT OF LOADING"]))||"—";
+    const gatewayPort=clean(getField(r,["GATEWAY PORT","GATEWAY","PORT"]))||"—";
+    const cfs=getField(r,["CFS NAME","CFS"])||"—";
+    const eta=getField(r,["ETA","VESSEL ARRIVAL","ARRIVAL DATE"]);
+    const portIn=getField(r,["PORT IN"]);
+    const splitDate=getField(r,["SPLIT DATE","SPLIT"]);
+    const destuff=getField(r,["DESTUFFING DATE","DESTUFF DATE"]);
+    const vessel=splitVesselVoy(getField(r,["VESSEL & VOY","VESSEL","VESSEL NAME"]));
+    const st=getStatus(r);
+    const status=(splitDate?"SPLIT COMPLETED":isFullyCompleted(r)?"COMPLETED":(st.text||"IN TRANSIT")).replace(/<[^>]+>/g,"").replace(/^[^A-Z0-9]+/i,"").trim().toUpperCase();
+    const etd=getField(r,["ETD"]);
+    const cell=(label,value)=>'<div style="padding:16px 18px;background:#f4f8fc;border-radius:12px;min-width:0"><div style="font-size:15px;font-weight:800;color:#6b7c92;text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px">'+label+'</div><div style="font-size:23px;font-weight:800;color:#1b2c46;overflow-wrap:anywhere;line-height:1.35">'+esc(value||"—")+'</div></div>';
+    return '<section style="padding:24px;margin-top:20px;border:2px solid #dce6f0;border-radius:18px;break-inside:avoid"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding-bottom:18px;border-bottom:2px solid #dce6f0"><div><div style="font-size:17px;font-weight:900;color:#1188c1;letter-spacing:.06em">CONTAINER</div><div style="font-size:31px;font-weight:900;color:#10264a;margin-top:5px;overflow-wrap:anywhere">'+esc(container)+'</div></div><div style="font-size:18px;font-weight:900;color:#205a8b;background:#eaf3fb;border-radius:10px;padding:12px 16px;text-align:center">'+esc(status)+'</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px">'+cell("Size / Type",type)+cell("MBL / Line",mbl+" / "+liner)+cell("Vessel / Voyage",vessel.vessel+(vessel.voyage?" V"+vessel.voyage:""))+cell("Gateway Port",gatewayPort)+cell("Port of Loading",pol+(etd?" · ETD "+fmt(etd):""))+cell("CFS",cfs)+cell("ETA / Port In",fmt(eta)+" / "+fmt(portIn))+cell("Destuffing",fmt(destuff))+'</div></section>';
+  };
   const totalTEU=containersList.reduce((sum,r)=>sum+(String(getField(r,["TYPE","SIZE"])||"").includes("40")?2:1),0);
   return `
-  <div id="manifestCaptureContainer" style="width:2400px;background:#fff;padding:48px 56px 40px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#1b2c46;box-sizing:border-box;border:1px solid #d7e0ea;border-radius:16px">
+  <div id="manifestCaptureContainer" style="width:1600px;background:#fff;padding:42px 44px 36px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#1b2c46;box-sizing:border-box;border:1px solid #d7e0ea;border-radius:16px">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:4px 0 22px;border-bottom:3px solid #15284a">
-      <div><div style="font-size:38px;font-weight:900;letter-spacing:.025em;color:#10264a">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</div><div style="font-size:23px;color:#667891;font-weight:700;margin-top:12px">Live Status Report • Chennai Operations Desk</div></div>
-      <div style="font-size:24px;color:#1188c1;font-weight:900">${esc(generatedDate)}</div>
+      <div><div style="font-size:32px;font-weight:900;letter-spacing:.025em;color:#10264a">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</div><div style="font-size:20px;color:#667891;font-weight:700;margin-top:10px">Live Status Report • Chennai Operations Desk</div></div>
+      <div style="font-size:20px;color:#1188c1;font-weight:900">${esc(generatedDate)}</div>
     </div>
-    <table class="wa-report-table" style="width:100%;border-collapse:collapse;table-layout:fixed;margin-top:32px;font-size:18px">
-      <colgroup><col style="width:10%"><col style="width:10%"><col style="width:16%"><col style="width:7%"><col style="width:11%"><col style="width:7%"><col style="width:10%"><col style="width:8%"><col style="width:10%"><col style="width:11%"></colgroup>
-      <thead><tr><th>CONTAINER NO</th><th>MBL / LINE</th><th>VESSEL</th><th>PORT</th><th>POL</th><th>CFS</th><th>ETA / PORT IN</th><th>DESTUFF</th><th>STATUS</th><th>REMARKS</th></tr></thead>
-      <tbody>${containersList.map(renderRow).join("")}</tbody>
-    </table>
+    <div style="margin-top:12px">${containersList.map(renderMobileCard).join("")}</div>
     <div style="display:flex;justify-content:flex-end;gap:28px;padding:18px 4px 0;font-size:13px;color:#6b7c92;font-weight:800">
       <span>Total Containers: <b style="color:#243955">${containersList.length}</b></span>
       <span>Total TEU: <b style="color:#243955">${totalTEU}</b></span>
