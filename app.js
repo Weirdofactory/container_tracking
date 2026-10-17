@@ -901,31 +901,46 @@ function checkActiveSession() {
 }
 
 function setAccessState(isStaff) {
+  // Set mode classes synchronously before changing view visibility so CSS cannot
+  // leave the staff dashboard behind the public landing page.
   document.body.classList.toggle("public-carrier-mode", !isStaff);
-  el("opsControls").style.display = isStaff ? "flex" : "none";
-  el("publicControls").style.display = isStaff ? "none" : "flex";
-  
-  if (isStaff) {
-    el("publicLandingView").style.display = "none";
-    el("opsDashboardView").style.display = "block";
-    el("opsDashboardView").classList.remove("fade-in");
-    void el("opsDashboardView").offsetWidth;
-    el("opsDashboardView").classList.add("fade-in");
-  } else {
-    el("opsDashboardView").style.display = "none";
-    el("publicLandingView").style.display = "block";
-    el("publicLandingView").classList.remove("fade-in");
-    void el("publicLandingView").offsetWidth;
-    el("publicLandingView").classList.add("fade-in");
+  document.body.classList.toggle("staff-reference-mode", !!isStaff);
+  const dashboard = el("opsDashboardView");
+  const publicView = el("publicLandingView");
+  const opsControls = el("opsControls");
+  const publicControls = el("publicControls");
+  if (opsControls) opsControls.style.display = isStaff ? "flex" : "none";
+  if (publicControls) publicControls.style.display = isStaff ? "none" : "flex";
+
+  if (dashboard) {
+    dashboard.style.display = isStaff ? "block" : "none";
+    dashboard.classList.remove("fade-in");
+    void dashboard.offsetWidth;
+    if (isStaff) dashboard.classList.add("fade-in");
+  }
+  if (publicView) {
+    publicView.style.display = isStaff ? "none" : "block";
+    publicView.classList.remove("fade-in");
+    void publicView.offsetWidth;
+    if (!isStaff) publicView.classList.add("fade-in");
   }
 
+  const sidebar = el("staffReferenceSidebar");
+  if (sidebar) sidebar.style.display = isStaff ? "flex" : "none";
+
   if (isStaff && currentUser) {
-    el("userBadge").textContent = `${currentUser.id} (${currentUser.role})`;
+    const userBadge = el("userBadge");
+    if (userBadge) userBadge.textContent = `${currentUser.id} (${currentUser.role})`;
     const isViewer = currentUser.role === "Viewer";
     document.querySelectorAll(".action-editor-only").forEach(elem => {
       elem.style.display = isViewer ? "none" : "inline-flex";
     });
-    renderUI();
+    try {
+      renderUI();
+    } catch (error) {
+      console.error("Staff dashboard render failed:", error);
+      toast("Signed in, but the dashboard failed to render. Refresh and try again.");
+    }
   }
 }
 
