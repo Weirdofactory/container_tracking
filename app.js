@@ -673,12 +673,12 @@ function generateCleanManifestHtml(containersList) {
   };
   const totalTEU=containersList.reduce((sum,r)=>sum+(String(getField(r,["TYPE","SIZE"])||"").includes("40")?2:1),0);
   return `
-  <div id="manifestCaptureContainer" style="width:1900px;background:#fff;padding:34px 48px 28px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#1b2c46;box-sizing:border-box;border:1px solid #d7e0ea;border-radius:16px">
+  <div id="manifestCaptureContainer" style="width:2400px;background:#fff;padding:48px 56px 40px;font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#1b2c46;box-sizing:border-box;border:1px solid #d7e0ea;border-radius:16px">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:4px 0 22px;border-bottom:3px solid #15284a">
-      <div><div style="font-size:28px;font-weight:900;letter-spacing:.035em;color:#10264a">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</div><div style="font-size:16px;color:#667891;font-weight:700;margin-top:8px">Live Status Report • Chennai Operations Desk</div></div>
-      <div style="font-size:17px;color:#1188c1;font-weight:900">${esc(generatedDate)}</div>
+      <div><div style="font-size:38px;font-weight:900;letter-spacing:.025em;color:#10264a">GREENWICH MERIDIAN LOGISTICS (INDIA) PVT. LTD.</div><div style="font-size:23px;color:#667891;font-weight:700;margin-top:12px">Live Status Report • Chennai Operations Desk</div></div>
+      <div style="font-size:24px;color:#1188c1;font-weight:900">${esc(generatedDate)}</div>
     </div>
-    <table class="wa-report-table" style="width:100%;border-collapse:collapse;table-layout:fixed;margin-top:24px;font-size:12px">
+    <table class="wa-report-table" style="width:100%;border-collapse:collapse;table-layout:fixed;margin-top:32px;font-size:18px">
       <colgroup><col style="width:10%"><col style="width:10%"><col style="width:16%"><col style="width:7%"><col style="width:11%"><col style="width:7%"><col style="width:10%"><col style="width:8%"><col style="width:10%"><col style="width:11%"></colgroup>
       <thead><tr><th>CONTAINER NO</th><th>MBL / LINE</th><th>VESSEL</th><th>PORT</th><th>POL</th><th>CFS</th><th>ETA / PORT IN</th><th>DESTUFF</th><th>STATUS</th><th>REMARKS</th></tr></thead>
       <tbody>${containersList.map(renderRow).join("")}</tbody>
