@@ -814,15 +814,28 @@ function executeSuccessfulLogin(userObj) {
 }
 
 el("loginBtn").addEventListener("click", () => {
+  if (el("staffEmailInput")) el("staffEmailInput").value = "";
+  if (el("staffPasswordInput")) el("staffPasswordInput").value = "";
   el("loginCodeInput").value = "";
+  if (el("legacyAccessCodePanel")) el("legacyAccessCodePanel").style.display = "none";
   clearLoginFeedback();
   el("loginToggleCode").textContent = "Show";
   el("loginToggleCode").setAttribute("aria-label", "Show access code");
   el("loginToggleCode").setAttribute("aria-pressed", "false");
   el("loginCodeInput").type = "password";
   el("loginModalBg").classList.add("open");
-  setTimeout(() => el("loginCodeInput").focus(), 100);
+  setTimeout(() => el("staffEmailInput")?.focus(), 100);
 });
+el("legacyAccessCodeToggle")?.addEventListener("click", () => {
+  const panel = el("legacyAccessCodePanel");
+  if (!panel) return;
+  const show = panel.style.display === "none";
+  panel.style.display = show ? "block" : "none";
+  if (show) el("loginCodeInput")?.focus();
+});
+["staffEmailInput", "staffPasswordInput"].forEach(id => el(id)?.addEventListener("keydown", event => {
+  if (event.key === "Enter") { event.preventDefault(); el("loginSubmit").click(); }
+}));
 el("loginClose").addEventListener("click", closeStaffLogin);
 el("loginCancel").addEventListener("click", closeStaffLogin);
 el("loginModalBg").addEventListener("click", (event) => {
