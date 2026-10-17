@@ -64,6 +64,24 @@ Deno.serve(async (req: Request) => {
   });
 
   const tokenHash = await sha256Hex(token);
+  // Apply a shared fixed-window limit before querying grants. Fail closed if
+  // the limiter is unavailable; do not silently disable abuse protection.
+  const bucketKey = await sha256Hex(`customer-tracking:${tokenHash}`);
+  const { data: rateRows, error: rateError } = await admin.rpc("consume_edge_rate_limit", {
+    p_bucket_key: bucketKey,
+    p_window_seconds: 60,
+    p_limit: 30,
+  });
+  if (rateError || !Array.isArray(rateRows) || !rateRows[0]) {
+    return response(503, { error: "Tracking service temporarily unavailable" });
+  }
+  if (!rateRows[0].allowed) {
+    return new Response(JSON.stringify({ error: "Too many requests" }), {
+      status: 429,
+      headers: { ...corsHeaders, "Retry-After": String(rateRows[0].retry_after_seconds || 60) },
+    });
+  }
+
   const { data: grant, error: grantError } = await admin
     .from("customer_tracking_tokens")
     .select("id, container_no, expires_at, revoked_at")
