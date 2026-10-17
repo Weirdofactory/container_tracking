@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.customer-tracking-admin]
 verify_jwt = true
+
+[functions.operations-data]
+verify_jwt = true
