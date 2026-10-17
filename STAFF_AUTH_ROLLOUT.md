@@ -15,7 +15,7 @@
 - This PR does not change the existing access-code login, public tracking search, or production RLS policies.
 - The migration is not applied and the Edge Function is not deployed.
 - The legacy operations dashboard is not yet migrated to Supabase Auth. The new admin and customer pages are separate entry points and do not change the existing dashboard login or data queries.
-- No rate limiting is implemented here. Add gateway/WAF rate limiting before public deployment.
+- This branch adds a database-backed fixed-window limiter shared across Edge Function instances (30 lookups/minute per token; 60 admin actions/minute per active Admin identity). The functions fail closed if the limiter is unavailable. This complements, but does not replace, gateway/WAF and abuse monitoring before public deployment.
 - Before issuing a link, the admin function now verifies the normalized container number exists in the shared tracking source dataset. A missing source dataset returns a service-unavailable response; an unknown container is rejected without creating a token.
 
 ## Admin function request shapes
@@ -33,7 +33,7 @@ Every action requires a valid Supabase Auth bearer token and an active `Admin` p
 5. Test `tracking-link-admin.html` with provisioned Admin and non-Admin accounts; test customer links in a clean browser session, including expired/revoked/unknown-container cases. Browser-script syntax was checked, but no live integration tests have been run.
 6. Build and test the main operations dashboard's Supabase Auth session flow. Keep the existing login available until staff workflows have parity.
 7. Migrate every required staff data operation to authenticated, role-checked server paths. Then plan a separate reversible RLS migration after auditing all app queries and writes.
-8. Add rate limiting, monitoring, and a documented rollback before production rollout.
+8. Apply the separate rate-limit migration in staging and verify that requests above the configured limits receive HTTP 429 with `Retry-After`; verify limiter failure returns HTTP 503 (fail closed). Add gateway/WAF limits, monitoring, and a documented rollback before production rollout.
 
 ## Important security notes
 - Supabase Auth authenticates identity; the staff profile determines authorization. Never accept a role supplied by the browser.
