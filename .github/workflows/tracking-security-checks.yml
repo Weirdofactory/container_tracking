@@ -5,8 +5,11 @@ on:
     paths:
       - "customer-tracking.html"
       - "tracking-link-admin.html"
+      - "index.html"
+      - "app.js"
       - "supabase/functions/customer-tracking/**"
       - "supabase/functions/customer-tracking-admin/**"
+      - "supabase/functions/operations-data/**"
       - "supabase/migrations/**"
       - "tests/security-smoke-check.mjs"
       - ".github/workflows/tracking-security-checks.yml"
@@ -38,3 +41,5 @@ jobs:
         run: deno check supabase/functions/customer-tracking/index.ts
       - name: Type-check tracking admin function
         run: deno check supabase/functions/customer-tracking-admin/index.ts
+      - name: Type-check operations data function
+        run: deno check supabase/functions/operations-data/index.ts
