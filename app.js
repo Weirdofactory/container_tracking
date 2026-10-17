@@ -850,54 +850,65 @@ el("loginCodeInput").addEventListener("keydown", (event) => {
 
 el("loginSubmit").addEventListener("click", async () => {
   if (el("loginSubmit").disabled) return;
-  const code = el("loginCodeInput").value.trim().toLowerCase();
-  if (!code) {
-    setLoginFeedback("Enter your staff access code to continue.", "error");
-    el("loginCodeInput").focus();
-    return;
-  }
-
+  const email = (el("staffEmailInput")?.value || "").trim().toLowerCase();
+  const password = el("staffPasswordInput")?.value || "";
+  const legacyMode = el("legacyAccessCodePanel")?.style.display !== "none";
   setLoginBusy(true);
-  setLoginFeedback("Verifying your access code securely…", "info");
-
   try {
-    const result = await Promise.race([
-      sb.from("user_roles").select("user_id, role, username").eq("access_code", code).single(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
-    ]);
-    const data = result.data, error = result.error;
-    if (error || !data) {
-      setLoginFeedback("That access code was not recognized. Check it and try again.", "error");
-      el("loginCodeInput").focus();
-      setLoginBusy(false);
-    } else {
-      executeSuccessfulLogin({ id: data.username || code, role: data.role || "Operator", uid: data.user_id });
+    if (email && password) {
+      setLoginFeedback("Signing in with Supabase Auth…", "info");
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error || !data.session || !data.user) throw new Error("Invalid email or password.");
+      const { data: profile, error: profileError } = await sb.from("staff_profiles")
+        .select("display_name, role, is_active").eq("user_id", data.user.id).maybeSingle();
+      if (profileError || !profile || !profile.is_active) {
+        await sb.auth.signOut();
+        throw new Error("This account does not have an active staff profile. Contact an administrator.");
+      }
+      localStorage.removeItem("gml_auth_code_user");
+      currentUser = { id: profile.display_name || data.user.email || data.user.id, role: profile.role, uid: data.user.id, authenticated: true };
+      closeStaffLogin(); setAccessState(true); await loadFromCloud(); toast("Signed in securely");
+      return;
     }
+    if (!legacyMode) { setLoginFeedback("Enter your staff email and password.", "error"); return; }
+    const code = el("loginCodeInput").value.trim().toLowerCase();
+    if (!code) { setLoginFeedback("Enter your staff email/password, or switch to the legacy access code.", "error"); return; }
+    setLoginFeedback("Verifying legacy access code…", "info");
+    const { data, error } = await sb.from("user_roles").select("user_id, role, username").eq("access_code", code).single();
+    if (error || !data) throw new Error("That access code was not recognized.");
+    executeSuccessfulLogin({ id: data.username || code, role: data.role || "Operator", uid: data.user_id, legacy: true });
   } catch(err) {
-    console.warn("Supabase auth error:", err);
-    setLoginFeedback("We couldn’t reach the login service. Check your connection and try again.", "error");
-    setLoginBusy(false);
-  }
+    console.warn("Staff sign-in failed:", err);
+    setLoginFeedback(err.message || "Sign-in failed. Check your connection and try again.", "error");
+  } finally { setLoginBusy(false); }
 });
 
 el("terminalRoutingBtn")?.addEventListener("click", openTerminalRoutingMaster);
-el("logoutBtn").addEventListener("click", () => {
-  currentUser = null;
-  localStorage.removeItem("gml_auth_code_user");
-  setAccessState(false);
-  toast("Logged out");
+el("logoutBtn").addEventListener("click", async () => {
+  if (currentUser?.authenticated) await sb.auth.signOut();
+  currentUser = null; localStorage.removeItem("gml_auth_code_user"); setAccessState(false); toast("Logged out");
 });
 
-function checkActiveSession() {
+async function checkActiveSession() {
+  try {
+    const { data: sessionData } = await sb.auth.getSession();
+    const session = sessionData?.session;
+    if (session?.user) {
+      const { data: profile, error } = await sb.from("staff_profiles")
+        .select("display_name, role, is_active").eq("user_id", session.user.id).maybeSingle();
+      if (!error && profile?.is_active) {
+        currentUser = { id: profile.display_name || session.user.email || session.user.id, role: profile.role, uid: session.user.id, authenticated: true };
+        localStorage.removeItem("gml_auth_code_user"); setAccessState(true); return true;
+      }
+      await sb.auth.signOut();
+    }
+  } catch (error) { console.warn("Supabase Auth session check failed:", error); }
   const savedUser = localStorage.getItem("gml_auth_code_user");
   if (savedUser) {
-    try {
-      currentUser = JSON.parse(savedUser);
-      setAccessState(true);
-      return;
-    } catch(e) { }
+    try { currentUser = { ...JSON.parse(savedUser), legacy: true }; setAccessState(true); return false; }
+    catch(e) { localStorage.removeItem("gml_auth_code_user"); }
   }
-  setAccessState(false);
+  setAccessState(false); return false;
 }
 
 function setAccessState(isStaff) {
@@ -2816,22 +2827,33 @@ async function saveAndRefresh() {
   renderUI();
   try {
     localStorage.setItem("containerRows", JSON.stringify(rows));
-    await sb.from('containers').upsert({ id: 'gml_tracking_records', data: rows, updated_at: new Date().toISOString() });
+    if (currentUser?.authenticated) {
+      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows } });
+      if (error || !data?.saved) throw new Error(data?.error || error?.message || "Secure save failed");
+      setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records");
+    } else {
+      // Compatibility path retained until public workflows are replaced and validated.
+      await sb.from("containers").upsert({ id: "gml_tracking_records", data: rows, updated_at: new Date().toISOString() });
+    }
   } catch (err) {
     console.warn("Cloud sync notice:", err);
+    if (currentUser?.authenticated) setCloudDataState("error", "Secure save failed");
   }
 }
 
 async function loadFromCloud() {
   try {
-    const { data, error } = await sb.from('containers').select('data').eq('id', 'gml_tracking_records').single();
-    if (!error && data && Array.isArray(data.data) && data.data.length > 0) {
-      rows = data.data;
-      localStorage.setItem("containerRows", JSON.stringify(rows));
-      populateFilters();
-      renderUI();
+    if (currentUser?.authenticated) {
+      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "read" } });
+      if (error || !Array.isArray(data?.data)) throw new Error(data?.error || error?.message || "Secure data read failed");
+      rows = data.data; localStorage.setItem("containerRows", JSON.stringify(rows));
+      populateFilters(); renderUI(); setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records"); return;
     }
-  } catch(err){}
+    const { data, error } = await sb.from("containers").select("data").eq("id", "gml_tracking_records").single();
+    if (!error && data && Array.isArray(data.data) && data.data.length > 0) {
+      rows = data.data; localStorage.setItem("containerRows", JSON.stringify(rows)); populateFilters(); renderUI();
+    }
+  } catch(err) { console.warn("Cloud load failed:", err); }
 }
 
 function populateFilters() {
@@ -4018,9 +4040,17 @@ async function saveAndRefresh() {
   renderUI();
   try {
     localStorage.setItem("containerRows", JSON.stringify(rows));
-    await sb.from('containers').upsert({ id: 'gml_tracking_records', data: rows, updated_at: new Date().toISOString() });
+    if (currentUser?.authenticated) {
+      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows } });
+      if (error || !data?.saved) throw new Error(data?.error || error?.message || "Secure save failed");
+      setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records");
+    } else {
+      // Compatibility path retained until public workflows are replaced and validated.
+      await sb.from("containers").upsert({ id: "gml_tracking_records", data: rows, updated_at: new Date().toISOString() });
+    }
   } catch (err) {
     console.warn("Cloud sync notice:", err);
+    if (currentUser?.authenticated) setCloudDataState("error", "Secure save failed");
   }
 }
 
@@ -4039,35 +4069,30 @@ function setCloudDataState(state, message) {
 async function loadFromCloud() {
   setCloudDataState("loading", "Loading cloud data…");
   try {
-    const { data, error } = await sb.from("containers").select("data").eq("id", "gml_tracking_records").single();
+    let data, error;
+    if (currentUser?.authenticated) {
+      const result = await sb.functions.invoke("operations-data", { body: { action: "read" } });
+      data = result.data ? { data: result.data.data } : null;
+      error = result.error || (Array.isArray(data?.data) ? null : new Error(result.data?.error || "Secure data read failed"));
+    } else {
+      // Compatibility path for the public landing/search; legacy policies remain until replacement validation.
+      const result = await sb.from("containers").select("data").eq("id", "gml_tracking_records").single();
+      data = result.data; error = result.error;
+    }
     if (error) {
       console.warn("Container data cloud read failed:", error);
       const cached = localStorage.getItem("containerRows");
-      setCloudDataState(cached ? "offline" : "error", cached ? "Saved records · offline" : "Cloud read failed");
-      return;
+      setCloudDataState(cached ? "offline" : "error", cached ? "Saved records · offline" : "Cloud read failed"); return;
     }
     if (data && Array.isArray(data.data) && data.data.length > 0) {
-      rows = data.data.map(item => ({
-        "PORT OUT": "",
-        "CONTAINER RETURN DATE": "",
-        "TRUCK NO.": "",
-        "DRIVER CONTACT": "",
-        ...item
-      }));
-      try { localStorage.setItem("containerRows", JSON.stringify(rows)); } catch (storageError) {
-        console.warn("Could not cache shipment records:", storageError);
-      }
+      rows = data.data.map(item => ({ "PORT OUT": "", "CONTAINER RETURN DATE": "", "TRUCK NO.": "", "DRIVER CONTACT": "", ...item }));
+      try { localStorage.setItem("containerRows", JSON.stringify(rows)); } catch (storageError) { console.warn("Could not cache shipment records:", storageError); }
       populateFilters();
-      setCloudDataState("connected", "Cloud synced · " + rows.length + " records");
-      renderUI();
-      return;
+      setCloudDataState("connected", (currentUser?.authenticated ? "Secure cloud sync · " : "Cloud synced · ") + rows.length + " records");
+      renderUI(); return;
     }
     const cached = localStorage.getItem("containerRows");
-    if (cached) {
-      setCloudDataState("offline", "Saved records · cloud dataset empty");
-    } else {
-      setCloudDataState("error", "No cloud records returned");
-    }
+    setCloudDataState(cached ? "offline" : "error", cached ? "Saved records · cloud dataset empty" : "No cloud records returned");
   } catch (err) {
     console.warn("Container data cloud load failed:", err);
     const cached = localStorage.getItem("containerRows");
@@ -4418,9 +4443,8 @@ try {
 } catch(e){}
 
 populateFilters();
-loadFromCloud();
 updateAuditBadge();
-checkActiveSession();
+checkActiveSession().finally(() => loadFromCloud());
 
 activeQuickFilter = 'all';
 document.querySelectorAll(".chip").forEach(c => {
