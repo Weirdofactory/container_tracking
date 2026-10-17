@@ -20,7 +20,18 @@
  <div class="hero"><div><h1>Your shipment, clearly in view.</h1><p>Follow key milestones, vessel routing and terminal activity with a secure, shipment-specific tracking link.</p></div><div class="private-pill">🔒 &nbsp; Private tracking link</div></div>
 </div></header>
 <main class="main">
- <div id="message" class="notice"><div class="noticeicon">↗</div><div><strong>Preparing your tracking view</strong><p>Verifying your private shipment link securely…</p></div></div>
+ <section id="welcomePanel" class="panel">
+  <div class="panelhead"><div><div class="eyebrow">Secure customer access</div><h2 class="sectiontitle">Track a shipment shared with you</h2><p class="sectiondesc">GML tracking links are private and show only the shipment assigned to that link.</p></div><span class="status">Protected access</span></div>
+  <div class="overview">
+   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px">
+    <div class="detail"><small>01 · Open your link</small><strong>Use the complete tracking URL sent by your GML operations representative.</strong></div>
+    <div class="detail"><small>02 · View milestones</small><strong>See shipment status, vessel and port references, estimated dates and recorded milestones.</strong></div>
+    <div class="detail"><small>03 · Need access?</small><strong>Contact your GML representative to request a valid private tracking link.</strong></div>
+   </div>
+   <div style="margin-top:18px;padding:14px 16px;border-radius:12px;background:#f1f8fd;border:1px solid #d9edf8;color:#315773;font-size:12px">For your security, this page cannot search all containers by itself. A valid private link is required to display shipment details.</div>
+  </div>
+ </section>
+ <div id="message" class="notice hidden"><div class="noticeicon">↗</div><div><strong>Preparing your tracking view</strong><p>Verifying your private shipment link securely…</p></div></div>
  <section id="shipmentPanel" class="panel hidden">
   <div class="panelhead"><div><div class="eyebrow">Shipment overview</div><h2>Current shipment</h2></div><span id="shipmentStatus" class="status">Status pending</span></div>
   <div class="overview"><div class="containerline"><div><div class="containerlabel">Container reference</div><div id="containerId" class="containerid">—</div><div id="shipmentSubtitle" class="subline">Shipment details</div></div><span id="exceptionBadge" class="status hidden">On schedule</span></div>
@@ -60,7 +71,7 @@
   if(!$("exceptionPanel").classList.contains("hidden")){$("exceptionBadge").classList.remove("hidden");$("exceptionBadge").textContent="Attention required";$("exceptionBadge").style.background="#fff0f0";$("exceptionBadge").style.color="#b42332"}
  }
  async function run(){
-  if(!token||token.length<40){setNotice("Invalid or incomplete tracking link","Please request a fresh shipment-specific link from your GML contact.",true);return}
+  if(!token||token.length<40){$("welcomePanel").classList.remove("hidden");$("message").classList.add("hidden");return} $("welcomePanel").classList.add("hidden");$("message").classList.remove("hidden");
   try{const response=await fetch(SUPABASE_URL+"/functions/v1/customer-tracking",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+SUPABASE_ANON_KEY},body:JSON.stringify({token}),cache:"no-store"});const result=await response.json().catch(()=>({}));
    if(!response.ok||!result.shipment){setNotice(response.status===404?"Tracking link unavailable":"Tracking service temporarily unavailable",response.status===404?"This link may be invalid, expired, or revoked. Please contact GML.":"Please try again shortly or contact your GML operations representative.",true);return}render(result.shipment)
   }catch(e){setNotice("Unable to connect","We couldn't reach the tracking service. Please try again later.",true)}
