@@ -25,7 +25,7 @@ function makeToken(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   let binary = "";
   bytes.forEach(byte => binary += String.fromCharCode(byte));
-  return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/g, "");
 }
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
