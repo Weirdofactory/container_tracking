@@ -24,7 +24,7 @@ These findings were obtained via read-only project inspection. No live data was 
 
 ## Staging status and boundaries
 
-The GitHub code is in draft PR #27 on `security/public-tracking-hardening`. A passing GitHub Actions static smoke/type-check run is not equivalent to endpoint or browser validation. Production traffic through the active functions has not been confirmed. **Do not merge, apply the new lockdown migration, or deploy updated Edge Functions until an isolated staging rehearsal and dependency review pass.**
+The GitHub code is in draft PR #28 on `security/public-tracking-hardening`. A passing GitHub Actions static smoke/type-check run is not equivalent to endpoint or browser validation. Production traffic through the active functions has not been confirmed. **Do not merge, apply the new lockdown migration, or deploy updated Edge Functions until an isolated staging rehearsal and dependency review pass.**
 
 The hardened dashboard should not restore public arbitrary-reference search against the shared shipment dataset. The new database lockdown migration revokes direct browser API access to operational datasets and legacy IGM RPCs; it must be applied only after the staging checks below and an external-client dependency review.
 
