@@ -865,7 +865,6 @@ el("loginSubmit").addEventListener("click", async () => {
   if (el("loginSubmit").disabled) return;
   const email = (el("staffEmailInput")?.value || "").trim().toLowerCase();
   const password = el("staffPasswordInput")?.value || "";
-  const legacyMode = el("legacyAccessCodePanel")?.style.display !== "none";
   setLoginBusy(true);
   try {
     if (email && password) {
@@ -883,13 +882,8 @@ el("loginSubmit").addEventListener("click", async () => {
       closeStaffLogin(); setAccessState(true); await loadFromCloud(); toast("Signed in securely");
       return;
     }
-    if (!legacyMode) { setLoginFeedback("Enter your staff email and password.", "error"); return; }
-    const code = el("loginCodeInput").value.trim().toLowerCase();
-    if (!code) { setLoginFeedback("Enter your staff email/password, or switch to the legacy access code.", "error"); return; }
-    setLoginFeedback("Verifying legacy access code…", "info");
-    const { data, error } = await sb.from("user_roles").select("user_id, role, username").eq("access_code", code).single();
-    if (error || !data) throw new Error("That access code was not recognized.");
-    executeSuccessfulLogin({ id: data.username || code, role: data.role || "Operator", uid: data.user_id, legacy: true });
+    setLoginFeedback("Enter your staff email and password to continue. Legacy access-code sign-in is disabled.", "error");
+    return;
   } catch(err) {
     console.warn("Staff sign-in failed:", err);
     setLoginFeedback(err.message || "Sign-in failed. Check your connection and try again.", "error");
@@ -2913,10 +2907,11 @@ async function loadFromCloud() {
       rows = data.data; localStorage.setItem("containerRows", JSON.stringify(rows));
       populateFilters(); renderUI(); setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records"); return;
     }
-    const { data, error } = await sb.from("containers").select("data").eq("id", "gml_tracking_records").single();
-    if (!error && data && Array.isArray(data.data) && data.data.length > 0) {
-      rows = data.data; localStorage.setItem("containerRows", JSON.stringify(rows)); populateFilters(); renderUI();
-    }
+    rows = [];
+    try { localStorage.removeItem("containerRows"); } catch (e) {}
+    populateFilters();
+    renderUI();
+    setCloudDataState("error", "Sign in to access staff records");
   } catch(err) { console.warn("Cloud load failed:", err); }
 }
 
