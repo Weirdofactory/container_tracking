@@ -1,0 +1,102 @@
+/* Staff sign-in v3 — explicit visual overhaul for the login screen shown to staff */
+#loginModalBg.staff-login-overlay{
+  position:fixed!important;inset:0!important;z-index:100000!important;
+  display:none;align-items:center!important;justify-content:center!important;
+  padding:24px!important;background:rgba(3,15,29,.76)!important;
+  backdrop-filter:blur(12px) saturate(125%)!important
+}
+#loginModalBg.staff-login-overlay.open{display:flex!important}
+#loginModalBg .staff-login-dialog{
+  position:relative!important;display:grid!important;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr)!important;
+  width:min(900px,96vw)!important;max-width:900px!important;max-height:min(720px,92vh)!important;
+  overflow:hidden!important;border:1px solid #d8e5ef!important;border-radius:25px!important;
+  background:#fff!important;box-shadow:0 35px 100px #00132666!important
+}
+#loginModalBg .staff-login-banner{
+  position:relative!important;isolation:isolate!important;display:flex!important;flex-direction:column!important;
+  justify-content:center!important;align-items:flex-start!important;min-height:500px!important;overflow:hidden!important;
+  padding:40px 34px!important;background:
+    radial-gradient(ellipse at 95% 12%,#32c7e33a,transparent 34%),
+    radial-gradient(ellipse at 0 100%,#148cc32e,transparent 40%),
+    linear-gradient(150deg,#071b31 0%,#0a2b49 56%,#0b5268 100%)!important;color:#fff!important
+}
+#loginModalBg .staff-login-banner:before{
+  content:"";position:absolute;z-index:-1;inset:0;opacity:.17;pointer-events:none;
+  background-image:linear-gradient(#ffffff13 1px,transparent 1px),linear-gradient(90deg,#ffffff13 1px,transparent 1px);
+  background-size:32px 32px;mask-image:linear-gradient(to bottom,black,transparent 95%)
+}
+#loginModalBg .staff-login-banner:after{
+  content:"";position:absolute;z-index:-1;width:350px;height:350px;right:-220px;bottom:-210px;
+  border:1px solid #ffffff35;border-radius:50%;box-shadow:0 0 0 28px #ffffff08,0 0 0 56px #ffffff06,0 0 0 84px #ffffff04
+}
+#loginModalBg .staff-login-close{
+  position:absolute!important;top:17px!important;right:17px!important;display:grid!important;place-items:center!important;
+  width:38px!important;height:38px!important;border:1px solid #ffffff32!important;border-radius:12px!important;
+  background:#ffffff10!important;color:#fff!important;font-size:24px!important;cursor:pointer!important
+}
+#loginModalBg .staff-login-brandmark{
+  display:grid!important;place-items:center!important;width:55px!important;height:55px!important;margin-bottom:35px!important;
+  border:1px solid #ffffff3b!important;border-radius:16px!important;background:#ffffff10!important;color:#fff!important;
+  font-size:19px!important;font-weight:900!important;letter-spacing:-.04em!important;box-shadow:0 12px 30px #00132330!important
+}
+#loginModalBg .staff-login-kicker{margin:0 0 13px!important;color:#73dff0!important;font-size:10px!important;font-weight:900!important;letter-spacing:.17em!important;line-height:1.7!important}
+#loginModalBg #staffLoginTitle{margin:0!important;color:#fff!important;font-size:clamp(30px,4vw,43px)!important;line-height:1.04!important;letter-spacing:-.065em!important;font-weight:900!important}
+#loginModalBg .staff-login-banner p{margin:14px 0 0!important;max-width:260px!important;color:#c1d7e6!important;font-size:13px!important;line-height:1.8!important}
+#loginModalBg .staff-login-content{
+  display:flex!important;flex-direction:column!important;justify-content:center!important;min-width:0!important;
+  overflow-y:auto!important;padding:43px clamp(25px,4vw,48px)!important;background:#fff!important
+}
+#loginModalBg .staff-login-content:before{
+  content:"AUTHORIZED STAFF ACCESS";display:block!important;margin-bottom:9px!important;color:#0784b7!important;
+  font-size:9px!important;font-weight:900!important;letter-spacing:.17em!important
+}
+#loginModalBg .staff-login-label{
+  display:block!important;margin:19px 0 8px!important;color:#263e55!important;font-size:10px!important;
+  font-weight:900!important;letter-spacing:.075em!important;text-transform:uppercase!important
+}
+#loginModalBg .staff-login-label:first-of-type{margin-top:8px!important}
+#loginModalBg .staff-code-input{
+  display:block!important;width:100%!important;min-width:0!important;min-height:49px!important;
+  margin:0!important;padding:0 15px!important;border:1px solid #dbe5ee!important;border-radius:12px!important;
+  outline:none!important;background:#f8fafc!important;color:#152d45!important;
+  font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif!important;font-size:13px!important;font-weight:600!important;
+  box-shadow:inset 0 1px 2px #112d4508!important;transition:border-color .18s,box-shadow .18s,background .18s!important
+}
+#loginModalBg .staff-code-input::placeholder{color:#95a5b5!important;font-weight:500!important}
+#loginModalBg .staff-code-input:focus{border-color:#1597ca!important;background:#fff!important;box-shadow:0 0 0 4px #0c8ec31b!important}
+#loginModalBg .staff-login-help{display:flex!important;align-items:flex-start!important;gap:9px!important;margin:18px 0 4px!important;color:#74869a!important;font-size:11px!important;line-height:1.7!important}
+#loginModalBg .staff-login-help span{display:grid;place-items:center;flex:0 0 24px;width:24px;height:24px;border-radius:8px;background:#eaf7fc;font-size:12px}
+#loginModalBg .staff-login-feedback{margin-top:8px!important;font-size:12px!important;line-height:1.5!important}
+#loginModalBg .staff-login-actions{display:grid!important;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr)!important;gap:10px!important;margin-top:20px!important}
+#loginModalBg .staff-login-actions .btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:48px!important;border-radius:12px!important;font-size:12px!important;font-weight:850!important;transition:transform .15s,box-shadow .15s!important}
+#loginModalBg .staff-login-actions .btn:hover{transform:translateY(-1px)!important}
+#loginModalBg .staff-login-cancel{border:1px solid #dce6ef!important;background:#f7fafc!important;color:#253a50!important}
+#loginModalBg .staff-login-submit{border:1px solid #0789c5!important;background:linear-gradient(105deg,#0787c3,#06a1c7)!important;color:#fff!important;box-shadow:0 8px 18px #087eb82b!important}
+#loginModalBg .staff-login-submit:hover{box-shadow:0 11px 24px #087eb83c!important}
+#loginModalBg .staff-login-footnote{
+  display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;
+  margin-top:23px!important;padding-top:17px!important;border-top:1px solid #e8eef4!important;
+  color:#91a2b4!important;font-size:9px!important;font-weight:900!important;letter-spacing:.15em!important;text-transform:uppercase!important
+}
+#loginModalBg .staff-login-footnote:before{content:"";width:5px;height:5px;border-radius:50%;background:#15a67a;box-shadow:0 0 0 4px #15a67a17}
+@media(max-width:700px){
+ #loginModalBg.staff-login-overlay{align-items:center!important;padding:12px!important}
+ #loginModalBg .staff-login-dialog{display:flex!important;flex-direction:column!important;width:min(470px,100%)!important;max-height:calc(100dvh - 24px)!important;border-radius:20px!important}
+ #loginModalBg .staff-login-banner{display:block!important;min-height:0!important;padding:20px 20px 24px!important}
+ #loginModalBg .staff-login-brandmark{width:47px!important;height:47px!important;margin-bottom:20px!important;border-radius:14px!important}
+ #loginModalBg .staff-login-kicker{font-size:9px!important;margin-bottom:10px!important}
+ #loginModalBg #staffLoginTitle{font-size:32px!important}
+ #loginModalBg .staff-login-banner p{margin-top:9px!important;font-size:12px!important}
+ #loginModalBg .staff-login-content{padding:23px 20px 20px!important}
+ #loginModalBg .staff-login-content:before{font-size:8px!important}
+ #loginModalBg .staff-login-label{margin-top:15px!important}
+ #loginModalBg .staff-code-input{min-height:46px!important}
+ #loginModalBg .staff-login-actions .btn{min-height:45px!important}
+ #loginModalBg .staff-login-footnote{margin-top:18px!important;padding-top:14px!important}
+}
+@media(max-width:380px){
+ #loginModalBg .staff-login-banner{padding:16px 17px 19px!important}
+ #loginModalBg .staff-login-content{padding:18px 17px!important}
+ #loginModalBg #staffLoginTitle{font-size:29px!important}
+}
+@media(prefers-reduced-motion:reduce){#loginModalBg *{transition-duration:.01ms!important}}
