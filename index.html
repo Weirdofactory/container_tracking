@@ -73,7 +73,7 @@
 
       <div id="publicControls" style="display:flex; align-items:center; gap:8px;">
         <button class="btn btn-ghost" id="publicThemeBtn" style="padding:6px 10px;">☀️</button>
-        <button class="btn btn-primary" id="loginBtn" onclick="document.getElementById('loginModalBg').classList.add('open'); document.getElementById('loginCodeInput')?.focus();">🔐 Staff Portal Login</button>
+        <button class="btn btn-primary" id="loginBtn" onclick="document.getElementById('loginModalBg').classList.add('open'); document.getElementById('staffEmailInput')?.focus();">🔐 Staff Portal Login</button>
       </div>
     </div>
   </div>
@@ -89,7 +89,7 @@
             <h1>Cargo Tracking</h1>
             <p>Track your shipment status, vessel movement and operational milestones from one place.</p>
           </div>
-          <button type="button" class="public-staff-login-btn" onclick="document.getElementById('loginModalBg').classList.add('open');document.getElementById('loginCodeInput')?.focus();">🔐 Staff Portal Login</button>
+          <button type="button" class="public-staff-login-btn" onclick="document.getElementById('loginModalBg').classList.add('open');document.getElementById('staffEmailInput')?.focus();">🔐 Staff Portal Login</button>
         </div>
       </div>
       <div class="one-track-panel">
@@ -264,7 +264,7 @@
       <label class="staff-login-label" for="staffPasswordInput" style="margin-top:12px;">Password</label>
       <input type="password" id="staffPasswordInput" class="input staff-code-input" autocomplete="current-password" aria-describedby="loginHelp loginFeedback" placeholder="Enter your password">
       <p class="staff-login-help" id="loginHelp"><span aria-hidden="true">🔒</span> Sign in with your authorized Supabase staff account.</p>
-      <button type="button" class="btn btn-ghost" id="legacyAccessCodeToggle" style="width:100%;margin:8px 0;">Use legacy access code (temporary)</button>
+      <button type="button" class="btn btn-ghost" id="legacyAccessCodeToggle" hidden aria-hidden="true" tabindex="-1" style="display:none;width:100%;margin:8px 0;">Legacy access code disabled</button>
       <div id="legacyAccessCodePanel" style="display:none;">
         <label class="staff-login-label" for="loginCodeInput">Legacy access code</label>
         <div class="staff-code-wrap">
@@ -293,48 +293,29 @@
 <div class="toast-popup" id="toast"></div>
 
 <script>
-/* Customer-safe boot fallback: keeps Track/Login usable even if an optional app module fails. */
+/* Safe boot fallback: never reads shipment data or authenticates via browser-stored access codes. */
 (function(){
   const $=id=>document.getElementById(id);
   window.openStaffLoginFallback=function(){
     const m=$('loginModalBg'); if(m)m.classList.add('open');
-    setTimeout(()=>{const x=$('loginCodeInput');if(x)x.focus();},50);
+    setTimeout(()=>{const x=$('staffEmailInput');if(x)x.focus();},50);
   };
   window.performPublicSearchFallback=function(){
-    const input=$('publicSearchInput'), box=$('publicResultContainer');
-    if(!input||!box)return;
-    const q=String(input.value||'').trim().toUpperCase().replace(/\s+/g,'');
-    if(!q){box.innerHTML='<div class="public-empty">Please enter a Container Number.</div>';return;}
-    let rows=[];
-    try{rows=JSON.parse(localStorage.getItem('containerRows')||'[]');}catch(e){}
-    if(!Array.isArray(rows)||!rows.length) rows=[];
-    const hits=rows.filter(r=>String(r['CONTAINER NO.']||r['CONTAINER']||r['CONTAINER NO']||'').toUpperCase().replace(/\s+/g,'')===q);
-    if(!hits.length){box.innerHTML='<div class="public-empty">No shipment found for <b>'+q.replace(/[&<>"]/g,'')+'</b>.</div>';return;}
-    const r=hits[0], val=k=>String(r[k]||'—');
-    box.innerHTML='<div class="public-result-card"><div class="public-result-head"><div><small>CONTAINER</small><h3>'+val('CONTAINER NO.')+'</h3></div><span class="status-pill">Shipment Found</span></div><div class="public-result-grid"><div><small>Vessel / Voyage</small><b>'+val('VESSEL & VOY')+'</b></div><div><small>Gateway Port</small><b>'+val('GATEWAY PORT')+'</b></div><div><small>ETA</small><b>'+val('ETA')+'</b></div><div><small>CFS</small><b>'+val('CFS NAME')+'</b></div></div></div>';
+    const box=$('publicResultContainer');
+    if(!box)return;
+    box.style.display='block';
+    box.innerHTML='<div class="public-empty"><strong>Private tracking link required</strong><span>For shipment privacy, public reference lookup is disabled. Open your authorized GML tracking link or contact your GML operations representative to request access.</span></div>';
   };
   const track=$('publicSearchBtn');
-  if(track) track.onclick=function(){ if(typeof window.performPublicSearch==='function') window.performPublicSearch(); else window.performPublicSearchFallback(); };
+  if(track) track.onclick=function(){
+    if(typeof window.performPublicSearch==='function') window.performPublicSearch();
+    else window.performPublicSearchFallback();
+  };
   const login=$('loginBtn');
   if(login) login.onclick=function(){window.openStaffLoginFallback();};
-  const submit=$('loginSubmit');
-  if(submit) submit.addEventListener('click',async function(){
-    if(typeof window.sb==='undefined' && typeof window.supabase==='undefined') return;
-    if(typeof window.executeSuccessfulLogin==='function') return;
-    const code=String(($('loginCodeInput')||{}).value||'').trim().toLowerCase();
-    if(!code)return;
-    const btn=submit; btn.disabled=true; btn.textContent='Verifying...';
-    try{
-      const client=window.sb || (window.supabase&&window.supabase.createClient('https://ykeucqritoexykqrggzz.supabase.co','sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ'));
-      const {data,error}=await client.from('user_roles').select('user_id, role, username').eq('access_code',code).single();
-      if(error||!data){alert('Invalid access code.');return;}
-      localStorage.setItem('gml_auth_code_user',JSON.stringify(data)); location.reload();
-    }catch(e){alert('Login service unavailable. Please try again.');}
-    finally{btn.disabled=false;btn.textContent='Sign In';}
-  },true);
 })();
 </script>
-<script src="./app.js?v=20261017-premium-customer-tracking-v4"></script>
+<script src="./app.js?v=20261018-security-public-tracking-v1"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
 <link rel="stylesheet" href="./enterprise-upgrade.css?v=20261012-ops-hub-v1">
