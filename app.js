@@ -45,6 +45,7 @@ const DEFAULT_ROWS = [
 ];
 
 let rows = [];
+let cloudDatasetUpdatedAt = null;
 let cloudDataReady = Promise.resolve();
 
 let currentUser = null;
@@ -2865,7 +2866,7 @@ async function saveAndRefresh() {
   try {
     localStorage.setItem("containerRows", JSON.stringify(rows));
     if (currentUser?.authenticated) {
-      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows } });
+      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows, expectedUpdatedAt: cloudDatasetUpdatedAt } });
       if (error || !data?.saved) throw new Error(data?.error || error?.message || "Secure save failed");
       setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records");
     } else {
@@ -4078,7 +4079,7 @@ async function saveAndRefresh() {
   try {
     localStorage.setItem("containerRows", JSON.stringify(rows));
     if (currentUser?.authenticated) {
-      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows } });
+      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows, expectedUpdatedAt: cloudDatasetUpdatedAt } });
       if (error || !data?.saved) throw new Error(data?.error || error?.message || "Secure save failed");
       setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records");
     } else {
@@ -4108,7 +4109,7 @@ async function loadFromCloud() {
     let data, error;
     if (currentUser?.authenticated) {
       const result = await sb.functions.invoke("operations-data", { body: { action: "read" } });
-      data = result.data ? { data: result.data.data } : null;
+      data = result.data ? { data: result.data.data, updatedAt: result.data.updatedAt } : null;
       error = result.error || (Array.isArray(data?.data) ? null : new Error(result.data?.error || "Secure data read failed"));
     } else {
       rows = [];
@@ -4124,6 +4125,7 @@ async function loadFromCloud() {
       setCloudDataState(cached ? "offline" : "error", cached ? "Saved records · offline" : "Cloud read failed"); return;
     }
     if (data && Array.isArray(data.data) && data.data.length > 0) {
+      cloudDatasetUpdatedAt = data.updatedAt || null;
       rows = data.data.map(item => ({ "PORT OUT": "", "CONTAINER RETURN DATE": "", "TRUCK NO.": "", "DRIVER CONTACT": "", ...item }));
       try { localStorage.setItem("containerRows", JSON.stringify(rows)); } catch (storageError) { console.warn("Could not cache shipment records:", storageError); }
       populateFilters();
