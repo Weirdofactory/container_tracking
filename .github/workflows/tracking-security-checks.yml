@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "customer-tracking.html"
+      - "premium-ui.css"
       - "tracking-link-admin.html"
       - "index.html"
       - "app.js"
