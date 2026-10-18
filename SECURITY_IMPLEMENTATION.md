@@ -2,7 +2,7 @@
 
 ## Current state
 
-The code changes are staged in draft PR #27. A read-only review of the connected Supabase account on **2026-10-18** found only one project and no development branches, so treat the connected project as live/production unless the owner confirms otherwise. No database writes, policy changes, or Edge Function deployments were made during this review.
+The code changes are staged in draft PR #28. A read-only review of the connected Supabase account on **2026-10-18** found only one project and no development branches, so treat the connected project as live/production unless the owner confirms otherwise. No database writes, policy changes, or Edge Function deployments were made during this review.
 
 The connected project currently records the three tracking/auth/rate-limit migrations as applied and lists the three Edge Functions as active. The deployed `customer-tracking` and `customer-tracking-admin` source files exactly match this branch. The deployed `operations-data` function does **not** match the branch and is missing the `expectedUpdatedAt` compare-and-swap check. Endpoint/browser integration tests have not been run.
 
