@@ -38,6 +38,7 @@ drop policy if exists "Allow public access for audit_logs" on public.audit_logs;
 drop policy if exists "Allow read for authenticated" on public.audit_logs;
 revoke all privileges on table public.audit_logs from public, anon, authenticated;
 grant insert on table public.audit_logs to authenticated;
+drop policy if exists audit_logs_insert_active_staff on public.audit_logs;
 create policy audit_logs_insert_active_staff
   on public.audit_logs
   for insert
@@ -86,5 +87,11 @@ grant execute on function public.import_igm_hbl_rows(uuid, jsonb) to service_rol
 
 revoke execute on function public.search_customer_igm(text) from public, anon, authenticated;
 grant execute on function public.search_customer_igm(text) to service_role;
+
+-- This event-trigger function is managed by PostgreSQL's DDL event-trigger
+-- mechanism, not intended as an RPC. Explicitly remove inherited API execute
+-- grants as defense in depth; the existing event-trigger binding is unchanged.
+revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+grant execute on function public.rls_auto_enable() to service_role;
 
 commit;
