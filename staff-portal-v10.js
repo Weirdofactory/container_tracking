@@ -105,7 +105,6 @@ function renderDetailPage(idx){
   '<div><span class="stv10-route-label">Origin / loading port</span><strong class="stv10-route-value">'+text(from)+'</strong><small class="stv10-route-meta">Port of loading</small></div>'+
   '<div class="stv10-route-arrow" aria-hidden="true">→</div>'+
   '<div><span class="stv10-route-label">Destination / gateway</span><strong class="stv10-route-value">'+text(to)+'</strong><small class="stv10-route-meta">Gateway port</small></div>'+
-  '<div class="stv10-route-state"><span class="stv10-route-label">Current milestone</span><strong class="stv10-route-value"><span class="st9-status '+statusCls+'">'+text(String(status.text||'Status not available').replace(/\s+/g,' ').slice(0,42))+'</span></strong><small class="stv10-route-meta">'+text('Based on recorded shipment milestones')+'</small></div>'+
  '</section>';
  const identity=[
   ['Container type',read(r,['TYPE','SIZE','CONTAINER TYPE'])],
