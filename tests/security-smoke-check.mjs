@@ -13,6 +13,8 @@ const operations = read("../supabase/functions/operations-data/index.ts");
 const dashboard = read("../app.js");
 const indexPage = read("../index.html");
 const supabaseConfig = read("../supabase/config.toml");
+const legacyLockdown = read("../supabase/migrations/202610180001_lock_down_legacy_public_access.sql");
+
 
 // Token grants must store only a digest and never expose the full tracking row.
 assert.match(lookup, /\.eq\("token_hash", tokenHash\)/);
@@ -81,4 +83,30 @@ assert.ok(dashboard.includes('sb.functions.invoke("operations-data"'));
 assert.ok(indexPage.includes('id="staffEmailInput"'));
 assert.ok(indexPage.includes('id="staffPasswordInput"'));
 assert.ok(indexPage.includes('id="legacyAccessCodePanel"'));
+ 
+// Regression checks for public API/RLS exposures observed during the connected-project review.
+assert.match(legacyLockdown, /drop policy if exists "Allow all public access" on public\.containers/i);
+assert.match(legacyLockdown, /drop policy if exists "Allow public read\/update for containers" on public\.containers/i);
+assert.match(legacyLockdown, /revoke all privileges on table public\.containers from public, anon, authenticated/i);
+assert.match(legacyLockdown, /drop policy if exists "Allow public access code verification" on public\.user_roles/i);
+assert.match(legacyLockdown, /revoke all privileges on table public\.user_roles from public, anon, authenticated/i);
+assert.match(legacyLockdown, /create policy audit_logs_insert_active_staff/i);
+assert.match(legacyLockdown, /sp\.is_active = true/i);
+assert.match(legacyLockdown, /revoke all privileges on table public\.customer_tracking_tokens from public, anon, authenticated/i);
+assert.match(legacyLockdown, /revoke all privileges on table public\.edge_rate_limit_buckets from public, anon, authenticated/i);
+for (const signature of [
+  "public.get_customer_igm_bundle(text)",
+  "public.get_igm_hbl_detail(text)",
+  "public.get_igm_hbls_for_container(text)",
+  "public.get_igm_hbls_for_shipment(text, text)",
+  "public.import_igm_hbl_rows(text, jsonb)",
+  "public.import_igm_hbl_rows(uuid, jsonb)",
+  "public.search_customer_igm(text)",
+]) {
+  const escaped = signature.replace(/[.*+?^${}()|[\]\\]/g, "\\assert.ok(indexPage.includes('id="legacyAccessCodePanel"'));");
+  assert.match(legacyLockdown, new RegExp(`revoke execute on function ${escaped} from public, anon, authenticated`, "i"));
+  assert.match(legacyLockdown, new RegExp(`grant execute on function ${escaped} to service_role`, "i"));
+}
+assert.match(legacyLockdown, /IMPORTANT: review and apply only in a staging Supabase branch first/i);
+
 console.log("Security smoke checks passed.");
