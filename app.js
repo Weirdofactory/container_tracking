@@ -1834,6 +1834,114 @@ function getFilteredRows() {
   return filtered;
 }
 
+function renderExceptionQueue() {
+  const listNode = el("staffExceptionList");
+  const countNode = el("staffExceptionCount");
+  const footNode = el("staffExceptionFoot");
+  if (!listNode || !countNode) return;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const parseDay = value => {
+    const raw = String(value || "").trim();
+    if (!raw || !validDate(raw)) return null;
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return null;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  };
+  const daysAgo = value => {
+    const day = parseDay(value);
+    return day === null ? null : Math.floor((today - day) / 86400000);
+  };
+  const fmtDay = value => {
+    if (!value) return "Date not recorded";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  };
+  const exceptions = [];
+  (Array.isArray(rows) ? rows : []).forEach((row, index) => {
+    if (!row || typeof row !== "object" || isFullyCompleted(row)) return;
+    const container = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NUMBER"]);
+    const mbl = getField(row, ["MBL NO", "MBL", "MASTER BL"]);
+    const vessel = getField(row, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+    const remarks = getField(row, ["REMARKS", "STATUS", "OPERATIONAL REMARKS"]);
+    const eta = getField(row, ["ETA"]);
+    const portIn = getField(row, ["PORT IN"]);
+    const portOut = getField(row, ["PORT OUT"]);
+    const destuff = getField(row, ["DESTUFFING DATE", "DESTUFF DATE"]);
+    const returned = getField(row, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]);
+    const lfd = getField(row, ["EMPTY RETURN VALIDITY", "EMPTY RETURN LFD", "DETENTION LFD"]);
+    const remarkMatch = remarks.match(/\b(hold|damage|damaged|delay|delayed|rollover|customs|not moved|pending|exception|short landed)\b/i);
+    let issue = null;
+
+    if (remarkMatch) {
+      const term = remarkMatch[0].toLowerCase();
+      const critical = /hold|damage|damaged|customs|rollover|short landed/i.test(term);
+      issue = { title: "Review operational remarks", detail: remarks, severity: critical ? "high" : "medium", age: null };
+    }
+    const etaAge = daysAgo(eta);
+    if (!issue && !portIn && etaAge !== null && etaAge > 0) {
+      issue = { title: "ETA passed · port-in not recorded", detail: "ETA " + fmtDay(eta), severity: etaAge > 2 ? "high" : "medium", age: etaAge };
+    }
+    const portInAge = daysAgo(portIn);
+    if (!issue && portIn && !portOut && portInAge !== null && portInAge >= 2) {
+      issue = { title: "Port-out milestone overdue", detail: "Port-in " + fmtDay(portIn), severity: portInAge >= 4 ? "high" : "medium", age: portInAge };
+    }
+    const portOutAge = daysAgo(portOut);
+    if (!issue && portOut && !destuff && portOutAge !== null && portOutAge >= 2) {
+      issue = { title: "Destuffing milestone overdue", detail: "Port-out " + fmtDay(portOut), severity: portOutAge >= 4 ? "high" : "medium", age: portOutAge };
+    }
+    const lfdDays = daysAgo(lfd);
+    if (!issue && !returned && lfd && lfdDays !== null && lfdDays >= -2) {
+      issue = { title: lfdDays >= 0 ? "Empty-return validity passed" : "Empty-return deadline approaching", detail: "Validity " + fmtDay(lfd), severity: lfdDays >= 0 ? "high" : "medium", age: lfdDays };
+    }
+    if (!issue) return;
+    exceptions.push({ index, container: container || mbl || "Shipment row " + (index + 1), mbl, vessel, ...issue });
+  });
+
+  exceptions.sort((a, b) => {
+    const severity = (b.severity === "high" ? 1 : 0) - (a.severity === "high" ? 1 : 0);
+    if (severity) return severity;
+    return (b.age ?? -999) - (a.age ?? -999);
+  });
+  countNode.textContent = String(exceptions.length);
+  if (!exceptions.length) {
+    listNode.innerHTML = '<div class="staff-exception-empty">No rule-based exceptions detected in the loaded open shipments. Continue monitoring new milestone updates.</div>';
+  } else {
+    listNode.innerHTML = exceptions.slice(0, 8).map(item =>
+      '<article class="staff-exception-item" data-severity="' + item.severity + '">' +
+        '<span class="staff-exception-bar" aria-hidden="true"></span>' +
+        '<div class="staff-exception-main"><div class="staff-exception-title">' + esc(item.title) +
+          '<span class="staff-exception-tag">' + (item.severity === "high" ? "High priority" : "Review") + '</span></div>' +
+          '<div class="staff-exception-ref">' + esc(item.container) + (item.mbl ? " · MBL " + esc(item.mbl) : "") + '</div>' +
+          '<div class="staff-exception-meta">' + esc(item.detail) + (item.vessel ? " · " + esc(item.vessel) : "") + '</div></div>' +
+        '<button type="button" class="staff-exception-open" data-exception-index="' + item.index + '">Open shipment →</button></article>'
+    ).join("");
+  }
+  if (footNode) footNode.textContent = exceptions.length > 8
+    ? "Showing 8 of " + exceptions.length + " flagged open shipments. Based on loaded records, not a live carrier feed."
+    : "Based on the latest loaded records; not a live carrier feed.";
+
+  listNode.querySelectorAll("[data-exception-index]").forEach(button => {
+    button.addEventListener("click", () => {
+      const row = rows[Number(button.dataset.exceptionIndex)];
+      if (!row) return;
+      const reference = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NUMBER"]) ||
+        getField(row, ["MBL NO", "MBL", "MASTER BL"]) ||
+        getField(row, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+      const search = el("search");
+      if (search) search.value = reference;
+      activeQuickFilter = "all";
+      document.querySelectorAll(".chip").forEach(chip => chip.classList.toggle("active", chip.dataset.filter === "all"));
+      currentPage = 1;
+      currentView = "sheet";
+      renderUI();
+      const table = el("sheetView");
+      if (table) table.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+}
+
 function updateKPIs() {
   const active = rows.filter(r => !isFullyCompleted(r));
   let portOutPending = 0;
@@ -2417,6 +2525,7 @@ function renderUI() {
 
   // Optional dashboard panels must never prevent the actual shipment table/cards from rendering.
   try { updateKPIs(); } catch (error) { console.warn("KPI refresh failed.", error); }
+  try { renderExceptionQueue(); } catch (error) { console.warn("Exception queue refresh failed.", error); }
   try { updateDataQualityNotice(); } catch (error) { console.warn("Data integrity notice failed.", error); }
   try { updateReferenceRail(); } catch (error) { console.warn("Recent shipments summary failed.", error); }
   try {
