@@ -3744,6 +3744,7 @@ function renderUI() {
 
   // Optional dashboard panels must never prevent the actual shipment table/cards from rendering.
   try { updateKPIs(); } catch (error) { console.warn("KPI refresh failed.", error); }
+  try { renderExceptionQueue(); } catch (error) { console.warn("Exception queue refresh failed.", error); }
   try { updateDataQualityNotice(); } catch (error) { console.warn("Data integrity notice failed.", error); }
   try { updateReferenceRail(); } catch (error) { console.warn("Recent shipments summary failed.", error); }
   try {
