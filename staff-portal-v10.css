@@ -79,7 +79,7 @@ body.staff-shipment-detail-page #opsDashboardView.main-wrapper{padding-top:17px!
 .stv10-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;min-height:34px!important;padding:0 11px!important;border:1px solid #d6e2eb!important;border-radius:8px!important;background:#fff!important;color:#3e596f!important;font-size:10px!important;font-weight:800!important;white-space:nowrap!important;cursor:pointer!important;box-shadow:none!important}
 .stv10-btn.primary{border-color:#087fb2!important;background:#087fb2!important;color:#fff!important}
 .stv10-btn.danger{border-color:#efd2cf!important;background:#fff8f7!important;color:#b4433b!important}
-.stv10-route-card{display:grid!important;grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr) minmax(220px,.8fr)!important;gap:14px!important;align-items:center!important;margin-bottom:14px!important;padding:17px 19px!important;border:1px solid #cddfeb!important;border-radius:12px!important;background:linear-gradient(112deg,#fff,#f8fbfd)!important;box-shadow:0 2px 6px #14365006!important}
+.stv10-route-card{display:grid!important;grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr)!important;gap:14px!important;align-items:center!important;margin-bottom:14px!important;padding:17px 19px!important;border:1px solid #cddfeb!important;border-radius:12px!important;background:linear-gradient(112deg,#fff,#f8fbfd)!important;box-shadow:0 2px 6px #14365006!important}
 .stv10-route-label{display:block!important;color:#8293a2!important;font-size:9px!important;font-weight:850!important;letter-spacing:.08em!important;text-transform:uppercase!important}
 .stv10-route-value{display:block!important;margin-top:5px!important;color:#213d54!important;font-size:14px!important;font-weight:850!important;overflow-wrap:anywhere!important}
 .stv10-route-meta{display:block!important;margin-top:4px!important;color:#8192a1!important;font-size:10px!important;line-height:1.35!important;overflow-wrap:anywhere!important}
@@ -110,7 +110,7 @@ body.staff-shipment-detail-page #opsDashboardView.main-wrapper{padding-top:17px!
 body.staff-overview-page.staff-sidebar-collapsed #opsDashboardView.main-wrapper{margin-left:68px!important}
 @media(max-width:1280px){
  .stv10-route-card{grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr)!important}
- .stv10-route-state{grid-column:1/-1!important;padding:10px 0 0!important;border-left:0!important;border-top:1px solid #e2eaf0!important}
+ 
  .stv10-page-grid{grid-template-columns:minmax(0,1fr) minmax(270px,.85fr)!important}
 }
 @media(max-width:1000px){
