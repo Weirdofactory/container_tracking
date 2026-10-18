@@ -17,7 +17,7 @@ function renderCompactTable(){
  const table=byId('sheetView'),tbody=byId('sheetTableBody');if(!table||!tbody||!document.body.classList.contains('staff-table-mode'))return;
  const records=currentRecords(),idxs=chosenIndices();
  const headers=['','Shipment','MBL No.','Liner','Gateway / Terminal','Vessel & Voyage','ETA','Port In','Port Out','CFS Depot','Current stage'];
- const thead=table.querySelector('thead');if(thead)thead.innerHTML='<tr>'+headers.map((h,i)=>'<th scope="col"'+(i===0?' aria-label="Select shipments"':'')+'>'+(i===0?'<input type="checkbox" id="staffTableSelectAll" aria-label="Select all shipments">':i===11?'Actions':escText(h))+'</th>').join('')+'</tr>';
+ const thead=table.querySelector('thead');if(thead)thead.innerHTML='<tr>'+headers.map((h,i)=>'<th scope="col"'+(i===0?' aria-label="Select shipments"':'')+'>'+(i===0?'<input type="checkbox" id="staffTableSelectAll" aria-label="Select all shipments">':escText(h))+'</th>').join('')+'</tr>';
  const oldRows=[...tbody.querySelectorAll('tr')];
  const html=[];
  oldRows.forEach(tr=>{
@@ -45,7 +45,6 @@ function renderCompactTable(){
     '<td>'+escText(display(mbl))+'</td><td>'+escText(display(liner))+'</td><td>'+escText(display(gw))+'</td><td>'+escText(display(vessel))+'</td>'+
     '<td>'+escText(date(eta))+'</td><td>'+escText(date(portIn))+'</td><td>'+escText(date(portOut))+'</td><td>'+escText(display(cfs))+'</td>'+
     '<td><span class="st9-status '+cls+'" title="'+escText(status.text)+'">'+escText(status.text.replace(/\s+/g,' ').slice(0,26))+'</span></td>'+
-    '<td><button type="button" class="st9-open-btn" data-st9-detail="'+i+'">View <span aria-hidden="true">→</span></button></td>'+
    '</tr>');
  });
  if(html.length)tbody.innerHTML=html.join('');
@@ -139,7 +138,8 @@ function init(){
  const dashboard=byId('opsDashboardView'),sheet=byId('sheetView'),tbody=byId('sheetTableBody');
  const observer=new MutationObserver(()=>{try{enhance()}catch(e){console.warn('Shipment table refresh skipped',e)}});
  [dashboard,sheet,document.body].filter(Boolean).forEach(el=>observer.observe(el,{attributes:true,attributeFilter:el===document.body?['class']:['style','class']}));
- document.addEventListener('click',e=>{const b=e.target.closest('[data-st9-detail]');if(b){e.preventDefault();openStaffShipmentDetail(Number(b.dataset.st9Detail));return;}const tr=e.target.closest('#sheetTableBody tr[data-row]');if(tr&&!e.target.closest('input,button,a,select,label'))openStaffShipmentDetail(Number(tr.dataset.row))});\n document.addEventListener('keydown',e=>{const tr=e.target.closest('#sheetTableBody tr[data-row]');if(tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openStaffShipmentDetail(Number(tr.dataset.row))}});
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-st9-detail]');if(b){e.preventDefault();openStaffShipmentDetail(Number(b.dataset.st9Detail));return;}const tr=e.target.closest('#sheetTableBody tr[data-row]');if(tr&&!e.target.closest('input,button,a,select,label'))openStaffShipmentDetail(Number(tr.dataset.row))});
+ document.addEventListener('keydown',e=>{const tr=e.target.closest('#sheetTableBody tr[data-row]');if(tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openStaffShipmentDetail(Number(tr.dataset.row))}});
  document.addEventListener('click',e=>{if(e.target.closest('.view-btn'))setTimeout(enhance,0)});
  setTimeout(enhance,0);setTimeout(enhance,300);
 }
