@@ -1,0 +1,109 @@
+/* Staff Workspace v4 — a materially restructured operations console.
+   Presentation-only: reuses the existing data, filters, actions and navigation. */
+:root{--sw4-ink:#10253d;--sw4-muted:#6e8297;--sw4-line:#dbe5ef;--sw4-paper:#f3f6fa;--sw4-navy:#071a2e;--sw4-blue:#087fbd;--sw4-cyan:#42c8e8}
+body:has(#opsDashboardView){background:var(--sw4-paper)!important;color:var(--sw4-ink)!important}
+body:has(#opsDashboardView) .nav-header{height:64px!important;min-height:64px!important;background:#fff!important;border-bottom:1px solid var(--sw4-line)!important;box-shadow:0 3px 14px #102c4509!important}
+body:has(#opsDashboardView) .nav-container{min-height:64px!important}
+body:has(#opsDashboardView) .staff-top-search{max-width:610px!important;background:#f5f8fb!important;border:1px solid #d8e3ed!important;border-radius:11px!important}
+body:has(#opsDashboardView) .staff-top-search input{min-height:37px!important}
+body:has(#opsDashboardView) .nav-header .btn-primary{background:#087eb9!important;box-shadow:0 4px 10px #087eb91b!important}
+.staff-reference-sidebar{width:224px!important;top:64px!important;background:#091e33!important;border-right:1px solid #1c3953!important;box-shadow:none!important;overflow-x:hidden!important}
+.staff-sidebar-brand{min-height:76px!important;padding:17px 17px!important;background:#0b233b!important;border-bottom:1px solid #ffffff12!important}
+.staff-sidebar-mark{width:36px!important;height:36px!important;border-radius:10px!important;background:#0c85bd!important;color:#fff!important}
+.staff-sidebar-label{margin:19px 15px 7px!important;font-size:9px!important;color:#7594ae!important;letter-spacing:.16em!important}
+.staff-side-link{min-height:40px!important;margin:3px 9px!important;padding:9px 11px!important;border-radius:9px!important;color:#afc4d6!important;font-size:11px!important;white-space:nowrap!important}
+.staff-side-link>span{flex:0 0 25px!important;width:25px!important;height:25px!important;background:#ffffff0b!important;border-radius:7px!important;color:#86cce7!important}
+.staff-side-link.active{background:#0a6b9d!important;border-color:#1b9fd2!important;box-shadow:inset 3px 0 #5fe0f5!important}
+.staff-sidebar-help{margin:14px 9px!important;padding:12px!important}
+.staff-sidebar-foot{font-size:9px!important}
+#opsDashboardView.main-wrapper{max-width:none!important;margin-left:224px!important;padding:23px clamp(16px,2vw,30px) 38px!important;min-height:calc(100vh - 64px)!important}
+#enterpriseOverview.ect-overview{min-height:145px!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:24px!important;padding:24px 28px!important;border:0!important;border-radius:17px!important;background:linear-gradient(112deg,#071b30 0%,#0b3453 64%,#0a5870 100%)!important;box-shadow:0 12px 30px #0b29441a!important}
+#enterpriseOverview.ect-overview:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:#39c9e9!important}
+#enterpriseOverview.ect-overview:after{width:250px!important;height:250px!important;right:-60px!important;top:-165px!important;opacity:.7!important}
+#enterpriseOverview .ect-overview-copy{max-width:720px!important}
+#enterpriseOverview .ect-eyebrow{display:inline-flex!important;align-items:center!important;gap:9px!important;padding:6px 9px!important;border:1px solid #ffffff20!important;border-radius:999px!important;background:#ffffff0b!important;color:#7fe4f5!important;font-size:9px!important;letter-spacing:.15em!important}
+#enterpriseOverview h1{font-size:clamp(24px,2.5vw,34px)!important;letter-spacing:-.055em!important;margin:11px 0 7px!important}
+#enterpriseOverview p{max-width:620px!important;font-size:12px!important;color:#c2d5e4!important;line-height:1.65!important;margin:0!important}
+#enterpriseOverview .ect-overview-stats{grid-template-columns:minmax(110px,145px) minmax(200px,auto) auto!important;gap:0!important;align-items:stretch!important;min-width:0!important;border:1px solid #ffffff22!important;border-radius:13px!important;background:#06182a7a!important;overflow:hidden!important}
+#enterpriseOverview .ect-stat{display:flex!important;flex-direction:column!important;justify-content:center!important;min-width:0!important;padding:12px 15px!important;border:0!important;border-right:1px solid #ffffff20!important;border-radius:0!important;background:transparent!important;backdrop-filter:none!important}
+#enterpriseOverview .ect-stat>span{font-size:9px!important;text-transform:uppercase!important;letter-spacing:.08em!important;color:#9dbbd0!important}
+#enterpriseOverview .ect-stat strong{font-size:23px!important}
+#enterpriseOverview .ect-sync-row{display:flex!important;align-items:center!important;gap:8px!important}
+#enterpriseOverview .ect-sync-row strong{font-size:11px!important;white-space:nowrap!important}
+#enterpriseOverview .eu-launch{align-self:stretch!important;margin:7px!important;padding:0 16px!important;border:0!important;border-radius:9px!important;background:#eaf7ff!important;color:#07588a!important;font-size:11px!important;font-weight:850!important;white-space:nowrap!important}
+#opsDashboardView .kpi-row{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:10px!important;margin:14px 0 16px!important}
+#opsDashboardView .kpi-row>.kpi-card{display:flex!important;flex-direction:column!important;justify-content:space-between!important;min-height:105px!important;padding:15px 16px!important;border:1px solid #dce6ef!important;border-top:3px solid #1688bd!important;border-radius:13px!important;background:#fff!important;box-shadow:0 3px 12px #15365006!important}
+#opsDashboardView .kpi-row>.kpi-card:nth-child(2){border-top-color:#13a77a!important}
+#opsDashboardView .kpi-row>.kpi-card:nth-child(3){border-top-color:#e7a126!important}
+#opsDashboardView .kpi-row>.kpi-card:nth-child(4){border-top-color:#ed7b37!important}
+#opsDashboardView .kpi-row>.kpi-card:nth-child(5){border-top-color:#e04c50!important}
+#opsDashboardView .kpi-row>.kpi-card:nth-child(6){border-top-color:#b64d9d!important}
+#opsDashboardView .kpi-card small{font-size:10px!important;text-transform:none!important;letter-spacing:0!important;color:#6c8095!important}
+#opsDashboardView .kpi-card strong{margin-top:13px!important;font-size:27px!important}
+#staffExceptionQueue{margin:0 0 17px!important;border:1px solid #e2e8ef!important;border-radius:15px!important;box-shadow:0 4px 16px #102b4408!important}
+#staffExceptionQueue .staff-exception-head{padding:15px 19px!important;background:#fff!important;border-bottom:1px solid #e8edf3!important}
+#staffExceptionQueue .staff-exception-eyebrow{color:#c16a08!important;font-size:9px!important}
+#staffExceptionQueue .staff-exception-head h2{font-size:16px!important;margin:4px 0 3px!important}
+#staffExceptionQueue .staff-exception-head p{font-size:11px!important}
+#staffExceptionQueue .staff-exception-count{min-width:68px!important;padding:8px 10px!important;background:#fff8eb!important;border-color:#f3d6a6!important}
+#staffExceptionQueue .staff-exception-count strong{font-size:20px!important}
+#staffExceptionQueue .staff-exception-item{grid-template-columns:5px minmax(0,1fr) auto!important;gap:11px!important;padding:11px 18px!important}
+#staffExceptionQueue .staff-exception-bar{height:34px!important;width:5px!important;border-radius:5px!important}
+#staffExceptionQueue .staff-exception-title{font-size:11px!important}
+#staffExceptionQueue .staff-exception-ref{font-size:10px!important}
+#staffExceptionQueue .staff-exception-meta{font-size:9px!important}
+#staffExceptionQueue .staff-exception-open{font-size:10px!important;padding:8px 10px!important}
+#opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr) 285px!important;gap:14px!important}
+#opsDashboardView .ect-workspace-main{display:flex!important;flex-direction:column!important;gap:13px!important}
+#opsDashboardView .ect-right-rail{gap:13px!important}
+#opsDashboardView .staff-map-panel,#opsDashboardView .staff-status-panel,#opsDashboardView .ect-rail-panel,#opsDashboardView .control-tray,#opsDashboardView .sheet-box,#opsDashboardView .cards-layout,#opsDashboardView .kanban-layout{border:1px solid #dce5ee!important;border-radius:14px!important;box-shadow:0 4px 15px #17355007!important}
+#opsDashboardView .staff-panel-heading,#opsDashboardView .ect-rail-heading{padding:14px 16px!important}
+#opsDashboardView .staff-panel-heading strong,#opsDashboardView .ect-rail-heading strong{font-size:11px!important}
+#opsDashboardView #staffMapCanvas{min-height:230px!important}
+#opsDashboardView .control-tray{margin-top:0!important}
+#opsDashboardView .control-tray-top{padding:11px!important;background:#fff!important}
+#opsDashboardView .control-tray-bottom{padding:0 11px 11px!important;background:#fff!important}
+#opsDashboardView .quick-chips-wrapper{gap:6px!important}
+#opsDashboardView .chip{font-size:9px!important;padding:7px 10px!important}
+#opsDashboardView .sheet-table{min-width:1250px!important}
+#opsDashboardView .sheet-table thead{background:#eef4f8!important}
+#opsDashboardView .sheet-table th{font-size:9px!important}
+#opsDashboardView .ect-quick-action{border-bottom:1px solid #edf2f6!important}
+#opsDashboardView .ect-quick-action:last-child{border-bottom:0!important}
+#opsDashboardView .staff-status-content{padding:13px!important}
+@media(max-width:1400px){
+ #enterpriseOverview .ect-overview-stats{grid-template-columns:110px minmax(180px,1fr)!important}
+ #enterpriseOverview .eu-launch{grid-column:1/-1!important;min-height:36px!important;margin:0 7px 7px!important}
+ #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr) 260px!important}
+ #opsDashboardView .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:1050px){
+ .staff-reference-sidebar{width:64px!important}
+ .staff-sidebar-brand{justify-content:center!important;padding:14px 6px!important}
+ .staff-sidebar-brand>span:not(.staff-sidebar-mark),.staff-sidebar-label,.staff-side-link:not(.active){font-size:0!important}
+ .staff-side-link{justify-content:center!important;padding:8px 5px!important}
+ .staff-side-link>span{font-size:13px!important}
+ .staff-sidebar-help,.staff-sidebar-foot,.staff-sidebar-toggle-label{display:none!important}
+ #opsDashboardView.main-wrapper{margin-left:64px!important}
+ #enterpriseOverview.ect-overview{grid-template-columns:1fr!important}
+ #enterpriseOverview .ect-overview-stats{width:100%!important}
+ #opsDashboardView .ect-workspace-grid{grid-template-columns:1fr!important}
+ #opsDashboardView .ect-right-rail{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:start!important}
+}
+@media(max-width:680px){
+ #opsDashboardView.main-wrapper{margin-left:0!important;padding:12px 10px 24px!important}
+ .staff-reference-sidebar{display:none!important}
+ #enterpriseOverview.ect-overview{padding:19px 17px!important;gap:16px!important}
+ #enterpriseOverview h1{font-size:24px!important}
+ #enterpriseOverview .ect-overview-stats{grid-template-columns:1fr 1fr!important}
+ #enterpriseOverview .ect-stat{padding:10px!important}
+ #enterpriseOverview .ect-stat:nth-child(2){border-right:0!important}
+ #enterpriseOverview .eu-launch{grid-column:1/-1!important}
+ #opsDashboardView .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ #opsDashboardView .kpi-row>.kpi-card{min-height:88px!important;padding:12px!important}
+ #opsDashboardView .kpi-card strong{font-size:23px!important}
+ #staffExceptionQueue .staff-exception-head{padding:13px!important}
+ #staffExceptionQueue .staff-exception-item{grid-template-columns:5px minmax(0,1fr)!important;padding:11px 13px!important}
+ #staffExceptionQueue .staff-exception-open{grid-column:2;justify-self:start}
+ #opsDashboardView .ect-right-rail{grid-template-columns:1fr!important}
+}
