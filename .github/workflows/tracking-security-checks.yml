@@ -6,6 +6,7 @@ on:
       - "customer-tracking.html"
       - "premium-ui.css"
       - "staff-control-tower-v2.css"
+      - "staff-login-v3.css"
       - "tracking-link-admin.html"
       - "index.html"
       - "app.js"
