@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  let payload: { action?: unknown; data?: unknown };
+  let payload: { action?: unknown; data?: unknown; expectedUpdatedAt?: unknown };
   try {
     const parsed = await req.json();
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return reply(400, { error: "Invalid request" }, origin);
@@ -83,14 +83,20 @@ Deno.serve(async (req: Request) => {
     for (const row of payload.data) {
       if (!row || typeof row !== "object" || Array.isArray(row)) return reply(400, { error: "Invalid shipment row" }, origin);
     }
-    const { data: existing, error: readError } = await admin.from("containers").select("updated_at")
-      .eq("id", "gml_tracking_records").maybeSingle();
-    if (readError || !existing) return reply(503, { error: "Shipment dataset unavailable" }, origin);
-    const { error: writeError } = await admin.from("containers").update({
-      data: payload.data, updated_at: new Date().toISOString(),
-    }).eq("id", "gml_tracking_records");
+    const expectedUpdatedAt = typeof payload.expectedUpdatedAt === "string" ? payload.expectedUpdatedAt : "";
+    if (!expectedUpdatedAt || Number.isNaN(Date.parse(expectedUpdatedAt))) {
+      return reply(400, { error: "Dataset version missing. Reload shipment data before saving." }, origin);
+    }
+    // Compare-and-swap: the version check and update are one database statement,
+    // so concurrent staff edits cannot silently overwrite a newer dataset.
+    const updatedAt = new Date().toISOString();
+    const { data: saved, error: writeError } = await admin.from("containers").update({
+      data: payload.data, updated_at: updatedAt,
+    }).eq("id", "gml_tracking_records").eq("updated_at", expectedUpdatedAt)
+      .select("updated_at").maybeSingle();
     if (writeError) return reply(503, { error: "Could not save shipment data" }, origin);
-    return reply(200, { saved: true, count: payload.data.length, updatedAt: new Date().toISOString() }, origin);
+    if (!saved) return reply(409, { error: "Shipment data changed since you loaded it. Reload the latest records and reapply your changes." }, origin);
+    return reply(200, { saved: true, count: payload.data.length, updatedAt: saved.updated_at }, origin);
   }
   return reply(400, { error: "Unsupported action" }, origin);
 });

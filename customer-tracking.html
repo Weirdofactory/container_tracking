@@ -52,6 +52,8 @@
  const $=id=>document.getElementById(id);
  const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const params=new URLSearchParams(location.search),token=params.get("token")||"";
+ // Remove the bearer token from the visible URL and subsequent browser history after capturing it.
+ try{const cleanUrl=new URL(location.href);cleanUrl.searchParams.delete("token");history.replaceState(null,"",cleanUrl.pathname+cleanUrl.search+cleanUrl.hash)}catch(e){}
  const niceDate=value=>{if(!value)return "Not recorded";const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"2-digit"})};
  const fields=[["type","Equipment"],["status","Shipment status"],["shippingLine","Shipping line"],["mbl","MBL number"],["booking","Booking number"],["vessel","Vessel & voyage"],["pol","Port of loading"],["pod","Port of discharge"],["gateway","Gateway / terminal"],["cfs","CFS depot"],["etd","Estimated departure"],["eta","Estimated arrival"]];
  const milestones=[["inwardDate","Inward granted","IN"],["portIn","Vessel berthed","PI"],["portOut","Port discharged","PO"],["cfsIn","CFS in-gate","CF"],["destuffingDate","Destuffed","DS"],["emptyReturnDate","Empty returned","ER"]];

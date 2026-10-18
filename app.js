@@ -45,6 +45,7 @@ const DEFAULT_ROWS = [
 ];
 
 let rows = [];
+let cloudDatasetUpdatedAt = null;
 let cloudDataReady = Promise.resolve();
 
 let currentUser = null;
@@ -805,14 +806,6 @@ function closeStaffLogin() {
   clearLoginFeedback();
   setLoginBusy(false);
 }
-function executeSuccessfulLogin(userObj) {
-  currentUser = userObj;
-  localStorage.setItem("gml_auth_code_user", JSON.stringify(currentUser));
-  closeStaffLogin();
-  setAccessState(true);
-  toast("Logged in as " + currentUser.id);
-}
-
 el("loginBtn").addEventListener("click", () => {
   if (el("staffEmailInput")) el("staffEmailInput").value = "";
   if (el("staffPasswordInput")) el("staffPasswordInput").value = "";
@@ -826,13 +819,6 @@ el("loginBtn").addEventListener("click", () => {
   el("loginModalBg").classList.add("open");
   setTimeout(() => el("staffEmailInput")?.focus(), 100);
 });
-el("legacyAccessCodeToggle")?.addEventListener("click", () => {
-  const panel = el("legacyAccessCodePanel");
-  if (!panel) return;
-  const show = panel.style.display === "none";
-  panel.style.display = show ? "block" : "none";
-  if (show) el("loginCodeInput")?.focus();
-});
 ["staffEmailInput", "staffPasswordInput"].forEach(id => el(id)?.addEventListener("keydown", event => {
   if (event.key === "Enter") { event.preventDefault(); el("loginSubmit").click(); }
 }));
@@ -844,28 +830,10 @@ el("loginModalBg").addEventListener("click", (event) => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && el("loginModalBg").classList.contains("open")) closeStaffLogin();
 });
-el("loginToggleCode").addEventListener("click", () => {
-  const input = el("loginCodeInput");
-  const reveal = input.type === "password";
-  input.type = reveal ? "text" : "password";
-  el("loginToggleCode").textContent = reveal ? "Hide" : "Show";
-  el("loginToggleCode").setAttribute("aria-label", reveal ? "Hide access code" : "Show access code");
-  el("loginToggleCode").setAttribute("aria-pressed", String(reveal));
-  input.focus();
-});
-el("loginCodeInput").addEventListener("input", clearLoginFeedback);
-el("loginCodeInput").addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    el("loginSubmit").click();
-  }
-});
-
 el("loginSubmit").addEventListener("click", async () => {
   if (el("loginSubmit").disabled) return;
   const email = (el("staffEmailInput")?.value || "").trim().toLowerCase();
   const password = el("staffPasswordInput")?.value || "";
-  const legacyMode = el("legacyAccessCodePanel")?.style.display !== "none";
   setLoginBusy(true);
   try {
     if (email && password) {
@@ -883,13 +851,8 @@ el("loginSubmit").addEventListener("click", async () => {
       closeStaffLogin(); setAccessState(true); await loadFromCloud(); toast("Signed in securely");
       return;
     }
-    if (!legacyMode) { setLoginFeedback("Enter your staff email and password.", "error"); return; }
-    const code = el("loginCodeInput").value.trim().toLowerCase();
-    if (!code) { setLoginFeedback("Enter your staff email/password, or switch to the legacy access code.", "error"); return; }
-    setLoginFeedback("Verifying legacy access code…", "info");
-    const { data, error } = await sb.from("user_roles").select("user_id, role, username").eq("access_code", code).single();
-    if (error || !data) throw new Error("That access code was not recognized.");
-    executeSuccessfulLogin({ id: data.username || code, role: data.role || "Operator", uid: data.user_id, legacy: true });
+    setLoginFeedback("Enter your staff email and password to continue. Legacy access-code sign-in is disabled.", "error");
+    return;
   } catch(err) {
     console.warn("Staff sign-in failed:", err);
     setLoginFeedback(err.message || "Sign-in failed. Check your connection and try again.", "error");
@@ -899,29 +862,52 @@ el("loginSubmit").addEventListener("click", async () => {
 el("terminalRoutingBtn")?.addEventListener("click", openTerminalRoutingMaster);
 el("logoutBtn").addEventListener("click", async () => {
   if (currentUser?.authenticated) await sb.auth.signOut();
-  currentUser = null; localStorage.removeItem("gml_auth_code_user"); setAccessState(false); toast("Logged out");
+  currentUser = null;
+  try {
+    localStorage.removeItem("gml_auth_code_user");
+    localStorage.removeItem("containerRows");
+  } catch (e) {}
+  rows = [];
+  populateFilters();
+  renderUI();
+  setAccessState(false);
+  setCloudDataState("error", "Sign in to access staff records");
+  toast("Logged out");
 });
 
 async function checkActiveSession() {
   try {
-    const { data: sessionData } = await sb.auth.getSession();
+    const { data: sessionData, error: sessionError } = await sb.auth.getSession();
+    if (sessionError) throw sessionError;
     const session = sessionData?.session;
     if (session?.user) {
       const { data: profile, error } = await sb.from("staff_profiles")
         .select("display_name, role, is_active").eq("user_id", session.user.id).maybeSingle();
       if (!error && profile?.is_active) {
-        currentUser = { id: profile.display_name || session.user.email || session.user.id, role: profile.role, uid: session.user.id, authenticated: true };
-        localStorage.removeItem("gml_auth_code_user"); setAccessState(true); return true;
+        currentUser = {
+          id: profile.display_name || session.user.email || session.user.id,
+          role: profile.role,
+          uid: session.user.id,
+          authenticated: true
+        };
+        localStorage.removeItem("gml_auth_code_user");
+        setAccessState(true);
+        return true;
       }
       await sb.auth.signOut();
     }
-  } catch (error) { console.warn("Supabase Auth session check failed:", error); }
-  const savedUser = localStorage.getItem("gml_auth_code_user");
-  if (savedUser) {
-    try { currentUser = { ...JSON.parse(savedUser), legacy: true }; setAccessState(true); return false; }
-    catch(e) { localStorage.removeItem("gml_auth_code_user"); }
+  } catch (error) {
+    console.warn("Supabase Auth session check failed:", error);
   }
-  setAccessState(false); return false;
+  // Legacy browser-stored staff objects are not valid authentication credentials.
+  currentUser = null;
+  try {
+    localStorage.removeItem("gml_auth_code_user");
+    localStorage.removeItem("containerRows");
+  } catch (e) {}
+  rows = [];
+  setAccessState(false);
+  return false;
 }
 
 function setAccessState(isStaff) {
@@ -1217,6 +1203,12 @@ async function performPublicSearch() {
   if (!rawInput) {
     toast("Please enter a Container or MBL Number!");
     el("publicSearchInput").focus();
+    return;
+  }
+  if (!currentUser?.authenticated) {
+    btn.classList.remove("btn-loading");
+    container.style.display = "block";
+    container.innerHTML = '<div class="carrier-empty-state"><strong>Private tracking link required</strong><span>For shipment privacy, public reference lookup is disabled. Open your authorized GML tracking link or contact your GML operations representative to request access.</span></div>';
     return;
   }
   btn.classList.add("btn-loading");
@@ -1842,6 +1834,114 @@ function getFilteredRows() {
   return filtered;
 }
 
+function renderExceptionQueue() {
+  const listNode = el("staffExceptionList");
+  const countNode = el("staffExceptionCount");
+  const footNode = el("staffExceptionFoot");
+  if (!listNode || !countNode) return;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const parseDay = value => {
+    const raw = String(value || "").trim();
+    if (!raw || !validDate(raw)) return null;
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return null;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  };
+  const daysAgo = value => {
+    const day = parseDay(value);
+    return day === null ? null : Math.floor((today - day) / 86400000);
+  };
+  const fmtDay = value => {
+    if (!value) return "Date not recorded";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  };
+  const exceptions = [];
+  (Array.isArray(rows) ? rows : []).forEach((row, index) => {
+    if (!row || typeof row !== "object" || isFullyCompleted(row)) return;
+    const container = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NUMBER"]);
+    const mbl = getField(row, ["MBL NO", "MBL", "MASTER BL"]);
+    const vessel = getField(row, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+    const remarks = getField(row, ["REMARKS", "STATUS", "OPERATIONAL REMARKS"]);
+    const eta = getField(row, ["ETA"]);
+    const portIn = getField(row, ["PORT IN"]);
+    const portOut = getField(row, ["PORT OUT"]);
+    const destuff = getField(row, ["DESTUFFING DATE", "DESTUFF DATE"]);
+    const returned = getField(row, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]);
+    const lfd = getField(row, ["EMPTY RETURN VALIDITY", "EMPTY RETURN LFD", "DETENTION LFD"]);
+    const remarkMatch = remarks.match(/\b(hold|damage|damaged|delay|delayed|rollover|customs|not moved|pending|exception|short landed)\b/i);
+    let issue = null;
+
+    if (remarkMatch) {
+      const term = remarkMatch[0].toLowerCase();
+      const critical = /hold|damage|damaged|customs|rollover|short landed/i.test(term);
+      issue = { title: "Review operational remarks", detail: remarks, severity: critical ? "high" : "medium", age: null };
+    }
+    const etaAge = daysAgo(eta);
+    if (!issue && !portIn && etaAge !== null && etaAge > 0) {
+      issue = { title: "ETA passed · port-in not recorded", detail: "ETA " + fmtDay(eta), severity: etaAge > 2 ? "high" : "medium", age: etaAge };
+    }
+    const portInAge = daysAgo(portIn);
+    if (!issue && portIn && !portOut && portInAge !== null && portInAge >= 2) {
+      issue = { title: "Port-out milestone overdue", detail: "Port-in " + fmtDay(portIn), severity: portInAge >= 4 ? "high" : "medium", age: portInAge };
+    }
+    const portOutAge = daysAgo(portOut);
+    if (!issue && portOut && !destuff && portOutAge !== null && portOutAge >= 2) {
+      issue = { title: "Destuffing milestone overdue", detail: "Port-out " + fmtDay(portOut), severity: portOutAge >= 4 ? "high" : "medium", age: portOutAge };
+    }
+    const lfdDays = daysAgo(lfd);
+    if (!issue && !returned && lfd && lfdDays !== null && lfdDays >= -2) {
+      issue = { title: lfdDays >= 0 ? "Empty-return validity passed" : "Empty-return deadline approaching", detail: "Validity " + fmtDay(lfd), severity: lfdDays >= 0 ? "high" : "medium", age: lfdDays };
+    }
+    if (!issue) return;
+    exceptions.push({ index, container: container || mbl || "Shipment row " + (index + 1), mbl, vessel, ...issue });
+  });
+
+  exceptions.sort((a, b) => {
+    const severity = (b.severity === "high" ? 1 : 0) - (a.severity === "high" ? 1 : 0);
+    if (severity) return severity;
+    return (b.age ?? -999) - (a.age ?? -999);
+  });
+  countNode.textContent = String(exceptions.length);
+  if (!exceptions.length) {
+    listNode.innerHTML = '<div class="staff-exception-empty">No rule-based exceptions detected in the loaded open shipments. Continue monitoring new milestone updates.</div>';
+  } else {
+    listNode.innerHTML = exceptions.slice(0, 8).map(item =>
+      '<article class="staff-exception-item" data-severity="' + item.severity + '">' +
+        '<span class="staff-exception-bar" aria-hidden="true"></span>' +
+        '<div class="staff-exception-main"><div class="staff-exception-title">' + esc(item.title) +
+          '<span class="staff-exception-tag">' + (item.severity === "high" ? "High priority" : "Review") + '</span></div>' +
+          '<div class="staff-exception-ref">' + esc(item.container) + (item.mbl ? " · MBL " + esc(item.mbl) : "") + '</div>' +
+          '<div class="staff-exception-meta">' + esc(item.detail) + (item.vessel ? " · " + esc(item.vessel) : "") + '</div></div>' +
+        '<button type="button" class="staff-exception-open" data-exception-index="' + item.index + '">Open shipment →</button></article>'
+    ).join("");
+  }
+  if (footNode) footNode.textContent = exceptions.length > 8
+    ? "Showing 8 of " + exceptions.length + " flagged open shipments. Based on loaded records, not a live carrier feed."
+    : "Based on the latest loaded records; not a live carrier feed.";
+
+  listNode.querySelectorAll("[data-exception-index]").forEach(button => {
+    button.addEventListener("click", () => {
+      const row = rows[Number(button.dataset.exceptionIndex)];
+      if (!row) return;
+      const reference = getField(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NUMBER"]) ||
+        getField(row, ["MBL NO", "MBL", "MASTER BL"]) ||
+        getField(row, ["VESSEL & VOY", "VESSEL", "VESSEL NAME"]);
+      const search = el("search");
+      if (search) search.value = reference;
+      activeQuickFilter = "all";
+      document.querySelectorAll(".chip").forEach(chip => chip.classList.toggle("active", chip.dataset.filter === "all"));
+      currentPage = 1;
+      currentView = "sheet";
+      renderUI();
+      const table = el("sheetView");
+      if (table) table.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+}
+
 function updateKPIs() {
   const active = rows.filter(r => !isFullyCompleted(r));
   let portOutPending = 0;
@@ -2425,6 +2525,7 @@ function renderUI() {
 
   // Optional dashboard panels must never prevent the actual shipment table/cards from rendering.
   try { updateKPIs(); } catch (error) { console.warn("KPI refresh failed.", error); }
+  try { renderExceptionQueue(); } catch (error) { console.warn("Exception queue refresh failed.", error); }
   try { updateDataQualityNotice(); } catch (error) { console.warn("Data integrity notice failed.", error); }
   try { updateReferenceRail(); } catch (error) { console.warn("Recent shipments summary failed.", error); }
   try {
@@ -2865,20 +2966,28 @@ document.querySelectorAll(".chip").forEach(chip => {
 });
 
 async function saveAndRefresh() {
+  if (!currentUser?.authenticated) {
+    setCloudDataState("error", "Sign in required to save shipment data");
+    toast("Sign in with an active staff account before saving changes.");
+    return;
+  }
   renderUI();
   try {
-    localStorage.setItem("containerRows", JSON.stringify(rows));
     if (currentUser?.authenticated) {
-      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows } });
+      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows, expectedUpdatedAt: cloudDatasetUpdatedAt } });
       if (error || !data?.saved) throw new Error(data?.error || error?.message || "Secure save failed");
+      cloudDatasetUpdatedAt = data.updatedAt || cloudDatasetUpdatedAt;
+      localStorage.setItem("containerRows", JSON.stringify(rows));
       setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records");
     } else {
-      // Compatibility path retained until public workflows are replaced and validated.
-      await sb.from("containers").upsert({ id: "gml_tracking_records", data: rows, updated_at: new Date().toISOString() });
+      throw new Error("Authenticated staff session required to save shipment data.");
     }
   } catch (err) {
     console.warn("Cloud sync notice:", err);
-    if (currentUser?.authenticated) setCloudDataState("error", "Secure save failed");
+    if (currentUser?.authenticated) {
+      setCloudDataState("error", err.message || "Secure save failed");
+      toast(err.message || "Secure save failed. Your edits were not synced.");
+    }
   }
 }
 
@@ -2890,10 +2999,11 @@ async function loadFromCloud() {
       rows = data.data; localStorage.setItem("containerRows", JSON.stringify(rows));
       populateFilters(); renderUI(); setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records"); return;
     }
-    const { data, error } = await sb.from("containers").select("data").eq("id", "gml_tracking_records").single();
-    if (!error && data && Array.isArray(data.data) && data.data.length > 0) {
-      rows = data.data; localStorage.setItem("containerRows", JSON.stringify(rows)); populateFilters(); renderUI();
-    }
+    rows = [];
+    try { localStorage.removeItem("containerRows"); } catch (e) {}
+    populateFilters();
+    renderUI();
+    setCloudDataState("error", "Sign in to access staff records");
   } catch(err) { console.warn("Cloud load failed:", err); }
 }
 
@@ -3242,27 +3352,22 @@ ddOverlay.addEventListener("drop", (e) => {
   }
 });
 
-// Load storage with safety fallback
-try {
-  const saved = localStorage.getItem("containerRows");
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      rows = parsed.map(item => ({
-        "PORT OUT": "",
-        "CONTAINER RETURN DATE": "",
-        "TRUCK NO.": "",
-        "DRIVER CONTACT": "",
-        ...item
-      }));
-    }
-  }
-} catch(e){}
-
+// Shipment rows are never restored from browser storage before staff authentication.
+try { localStorage.removeItem("containerRows"); } catch(e) {}
+rows = [];
 populateFilters();
-cloudDataReady = loadFromCloud();
+cloudDataReady = (async () => {
+  const authenticatedStaff = await checkActiveSession();
+  if (authenticatedStaff) {
+    await loadFromCloud();
+    return;
+  }
+  rows = [];
+  populateFilters();
+  renderUI();
+  setCloudDataState("error", "Sign in to access staff records");
+})();
 updateAuditBadge();
-checkActiveSession();
 
 activeQuickFilter = 'all';
 document.querySelectorAll(".chip").forEach(c => {
@@ -3639,6 +3744,7 @@ function renderUI() {
 
   // Optional dashboard panels must never prevent the actual shipment table/cards from rendering.
   try { updateKPIs(); } catch (error) { console.warn("KPI refresh failed.", error); }
+  try { renderExceptionQueue(); } catch (error) { console.warn("Exception queue refresh failed.", error); }
   try { updateDataQualityNotice(); } catch (error) { console.warn("Data integrity notice failed.", error); }
   try { updateReferenceRail(); } catch (error) { console.warn("Recent shipments summary failed.", error); }
   try {
@@ -4078,20 +4184,28 @@ document.querySelectorAll(".chip").forEach(chip => {
 });
 
 async function saveAndRefresh() {
+  if (!currentUser?.authenticated) {
+    setCloudDataState("error", "Sign in required to save shipment data");
+    toast("Sign in with an active staff account before saving changes.");
+    return;
+  }
   renderUI();
   try {
-    localStorage.setItem("containerRows", JSON.stringify(rows));
     if (currentUser?.authenticated) {
-      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows } });
+      const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows, expectedUpdatedAt: cloudDatasetUpdatedAt } });
       if (error || !data?.saved) throw new Error(data?.error || error?.message || "Secure save failed");
+      cloudDatasetUpdatedAt = data.updatedAt || cloudDatasetUpdatedAt;
+      localStorage.setItem("containerRows", JSON.stringify(rows));
       setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records");
     } else {
-      // Compatibility path retained until public workflows are replaced and validated.
-      await sb.from("containers").upsert({ id: "gml_tracking_records", data: rows, updated_at: new Date().toISOString() });
+      throw new Error("Authenticated staff session required to save shipment data.");
     }
   } catch (err) {
     console.warn("Cloud sync notice:", err);
-    if (currentUser?.authenticated) setCloudDataState("error", "Secure save failed");
+    if (currentUser?.authenticated) {
+      setCloudDataState("error", err.message || "Secure save failed");
+      toast(err.message || "Secure save failed. Your edits were not synced.");
+    }
   }
 }
 
@@ -4108,23 +4222,28 @@ function setCloudDataState(state, message) {
 }
 
 async function loadFromCloud() {
+  cloudDatasetUpdatedAt = null;
   setCloudDataState("loading", "Loading cloud data…");
   try {
     let data, error;
     if (currentUser?.authenticated) {
       const result = await sb.functions.invoke("operations-data", { body: { action: "read" } });
-      data = result.data ? { data: result.data.data } : null;
+      data = result.data ? { data: result.data.data, updatedAt: result.data.updatedAt } : null;
       error = result.error || (Array.isArray(data?.data) ? null : new Error(result.data?.error || "Secure data read failed"));
     } else {
-      // Compatibility path for the public landing/search; legacy policies remain until replacement validation.
-      const result = await sb.from("containers").select("data").eq("id", "gml_tracking_records").single();
-      data = result.data; error = result.error;
+      rows = [];
+      try { localStorage.removeItem("containerRows"); } catch (e) {}
+      populateFilters();
+      renderUI();
+      setCloudDataState("error", "Sign in to access staff records");
+      return;
     }
     if (error) {
       console.warn("Container data cloud read failed:", error);
       const cached = localStorage.getItem("containerRows");
       setCloudDataState(cached ? "offline" : "error", cached ? "Saved records · offline" : "Cloud read failed"); return;
     }
+    cloudDatasetUpdatedAt = data?.updatedAt || null;
     if (data && Array.isArray(data.data) && data.data.length > 0) {
       rows = data.data.map(item => ({ "PORT OUT": "", "CONTAINER RETURN DATE": "", "TRUCK NO.": "", "DRIVER CONTACT": "", ...item }));
       try { localStorage.setItem("containerRows", JSON.stringify(rows)); } catch (storageError) { console.warn("Could not cache shipment records:", storageError); }
@@ -4466,32 +4585,7 @@ function processExcelFile(file) {
 
 el("excelInput").addEventListener("change", e => processExcelFile(e.target.files[0]));
 
-// Load storage with safety fallback
-try {
-  const saved = localStorage.getItem("containerRows");
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      rows = parsed.map(item => ({
-        "PORT OUT": "",
-        "CONTAINER RETURN DATE": "",
-        "TRUCK NO.": "",
-        "DRIVER CONTACT": "",
-        ...item
-      }));
-    }
-  }
-} catch(e){}
-
-populateFilters();
-updateAuditBadge();
-checkActiveSession().finally(() => loadFromCloud());
-
-activeQuickFilter = 'all';
-document.querySelectorAll(".chip").forEach(c => {
-  c.classList.toggle("active", c.dataset.filter === 'all');
-});
-renderUI();
+// Duplicate legacy initialization removed. Secure startup is handled once above.
 
 
 
