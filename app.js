@@ -4464,32 +4464,7 @@ function processExcelFile(file) {
 
 el("excelInput").addEventListener("change", e => processExcelFile(e.target.files[0]));
 
-// Load storage with safety fallback
-try {
-  const saved = localStorage.getItem("containerRows");
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      rows = parsed.map(item => ({
-        "PORT OUT": "",
-        "CONTAINER RETURN DATE": "",
-        "TRUCK NO.": "",
-        "DRIVER CONTACT": "",
-        ...item
-      }));
-    }
-  }
-} catch(e){}
-
-populateFilters();
-updateAuditBadge();
-checkActiveSession().finally(() => loadFromCloud());
-
-activeQuickFilter = 'all';
-document.querySelectorAll(".chip").forEach(c => {
-  c.classList.toggle("active", c.dataset.filter === 'all');
-});
-renderUI();
+// Duplicate legacy initialization removed. Secure startup is handled once above.
 
 
 
