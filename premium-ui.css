@@ -223,3 +223,11 @@ body:has(#shipmentPanel) .footer{padding-top:5px!important}
 @media(prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+/* Trust-building feature tiles */
+.secure-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:19px 0 0}
+.secure-feature{display:flex;align-items:flex-start;gap:12px;min-width:0;padding:18px;border:1px solid #dce6ef;border-radius:15px;background:rgba(255,255,255,.78);box-shadow:0 5px 16px rgba(16,43,72,.025)}
+.secure-feature-icon{display:grid;place-items:center;flex:0 0 auto;width:35px;height:35px;border-radius:11px;background:#eaf7fc;color:#087bb8;font-size:18px;font-weight:900}
+.secure-feature strong{display:block;margin:2px 0 5px;color:#193650;font-size:12px;font-weight:850}
+.secure-feature p{margin:0;color:#6e8197;font-size:11px;line-height:1.65}
+@media(max-width:760px){.secure-feature-grid{grid-template-columns:minmax(0,1fr);gap:9px}.secure-feature{padding:15px}}
