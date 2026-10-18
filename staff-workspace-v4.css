@@ -246,3 +246,67 @@ body:has(#opsDashboardView) #opsControls{width:100%!important}
  #opsDashboardView:has(#sheetView[style*="block"]) .view-selector{width:100%!important}
  #opsDashboardView:has(#sheetView[style*="block"]) .view-btn{flex:1!important}
 }
+
+/* v6 — table workspace visual reset */
+#opsDashboardView:has(#sheetView[style*="block"]){padding:14px 18px 24px!important;background:#f2f5f9!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .ect-workspace-grid{display:block!important;width:100%!important;max-width:none!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .ect-workspace-main{display:flex!important;flex-direction:column!important;gap:12px!important;width:100%!important;min-width:0!important}
+#opsDashboardView:has(#sheetView[style*="block"]) #enterpriseOverview,
+#opsDashboardView:has(#sheetView[style*="block"]) .kpi-row,
+#opsDashboardView:has(#sheetView[style*="block"]) #staffExceptionQueue,
+#opsDashboardView:has(#sheetView[style*="block"]) .staff-map-panel,
+#opsDashboardView:has(#sheetView[style*="block"]) .ect-right-rail{display:none!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .control-tray{display:flex!important;flex-direction:column!important;gap:10px!important;margin:0!important;padding:12px 14px!important;background:#fff!important;border:1px solid #dce5ef!important;border-radius:12px!important;box-shadow:0 2px 8px rgba(19,47,75,.035)!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .control-tray-top{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;flex-wrap:wrap!important;padding:0!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .filter-inputs{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;flex:1 1 600px!important;flex-wrap:nowrap!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .search-input-wrapper{display:flex!important;position:relative!important;align-items:center!important;min-width:260px!important;max-width:580px!important;flex:1 1 420px!important;visibility:visible!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .search-input-wrapper input{display:block!important;width:100%!important;height:38px!important;padding:0 34px!important;border:1px solid #d7e2ed!important;border-radius:8px!important;background:#f7f9fc!important;color:#17314a!important;font-size:12px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .search-input-icon{left:12px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) #searchClearBtn{right:8px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) #searchResultCount{white-space:nowrap!important;font-size:10px!important;color:#71849a!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .control-tray .btn{height:38px!important;padding:0 13px!important;white-space:nowrap!important;border-radius:8px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .view-selector{display:flex!important;flex:0 0 auto!important;align-items:center!important;gap:3px!important;padding:3px!important;border:1px solid #dce5ef!important;border-radius:9px!important;background:#f3f6fa!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .view-btn{height:32px!important;padding:0 13px!important;border-radius:7px!important;font-size:11px!important;font-weight:750!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .control-tray-bottom{margin:0!important;padding:10px 0 0!important;border-top:1px solid #edf1f5!important;background:transparent!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .quick-chips-wrapper{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:6px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .chip{min-height:30px!important;padding:0 12px!important;border:1px solid #dfe7ef!important;border-radius:7px!important;background:#f7f9fc!important;color:#63778d!important;font-size:10px!important;font-weight:750!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .chip.active{border-color:#8dd7f2!important;background:#e8f7fd!important;color:#087bb0!important;box-shadow:inset 0 0 0 1px #c6ecf8!important}
+#opsDashboardView:has(#sheetView[style*="block"]) #sheetView.sheet-box{display:block!important;position:relative!important;width:100%!important;max-width:none!important;height:auto!important;max-height:none!important;min-height:0!important;margin:0!important;padding:0!important;overflow-x:auto!important;overflow-y:visible!important;overscroll-behavior-x:contain!important;border:1px solid #d9e3ed!important;border-radius:12px!important;background:#fff!important;box-shadow:0 2px 9px rgba(19,47,75,.035)!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table{width:max-content!important;min-width:100%!important;table-layout:fixed!important;border-collapse:separate!important;border-spacing:0!important;background:#fff!important;font-size:11px!important;white-space:nowrap!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table thead{position:static!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table thead th{position:static!important;top:auto!important;z-index:auto!important;height:40px!important;max-height:40px!important;padding:0 12px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;background:#eaf0f6!important;color:#526980!important;border-bottom:1px solid #d7e1eb!important;font-size:9px!important;font-weight:850!important;letter-spacing:.045em!important;line-height:1.1!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table tbody tr{height:46px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table tbody td{height:46px!important;max-height:46px!important;padding:0 12px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;vertical-align:middle!important;background:#fff!important;color:#18314a!important;border-bottom:1px solid #edf1f5!important;font-size:11px!important;line-height:1.2!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table tbody tr:nth-child(even) td{background:#fbfcfe!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table tbody tr:hover td{background:#f0f8fd!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table tbody tr:last-child td{border-bottom:0!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(1),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(1){position:sticky!important;left:0!important;width:42px!important;min-width:42px!important;max-width:42px!important;text-align:center!important;background:#f6f9fc!important;z-index:4!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(2),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(2){position:sticky!important;left:42px!important;width:158px!important;min-width:158px!important;max-width:158px!important;background:#fff!important;z-index:4!important;box-shadow:2px 0 5px rgba(25,51,78,.06)!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(1),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(2){background:#eaf0f6!important;z-index:6!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(3),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(3){width:72px!important;min-width:72px!important;max-width:72px!important;text-align:center!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(4),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(4){width:172px!important;min-width:172px!important;max-width:172px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(5),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(5){width:125px!important;min-width:125px!important;max-width:125px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(6),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(6){width:145px!important;min-width:145px!important;max-width:145px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(7),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(7){width:190px!important;min-width:190px!important;max-width:190px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(8),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(8),
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(9),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(9){width:132px!important;min-width:132px!important;max-width:132px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(10),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(10){width:145px!important;min-width:145px!important;max-width:145px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(11),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(11){width:150px!important;min-width:150px!important;max-width:150px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(12),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(12),
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(13),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(13){width:132px!important;min-width:132px!important;max-width:132px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(14),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(14),
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(15),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(15){width:138px!important;min-width:138px!important;max-width:138px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(16),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(16){width:110px!important;min-width:110px!important;max-width:110px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(17),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(17){width:250px!important;min-width:250px!important;max-width:250px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table th:nth-child(18),#opsDashboardView:has(#sheetView[style*="block"]) .sheet-table td:nth-child(18){width:100px!important;min-width:100px!important;max-width:100px!important}
+#opsDashboardView:has(#sheetView[style*="block"]) #paginationWrapper{padding:11px 14px!important;border-top:1px solid #edf1f5!important;background:#fff!important}
+@media(max-width:1000px){
+ #opsDashboardView:has(#sheetView[style*="block"]) .control-tray-top{align-items:stretch!important}
+ #opsDashboardView:has(#sheetView[style*="block"]) .filter-inputs{flex-wrap:wrap!important}
+ #opsDashboardView:has(#sheetView[style*="block"]) .search-input-wrapper{flex-basis:100%!important;max-width:none!important}
+}
+@media(max-width:680px){
+ #opsDashboardView:has(#sheetView[style*="block"]){margin-left:0!important;width:100%!important;padding:10px!important}
+ #opsDashboardView:has(#sheetView[style*="block"]) .view-selector{width:100%!important}
+ #opsDashboardView:has(#sheetView[style*="block"]) .view-btn{flex:1!important}
+}
