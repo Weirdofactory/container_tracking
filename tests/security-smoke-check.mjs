@@ -85,7 +85,7 @@ assert.ok(indexPage.includes('id="staffPasswordInput"'));
 assert.ok(indexPage.includes('id="legacyAccessCodePanel"'));
 
 // UI regression checks: public landing must not advertise unrestricted reference lookup.
-assert.ok(indexPage.includes('href="./premium-ui.css?v=20261018-premium-ui-v1"'));
+assert.ok(indexPage.includes('href="./premium-ui.css?v=20261018-premium-ui-v2"'));
 assert.ok(customerPage.includes('href="./premium-ui.css?v=20261018-premium-ui-v1"'));
 assert.ok(indexPage.includes("Your shipment link is your secure gateway."));
 assert.ok(indexPage.includes('class="legacy-public-search-hooks" hidden aria-hidden="true"'));
