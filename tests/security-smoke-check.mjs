@@ -103,7 +103,9 @@ for (const signature of [
   "public.import_igm_hbl_rows(uuid, jsonb)",
   "public.search_customer_igm(text)",
 ]) {
-  const escaped = signature.replace(/[.*+?^${}()|[\]\\]/g, "\\assert.ok(indexPage.includes('id="legacyAccessCodePanel"'));");
+  const lowered = legacyLockdown.toLowerCase();
+  assert.ok(lowered.includes("revoke execute on function " + signature.toLowerCase() + " from public, anon, authenticated"), "missing revoke for " + signature);
+  assert.ok(lowered.includes("grant execute on function " + signature.toLowerCase() + " to service_role"), "missing trusted grant for " + signature);
   assert.match(legacyLockdown, new RegExp(`revoke execute on function ${escaped} from public, anon, authenticated`, "i"));
   assert.match(legacyLockdown, new RegExp(`grant execute on function ${escaped} to service_role`, "i"));
 }
