@@ -2864,17 +2864,21 @@ async function saveAndRefresh() {
   }
   renderUI();
   try {
-    localStorage.setItem("containerRows", JSON.stringify(rows));
     if (currentUser?.authenticated) {
       const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows, expectedUpdatedAt: cloudDatasetUpdatedAt } });
       if (error || !data?.saved) throw new Error(data?.error || error?.message || "Secure save failed");
+      cloudDatasetUpdatedAt = data.updatedAt || cloudDatasetUpdatedAt;
+      localStorage.setItem("containerRows", JSON.stringify(rows));
       setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records");
     } else {
       throw new Error("Authenticated staff session required to save shipment data.");
     }
   } catch (err) {
     console.warn("Cloud sync notice:", err);
-    if (currentUser?.authenticated) setCloudDataState("error", "Secure save failed");
+    if (currentUser?.authenticated) {
+      setCloudDataState("error", err.message || "Secure save failed");
+      toast(err.message || "Secure save failed. Your edits were not synced.");
+    }
   }
 }
 
@@ -4077,17 +4081,21 @@ async function saveAndRefresh() {
   }
   renderUI();
   try {
-    localStorage.setItem("containerRows", JSON.stringify(rows));
     if (currentUser?.authenticated) {
       const { data, error } = await sb.functions.invoke("operations-data", { body: { action: "write", data: rows, expectedUpdatedAt: cloudDatasetUpdatedAt } });
       if (error || !data?.saved) throw new Error(data?.error || error?.message || "Secure save failed");
+      cloudDatasetUpdatedAt = data.updatedAt || cloudDatasetUpdatedAt;
+      localStorage.setItem("containerRows", JSON.stringify(rows));
       setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records");
     } else {
       throw new Error("Authenticated staff session required to save shipment data.");
     }
   } catch (err) {
     console.warn("Cloud sync notice:", err);
-    if (currentUser?.authenticated) setCloudDataState("error", "Secure save failed");
+    if (currentUser?.authenticated) {
+      setCloudDataState("error", err.message || "Secure save failed");
+      toast(err.message || "Secure save failed. Your edits were not synced.");
+    }
   }
 }
 
@@ -4124,8 +4132,8 @@ async function loadFromCloud() {
       const cached = localStorage.getItem("containerRows");
       setCloudDataState(cached ? "offline" : "error", cached ? "Saved records · offline" : "Cloud read failed"); return;
     }
+    cloudDatasetUpdatedAt = data?.updatedAt || null;
     if (data && Array.isArray(data.data) && data.data.length > 0) {
-      cloudDatasetUpdatedAt = data.updatedAt || null;
       rows = data.data.map(item => ({ "PORT OUT": "", "CONTAINER RETURN DATE": "", "TRUCK NO.": "", "DRIVER CONTACT": "", ...item }));
       try { localStorage.setItem("containerRows", JSON.stringify(rows)); } catch (storageError) { console.warn("Could not cache shipment records:", storageError); }
       populateFilters();
