@@ -13,6 +13,8 @@ const operations = read("../supabase/functions/operations-data/index.ts");
 const dashboard = read("../app.js");
 const indexPage = read("../index.html");
 const supabaseConfig = read("../supabase/config.toml");
+const legacyLockdown = read("../supabase/migrations/202610180001_lock_down_legacy_public_access.sql");
+
 
 // Token grants must store only a digest and never expose the full tracking row.
 assert.match(lookup, /\.eq\("token_hash", tokenHash\)/);
@@ -74,6 +76,10 @@ assert.ok(operations.includes('["Admin", "Editor", "Operator"].includes(profile.
 assert.ok(operations.includes('payload.action === "read"'));
 assert.ok(operations.includes('payload.action === "write"'));
 assert.ok(operations.includes("consume_edge_rate_limit"));
+assert.ok(operations.includes("expectedUpdatedAt"), "staff writes must carry a previously-read dataset version");
+assert.ok(operations.includes('.eq("updated_at", expectedUpdatedAt)'), "writes must use compare-and-swap against updated_at");
+assert.ok(operations.includes("return reply(409"), "stale write conflicts must be rejected");
+
 assert.ok(supabaseConfig.includes("[functions.operations-data]"));
 assert.ok(supabaseConfig.includes("verify_jwt = true"));
 assert.ok(dashboard.includes("sb.auth.signInWithPassword"));
@@ -81,4 +87,32 @@ assert.ok(dashboard.includes('sb.functions.invoke("operations-data"'));
 assert.ok(indexPage.includes('id="staffEmailInput"'));
 assert.ok(indexPage.includes('id="staffPasswordInput"'));
 assert.ok(indexPage.includes('id="legacyAccessCodePanel"'));
+ 
+// Regression checks for public API/RLS exposures observed during the connected-project review.
+assert.match(legacyLockdown, /drop policy if exists "Allow all public access" on public\.containers/i);
+assert.match(legacyLockdown, /drop policy if exists "Allow public read\/update for containers" on public\.containers/i);
+assert.match(legacyLockdown, /revoke all privileges on table public\.containers from public, anon, authenticated/i);
+assert.match(legacyLockdown, /drop policy if exists "Allow public access code verification" on public\.user_roles/i);
+assert.match(legacyLockdown, /revoke all privileges on table public\.user_roles from public, anon, authenticated/i);
+assert.match(legacyLockdown, /drop policy if exists audit_logs_insert_active_staff/i);
+assert.match(legacyLockdown, /create policy audit_logs_insert_active_staff/i);
+assert.match(legacyLockdown, /revoke execute on function public\.rls_auto_enable\(\) from public, anon, authenticated/i);
+assert.match(legacyLockdown, /sp\.is_active = true/i);
+assert.match(legacyLockdown, /revoke all privileges on table public\.customer_tracking_tokens from public, anon, authenticated/i);
+assert.match(legacyLockdown, /revoke all privileges on table public\.edge_rate_limit_buckets from public, anon, authenticated/i);
+for (const signature of [
+  "public.get_customer_igm_bundle(text)",
+  "public.get_igm_hbl_detail(text)",
+  "public.get_igm_hbls_for_container(text)",
+  "public.get_igm_hbls_for_shipment(text, text)",
+  "public.import_igm_hbl_rows(text, jsonb)",
+  "public.import_igm_hbl_rows(uuid, jsonb)",
+  "public.search_customer_igm(text)",
+]) {
+  const lowered = legacyLockdown.toLowerCase();
+  assert.ok(lowered.includes("revoke execute on function " + signature.toLowerCase() + " from public, anon, authenticated"), "missing revoke for " + signature);
+  assert.ok(lowered.includes("grant execute on function " + signature.toLowerCase() + " to service_role"), "missing trusted grant for " + signature);
+}
+assert.match(legacyLockdown, /IMPORTANT: review and apply only in a staging Supabase branch first/i);
+
 console.log("Security smoke checks passed.");
