@@ -904,24 +904,37 @@ el("logoutBtn").addEventListener("click", async () => {
 
 async function checkActiveSession() {
   try {
-    const { data: sessionData } = await sb.auth.getSession();
+    const { data: sessionData, error: sessionError } = await sb.auth.getSession();
+    if (sessionError) throw sessionError;
     const session = sessionData?.session;
     if (session?.user) {
       const { data: profile, error } = await sb.from("staff_profiles")
         .select("display_name, role, is_active").eq("user_id", session.user.id).maybeSingle();
       if (!error && profile?.is_active) {
-        currentUser = { id: profile.display_name || session.user.email || session.user.id, role: profile.role, uid: session.user.id, authenticated: true };
-        localStorage.removeItem("gml_auth_code_user"); setAccessState(true); return true;
+        currentUser = {
+          id: profile.display_name || session.user.email || session.user.id,
+          role: profile.role,
+          uid: session.user.id,
+          authenticated: true
+        };
+        localStorage.removeItem("gml_auth_code_user");
+        setAccessState(true);
+        return true;
       }
       await sb.auth.signOut();
     }
-  } catch (error) { console.warn("Supabase Auth session check failed:", error); }
-  const savedUser = localStorage.getItem("gml_auth_code_user");
-  if (savedUser) {
-    try { currentUser = { ...JSON.parse(savedUser), legacy: true }; setAccessState(true); return false; }
-    catch(e) { localStorage.removeItem("gml_auth_code_user"); }
+  } catch (error) {
+    console.warn("Supabase Auth session check failed:", error);
   }
-  setAccessState(false); return false;
+  // Legacy browser-stored staff objects are not valid authentication credentials.
+  currentUser = null;
+  try {
+    localStorage.removeItem("gml_auth_code_user");
+    localStorage.removeItem("containerRows");
+  } catch (e) {}
+  rows = [];
+  setAccessState(false);
+  return false;
 }
 
 function setAccessState(isStaff) {
@@ -1217,6 +1230,12 @@ async function performPublicSearch() {
   if (!rawInput) {
     toast("Please enter a Container or MBL Number!");
     el("publicSearchInput").focus();
+    return;
+  }
+  if (!currentUser?.authenticated) {
+    btn.classList.remove("btn-loading");
+    container.style.display = "block";
+    container.innerHTML = '<div class="carrier-empty-state"><strong>Private tracking link required</strong><span>For shipment privacy, public reference lookup is disabled. Open your authorized GML tracking link or contact your GML operations representative to request access.</span></div>';
     return;
   }
   btn.classList.add("btn-loading");
@@ -2865,6 +2884,11 @@ document.querySelectorAll(".chip").forEach(chip => {
 });
 
 async function saveAndRefresh() {
+  if (!currentUser?.authenticated) {
+    setCloudDataState("error", "Sign in required to save shipment data");
+    toast("Sign in with an active staff account before saving changes.");
+    return;
+  }
   renderUI();
   try {
     localStorage.setItem("containerRows", JSON.stringify(rows));
@@ -2873,8 +2897,7 @@ async function saveAndRefresh() {
       if (error || !data?.saved) throw new Error(data?.error || error?.message || "Secure save failed");
       setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records");
     } else {
-      // Compatibility path retained until public workflows are replaced and validated.
-      await sb.from("containers").upsert({ id: "gml_tracking_records", data: rows, updated_at: new Date().toISOString() });
+      throw new Error("Authenticated staff session required to save shipment data.");
     }
   } catch (err) {
     console.warn("Cloud sync notice:", err);
@@ -3242,27 +3265,22 @@ ddOverlay.addEventListener("drop", (e) => {
   }
 });
 
-// Load storage with safety fallback
-try {
-  const saved = localStorage.getItem("containerRows");
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      rows = parsed.map(item => ({
-        "PORT OUT": "",
-        "CONTAINER RETURN DATE": "",
-        "TRUCK NO.": "",
-        "DRIVER CONTACT": "",
-        ...item
-      }));
-    }
-  }
-} catch(e){}
-
+// Shipment rows are never restored from browser storage before staff authentication.
+try { localStorage.removeItem("containerRows"); } catch(e) {}
+rows = [];
 populateFilters();
-cloudDataReady = loadFromCloud();
+cloudDataReady = (async () => {
+  const authenticatedStaff = await checkActiveSession();
+  if (authenticatedStaff) {
+    await loadFromCloud();
+    return;
+  }
+  rows = [];
+  populateFilters();
+  renderUI();
+  setCloudDataState("error", "Sign in to access staff records");
+})();
 updateAuditBadge();
-checkActiveSession();
 
 activeQuickFilter = 'all';
 document.querySelectorAll(".chip").forEach(c => {
@@ -4078,6 +4096,11 @@ document.querySelectorAll(".chip").forEach(chip => {
 });
 
 async function saveAndRefresh() {
+  if (!currentUser?.authenticated) {
+    setCloudDataState("error", "Sign in required to save shipment data");
+    toast("Sign in with an active staff account before saving changes.");
+    return;
+  }
   renderUI();
   try {
     localStorage.setItem("containerRows", JSON.stringify(rows));
@@ -4086,8 +4109,7 @@ async function saveAndRefresh() {
       if (error || !data?.saved) throw new Error(data?.error || error?.message || "Secure save failed");
       setCloudDataState("connected", "Secure cloud sync · " + rows.length + " records");
     } else {
-      // Compatibility path retained until public workflows are replaced and validated.
-      await sb.from("containers").upsert({ id: "gml_tracking_records", data: rows, updated_at: new Date().toISOString() });
+      throw new Error("Authenticated staff session required to save shipment data.");
     }
   } catch (err) {
     console.warn("Cloud sync notice:", err);
@@ -4116,9 +4138,12 @@ async function loadFromCloud() {
       data = result.data ? { data: result.data.data } : null;
       error = result.error || (Array.isArray(data?.data) ? null : new Error(result.data?.error || "Secure data read failed"));
     } else {
-      // Compatibility path for the public landing/search; legacy policies remain until replacement validation.
-      const result = await sb.from("containers").select("data").eq("id", "gml_tracking_records").single();
-      data = result.data; error = result.error;
+      rows = [];
+      try { localStorage.removeItem("containerRows"); } catch (e) {}
+      populateFilters();
+      renderUI();
+      setCloudDataState("error", "Sign in to access staff records");
+      return;
     }
     if (error) {
       console.warn("Container data cloud read failed:", error);
