@@ -76,6 +76,10 @@ assert.ok(operations.includes('["Admin", "Editor", "Operator"].includes(profile.
 assert.ok(operations.includes('payload.action === "read"'));
 assert.ok(operations.includes('payload.action === "write"'));
 assert.ok(operations.includes("consume_edge_rate_limit"));
+assert.ok(operations.includes("expectedUpdatedAt"), "staff writes must carry a previously-read dataset version");
+assert.ok(operations.includes('.eq("updated_at", expectedUpdatedAt)'), "writes must use compare-and-swap against updated_at");
+assert.ok(operations.includes("return reply(409"), "stale write conflicts must be rejected");
+
 assert.ok(supabaseConfig.includes("[functions.operations-data]"));
 assert.ok(supabaseConfig.includes("verify_jwt = true"));
 assert.ok(dashboard.includes("sb.auth.signInWithPassword"));
@@ -90,7 +94,9 @@ assert.match(legacyLockdown, /drop policy if exists "Allow public read\/update f
 assert.match(legacyLockdown, /revoke all privileges on table public\.containers from public, anon, authenticated/i);
 assert.match(legacyLockdown, /drop policy if exists "Allow public access code verification" on public\.user_roles/i);
 assert.match(legacyLockdown, /revoke all privileges on table public\.user_roles from public, anon, authenticated/i);
+assert.match(legacyLockdown, /drop policy if exists audit_logs_insert_active_staff/i);
 assert.match(legacyLockdown, /create policy audit_logs_insert_active_staff/i);
+assert.match(legacyLockdown, /revoke execute on function public\.rls_auto_enable\(\) from public, anon, authenticated/i);
 assert.match(legacyLockdown, /sp\.is_active = true/i);
 assert.match(legacyLockdown, /revoke all privileges on table public\.customer_tracking_tokens from public, anon, authenticated/i);
 assert.match(legacyLockdown, /revoke all privileges on table public\.edge_rate_limit_buckets from public, anon, authenticated/i);
