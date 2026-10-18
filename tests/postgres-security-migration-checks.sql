@@ -7,7 +7,6 @@ DECLARE
   table_names text[] := ARRAY[
     'public.containers',
     'public.user_roles',
-    'public.audit_logs',
     'public.customer_tracking_tokens',
     'public.edge_rate_limit_buckets',
     'public.igm_hbl_details',
