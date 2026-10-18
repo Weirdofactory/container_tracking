@@ -101,12 +101,11 @@ function renderDetailPage(idx){
  const mbl=read(r,['MBL NO','MBL','MASTER BL']);
  const status=getStatusSafe(r),statusCls=detailStatusClass(status);
  const from=empty(pol)?'Origin not recorded':pol,to=empty(gateway)?'Gateway not recorded':gateway;
- const routeMeta=[read(r,['VESSEL & VOY','VESSEL','VESSEL NAME']),read(r,['TRANSSHIPMENT PORT','TRANSHIPMENT PORT','TRANS-SHIPMENT PORT','T/S PORT','TS PORT'])].filter(v=>!empty(v));
  const routeCard='<section class="stv10-route-card">'+
   '<div><span class="stv10-route-label">Origin / loading port</span><strong class="stv10-route-value">'+text(from)+'</strong><small class="stv10-route-meta">Port of loading</small></div>'+
   '<div class="stv10-route-arrow" aria-hidden="true">→</div>'+
-  '<div><span class="stv10-route-label">Destination / gateway</span><strong class="stv10-route-value">'+text(to)+'</strong><small class="stv10-route-meta">'+text(read(r,['CFS NAME','CFS'])||'Terminal not recorded')+'</small></div>'+
-  '<div class="stv10-route-state"><span class="stv10-route-label">Current milestone</span><strong class="stv10-route-value"><span class="st9-status '+statusCls+'">'+text(String(status.text||'Status not available').replace(/\s+/g,' ').slice(0,42))+'</span></strong><small class="stv10-route-meta">'+text(routeMeta.length?routeMeta.join(' · '):'Vessel or transshipment details not recorded')+'</small></div>'+
+  '<div><span class="stv10-route-label">Destination / gateway</span><strong class="stv10-route-value">'+text(to)+'</strong><small class="stv10-route-meta">Gateway port</small></div>'+
+  '<div class="stv10-route-state"><span class="stv10-route-label">Current milestone</span><strong class="stv10-route-value"><span class="st9-status '+statusCls+'">'+text(String(status.text||'Status not available').replace(/\s+/g,' ').slice(0,42))+'</span></strong><small class="stv10-route-meta">'+text('Based on recorded shipment milestones')+'</small></div>'+
  '</section>';
  const identity=[
   ['Container type',read(r,['TYPE','SIZE','CONTAINER TYPE'])],
