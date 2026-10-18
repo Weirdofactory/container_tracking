@@ -4112,6 +4112,7 @@ function setCloudDataState(state, message) {
 }
 
 async function loadFromCloud() {
+  cloudDatasetUpdatedAt = null;
   setCloudDataState("loading", "Loading cloud data…");
   try {
     let data, error;
