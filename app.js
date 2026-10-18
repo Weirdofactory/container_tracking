@@ -805,14 +805,6 @@ function closeStaffLogin() {
   clearLoginFeedback();
   setLoginBusy(false);
 }
-function executeSuccessfulLogin(userObj) {
-  currentUser = userObj;
-  localStorage.setItem("gml_auth_code_user", JSON.stringify(currentUser));
-  closeStaffLogin();
-  setAccessState(true);
-  toast("Logged in as " + currentUser.id);
-}
-
 el("loginBtn").addEventListener("click", () => {
   if (el("staffEmailInput")) el("staffEmailInput").value = "";
   if (el("staffPasswordInput")) el("staffPasswordInput").value = "";
@@ -826,13 +818,6 @@ el("loginBtn").addEventListener("click", () => {
   el("loginModalBg").classList.add("open");
   setTimeout(() => el("staffEmailInput")?.focus(), 100);
 });
-el("legacyAccessCodeToggle")?.addEventListener("click", () => {
-  const panel = el("legacyAccessCodePanel");
-  if (!panel) return;
-  const show = panel.style.display === "none";
-  panel.style.display = show ? "block" : "none";
-  if (show) el("loginCodeInput")?.focus();
-});
 ["staffEmailInput", "staffPasswordInput"].forEach(id => el(id)?.addEventListener("keydown", event => {
   if (event.key === "Enter") { event.preventDefault(); el("loginSubmit").click(); }
 }));
@@ -844,23 +829,6 @@ el("loginModalBg").addEventListener("click", (event) => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && el("loginModalBg").classList.contains("open")) closeStaffLogin();
 });
-el("loginToggleCode").addEventListener("click", () => {
-  const input = el("loginCodeInput");
-  const reveal = input.type === "password";
-  input.type = reveal ? "text" : "password";
-  el("loginToggleCode").textContent = reveal ? "Hide" : "Show";
-  el("loginToggleCode").setAttribute("aria-label", reveal ? "Hide access code" : "Show access code");
-  el("loginToggleCode").setAttribute("aria-pressed", String(reveal));
-  input.focus();
-});
-el("loginCodeInput").addEventListener("input", clearLoginFeedback);
-el("loginCodeInput").addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    el("loginSubmit").click();
-  }
-});
-
 el("loginSubmit").addEventListener("click", async () => {
   if (el("loginSubmit").disabled) return;
   const email = (el("staffEmailInput")?.value || "").trim().toLowerCase();
@@ -893,7 +861,17 @@ el("loginSubmit").addEventListener("click", async () => {
 el("terminalRoutingBtn")?.addEventListener("click", openTerminalRoutingMaster);
 el("logoutBtn").addEventListener("click", async () => {
   if (currentUser?.authenticated) await sb.auth.signOut();
-  currentUser = null; localStorage.removeItem("gml_auth_code_user"); setAccessState(false); toast("Logged out");
+  currentUser = null;
+  try {
+    localStorage.removeItem("gml_auth_code_user");
+    localStorage.removeItem("containerRows");
+  } catch (e) {}
+  rows = [];
+  populateFilters();
+  renderUI();
+  setAccessState(false);
+  setCloudDataState("error", "Sign in to access staff records");
+  toast("Logged out");
 });
 
 async function checkActiveSession() {
