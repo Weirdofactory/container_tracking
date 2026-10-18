@@ -142,6 +142,31 @@
 @media(max-width:480px){
   #opsDashboardView .kpi-row{grid-template-columns:1fr !important;}
 }
+
+#opsDashboardView .staff-exception-panel{background:#fff;border:1px solid #dfe7ef;border-radius:16px;box-shadow:0 8px 24px rgba(22,43,67,.05);margin:0 0 20px;overflow:hidden}
+#opsDashboardView .staff-exception-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 22px;border-bottom:1px solid #edf1f5}
+#opsDashboardView .staff-exception-eyebrow{font-size:10px;font-weight:800;letter-spacing:.14em;color:#b45309}
+#opsDashboardView .staff-exception-head h2{font-size:18px;margin:5px 0 3px;color:#14283f}
+#opsDashboardView .staff-exception-head p{font-size:12px;color:#718197;margin:0;max-width:720px}
+#opsDashboardView .staff-exception-count{flex:0 0 auto;min-width:76px;text-align:center;padding:9px 12px;border:1px solid #f4d5a6;background:#fff8eb;border-radius:12px;color:#9a4e08}
+#opsDashboardView .staff-exception-count strong{display:block;font-size:22px;line-height:1.2}
+#opsDashboardView .staff-exception-count span{font-size:10px;font-weight:700}
+#opsDashboardView .staff-exception-list{display:grid}
+#opsDashboardView .staff-exception-item{display:grid;grid-template-columns:8px minmax(0,1fr) auto;align-items:center;gap:13px;padding:13px 22px;border-bottom:1px solid #f0f3f7}
+#opsDashboardView .staff-exception-item:last-child{border-bottom:0}
+#opsDashboardView .staff-exception-bar{height:38px;border-radius:8px;background:#f59e0b}
+#opsDashboardView .staff-exception-item[data-severity="high"] .staff-exception-bar{background:#d92d20}
+#opsDashboardView .staff-exception-main{min-width:0}
+#opsDashboardView .staff-exception-title{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:12px;font-weight:800;color:#1a2e45}
+#opsDashboardView .staff-exception-ref{font-size:11px;color:#60748a;margin-top:3px;overflow-wrap:anywhere}
+#opsDashboardView .staff-exception-meta{font-size:10px;color:#8190a2;margin-top:3px}
+#opsDashboardView .staff-exception-tag{font-size:9px;letter-spacing:.05em;text-transform:uppercase;font-weight:800;border-radius:999px;padding:4px 7px;background:#fff1d6;color:#99500a}
+#opsDashboardView .staff-exception-item[data-severity="high"] .staff-exception-tag{background:#fee4e2;color:#b42318}
+#opsDashboardView .staff-exception-open{border:1px solid #d8e4ef;border-radius:9px;background:#f8fbfe;color:#17618e;padding:8px 11px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer}
+#opsDashboardView .staff-exception-open:hover{background:#eaf5fc;border-color:#a9d6ed}
+#opsDashboardView .staff-exception-empty{padding:20px 22px;color:#65778c;font-size:12px}
+#opsDashboardView .staff-exception-foot{padding:10px 22px;background:#f8fafc;border-top:1px solid #edf1f5;color:#8491a2;font-size:10px}
+@media(max-width:620px){#opsDashboardView .staff-exception-head{align-items:flex-start;padding:16px;gap:10px}#opsDashboardView .staff-exception-item{grid-template-columns:6px minmax(0,1fr);padding:12px 16px;gap:10px}#opsDashboardView .staff-exception-open{grid-column:2;justify-self:start}#opsDashboardView .staff-exception-foot{padding:10px 16px}}
 </style>
 <aside class="staff-reference-sidebar" id="staffReferenceSidebar" aria-label="Staff navigation">
   <div class="staff-sidebar-brand"><span class="staff-sidebar-mark">⚓</span><span><strong>GML OPERATIONS</strong><small>LOGISTICS CONTROL</small></span></div>
@@ -184,6 +209,14 @@
     <div class="kpi-card" style="border-top-color:var(--danger);"><small>Destuffing Pending</small><strong id="kDestuffingPending" style="color:var(--danger)">0</strong></div>
     <div class="kpi-card total-cost-kpi"><small>Total Financial Exposure</small><strong id="kTotalExposure" style="color:var(--corporate-pink)">₹0</strong></div>
   </div>
+  <section id="staffExceptionQueue" class="staff-exception-panel" aria-labelledby="staffExceptionHeading">
+    <div class="staff-exception-head">
+      <div><div class="staff-exception-eyebrow">ACTION REQUIRED</div><h2 id="staffExceptionHeading">Shipment exception queue</h2><p>Rule-based flags from recorded shipment milestones and remarks. Confirm each item with operations before taking action.</p></div>
+      <div class="staff-exception-count"><strong id="staffExceptionCount">0</strong><span>open items</span></div>
+    </div>
+    <div id="staffExceptionList" class="staff-exception-list"><div class="staff-exception-empty">Exceptions will appear when shipment records are loaded.</div></div>
+    <div class="staff-exception-foot" id="staffExceptionFoot">Based on the latest loaded records; not a live carrier feed.</div>
+  </section>
   
   <div class="ect-workspace-grid"><div class="ect-workspace-main">
 <section class="staff-map-panel">
