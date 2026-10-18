@@ -13,6 +13,7 @@ const operations = read("../supabase/functions/operations-data/index.ts");
 const dashboard = read("../app.js");
 const indexPage = read("../index.html");
 const supabaseConfig = read("../supabase/config.toml");
+const premiumUi = read("../premium-ui.css");
 
 // Token grants must store only a digest and never expose the full tracking row.
 assert.match(lookup, /\.eq\("token_hash", tokenHash\)/);
@@ -81,4 +82,18 @@ assert.ok(dashboard.includes('sb.functions.invoke("operations-data"'));
 assert.ok(indexPage.includes('id="staffEmailInput"'));
 assert.ok(indexPage.includes('id="staffPasswordInput"'));
 assert.ok(indexPage.includes('id="legacyAccessCodePanel"'));
-console.log("Security smoke checks passed.");
+
+// UI regression checks: public landing must not advertise unrestricted reference lookup.
+assert.ok(indexPage.includes('href="./premium-ui.css?v=20261018-premium-ui-v1"'));
+assert.ok(customerPage.includes('href="./premium-ui.css?v=20261018-premium-ui-v1"'));
+assert.ok(indexPage.includes("Your shipment link is your secure gateway."));
+assert.ok(indexPage.includes('class="legacy-public-search-hooks" hidden aria-hidden="true"'));
+assert.ok(indexPage.includes('id="publicSearchInput"'), "preserve the legacy hook for existing script compatibility");
+assert.ok(indexPage.includes('Request a tracking link'));
+assert.doesNotMatch(indexPage, /Enter a container, MBL, booking or HBL number to begin/);
+assert.match(premiumUi, /\.secure-access-panel/);
+assert.match(premiumUi, /#opsDashboardView/);
+assert.match(premiumUi, /#shipmentPanel/);
+assert.match(premiumUi, /prefers-reduced-motion/);
+
+console.log("Security and UI smoke checks passed.");

@@ -86,34 +86,61 @@
         <div class="one-hero-title-row">
           <div>
             <div class="one-eyebrow">GML CONTAINER TRACKING</div>
-            <h1>Cargo Tracking</h1>
-            <p>Track your shipment status, vessel movement and operational milestones from one place.</p>
+            <h1>Shipment visibility, without the guesswork.</h1>
+            <p>One clear view of your cargo journey—from vessel routing and estimated arrival to terminal milestones and the next operational update.</p>
           </div>
           <button type="button" class="public-staff-login-btn" onclick="document.getElementById('loginModalBg').classList.add('open');document.getElementById('staffEmailInput')?.focus();">🔐 Staff Portal Login</button>
         </div>
       </div>
-      <div class="one-track-panel">
-        <div class="one-track-panel-head">
-          <div><strong>Track &amp; Trace</strong><span>Enter a container, MBL, booking or HBL number to begin</span></div>
-          <span class="one-panel-badge">● ONLINE</span>
-        </div>
-        <div class="one-track-fields">
-          <div class="one-field-group one-field-type"><label>Search Type</label><select id="publicTrackingType" aria-label="Search Type"><option value="all">All References</option><option value="container">Container No.</option><option value="mbl">MBL No.</option><option value="booking">Booking No.</option><option value="hbl">HBL No.</option></select></div>
-          <div class="one-field-group one-field-input"><label>Tracking Number</label><input type="text" id="publicSearchInput" autocomplete="off" spellcheck="false" placeholder="Enter Container / MBL / Booking / HBL No."></div>
-          <button class="one-track-button" id="publicSearchBtn" onclick="performPublicSearch()">Search</button>
-        </div>
-        <div class="one-track-help">Enter one or more references. Separate multiple entries with a space, comma or semicolon.</div>
-      </div>
     </div>
   </div>
+
   <div class="one-content-wrap">
-    <div class="one-result-heading"><div><span class="one-section-kicker">SHIPMENT RESULTS</span><h2>Track your cargo</h2></div><div class="one-result-actions"><span class="one-result-note">Current status &amp; milestone history</span><span class="one-result-count-badge" id="publicResultCountBadge">0 results</span></div></div>
-  <div id="publicResultContainer" class="public-result-card one-results-surface"></div>
+    <section class="secure-access-panel" aria-labelledby="secureAccessTitle">
+      <div class="secure-access-intro">
+        <span class="secure-access-label">Private shipment access</span>
+        <h2 id="secureAccessTitle">Your shipment link is your secure gateway.</h2>
+        <p>GML tracking links are created for a specific shipment, so your page shows only the shipment details intended for you. Open the private link shared by your operations contact to view live recorded milestones.</p>
+        <div class="secure-access-actions">
+          <a class="secure-access-primary" href="mailto:madhan@gmlindia.net?subject=Request%20for%20private%20shipment%20tracking%20link">✉ Request a tracking link</a>
+          <a class="secure-access-secondary" href="https://wa.me/919884070344?text=Hello%20GML%2C%20please%20help%20me%20access%20my%20shipment%20tracking%20link." target="_blank" rel="noopener noreferrer">◉ Contact operations</a>
+        </div>
+        <div class="secure-access-note"><span aria-hidden="true">⌑</span><div><strong>Privacy by design</strong><br>Shipment records are not searchable by public container, MBL, booking or HBL references. A valid private link is required.</div></div>
+      </div>
+      <div class="secure-access-steps" aria-label="How shipment tracking works">
+        <div class="secure-access-step"><span class="secure-access-step-number">01</span><div><strong>Open your private link</strong><small>Use the complete tracking URL shared by your GML representative.</small></div></div>
+        <div class="secure-access-step"><span class="secure-access-step-number">02</span><div><strong>Follow shipment milestones</strong><small>Review vessel, route, estimated dates and recorded handling events.</small></div></div>
+        <div class="secure-access-step"><span class="secure-access-step-number">03</span><div><strong>Get help when a detail needs review</strong><small>Contact the operations team if an update is missing or an exception is shown.</small></div></div>
+      </div>
+    </section>
+
+    <div class="secure-feature-grid" aria-label="Tracking features">
+      <article class="secure-feature"><span class="secure-feature-icon">↗</span><div><strong>Route clarity</strong><p>Origin, destination, vessel and estimated dates in one readable view.</p></div></article>
+      <article class="secure-feature"><span class="secure-feature-icon">◷</span><div><strong>Milestone history</strong><p>See the progress recorded by the operations team, without guessing what is complete.</p></div></article>
+      <article class="secure-feature"><span class="secure-feature-icon">✦</span><div><strong>Direct support</strong><p>Reach GML when an ETA, terminal event or operational note needs attention.</p></div></article>
+    </div>
   </div>
+
+  <div class="legacy-public-search-hooks" hidden aria-hidden="true">
+    <select id="publicTrackingType" tabindex="-1" aria-hidden="true"><option value="all">All References</option></select>
+    <input type="text" id="publicSearchInput" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button type="button" id="publicSearchBtn" tabindex="-1" aria-hidden="true" onclick="performPublicSearch()">Search</button>
+    <span id="publicResultCountBadge">0 results</span>
+    <div id="publicResultContainer"></div>
   </div>
-  <section class="customer-help-section">
-    <div><div><span class="hero-eyebrow">NEED ASSISTANCE?</span><h2>Our operations team is here to help.</h2><p>For shipment-specific questions, keep your container number ready when contacting the team.</p></div>
-    <div class="customer-help-actions"><a class="btn btn-primary" href="mailto:madhan@gmlindia.net">✉️ Email Operations</a><a class="btn btn-ghost" href="https://wa.me/919884070344" target="_blank" rel="noopener">💬 WhatsApp Operations</a></div></div>
+
+  <section class="customer-help-section" aria-labelledby="customerHelpTitle">
+    <div>
+      <div>
+        <span class="hero-eyebrow">NEED ASSISTANCE?</span>
+        <h2 id="customerHelpTitle">A shipment question? Talk to our operations team.</h2>
+        <p>Keep your container number or shipment reference ready so the team can help you faster.</p>
+      </div>
+      <div class="customer-help-actions">
+        <a class="btn btn-primary" href="mailto:madhan@gmlindia.net?subject=Shipment%20tracking%20support">✉ Email Operations</a>
+        <a class="btn btn-ghost" href="https://wa.me/919884070344" target="_blank" rel="noopener noreferrer">◉ WhatsApp Operations</a>
+      </div>
+    </div>
   </section>
 </section>
 
@@ -351,7 +378,7 @@
 <script src="./app.js?v=20261018-security-public-tracking-v1"></script>
 <script src="./phase1.js?v=20260924-36"></script>
 <script src="./phase2.js?v=20260924-36"></script>
-<link rel="stylesheet" href="./enterprise-upgrade.css?v=20261012-ops-hub-v1">
+<link rel="stylesheet" href="./enterprise-upgrade.css?v=20261012-ops-hub-v1">\n<link rel="stylesheet" href="./premium-ui.css?v=20261018-premium-ui-v1">
 <script src="./enterprise-upgrade.js?v=20261012-ops-hub-v1"></script>
 </body>
 </html>
