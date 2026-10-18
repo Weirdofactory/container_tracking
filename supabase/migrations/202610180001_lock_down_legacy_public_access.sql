@@ -8,8 +8,6 @@
 -- The staff dashboard now uses the authenticated operations-data Edge
 -- Function (service role on the server); no browser should read or mutate
 -- the shared containers dataset directly.
-begin;
-
 -- The broad policies below made the shared shipment dataset publicly
 -- readable and writable regardless of the narrower role-specific policies.
 drop policy if exists "Allow all public access" on public.containers;
@@ -94,4 +92,3 @@ grant execute on function public.search_customer_igm(text) to service_role;
 revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
 grant execute on function public.rls_auto_enable() to service_role;
 
-commit;
