@@ -14,6 +14,7 @@ const dashboard = read("../app.js");
 const indexPage = read("../index.html");
 const supabaseConfig = read("../supabase/config.toml");
 const premiumUi = read("../premium-ui.css");
+const staffUiV2 = read("../staff-control-tower-v2.css");
 
 // Token grants must store only a digest and never expose the full tracking row.
 assert.match(lookup, /\.eq\("token_hash", tokenHash\)/);
@@ -95,5 +96,12 @@ assert.match(premiumUi, /\.secure-access-panel/);
 assert.match(premiumUi, /#opsDashboardView/);
 assert.match(premiumUi, /#shipmentPanel/);
 assert.match(premiumUi, /prefers-reduced-motion/);
+assert.ok(indexPage.includes('href="./staff-control-tower-v2.css?v=20261018-staff-v2"'));
+assert.ok(indexPage.indexOf('staff-control-tower-v2.css') < indexPage.indexOf('</head>'), "staff UI stylesheet must load in the document head");
+assert.match(staffUiV2, /#enterpriseOverview\.ect-overview/);
+assert.match(staffUiV2, /#opsDashboardView \.kpi-row/);
+assert.match(staffUiV2, /\.staff-reference-sidebar/);
+assert.match(staffUiV2, /@media\(max-width:680px\)/);
+assert.doesNotMatch(indexPage, /\\\\n<link rel="stylesheet"/, "do not leave escaped newline text between stylesheet tags");
 
 console.log("Security and UI smoke checks passed.");
