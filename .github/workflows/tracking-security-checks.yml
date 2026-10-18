@@ -5,6 +5,7 @@ on:
     paths:
       - "customer-tracking.html"
       - "premium-ui.css"
+      - "staff-control-tower-v2.css"
       - "tracking-link-admin.html"
       - "index.html"
       - "app.js"
