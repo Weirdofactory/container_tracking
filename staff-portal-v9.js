@@ -16,7 +16,7 @@ function chosenIndices(){
 function renderCompactTable(){
  const table=byId('sheetView'),tbody=byId('sheetTableBody');if(!table||!tbody||!document.body.classList.contains('staff-table-mode'))return;
  const records=currentRecords(),idxs=chosenIndices();
- const headers=['','Shipment','MBL No.','Liner','Gateway / Terminal','Vessel & Voyage','ETA','Port In','Port Out','CFS Depot','Current stage',''];
+ const headers=['','Shipment','MBL No.','Liner','Gateway / Terminal','Vessel & Voyage','ETA','Port In','Port Out','CFS Depot','Current stage'];
  const thead=table.querySelector('thead');if(thead)thead.innerHTML='<tr>'+headers.map((h,i)=>'<th scope="col"'+(i===0?' aria-label="Select shipments"':'')+'>'+(i===0?'<input type="checkbox" id="staffTableSelectAll" aria-label="Select all shipments">':i===11?'Actions':escText(h))+'</th>').join('')+'</tr>';
  const oldRows=[...tbody.querySelectorAll('tr')];
  const html=[];
@@ -39,7 +39,7 @@ function renderCompactTable(){
    const cfs=val(r,['CFS NAME','CFS']);
    const isChecked=(()=>{try{return selectedIndices.has(i)}catch(_){return false}})();
    const cls=['completed','done','returned'].some(t=>(status.klass+' '+status.text).toLowerCase().includes(t))?'completed':(['warning','overdue','pending','delay','danger'].some(t=>(status.klass+' '+status.text).toLowerCase().includes(t))?'warning':'progress');
-   html.push('<tr data-row="'+i+'">'+
+   html.push('<tr data-row="'+i+'" tabindex="0" role="button" aria-label="Open shipment '+escText(cn)+'">'+
     '<td class="st9-checkbox-cell"><input type="checkbox" class="chk-item st9-row-check" value="'+i+'" '+(isChecked?'checked':'')+' aria-label="Select '+escText(cn)+'"></td>'+
     '<td><button type="button" class="st9-container-link" data-st9-detail="'+i+'">'+escText(display(cn))+'<span class="st9-container-sub">'+escText(display(type))+'</span></button></td>'+
     '<td>'+escText(display(mbl))+'</td><td>'+escText(display(liner))+'</td><td>'+escText(display(gw))+'</td><td>'+escText(display(vessel))+'</td>'+
@@ -94,7 +94,7 @@ function openStaffShipmentDetail(i){
   ['Terminal LFD',f.terminalLFD],['Detention LFD',f.detentionLFD],['Estimated exposure',typeof formatCurrency==='function'?formatCurrency(f.totalCostUSD):f.totalCostUSD]
  ])}catch(_){}
  const from=pol||'Origin not recorded',to=gateway||'Gateway not recorded';
- content.innerHTML='<section class="st9-detail-hero"><div class="st9-detail-eyebrow">SHIPMENT RECORD · '+escText(String(i).padStart(4,'0'))+'</div><div class="st9-detail-title-row"><div><h2 class="st9-detail-title" id="st9DetailTitle">'+escText(display(cn))+'</h2><div class="st9-detail-subtitle">'+escText(display(mbl))+' · '+escText(display(liner))+'</div></div><span class="st9-status '+(['completed','returned','done'].some(t=>(status.klass+' '+status.text).toLowerCase().includes(t))?'completed':'progress')+'">'+escText(status.text.replace(/\s+/g,' ').slice(0,27))+'</span></div><div class="st9-route-summary"><div class="st9-route-end"><small>Port of loading</small><strong>'+escText(display(from))+'</strong></div><div class="st9-route-arrow" aria-hidden="true">→</div><div class="st9-route-end"><small>Gateway / terminal</small><strong>'+escText(display(to))+'</strong></div></div></section>'+
+ content.innerHTML='<section class="st9-detail-hero"><div class="st9-detail-eyebrow">SHIPMENT RECORD · '+escText('DETAILS')+'</div><div class="st9-detail-title-row"><div><h2 class="st9-detail-title" id="st9DetailTitle">'+escText(display(cn))+'</h2><div class="st9-detail-subtitle">'+escText(display(mbl))+' · '+escText(display(liner))+'</div></div><span class="st9-status '+(['completed','returned','done'].some(t=>(status.klass+' '+status.text).toLowerCase().includes(t))?'completed':'progress')+'">'+escText(status.text.replace(/\s+/g,' ').slice(0,27))+'</span></div><div class="st9-route-summary"><div class="st9-route-end"><small>Port of loading</small><strong>'+escText(display(from))+'</strong></div><div class="st9-route-arrow" aria-hidden="true">→</div><div class="st9-route-end"><small>Gateway / terminal</small><strong>'+escText(display(to))+'</strong></div></div></section>'+
  infoSection('Shipment information','Core routing & booking data',overview)+
  '<section class="st9-detail-section"><div class="st9-detail-section-head"><h3>Operational milestones</h3><small>'+progress+' of '+milestones.length+' dates recorded</small></div><div class="st9-timeline">'+timeline+'</div></section>'+
  infoSection('Handling & delivery','Last-mile information',handling)+finance;
@@ -138,8 +138,8 @@ function init(){
  }
  const dashboard=byId('opsDashboardView'),sheet=byId('sheetView'),tbody=byId('sheetTableBody');
  const observer=new MutationObserver(()=>{try{enhance()}catch(e){console.warn('Shipment table refresh skipped',e)}});
- [dashboard,sheet,tbody].filter(Boolean).forEach(el=>observer.observe(el,{attributes:true,childList:true,subtree:el===tbody,attributeFilter:['style','class']}));
- document.addEventListener('click',e=>{const b=e.target.closest('[data-st9-detail]');if(b){e.preventDefault();openStaffShipmentDetail(Number(b.dataset.st9Detail))}});
+ [dashboard,sheet,document.body].filter(Boolean).forEach(el=>observer.observe(el,{attributes:true,attributeFilter:el===document.body?['class']:['style','class']}));
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-st9-detail]');if(b){e.preventDefault();openStaffShipmentDetail(Number(b.dataset.st9Detail));return;}const tr=e.target.closest('#sheetTableBody tr[data-row]');if(tr&&!e.target.closest('input,button,a,select,label'))openStaffShipmentDetail(Number(tr.dataset.row))});\n document.addEventListener('keydown',e=>{const tr=e.target.closest('#sheetTableBody tr[data-row]');if(tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openStaffShipmentDetail(Number(tr.dataset.row))}});
  document.addEventListener('click',e=>{if(e.target.closest('.view-btn'))setTimeout(enhance,0)});
  setTimeout(enhance,0);setTimeout(enhance,300);
 }
