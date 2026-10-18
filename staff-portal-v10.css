@@ -1,0 +1,138 @@
+/* Staff workspace v10 — explicit page states, reliable sidebar collapse, and detail page */
+body.staff-authenticated{background:#f3f6f9!important;color:#1c344a!important;font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif!important}
+body.staff-authenticated #opsDashboardView.main-wrapper{margin-left:224px!important;padding:20px 22px 30px!important;width:auto!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important}
+body.staff-authenticated #opsDashboardView .ect-workspace-grid{grid-template-columns:minmax(0,1fr) 270px!important;gap:14px!important;align-items:start!important}
+body.staff-authenticated #opsDashboardView .ect-workspace-main,body.staff-authenticated #opsDashboardView .ect-right-rail{min-width:0!important;gap:14px!important}
+body.staff-authenticated .staff-reference-sidebar{width:224px!important;transition:width .18s ease!important;overflow-x:hidden!important}
+body.staff-authenticated #opsDashboardView.main-wrapper{transition:margin-left .18s ease,padding .18s ease!important}
+/* Real collapse contract: the existing app toggles this BODY class, not .collapsed on the aside. */
+body.staff-authenticated.staff-sidebar-collapsed .staff-reference-sidebar,
+body.staff-authenticated.staff-sidebar-collapsed .staff-reference-sidebar.collapsed{width:68px!important;padding:14px 7px 10px!important}
+body.staff-authenticated.staff-sidebar-collapsed #opsDashboardView.main-wrapper{margin-left:68px!important}
+body.staff-authenticated.staff-sidebar-collapsed .staff-sidebar-brand{justify-content:center!important;padding:7px 0 13px!important}
+body.staff-authenticated.staff-sidebar-collapsed .staff-sidebar-brand>span:not(.staff-sidebar-mark),
+body.staff-authenticated.staff-sidebar-collapsed .staff-sidebar-label,
+body.staff-authenticated.staff-sidebar-collapsed .staff-sidebar-toggle-label,
+body.staff-authenticated.staff-sidebar-collapsed .staff-sidebar-help,
+body.staff-authenticated.staff-sidebar-collapsed .staff-sidebar-foot{display:none!important}
+body.staff-authenticated.staff-sidebar-collapsed .staff-side-link{justify-content:center!important;gap:0!important;padding:8px 4px!important;font-size:0!important}
+body.staff-authenticated.staff-sidebar-collapsed .staff-side-link>span{font-size:14px!important}
+body.staff-authenticated.staff-sidebar-collapsed .staff-sidebar-toggle{justify-content:center!important;padding:9px 4px!important}
+body.staff-authenticated.staff-sidebar-collapsed .staff-sidebar-toggle>span[aria-hidden="true"]{font-size:17px!important}
+body.staff-authenticated .staff-sidebar-toggle{cursor:pointer!important;min-height:38px!important}
+/* App-like overview page */
+body.staff-overview-page #opsDashboardView .control-tray,
+body.staff-overview-page #opsDashboardView #cardsView,
+body.staff-overview-page #opsDashboardView #sheetView,
+body.staff-overview-page #opsDashboardView #kanbanView,
+body.staff-overview-page #opsDashboardView .staff-table-intro{display:none!important}
+body.staff-overview-page #opsDashboardView #enterpriseOverview{display:grid!important}
+body.staff-overview-page #opsDashboardView>.kpi-row{display:grid!important}
+body.staff-overview-page #opsDashboardView #staffExceptionQueue{display:block!important}
+body.staff-overview-page #opsDashboardView .ect-workspace-grid{display:grid!important;grid-template-columns:minmax(0,1fr) 270px!important}
+body.staff-overview-page #opsDashboardView .staff-map-panel,
+body.staff-overview-page #opsDashboardView .ect-right-rail{display:flex!important}
+/* Separate Shipments page: don't leave overview/KPIs/map/rail mixed into the register. */
+body.staff-shipment-list-page #opsDashboardView #enterpriseOverview,
+body.staff-shipment-list-page #opsDashboardView>.kpi-row,
+body.staff-shipment-list-page #opsDashboardView #staffExceptionQueue,
+body.staff-shipment-list-page #opsDashboardView .staff-map-panel,
+body.staff-shipment-list-page #opsDashboardView .ect-right-rail{display:none!important}
+body.staff-shipment-list-page #opsDashboardView .ect-workspace-grid{display:block!important;width:100%!important;max-width:none!important}
+body.staff-shipment-list-page #opsDashboardView .ect-workspace-main{display:flex!important;flex-direction:column!important;gap:12px!important;width:100%!important;min-width:0!important}
+body.staff-shipment-list-page #opsDashboardView .staff-table-intro{display:flex!important;align-items:center!important;gap:15px!important;min-height:70px!important;margin:0!important;padding:0 1px 5px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:#1d3349!important}
+body.staff-shipment-list-page #opsDashboardView .staff-table-intro-mark{display:none!important}
+body.staff-shipment-list-page #opsDashboardView .staff-table-intro-copy{display:flex!important;flex-direction:column!important;align-items:flex-start!important;flex:1 1 auto!important;min-width:0!important}
+body.staff-shipment-list-page #opsDashboardView .staff-table-intro-breadcrumb{display:flex!important;gap:7px!important;align-items:center!important;margin:0 0 7px!important;color:#8a99a8!important;font-size:10px!important;font-weight:650!important}
+body.staff-shipment-list-page #opsDashboardView .staff-table-intro-breadcrumb strong{color:#52677c!important}
+body.staff-shipment-list-page #opsDashboardView .staff-table-intro-copy>span{display:none!important}
+body.staff-shipment-list-page #opsDashboardView .staff-table-intro-copy h1{margin:0!important;color:#1a3148!important;font-size:24px!important;font-weight:850!important;letter-spacing:-.045em!important;line-height:1.15!important}
+body.staff-shipment-list-page #opsDashboardView .staff-table-intro-copy p{margin:5px 0 0!important;color:#72859a!important;font-size:11px!important;line-height:1.45!important}
+body.staff-shipment-list-page #opsDashboardView .staff-table-intro-note{margin-left:auto!important;background:#fff!important;border:1px solid #dbe5ed!important;border-radius:8px!important;color:#617689!important}
+body.staff-shipment-list-page #opsDashboardView .control-tray{margin:0!important;padding:12px!important;border:1px solid #dce5ed!important;border-radius:10px!important;background:#fff!important;box-shadow:none!important}
+body.staff-shipment-list-page #opsDashboardView .control-tray-top{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;flex-wrap:wrap!important}
+body.staff-shipment-list-page #opsDashboardView .filter-inputs{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;flex:1 1 460px!important;flex-wrap:wrap!important}
+body.staff-shipment-list-page #opsDashboardView .search-input-wrapper{flex:1 1 300px!important;min-width:220px!important;max-width:560px!important}
+body.staff-shipment-list-page #opsDashboardView .view-selector{flex:0 0 auto!important}
+body.staff-shipment-list-page #opsDashboardView .control-tray-bottom{margin-top:10px!important;padding-top:9px!important;border-top:1px solid #edf1f4!important}
+body.staff-shipment-list-page #opsDashboardView .quick-chips-wrapper{display:flex!important;flex-wrap:wrap!important;gap:6px!important}
+body.staff-shipment-list-page #opsDashboardView .chip{min-height:29px!important;padding:0 11px!important;border-radius:7px!important;font-size:10px!important}
+/* Full detail page: its own title, route card, grouped field panels, milestones, and action footer. */
+#staffShipmentDetailPage{display:none!important;min-width:0!important}
+body.staff-shipment-detail-page #opsDashboardView>.staff-table-intro,
+body.staff-shipment-detail-page #opsDashboardView>#enterpriseOverview,
+body.staff-shipment-detail-page #opsDashboardView>.kpi-row,
+body.staff-shipment-detail-page #opsDashboardView>#staffExceptionQueue,
+body.staff-shipment-detail-page #opsDashboardView>.ect-workspace-grid{display:none!important}
+body.staff-shipment-detail-page #opsDashboardView>#staffShipmentDetailPage{display:block!important}
+body.staff-shipment-detail-page #opsDashboardView.main-wrapper{padding-top:17px!important}
+.stv10-breadcrumbs{display:flex!important;align-items:center!important;gap:9px!important;margin:0 0 13px!important;color:#8292a1!important;font-size:10px!important;font-weight:700!important}
+.stv10-breadcrumbs button{padding:0!important;border:0!important;background:transparent!important;color:#087fb2!important;font:inherit!important;cursor:pointer!important}
+.stv10-breadcrumbs strong{color:#4b6278!important}
+.stv10-header{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:16px!important;margin-bottom:14px!important}
+.stv10-heading-copy{min-width:0!important}
+.stv10-eyebrow{margin-bottom:6px!important;color:#8a9aa8!important;font-size:9px!important;font-weight:850!important;letter-spacing:.14em!important}
+.stv10-titleline{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:11px!important}
+.stv10-title{margin:0!important;color:#17344d!important;font-family:"JetBrains Mono",monospace!important;font-size:25px!important;font-weight:850!important;letter-spacing:-.04em!important;overflow-wrap:anywhere!important}
+.stv10-description{margin:6px 0 0!important;color:#708398!important;font-size:11px!important;line-height:1.5!important}
+.stv10-header-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;flex-wrap:wrap!important;gap:7px!important}
+.stv10-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;min-height:34px!important;padding:0 11px!important;border:1px solid #d6e2eb!important;border-radius:8px!important;background:#fff!important;color:#3e596f!important;font-size:10px!important;font-weight:800!important;white-space:nowrap!important;cursor:pointer!important;box-shadow:none!important}
+.stv10-btn.primary{border-color:#087fb2!important;background:#087fb2!important;color:#fff!important}
+.stv10-btn.danger{border-color:#efd2cf!important;background:#fff8f7!important;color:#b4433b!important}
+.stv10-route-card{display:grid!important;grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr) minmax(220px,.8fr)!important;gap:14px!important;align-items:center!important;margin-bottom:14px!important;padding:17px 19px!important;border:1px solid #cddfeb!important;border-radius:12px!important;background:linear-gradient(112deg,#fff,#f8fbfd)!important;box-shadow:0 2px 6px #14365006!important}
+.stv10-route-label{display:block!important;color:#8293a2!important;font-size:9px!important;font-weight:850!important;letter-spacing:.08em!important;text-transform:uppercase!important}
+.stv10-route-value{display:block!important;margin-top:5px!important;color:#213d54!important;font-size:14px!important;font-weight:850!important;overflow-wrap:anywhere!important}
+.stv10-route-meta{display:block!important;margin-top:4px!important;color:#8192a1!important;font-size:10px!important;line-height:1.35!important;overflow-wrap:anywhere!important}
+.stv10-route-arrow{text-align:center!important;color:#1197c4!important;font-size:22px!important;font-weight:600!important}
+.stv10-route-state{padding-left:15px!important;border-left:1px solid #e2eaf0!important}
+.stv10-page-grid{display:grid!important;grid-template-columns:minmax(0,1.4fr) minmax(300px,.9fr)!important;align-items:start!important;gap:14px!important}
+.stv10-page-column{display:flex!important;flex-direction:column!important;gap:14px!important;min-width:0!important}
+.stv10-panel{min-width:0!important;padding:17px 18px!important;border:1px solid #dce5ed!important;border-radius:11px!important;background:#fff!important;box-shadow:0 2px 6px #14365005!important}
+.stv10-panel-heading{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin:0 0 15px!important;padding-bottom:11px!important;border-bottom:1px solid #edf1f4!important}
+.stv10-panel-heading h2{margin:0!important;color:#233e54!important;font-size:13px!important;font-weight:850!important}
+.stv10-panel-heading small{color:#8a9aa8!important;font-size:9px!important}
+.stv10-fields{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:15px 20px!important}
+.stv10-field{min-width:0!important}
+.stv10-field-label{display:block!important;color:#8494a3!important;font-size:9px!important;font-weight:750!important;letter-spacing:.01em!important}
+.stv10-field-value{display:block!important;margin-top:5px!important;color:#294257!important;font-size:11px!important;font-weight:750!important;line-height:1.45!important;overflow-wrap:anywhere!important;white-space:pre-wrap!important}
+.stv10-field-value.is-empty{color:#a0acb7!important;font-weight:550!important}
+.stv10-timeline{position:relative!important;display:flex!important;flex-direction:column!important;gap:0!important}
+.stv10-timeline-item{position:relative!important;display:grid!important;grid-template-columns:23px minmax(0,1fr) auto!important;align-items:start!important;gap:9px!important;min-height:48px!important;padding-bottom:12px!important}
+.stv10-timeline-item:not(:last-child):before{content:"";position:absolute;left:8px;top:17px;bottom:-1px;width:2px;background:#dfe7ed}
+.stv10-time-dot{position:relative!important;z-index:1!important;display:grid!important;place-items:center!important;width:18px!important;height:18px!important;border:1px solid #d5e0e8!important;border-radius:50%!important;background:#f5f8fa!important;color:#91a1af!important;font-size:9px!important}
+.stv10-timeline-item.done .stv10-time-dot{border-color:#087eae!important;background:#087eae!important;color:#fff!important}
+.stv10-timeline-item strong{display:block!important;color:#354f64!important;font-size:10px!important;font-weight:800!important}
+.stv10-timeline-item small{display:block!important;margin-top:4px!important;color:#8293a2!important;font-size:9px!important}
+.stv10-time-status{padding-top:3px!important;color:#8999a7!important;font-size:9px!important;white-space:nowrap!important}
+.stv10-remark{padding:11px 12px!important;border:1px solid #e0e8ee!important;border-radius:8px!important;background:#f8fafc!important;color:#4e6478!important;font-size:11px!important;line-height:1.6!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important}
+.stv10-page-footer{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;flex-wrap:wrap!important;margin-top:14px!important;padding-top:13px!important;border-top:1px solid #dce5ed!important}
+.stv10-page-footer small{color:#8898a6!important;font-size:9px!important}
+body.staff-overview-page.staff-sidebar-collapsed #opsDashboardView.main-wrapper{margin-left:68px!important}
+@media(max-width:1280px){
+ .stv10-route-card{grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr)!important}
+ .stv10-route-state{grid-column:1/-1!important;padding:10px 0 0!important;border-left:0!important;border-top:1px solid #e2eaf0!important}
+ .stv10-page-grid{grid-template-columns:minmax(0,1fr) minmax(270px,.85fr)!important}
+}
+@media(max-width:1000px){
+ body.staff-authenticated #opsDashboardView.main-wrapper{margin-left:68px!important;padding:14px!important}
+ body.staff-authenticated .staff-reference-sidebar,body.staff-authenticated .staff-reference-sidebar.collapsed{width:68px!important;padding:12px 7px!important}
+ body.staff-authenticated .staff-sidebar-brand{justify-content:center!important;padding:6px 0 13px!important}
+ body.staff-authenticated .staff-sidebar-brand>span:not(.staff-sidebar-mark),body.staff-authenticated .staff-sidebar-label,body.staff-authenticated .staff-sidebar-toggle-label,body.staff-authenticated .staff-sidebar-help,body.staff-authenticated .staff-sidebar-foot{display:none!important}
+ body.staff-authenticated .staff-side-link{justify-content:center!important;padding:7px 4px!important;font-size:0!important}
+ body.staff-authenticated .staff-side-link>span{font-size:13px!important}
+ body.staff-authenticated .ect-workspace-grid, .stv10-page-grid{grid-template-columns:minmax(0,1fr)!important}
+ .stv10-header{flex-direction:column!important;align-items:stretch!important}
+ .stv10-header-actions{justify-content:flex-start!important}
+}
+@media(max-width:720px){
+ body.staff-authenticated .staff-reference-sidebar,body.staff-authenticated .staff-reference-sidebar.collapsed{display:none!important}
+ body.staff-authenticated #opsDashboardView.main-wrapper{margin-left:0!important;padding:10px!important}
+ .stv10-route-card{grid-template-columns:minmax(0,1fr) 25px minmax(0,1fr)!important;padding:13px!important;gap:7px!important}
+ .stv10-route-value{font-size:12px!important}
+ .stv10-page-grid{grid-template-columns:minmax(0,1fr)!important}
+ .stv10-panel{padding:13px!important}
+ .stv10-fields{gap:12px!important}
+ .stv10-title{font-size:20px!important}
+ .stv10-page-footer{align-items:stretch!important}
+ .stv10-page-footer .stv10-btn{flex:1!important}
+}
