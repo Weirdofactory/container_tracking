@@ -12,6 +12,9 @@ on:
       - "supabase/functions/operations-data/**"
       - "supabase/migrations/**"
       - "tests/security-smoke-check.mjs"
+      - "tests/postgres-security-migration-checks.sql"
+      - "tests/postgres-inactive-staff-audit-rejection.sql"
+      - "tests/fixtures/**"
       - ".github/workflows/tracking-security-checks.yml"
   push:
     branches:
@@ -24,6 +27,26 @@ permissions:
 jobs:
   static-security-checks:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tracking_security_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tracking_security_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: tracking_security_test
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -33,6 +56,25 @@ jobs:
           node-version: "22"
       - name: Run security smoke checks
         run: node tests/security-smoke-check.mjs
+      - name: Set up PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Build disposable legacy-policy fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/fixtures/security-lockdown-prestate.sql
+      - name: Apply lockdown migration to disposable PostgreSQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/202610180001_lock_down_legacy_public_access.sql
+      - name: Verify migrated table/function grants and active audit insertion
+        run: psql -v ON_ERROR_STOP=1 -f tests/postgres-security-migration-checks.sql
+      - name: Verify inactive staff audit insert is rejected
+        shell: bash
+        run: |
+          if psql -v ON_ERROR_STOP=1 -f tests/postgres-inactive-staff-audit-rejection.sql; then
+            echo "ERROR: inactive staff unexpectedly inserted an audit row" >&2
+            exit 1
+          else
+            echo "Verified: inactive staff insert was rejected."
+          fi
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
