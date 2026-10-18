@@ -63,18 +63,22 @@ jobs:
       - name: Build disposable legacy-policy fixture
         run: psql -v ON_ERROR_STOP=1 -f tests/fixtures/security-lockdown-prestate.sql
       - name: Apply lockdown migration to disposable PostgreSQL
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/202610180001_lock_down_legacy_public_access.sql
+        run: psql --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/202610180001_lock_down_legacy_public_access.sql
       - name: Verify migrated table/function grants and active audit insertion
         run: psql -v ON_ERROR_STOP=1 -f tests/postgres-security-migration-checks.sql
       - name: Verify inactive staff audit insert is rejected
         shell: bash
         run: |
-          if psql -v ON_ERROR_STOP=1 -f tests/postgres-inactive-staff-audit-rejection.sql; then
+          output="$(psql -v ON_ERROR_STOP=1 -f tests/postgres-inactive-staff-audit-rejection.sql 2>&1)" && {
             echo "ERROR: inactive staff unexpectedly inserted an audit row" >&2
             exit 1
-          else
-            echo "Verified: inactive staff insert was rejected."
+          }
+          echo "$output"
+          if ! grep -qi "row-level security policy" <<<"$output"; then
+            echo "ERROR: inactive insert failed for a reason other than the intended RLS policy" >&2
+            exit 1
           fi
+          echo "Verified: inactive staff insert was rejected by RLS."
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
