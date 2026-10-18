@@ -106,8 +106,6 @@ for (const signature of [
   const lowered = legacyLockdown.toLowerCase();
   assert.ok(lowered.includes("revoke execute on function " + signature.toLowerCase() + " from public, anon, authenticated"), "missing revoke for " + signature);
   assert.ok(lowered.includes("grant execute on function " + signature.toLowerCase() + " to service_role"), "missing trusted grant for " + signature);
-  assert.match(legacyLockdown, new RegExp(`revoke execute on function ${escaped} from public, anon, authenticated`, "i"));
-  assert.match(legacyLockdown, new RegExp(`grant execute on function ${escaped} to service_role`, "i"));
 }
 assert.match(legacyLockdown, /IMPORTANT: review and apply only in a staging Supabase branch first/i);
 
