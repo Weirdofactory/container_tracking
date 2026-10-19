@@ -19,7 +19,7 @@ body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-page-de
 body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-right{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:11px!important;min-width:0!important}
 body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics{display:flex!important;align-items:stretch!important;gap:0!important;min-width:0!important;max-width:520px!important;border:1px solid #ffffff25!important;border-radius:8px!important;background:#071d30a8!important;overflow:hidden!important}
 body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-stat{display:flex!important;flex-direction:column!important;justify-content:center!important;min-width:92px!important;padding:10px 13px!important;border:0!important;border-right:1px solid #ffffff24!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
-body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-stat:last-child{flex:1 1 auto!important;min-width:190px!important;border-right:0!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-stat:nth-child(2){flex:1 1 auto!important;min-width:190px!important;border-right:0!important}
 body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-stat>span{margin:0 0 5px!important;color:#9bb6c8!important;font-size:8px!important;font-weight:850!important;letter-spacing:.08em!important;text-transform:uppercase!important}
 body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-stat strong{color:#f6fafc!important;font-size:17px!important;font-weight:900!important;line-height:1.25!important}
 body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-sync-row{display:flex!important;align-items:center!important;gap:6px!important;min-width:0!important}
@@ -122,7 +122,7 @@ body.staff-authenticated.staff-overview-page #staffControlTowerV12 .staff-map-pa
 body.staff-authenticated.staff-overview-page #staffControlTowerV12 .staff-map-panel .staff-map-legend #staffMapRouteStatus{display:block!important;flex:1 1 100%!important;width:100%!important;margin:1px 0 0!important;padding:7px 0 0!important;border-top:1px solid #edf1f4!important;color:#435f74!important;font-size:9px!important;font-weight:700!important;white-space:normal!important;line-height:1.4!important}
 body.staff-authenticated.staff-overview-page #staffControlTowerV12 #dataQualityNotice{margin:0!important;border-radius:9px!important}
 @media(max-width:1450px){
- body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-stat:last-child{min-width:170px!important}
+ body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-stat:nth-child(2){min-width:170px!important}
  body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-main-grid{grid-template-columns:minmax(0,1.2fr) minmax(310px,.85fr)!important}
  body.staff-authenticated.staff-overview-page #staffControlTowerV12 .kpi-row{grid-template-columns:repeat(3,minmax(0,1fr))!important}
  body.staff-authenticated.staff-overview-page #staffControlTowerV12 .kpi-row>.kpi-card:nth-child(3){border-right:0!important}
@@ -146,7 +146,7 @@ body.staff-authenticated.staff-overview-page #staffControlTowerV12 #dataQualityN
  body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-right{align-items:stretch!important;flex-direction:column!important}
  body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics{width:100%!important;max-width:none!important}
  body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-stat{min-width:78px!important;padding:8px!important}
- body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-stat:last-child{min-width:0!important}
+ body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-stat:nth-child(2){min-width:0!important}
  body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics .ect-sync-row strong{max-width:150px!important;font-size:9px!important}
  body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-button{width:100%!important}
  body.staff-authenticated.staff-overview-page #staffControlTowerV12 .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}
