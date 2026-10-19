@@ -3,7 +3,7 @@
 'use strict';
 const $=s=>document.querySelector(s);
 const byId=id=>document.getElementById(id);
-let initialized=false;
+let initialized=false;let waitingObserver=null;let attempts=0;
 function updateStatusBar(content,bar,totalLabel,summary){
  const total=Number(byId('staffStatusTotal')?.textContent||0)||0;
  const active=Number(byId('staffStatusActive')?.textContent||0)||0;
@@ -19,9 +19,17 @@ function updateStatusBar(content,bar,totalLabel,summary){
 function init(){
  if(initialized)return;
  const shell=byId('staffControlTowerV12');
- if(!shell){setTimeout(init,100);return}
+ if(!shell){if(attempts++<30)setTimeout(init,100);return}
  const body=document.body;
- if(!body.classList.contains('staff-overview-page')){setTimeout(init,100);return}
+ if(!body.classList.contains('staff-overview-page')){
+  if(!waitingObserver&&typeof MutationObserver!=='undefined'){
+   waitingObserver=new MutationObserver(()=>{
+    if(body.classList.contains('staff-overview-page')){waitingObserver.disconnect();waitingObserver=null;init()}
+   });
+   waitingObserver.observe(body,{attributes:true,attributeFilter:['class']});
+  }
+  return;
+ }
  initialized=true;
  // Keep the live elements, but remove the Intelligence Hub call-to-action from the dashboard header.
  shell.querySelectorAll('.eu-launch,#euHubLaunch').forEach(el=>{el.setAttribute('aria-hidden','true');el.tabIndex=-1;el.style.setProperty('display','none','important')});
