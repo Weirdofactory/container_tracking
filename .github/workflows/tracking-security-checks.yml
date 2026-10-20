@@ -9,6 +9,8 @@ on:
       - "staff-login-v3.css"
       - "staff-portal.css"
       - "staff-portal.js"
+      - "approved-control-tower.css"
+      - "approved-control-tower.js"
       - "tracking-link-admin.html"
       - "index.html"
       - "app.js"
