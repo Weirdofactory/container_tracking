@@ -1,4 +1,4 @@
-/* Approved Control Tower UI — fresh layout, independent of legacy dashboard styling. */
+/* Approved Control Tower UI — fresh layout, independent of legacy dashboard styling. */\n.approved-top-nav,.approved-header-search,.approved-new-shipment{display:none!important}\nbody.staff-authenticated .approved-top-nav{display:flex!important}\nbody.staff-authenticated .approved-header-search{display:flex!important}\nbody.staff-authenticated .approved-new-shipment{display:block!important}\nbody.staff-authenticated #publicControls{display:none!important}
 :root{--ct-ink:#102b4e;--ct-muted:#6b809d;--ct-line:#e1eaf2;--ct-canvas:#f4f8fc;--ct-card:#fff;--ct-blue:#087fa8;--ct-cyan:#1bb8d1;--ct-green:#16a765;--ct-orange:#f28a16;--ct-red:#e44c54;--ct-shadow:0 5px 22px rgba(23,58,91,.055)}
 body.staff-authenticated.staff-overview-page{background:var(--ct-canvas)!important;color:var(--ct-ink)!important;font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif!important}
 body.staff-authenticated.staff-overview-page .nav-header{height:66px!important;min-height:66px!important;background:#fff!important;border-bottom:1px solid var(--ct-line)!important;box-shadow:none!important}
