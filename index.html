@@ -3485,6 +3485,7 @@ body.staff-reference-mode .header-utility,body.staff-authenticated .header-utili
 body.staff-reference-mode .approved-new-shipment,body.staff-authenticated .approved-new-shipment{display:block!important;flex:0 0 auto!important;white-space:nowrap!important}
 body.staff-reference-mode .staff-map-basemap-notice,body.staff-authenticated .staff-map-basemap-notice{display:none!important}
 .leaflet-container{background:#e8f2f4!important}
+#staffMapCanvas .leaflet-control-attribution{font-size:10px!important;background:rgba(255,255,255,.92)!important;padding:3px 5px!important}
 .leaflet-overlay-pane .offline-land{fill:#d7e6d9;stroke:#bfd2c8;stroke-width:1.1;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 @media(max-width:1250px){
   body.staff-reference-mode .nav-header,body.staff-authenticated .nav-header,body.staff-authenticated.staff-overview-page .nav-header{height:106px!important;min-height:106px!important}
@@ -3908,7 +3909,6 @@ body.staff-authenticated:has(#floatingActionBar.show) #opsDashboardView.main-wra
 
 <div class="modal-bg" id="auditModalBg"><div class="modal-dialog" style="width:840px;max-width:95vw;"><div class="modal-header"><span>📜 Activity & Change Audit Trail</span><button class="btn btn-ghost" id="auditClose">✕</button></div><div class="modal-body" style="padding:16px;background:var(--bg-elevated);"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;"><input type="text" id="auditSearchInput" class="input" placeholder="Filter audit logs..." style="flex:1;"><button class="btn btn-ghost" id="exportAuditBtn">📤 Export CSV</button><button class="btn btn-danger" id="clearAuditBtn" style="display:none;">Clear Logs</button></div><div style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead style="position:sticky;top:0;background:var(--bg-elevated);border-bottom:1px solid var(--border);z-index:5;"><tr style="text-align:left;color:var(--text-muted);font-size:9.5px;text-transform:uppercase;"><th style="padding:8px 10px;">Timestamp</th><th style="padding:8px 10px;">Operator</th><th style="padding:8px 10px;">Action</th><th style="padding:8px 10px;">Unit</th><th style="padding:8px 10px;">Field</th><th style="padding:8px 10px;">Change</th></tr></thead><tbody id="auditTableBody"></tbody></table></div></div></div></div>
 
-<div class="modal-bg" id="mapModalBg"><div class="modal-dialog" style="width:840px;max-width:95vw;"><div class="modal-header"><span id="mapModalTitle">Voyage Tracker</span><button class="btn btn-ghost" id="mapCloseBtn">✕</button></div><div class="modal-body" style="padding:0;background:#0b1329;"><div id="leafletMap" style="width:100%;height:380px;background:#0b1329;"></div><div style="padding:10px 16px;font-size:11px;display:flex;justify-content:space-between;align-items:center;background:var(--bg-elevated);"><div><strong id="mapVesselText">Vessel Route</strong></div><a id="vesselFinderExternalBtn" href="https://www.vesselfinder.com/" target="_blank" class="btn btn-primary" style="padding:4px 10px;font-size:11px;">Open Live AIS ↗</a></div></div></div></div>
 
 <div class="modal-bg staff-login-overlay" id="loginModalBg" role="dialog" aria-modal="true" aria-labelledby="staffLoginTitle">
   <div class="staff-login-dialog">
@@ -3979,7 +3979,6 @@ let activeQuickFilter = 'all';
 let editingIndex = -1;
 let sortField = 'ETA';
 let sortAsc = true;
-let routeMapInstance = null;
 let activeTruckSlipIndex = -1;
 let pendingDelete = null;
 let deleteTimeout = null;
@@ -4018,6 +4017,78 @@ const PORT_COORDS = {
   "ENNORE": [13.250, 80.332],
   "CHENNAI": [13.0827, 80.2707]
 };
+
+let openFreeMapDependenciesPromise = null;
+function loadOpenFreeMapDependencies() {
+  const getAdapter = () => window.MaplibreGLLeaflet && window.MaplibreGLLeaflet.maplibreGL;
+  if (window.maplibregl && getAdapter()) return Promise.resolve(getAdapter());
+  if (openFreeMapDependenciesPromise) return openFreeMapDependenciesPromise;
+
+  openFreeMapDependenciesPromise = new Promise((resolve, reject) => {
+    if (!document.querySelector('link[data-openfreemap-css]')) {
+      const style = document.createElement("link");
+      style.rel = "stylesheet";
+      style.href = "https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css";
+      style.dataset.openfreemapCss = "1";
+      document.head.appendChild(style);
+    }
+
+    const mapScript = document.createElement("script");
+    mapScript.src = "https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js";
+    mapScript.onload = () => {
+      const bridgeScript = document.createElement("script");
+      bridgeScript.src = "https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/dist/leaflet-maplibre-gl.js";
+      bridgeScript.onload = () => {
+        const adapter = getAdapter();
+        if (adapter) resolve(adapter);
+        else reject(new Error("MapLibre Leaflet adapter did not load."));
+      };
+      bridgeScript.onerror = () => reject(new Error("MapLibre Leaflet adapter could not load."));
+      document.head.appendChild(bridgeScript);
+    };
+    mapScript.onerror = () => reject(new Error("MapLibre could not load."));
+    document.head.appendChild(mapScript);
+  });
+
+  return openFreeMapDependenciesPromise;
+}
+
+function attachOpenFreeMap(map, fallback) {
+  loadOpenFreeMapDependencies().then(maplibreGL => {
+    if (!map || !map._container || !map._container.isConnected || map._openFreeMapLayer) return;
+    const attribution = '<a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://openmaptiles.org/">© OpenMapTiles</a> · Data <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>';
+    let layer = null;
+    try {
+      layer = maplibreGL({
+        style: "https://tiles.openfreemap.org/styles/positron",
+        interactive: false,
+        attributionControl: false
+      }).addTo(map);
+      map._openFreeMapLayer = layer;
+      if (map.attributionControl) map.attributionControl.addAttribution(attribution);
+
+      let loaded = false;
+      const glMap = layer.getMaplibreMap();
+      glMap.once("load", () => {
+        loaded = true;
+        if (map.hasLayer(fallback)) map.removeLayer(fallback);
+      });
+      setTimeout(() => {
+        if (loaded) return;
+        if (map.hasLayer(layer)) map.removeLayer(layer);
+        if (map._openFreeMapLayer === layer) delete map._openFreeMapLayer;
+        if (map.attributionControl) map.attributionControl.removeAttribution(attribution);
+      }, 12000);
+    } catch (error) {
+      if (layer && map.hasLayer(layer)) map.removeLayer(layer);
+      if (map._openFreeMapLayer === layer) delete map._openFreeMapLayer;
+      if (map.attributionControl) map.attributionControl.removeAttribution(attribution);
+      console.warn("Online basemap unavailable; keeping the offline map.", error);
+    }
+  }).catch(error => {
+    console.warn("Online basemap unavailable; keeping the offline map.", error);
+  });
+}
 
 function addOfflineBasemap(map) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -4060,7 +4131,9 @@ function addOfflineBasemap(map) {
   const landPaths = land.map(points => `<path class="offline-land" d="${pathFor(points)}"/>`).join("");
   svg.innerHTML = `<rect width="960" height="480" fill="#e8f2f4"/><g fill="none" stroke="#d4e3e6" stroke-width="1">${parallels}${meridians}</g><g>${landPaths}</g>`;
   const bounds = L.latLngBounds([[-85.05112878, -180], [85.05112878, 180]]);
-  return L.svgOverlay(svg, bounds, { interactive: false, opacity: 1 }).addTo(map);
+  const fallback = L.svgOverlay(svg, bounds, { interactive: false, opacity: 1 }).addTo(map);
+  attachOpenFreeMap(map, fallback);
+  return fallback;
 }
 
 const el = id => document.getElementById(id);
@@ -4742,93 +4815,6 @@ function setAccessState(isStaff) {
     }
   }
 }
-
-function resolveCoords(name, defaultCoord) {
-  const upper = String(name || "").toUpperCase();
-  for (const [k, coord] of Object.entries(PORT_COORDS)) {
-    if (upper.includes(k)) return { name: k, coord };
-  }
-  return { name: upper || "PORT", coord: defaultCoord };
-}
-
-function getCleanVesselName(vsl) {
-  return String(vsl || "").replace(/\b(V|VOY|VOYAGE)\.?\s*[0-9A-Z\/\-]+$/i, "").trim();
-}
-
-function getVesselFinderUrl(vesselName) {
-  const clean = getCleanVesselName(vesselName);
-  return clean ? `https://www.vesselfinder.com/vessels?name=${encodeURIComponent(clean)}` : `https://www.vesselfinder.com/`;
-}
-
-// Upgraded Live AIS Integration
-async function openRouteMap(originStr, destStr, vesselStr) {
-  const cleanVessel = getCleanVesselName(vesselStr);
-  const vfUrl = getVesselFinderUrl(vesselStr);
-
-  el("mapModalTitle").innerHTML = `📡 Live AIS: ${esc(cleanVessel || 'Ocean Vessel')} • ${esc(originStr)} → ${esc(destStr)}`;
-  el("mapVesselText").textContent = `Locating ${cleanVessel}...`;
-
-  const vfBtn = el("vesselFinderExternalBtn");
-  if (vfBtn) vfBtn.href = vfUrl;
-
-  el("mapModalBg").classList.add("open");
-
-  // Initialize Map if needed
-  setTimeout(() => {
-    if (!routeMapInstance) {
-      routeMapInstance = L.map('leafletMap', { zoomControl: true, attributionControl: false });
-      addOfflineBasemap(routeMapInstance);
-    } else {
-      routeMapInstance.eachLayer(layer => {
-        if (layer instanceof L.Polyline || layer instanceof L.Marker) routeMapInstance.removeLayer(layer);
-      });
-    }
-    routeMapInstance.invalidateSize();
-  }, 120);
-
-  try {
-    // NOTE: Replace this URL with your actual Marine API endpoint (e.g., Datalastic or Spire)
-    // Example: `https://api.datalastic.com/api/v0/vessel_history?api-key=YOUR_KEY&name=${cleanVessel}`
-    const response = await fetch(`https://api.example-marine.com/vessel?name=${encodeURIComponent(cleanVessel)}`);
-    
-    if (!response.ok) throw new Error("API limits or vessel out of range");
-    const aisData = await response.json();
-
-    // Assuming API returns { lat: 14.5, lon: 82.1, speed: 18.5, course: 210, last_update: '...' }
-    const liveCoord = [aisData.lat, aisData.lon];
-    const origin = resolveCoords(originStr, [22.48, 113.91]);
-    const dest = resolveCoords(destStr, [13.0827, 80.2707]);
-
-    // Draw Live Route
-    const seaPath = L.polyline([origin.coord, liveCoord, dest.coord], { 
-      color: '#38bdf8', weight: 2.5, dashArray: '4, 6', opacity: 0.85 
-    }).addTo(routeMapInstance);
-
-    // Plot Markers
-    L.marker(origin.coord, { icon: L.divIcon({ html: `<div style="background:#0284c7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:800; font-size:9px;">${origin.name}</div>` }) }).addTo(routeMapInstance);
-    L.marker(dest.coord, { icon: L.divIcon({ html: `<div style="background:#10b981; color:#fff; padding:2px 6px; border-radius:4px; font-weight:800; font-size:9px;">⚓ ${dest.name}</div>` }) }).addTo(routeMapInstance);
-    
-    // Plot Live Vessel
-    L.marker(liveCoord, { icon: L.divIcon({ html: `<div style="background:#2563eb; color:#fff; padding:2px 6px; border-radius:6px; font-weight:800; font-size:9.5px;">🚢 ${esc(cleanVessel)} (${aisData.speed}kn)</div>` }) }).addTo(routeMapInstance);
-
-    routeMapInstance.fitBounds(seaPath.getBounds(), { padding: [30, 30] });
-    el("mapVesselText").textContent = `Speed: ${aisData.speed}kn | Heading: ${aisData.course}° | Last Ping: ${aisData.last_update}`;
-
-  } catch (error) {
-    // Fallback to simulated route if vessel is in deep ocean / API fails
-    el("mapVesselText").textContent = `Live AIS unavailable. Showing simulated route.`;
-    const origin = resolveCoords(originStr, [22.48, 113.91]);
-    const dest = resolveCoords(destStr, [13.0827, 80.2707]);
-    const waypoints = [origin.coord, [18.5, 115.0], [6.0, 108.0], [1.35, 104.4], dest.coord];
-    
-    const seaPath = L.polyline(waypoints, { color: '#64748b', weight: 2, dashArray: '4, 6', opacity: 0.5 }).addTo(routeMapInstance);
-    L.marker(origin.coord, { icon: L.divIcon({ html: `<div style="background:#0284c7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:800; font-size:9px;">${origin.name}</div>` }) }).addTo(routeMapInstance);
-    L.marker(dest.coord, { icon: L.divIcon({ html: `<div style="background:#10b981; color:#fff; padding:2px 6px; border-radius:4px; font-weight:800; font-size:9px;">⚓ ${dest.name}</div>` }) }).addTo(routeMapInstance);
-    routeMapInstance.fitBounds(seaPath.getBounds(), { padding: [30, 30] });
-  }
-}
-
-el("mapCloseBtn").addEventListener("click", () => el("mapModalBg").classList.remove("open"));
 
 function openEmailModal(idx) {
   const r = rows[idx];
@@ -5962,7 +5948,14 @@ el("bulkWhatsAppBtn").addEventListener("click", () => {
   openWhatsAppComposer(-1, Array.from(selectedIndices));
 });
 
-// Snapshot button is bound once above. Do not attach a second click handler here.
+// Download a clean PNG status report for the selected shipment records.
+el("bulkPhotoBtn").addEventListener("click", () => {
+  const selectedRows = Array.from(selectedIndices)
+    .map(index => rows[index])
+    .filter(Boolean);
+  if (!selectedRows.length) return toast("Select at least one shipment first.");
+  downloadMultipleStatusImage(selectedRows, selectedRows.length + "_Shipments");
+});
 
 function getFilteredRows() {
   const q = el("search").value.toLowerCase().replace(/[^a-z0-9]/g, '');
