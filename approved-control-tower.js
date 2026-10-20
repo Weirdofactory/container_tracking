@@ -16,7 +16,7 @@ function createHeader(){
  const newBtn=document.createElement('button');newBtn.type='button';newBtn.className='approved-new-shipment';newBtn.innerHTML='＋ New shipment';
  tools.insertBefore(nav,tools.firstChild);tools.insertBefore(search,nav.nextSibling);tools.appendChild(newBtn);
  nav.addEventListener('click',e=>{const b=e.target.closest('[data-approved-nav]');if(!b)return;const target=b.dataset.approvedNav;nav.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));if(target==='dashboard')$('#staffReferenceSidebar [data-staff-nav="dashboard"]')?.click();else if(target==='shipments')$('#staffReferenceSidebar [data-staff-nav="shipments"]')?.click();else if(target==='tracking')$('#staffReferenceSidebar [data-staff-nav="tracking"]')?.click();else if(target==='documents')$('#headerCsnBtn')?.click();else if(target==='reports')$('#openAnalyticsBtn')?.click()});
- search.querySelector('input').addEventListener('keydown',e=>{if(e.key==='Enter'){const input=$('#search');if(input){input.value=e.currentTarget.value;input.dispatchEvent(new Event('input',{bubbles:true}));$('#searchClearBtn')?.click()}}});
+ search.querySelector('input').addEventListener('keydown',e=>{if(e.key==='Enter'){const input=$('#search');if(input){input.value=e.currentTarget.value;input.dispatchEvent(new Event('input',{bubbles:true}))}}});
  newBtn.addEventListener('click',()=>$('#addBtn')?.click());
 }
 function buildShipmentPanel(shell){
@@ -55,7 +55,7 @@ function init(){
  if(globalSearch)globalSearch.addEventListener('input',()=>{const input=$('#search');if(input){input.value=globalSearch.value;input.dispatchEvent(new Event('input',{bubbles:true}))}});
  const updateNav=()=>{const isList=document.body.classList.contains('staff-shipment-list-page');const isDetail=document.body.classList.contains('staff-shipment-detail-page');const active=isList?'shipments':isDetail?'shipments':'dashboard';$$('.approved-top-nav [data-approved-nav]').forEach(b=>b.classList.toggle('active',b.dataset.approvedNav===active))};
  new MutationObserver(updateNav).observe(document.body,{attributes:true,attributeFilter:['class']});updateNav();
- if(typeof MutationObserver!=='undefined'){const observer=new MutationObserver(()=>renderShipments($('.approved-live-shipments'),'all'));const main=$('#opsDashboardView');if(main)observer.observe(main,{childList:true,subtree:true,characterData:true})}
+ if(typeof MutationObserver!=='undefined'){const observer=new MutationObserver(()=>renderShipments($('.approved-live-shipments'),'all'));const source=$('#sheetTableBody');if(source)observer.observe(source,{childList:true,subtree:true,characterData:true})}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
