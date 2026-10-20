@@ -576,7 +576,7 @@ function init(){
  const qualitySlot=make('div','st12-integrity-slot','st12IntegritySlot');
  if(integrity)qualitySlot.appendChild(integrity);
 
- shell.append(head,kpiRegion,content,mapBlock,actionsBlock,qualitySlot);
+ shell.append(head,kpiRegion,content,actionsBlock,qualitySlot);
  main.insertBefore(shell,overview);
 
  // Keep existing nodes/IDs intact so the original data renderers and action listeners remain connected.
