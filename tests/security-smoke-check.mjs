@@ -14,7 +14,7 @@ const dashboard = read("../app.js");
 const indexPage = read("../index.html");
 const supabaseConfig = read("../supabase/config.toml");
 const premiumUi = read("../premium-ui.css");
-const staffUiV2 = read("../staff-control-tower-v2.css");
+const staffPortal = read("../staff-portal.css");
 const staffLoginV3 = read("../staff-login-v3.css");
 
 // Token grants must store only a digest and never expose the full tracking row.
@@ -97,12 +97,12 @@ assert.match(premiumUi, /\.secure-access-panel/);
 assert.match(premiumUi, /#opsDashboardView/);
 assert.match(premiumUi, /#shipmentPanel/);
 assert.match(premiumUi, /prefers-reduced-motion/);
-assert.ok(indexPage.includes('href="./staff-control-tower-v2.css?v=20261018-staff-v2"'));
-assert.ok(indexPage.indexOf('staff-control-tower-v2.css') < indexPage.indexOf('</head>'), "staff UI stylesheet must load in the document head");
-assert.match(staffUiV2, /#enterpriseOverview\.ect-overview/);
-assert.match(staffUiV2, /#opsDashboardView \.kpi-row/);
-assert.match(staffUiV2, /\.staff-reference-sidebar/);
-assert.match(staffUiV2, /@media\(max-width:680px\)/);
+assert.ok(indexPage.includes('href="./staff-portal.css?v=20261020-clean-reset-v1"'));
+assert.ok(indexPage.indexOf('staff-portal.css') < indexPage.indexOf('</head>'), "canonical staff UI stylesheet must load in the document head");
+assert.match(staffPortal, /#staffControlTowerV12 \.st12-page-head/);
+assert.match(staffPortal, /#staffControlTowerV12 \.kpi-row/);
+assert.match(staffPortal, /#staffReferenceSidebar/);
+assert.match(staffPortal, /@media\(max-width:620px\)/);
 assert.ok(indexPage.includes('href="./staff-login-v3.css?v=20261018-login-v3"'));
 assert.ok(indexPage.indexOf('staff-login-v3.css') < indexPage.indexOf('</head>'));
 assert.match(staffLoginV3, /#loginModalBg \.staff-login-dialog/);
