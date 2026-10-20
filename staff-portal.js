@@ -686,3 +686,23 @@ function init(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
+;
+/* Clean layout bridge: keep the collapse button and content offset in sync. */
+(function(){
+ 'use strict';
+ function init(){
+  const sidebar=document.getElementById('staffReferenceSidebar');
+  const main=document.getElementById('opsDashboardView');
+  if(!sidebar||!main)return;
+  const sync=()=>{
+   const collapsed=sidebar.classList.contains('collapsed');
+   document.body.classList.toggle('staff-sidebar-collapsed',collapsed);
+   main.style.setProperty('--gml-sidebar',collapsed?'68px':'244px');
+  };
+  const observer=new MutationObserver(sync);
+  observer.observe(sidebar,{attributes:true,attributeFilter:['class']});
+  document.getElementById('staffSidebarToggle')?.addEventListener('click',()=>requestAnimationFrame(sync));
+  sync();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
