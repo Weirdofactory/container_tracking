@@ -1,0 +1,10 @@
+project_id = "ykeucqritoexykqrggzz"
+
+[functions.customer-tracking]
+verify_jwt = false
+
+[functions.customer-tracking-admin]
+verify_jwt = true
+
+[functions.operations-data]
+verify_jwt = true
