@@ -234,7 +234,56 @@
   async function importFile(file){if(!file)return;try{let parsed;if(window.XLSX){const buf=await file.arrayBuffer(),wb=XLSX.read(buf,{type:"array",cellDates:true}),ws=wb.Sheets[wb.SheetNames[0]];parsed=XLSX.utils.sheet_to_json(ws,{defval:""})}else if(file.name.toLowerCase().endsWith(".csv")){const text=await file.text(),[head,...lines]=text.split(/\r?\n/),headers=head.split(",").map(x=>x.trim().replace(/^"|"$/g,""));parsed=lines.filter(Boolean).map(line=>{const cells=line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(x=>x.trim().replace(/^"|"$/g,""));return Object.fromEntries(headers.map((h,i)=>[h,cells[i]||""]))})}else throw new Error("Spreadsheet support did not load. Try a CSV file.");state.importRows=parsed.map(r=>{const out={};COLUMNS.forEach(c=>{const v=field(r,[c]);if(v!=="")out[c]=v});return out}).filter(r=>r["CONTAINER NO."]);if(!state.importRows.length)throw new Error("No rows with a container number were found. Check the spreadsheet column headings.");$("importSummary").textContent=`${state.importRows.length} shipment rows are ready to add. Existing rows will be kept.`;const sample=state.importRows.slice(0,4);$("importPreview").innerHTML=`<table><thead><tr><th>Container</th><th>MBL</th><th>Vessel</th><th>ETA</th></tr></thead><tbody>${sample.map(r=>`<tr><td>${esc(container(r))}</td><td>${esc(field(r,["MBL NO"]))}</td><td>${esc(field(r,["VESSEL & VOY"]))}</td><td>${esc(fmtDate(field(r,["ETA"])))}</td></tr>`).join("")}</tbody></table>`;modal("importModal")}catch(err){toast(errText(err),"error")}}
   async function confirmImport(){const merged=[...state.importRows,...state.rows];if(await saveRecords(merged)){state.importRows=[];modal("importModal",false)}}
 
-  function drawPhoto(records){const W=1100,rowH=130,H=180+records.length*rowH;const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;const c=canvas.getContext("2d");c.fillStyle="#f2f6fa";c.fillRect(0,0,W,H);c.fillStyle="#0b2b50";c.fillRect(0,0,W,122);c.fillStyle="#25c2d2";c.fillRect(0,0,11,H);c.fillStyle="#fff";c.font="700 18px DM Sans, sans-serif";c.fillText("GREENWICH MERIDIAN LOGISTICS",42,42);c.font="800 30px Manrope, sans-serif";c.fillText("Shipment status update",42,83);c.font="500 14px DM Sans, sans-serif";c.fillStyle="#b9d2e7";c.fillText(`Prepared ${fmtDate(new Date())} · ${records.length} shipment${records.length===1?"":"s"}`,W-350,82);records.forEach((r,i)=>{const y=144+i*rowH;c.fillStyle="#fff";roundRect(c,34,y,W-68,rowH-12,14);c.fill();c.fillStyle="#087fc8";c.font="800 21px Manrope, sans-serif";c.fillText(container(r),56,y+34);c.fillStyle="#1b3b5c";c.font="700 14px DM Sans, sans-serif";c.fillText(statusOf(r).toUpperCase(),W-248,y+33);c.fillStyle="#74899e";c.font="700 10px DM Sans, sans-serif";c.fillText("ROUTE",56,y+59);c.fillText("VESSEL",430,y+59);c.fillText("ESTIMATED ARRIVAL",730,y+59);c.fillStyle="#284864";c.font="600 14px DM Sans, sans-serif";c.fillText(routeOf(r),56,y+82);c.fillText(String(field(r,["VESSEL & VOY"])||"Awaiting update").slice(0,38),430,y+82);c.fillText(fmtDate(field(r,["ETA"])),730,y+82);c.fillStyle="#94a7b9";c.font="500 11px DM Sans, sans-serif";c.fillText("Milestones shown from records supplied by GML operations.",56,y+105)});canvas.toBlob(blob=>blob?downloadBlob(blob,`GML_Status_${records.length===1?container(records[0]).replace(/[^A-Z0-9-]/gi,"_"):"Update"}.png`):toast("Could not create the status photo.","error"),"image/png")}
+  function drawPhoto(records){
+    if(!records.length)return toast("No shipment records are available for the photo.","error");
+    const W=1200,headerH=174,cardH=204,gap=16,footerH=62,top=headerH+20,H=top+records.length*cardH+Math.max(0,records.length-1)*gap+footerH;
+    const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;const c=canvas.getContext("2d");
+    c.fillStyle="#f1f5f9";c.fillRect(0,0,W,H);c.fillStyle="#10aec1";c.fillRect(0,0,10,H);
+    c.fillStyle="#0b2b50";c.fillRect(0,0,W,headerH);c.fillStyle="#123c65";roundRect(c,770,32,390,106,14);c.fill();
+    drawPhotoAnchor(c,64,66);c.fillStyle="#90e4e7";c.font="800 12px DM Sans, sans-serif";c.fillText("GREENWICH MERIDIAN LOGISTICS",107,43);
+    c.fillStyle="#fff";c.font="800 29px Manrope, sans-serif";c.fillText("Shipment status update",42,111);
+    c.fillStyle="#b8cee1";c.font="700 10px DM Sans, sans-serif";c.fillText("GENERATED",792,57);c.fillText("DATA LAST SYNCED",974,57);
+    c.fillStyle="#fff";c.font="600 13px DM Sans, sans-serif";c.fillText(photoTimestamp(new Date()),792,82,160);c.fillText(state.updatedAt?photoTimestamp(state.updatedAt):"Unavailable",974,82,170);
+    c.fillStyle="#b8cee1";c.font="500 11px DM Sans, sans-serif";c.fillText(`${records.length} shipment${records.length===1?"":"s"} · Shipment records`,792,112);
+    records.forEach((r,i)=>{
+      const x=34,y=top+i*(cardH+gap),w=W-68,h=cardH,status=statusOf(r),palette=photoStatusColors(status);
+      c.save();c.shadowColor="#16365714";c.shadowBlur=14;c.shadowOffsetY=4;c.fillStyle="#fff";roundRect(c,x,y,w,h,15);c.fill();c.restore();
+      c.fillStyle=palette.edge;roundRect(c,x,y,6,h,4);c.fill();
+      c.fillStyle="#6e8499";c.font="800 10px DM Sans, sans-serif";c.fillText("CONTAINER",x+24,y+29);
+      c.fillStyle="#087fc8";c.font="800 23px Manrope, sans-serif";c.fillText(container(r),x+24,y+59,500);
+      const refs=[field(r,["MBL NO"])&&`MBL ${field(r,["MBL NO"])}`,field(r,["TYPE"])&&`TYPE ${field(r,["TYPE"])}`].filter(Boolean).join("   ·   ");
+      c.fillStyle="#75899d";c.font="600 11px DM Sans, sans-serif";c.fillText(refs||"Shipment reference not recorded",x+24,y+82,620);
+      const badgeText=status.toUpperCase();c.font="800 11px DM Sans, sans-serif";const badgeW=Math.min(245,c.measureText(badgeText).width+30),badgeX=x+w-badgeW-24;
+      c.fillStyle=palette.bg;roundRect(c,badgeX,y+24,badgeW,30,15);c.fill();c.fillStyle=palette.text;c.fillText(badgeText,badgeX+15,y+43,badgeW-26);
+      const cols=[{x:x+24,w:350,label:"ROUTE",value:routeOf(r)},{x:x+405,w:355,label:"VESSEL & VOYAGE",value:field(r,["VESSEL & VOY"])||"Not recorded"},{x:x+790,w:235,label:"ESTIMATED ARRIVAL · ETA",value:field(r,["ETA"])?fmtDate(field(r,["ETA"])):"Not scheduled"}];
+      cols.forEach(col=>{c.fillStyle="#8a9db0";c.font="800 9px DM Sans, sans-serif";c.fillText(col.label,col.x,y+111);c.fillStyle="#294965";c.font="700 13px DM Sans, sans-serif";c.fillText(String(col.value),col.x,y+134,col.w)});
+      c.strokeStyle="#e6edf3";c.lineWidth=1;c.beginPath();c.moveTo(x+24,y+150);c.lineTo(x+w-24,y+150);c.stroke();
+      const milestone=photoMilestone(r);c.fillStyle="#6d8499";c.font="800 9px DM Sans, sans-serif";c.fillText("LATEST RECORDED UPDATE",x+24,y+173);
+      c.fillStyle="#173b5d";c.font="800 13px DM Sans, sans-serif";c.fillText(milestone.label,x+24,y+192,480);
+      c.fillStyle="#5e7891";c.font="700 12px DM Sans, sans-serif";c.textAlign="right";c.fillText(milestone.date,x+w-24,y+185,300);c.textAlign="left";
+    });
+    const fy=H-footerH;c.fillStyle="#e2eaf1";c.fillRect(34,fy,W-68,1);c.fillStyle="#6f859a";c.font="600 11px DM Sans, sans-serif";c.fillText("Source: GML shipment records · ETAs are estimates · This image does not show live carrier positions.",42,fy+27);c.fillStyle="#91a2b2";c.font="500 10px DM Sans, sans-serif";c.fillText("Share shipment information only with its intended recipient.",42,fy+45);
+    canvas.toBlob(blob=>blob?downloadBlob(blob,`GML_Status_${records.length===1?container(records[0]).replace(/[^A-Z0-9-]/gi,"_"):"Update"}.png`):toast("Could not create the status photo.","error"),"image/png");
+  }
+  function photoTimestamp(value){const d=value instanceof Date?value:new Date(value);return Number.isNaN(+d)?"Unavailable":new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:true}).format(d)}
+  function photoMilestone(row){
+    const options=[["Empty container returned","CONTAINER RETURN DATE"],["Destuffing recorded","DESTUFFING DATE"],["Received at CFS","CFS IN"],["Port out recorded","PORT OUT"],["Port arrival recorded","PORT IN"],["Inward date recorded","INWARD DATE"],["Split date recorded","SPLIT DATE"]];
+    const events=options.map(([label,key])=>({label,value:field(row,[key]),date:parseDate(field(row,[key]))})).filter(x=>x.value);
+    const dated=events.filter(x=>x.date).sort((a,b)=>b.date-a.date)[0];
+    if(dated)return{label:dated.label,date:fmtDate(dated.date)};
+    if(events.length)return{label:events[0].label,date:String(events[0].value)};
+    const etd=field(row,["ETD"]);if(etd)return{label:"Vessel departure estimate",date:fmtDate(etd)};
+    const eta=field(row,["ETA"]);if(eta)return{label:"Estimated arrival",date:fmtDate(eta)};
+    return{label:"No milestone recorded",date:"Awaiting update"};
+  }
+  function photoStatusColors(status){
+    if(/delayed/i.test(status))return{bg:"#ffebe9",text:"#b73732",edge:"#e2514b"};
+    if(/returned|destuff|CFS|arrived|port out/i.test(status))return{bg:"#e8f8f0",text:"#07825e",edge:"#0ba878"};
+    if(/transit/i.test(status))return{bg:"#e8f2ff",text:"#176dc2",edge:"#287fe0"};
+    if(/scheduled/i.test(status))return{bg:"#fff5dd",text:"#9a6805",edge:"#e3a52b"};
+    return{bg:"#eef2f6",text:"#5b7187",edge:"#92a4b5"};
+  }
+  function drawPhotoAnchor(ctx,x,y){ctx.fillStyle="#10a8c4";ctx.beginPath();ctx.arc(x,y,27,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=2.4;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(x,y-13);ctx.lineTo(x,y+12);ctx.moveTo(x-9,y-5);ctx.lineTo(x+9,y-5);ctx.moveTo(x-14,y+7);ctx.quadraticCurveTo(x,y+24,x+14,y+7);ctx.moveTo(x,y-13);ctx.arc(x,y-15,2,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(x,y-15,2,0,Math.PI*2);ctx.fillStyle="#fff";ctx.fill()}
   function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
   function selectedRecords(){return [...state.selected].map(i=>state.rows[i]).filter(Boolean)}
   function photoSelected(){const records=selectedRecords();if(!records.length)return toast("Select one or more shipments first.","error");if(records.length>12)return toast("Select up to 12 shipments for one status photo.","error");drawPhoto(records)}
