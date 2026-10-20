@@ -8,7 +8,7 @@ on:
       - "staff-control-tower-v2.css"
       - "staff-login-v3.css"
       - "staff-portal.css"
-      - "staff-portal.js"
+      - "staff-portal.js"\n      - "approved-control-tower.css"\n      - "approved-control-tower.js"
       - "tracking-link-admin.html"
       - "index.html"
       - "app.js"
