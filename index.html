@@ -2916,7 +2916,6 @@ body.staff-authenticated .staff-exception-count span{margin-top:4px!important;fo
 body.staff-authenticated #staffExceptionQueue .staff-exception-list{display:flex!important;flex-direction:column!important;gap:0!important;max-height:430px!important;overflow:auto!important;padding:0 15px!important}
 body.staff-authenticated #staffExceptionQueue .staff-exception-item{display:grid!important;grid-template-columns:4px minmax(0,1fr) auto!important;align-items:center!important;gap:12px!important;min-width:0!important;padding:13px 2px!important;border:0!important;border-bottom:1px solid #edf1f4!important;border-radius:0!important;background:#fff!important;box-shadow:none!important}
 body.staff-authenticated #staffExceptionQueue .staff-exception-item:last-child{border-bottom:0!important}
-body.staff-authenticated #staffExceptionQueue .staff-exception-item:before{content:""!important;display:block!important;align-self:stretch!important;min-height:36px!important;border-radius:4px!important;background:#d84a43!important}
 body.staff-authenticated #staffExceptionQueue .staff-exception-item>*{min-width:0!important}
 body.staff-authenticated #staffExceptionQueue .staff-exception-open{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:34px!important;padding:0 11px!important;border:1px solid #d9e5ec!important;border-radius:8px!important;background:#f8fbfc!important;color:#175d7b!important;font-size:9px!important;font-weight:850!important;white-space:nowrap!important}
 body.staff-authenticated #staffExceptionQueue .staff-exception-open:hover{background:var(--gml-accent-soft)!important;border-color:#a5dce9!important}
@@ -3673,6 +3672,9 @@ body.staff-authenticated .main-wrapper#opsDashboardView{scroll-margin-top:82px!i
   body.staff-authenticated #opsDashboardView.main-wrapper,body.staff-authenticated.staff-shipment-list-page #opsDashboardView.main-wrapper,body.staff-authenticated.staff-shipment-detail-page #opsDashboardView.main-wrapper{width:100%!important;margin:0!important;padding:14px 12px calc(78px + env(safe-area-inset-bottom))!important}
 }
 body:has(#opsDashboardView:not([style*="display: none"])) #staffReferenceSidebar{display:flex!important;visibility:visible!important}
+body.staff-authenticated #staffExceptionQueue .staff-exception-bar{display:block!important;align-self:stretch!important;width:100%!important;height:auto!important;min-height:34px!important;border-radius:4px!important}
+body.staff-authenticated #floatingActionBar{left:50vw!important;max-width:calc(100vw - 28px)!important;box-sizing:border-box!important;flex-wrap:wrap!important;justify-content:center!important}
+body.staff-authenticated:has(#floatingActionBar.show) #opsDashboardView.main-wrapper{padding-bottom:150px!important}
 </style>
 </head>
 <body>
@@ -8020,7 +8022,7 @@ const active=document.querySelector('#opsDashboardView .view-btn.active');
 const table=signedIn&&(visible(sheet)||(active&&active.dataset.view==='sheet'));
 body.classList.toggle('staff-table-mode',!!table);
 const sidebar=document.getElementById('staffReferenceSidebar');
-if(signedIn&&sidebar&&!sidebar.dataset.v8Opened){sidebar.classList.remove('collapsed');sidebar.dataset.v8Opened='1'}
+
 const search=document.getElementById('search');if(search)search.setAttribute('aria-label','Search shipments by container, MBL, vessel, liner or truck');
 }
 const observer=new MutationObserver(update);
@@ -8758,9 +8760,19 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   const main=document.getElementById('opsDashboardView');
   if(!sidebar||!main)return;
   const sync=()=>{
-   const collapsed=sidebar.classList.contains('collapsed');
-   document.body.classList.toggle('staff-sidebar-collapsed',collapsed);
+   const collapsed=document.body.classList.contains('staff-sidebar-collapsed');
+   
    main.style.setProperty('--gml-sidebar',collapsed?'68px':'244px');
+   const toggle=document.getElementById('staffSidebarToggle');
+   if(toggle){
+    toggle.setAttribute('aria-expanded',collapsed?'false':'true');
+    toggle.setAttribute('aria-label',collapsed?'Expand navigation':'Collapse navigation');
+    toggle.title=collapsed?'Expand navigation':'Collapse navigation';
+    const icon=toggle.querySelector('span[aria-hidden="true"]');
+    if(icon)icon.textContent=collapsed?'›':'‹';
+    const label=toggle.querySelector('.staff-sidebar-toggle-label');
+    if(label)label.textContent=collapsed?'Expand menu':'Collapse menu';
+   }
   };
   const observer=new MutationObserver(sync);
   observer.observe(sidebar,{attributes:true,attributeFilter:['class']});
