@@ -559,10 +559,11 @@ function init(){
  const statusSlot=make('div','st12-status-slot','st12StatusSlot');statusSlot.appendChild(status);
  const recentSlot=make('div','st12-recent-slot','st12RecentSlot');recentSlot.appendChild(recent);
  side.append(statusSlot,recentSlot);
- content.append(worklist,side);
-
  const mapBlock=make('section','st12-map-block','st12MapBlock');
  mapBlock.appendChild(map);
+ // Clean composition: map, exceptions, status, and recent activity share one responsive grid.
+ content.append(mapBlock,worklist,statusSlot,recentSlot);
+ side.remove();
 
  const actionsBlock=make('section','st12-action-block','st12ActionBlock');
  const actionsGrid=make('div','st12-action-grid','st12ActionGrid');
