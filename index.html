@@ -997,7 +997,8 @@ body { background-color: var(--bg-app); color: var(--text-main); font-family: 'P
 @media(max-width:800px){.one-result-actions{justify-content:flex-start}.carrier-detail-top{flex-direction:column}.carrier-detail-actions{justify-content:flex-start}.carrier-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.carrier-results-shell{border-left:0;border-right:0;border-radius:0}.carrier-table-wrap{overflow:visible}.carrier-results-table{display:block;min-width:0}.carrier-results-table thead{display:none}.carrier-results-table tbody,.carrier-results-table tr,.carrier-results-table td{display:block;width:100%;box-sizing:border-box}.carrier-result-row{position:relative;padding:12px 14px 13px;border-bottom:1px solid var(--border)}.carrier-result-row td{padding:4px 0;border:0}.carrier-result-row td:nth-child(1){padding-right:70px}.carrier-result-row td:nth-child(2),.carrier-result-row td:nth-child(3){display:inline-block;width:auto;margin-right:12px}.carrier-result-row td:nth-child(4),.carrier-result-row td:nth-child(5),.carrier-result-row td:nth-child(6){display:block}.carrier-result-row td:last-child{position:absolute;right:14px;top:12px}.carrier-detail-row td{display:block!important;padding:0}.carrier-detail-panel{padding:16px 14px}.carrier-detail-grid{grid-template-columns:1fr 1fr}}
 
-/* GML customer carrier portal — current ONE-style Track & Trace structure */body.public-carrier-mode{background:#f3f5f7;}
+/* GML customer carrier portal — current ONE-style Track & Trace structure */
+body.public-carrier-mode{background:#f3f5f7;}
 body.public-carrier-mode .nav-header{display:none;}
 body.public-carrier-mode .one-public-shell{padding-left:0;min-height:100vh;background:#f3f5f7;}
 .public-carrier-topbar{height:76px;box-sizing:border-box;background:#fff;border-bottom:1px solid #d9dee3;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:relative;z-index:50;}
@@ -1996,7 +1997,8 @@ body.staff-reference-mode #opsDashboardView .sheet-table th{
   line-height:1.35!important;
 }
 body.staff-reference-mode #opsDashboardView .sheet-table td,
-body.staff-reference-mode #opsDashboardView .sheet-table .cell-input{  padding:10px 9px!important;
+body.staff-reference-mode #opsDashboardView .sheet-table .cell-input{
+  padding:10px 9px!important;
   font-size:12px!important;
 }
 body.staff-reference-mode #opsDashboardView .staff-map-action,
@@ -2995,7 +2997,8 @@ body.staff-authenticated .quick-chips-wrapper{display:flex!important;align-items
 body.staff-authenticated .quick-chips-wrapper .chip{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;min-height:32px!important;padding:0 12px!important;border:1px solid var(--gml-line)!important;border-radius:999px!important;background:#fff!important;color:#63788b!important;font-size:10px!important;font-weight:750!important;white-space:nowrap!important}
 body.staff-authenticated .quick-chips-wrapper .chip.active{border-color:#a8dfe9!important;background:var(--gml-accent-soft)!important;color:#086d8c!important}
 body.staff-authenticated .sheet-box{width:100%!important;max-width:100%!important;min-width:0!important;overflow:auto!important;border:1px solid var(--gml-line)!important;border-radius:12px!important;background:#fff!important;box-shadow:var(--gml-shadow)!important}
-body.staff-authenticated .sheet-table{width:100%!important;min-width:1100px!important;border-collapse:separate!important;border-spacing:0!important;table-layout:auto!important;font-size:10px!important}body.staff-authenticated .sheet-table thead th{position:sticky!important;top:0!important;z-index:5!important;padding:12px 13px!important;border:0!important;border-bottom:1px solid #d9e3eb!important;background:#eef3f6!important;color:#536a7d!important;text-align:left!important;font-size:9px!important;font-weight:850!important;letter-spacing:.025em!important;white-space:nowrap!important}
+body.staff-authenticated .sheet-table{width:100%!important;min-width:1100px!important;border-collapse:separate!important;border-spacing:0!important;table-layout:auto!important;font-size:10px!important}
+body.staff-authenticated .sheet-table thead th{position:sticky!important;top:0!important;z-index:5!important;padding:12px 13px!important;border:0!important;border-bottom:1px solid #d9e3eb!important;background:#eef3f6!important;color:#536a7d!important;text-align:left!important;font-size:9px!important;font-weight:850!important;letter-spacing:.025em!important;white-space:nowrap!important}
 body.staff-authenticated .sheet-table tbody td{height:48px!important;padding:10px 13px!important;border:0!important;border-bottom:1px solid #edf1f4!important;background:#fff!important;color:#314a5f!important;font-size:10px!important;white-space:nowrap!important}
 body.staff-authenticated .sheet-table tbody tr:nth-child(even) td{background:#fbfcfd!important}
 body.staff-authenticated .sheet-table tbody tr:hover td{background:#f0fafc!important}
@@ -3504,6 +3507,137 @@ body.staff-reference-mode .staff-map-basemap-notice,body.staff-authenticated .st
   body.staff-reference-mode .staff-top-search,body.staff-authenticated .staff-top-search,body.staff-reference-mode #staffTopSearchWrap,body.staff-authenticated #staffTopSearchWrap{grid-column:1/-1!important;grid-row:2!important}
 }
 
+/* Reference-inspired staff dashboard: navy navigation, compact header, live shipment analytics. */
+body.staff-authenticated.staff-overview-page{--md-navy:#0b2b52;--md-blue:#1877e8;--md-teal:#0ea5b7;--md-ink:#142f52;--md-muted:#7187a1;--md-line:#e2eaf3;--md-canvas:#f3f7fb;background:var(--md-canvas)!important;color:var(--md-ink)!important}
+body.staff-authenticated.staff-overview-page .staff-reference-sidebar{position:fixed!important;z-index:120!important;inset:0 auto 0 0!important;width:258px!important;padding:20px 13px 16px!important;background:linear-gradient(180deg,#082348 0%,#0c315d 58%,#061d3b 100%)!important;border-right:1px solid #18456d!important;box-shadow:8px 0 28px #08203b18!important}
+body.staff-authenticated.staff-overview-page .staff-sidebar-brand{padding:4px 9px 24px!important;margin:0 0 10px!important;border-bottom:1px solid #ffffff1a!important}
+body.staff-authenticated.staff-overview-page .staff-sidebar-mark{display:grid!important;place-items:center!important;width:44px!important;height:44px!important;border-radius:12px!important;background:#f5fbff!important;color:#0b345c!important;font-size:24px!important;box-shadow:0 8px 20px #03172d4d!important}
+body.staff-authenticated.staff-overview-page .staff-sidebar-brand strong{font-size:15px!important;letter-spacing:.035em!important}
+body.staff-authenticated.staff-overview-page .staff-sidebar-brand small{font-size:9px!important;color:#9cb7d4!important}
+body.staff-authenticated.staff-overview-page .staff-sidebar-label{margin:18px 10px 8px!important;color:#90aac7!important;font-size:10px!important;letter-spacing:.13em!important}
+body.staff-authenticated.staff-overview-page .staff-side-link{min-height:44px!important;margin:3px 0!important;padding:10px 12px!important;border-radius:9px!important;font-size:13px!important;color:#d5e1ee!important}
+body.staff-authenticated.staff-overview-page .staff-side-link>span{width:23px!important;color:#afc5dc!important;font-size:17px!important}
+body.staff-authenticated.staff-overview-page .staff-side-link.active{background:linear-gradient(100deg,#176bd2,#1159ad)!important;border-color:#3987e7!important;box-shadow:0 5px 16px #061c3b66!important}
+body.staff-authenticated.staff-overview-page .staff-sidebar-help{padding:13px 12px!important;border-color:#ffffff20!important;background:#ffffff0b!important}
+body.staff-authenticated.staff-overview-page .staff-sidebar-foot{color:#9bb5d0!important;letter-spacing:.1em!important}
+body.staff-authenticated.staff-overview-page .nav-header{position:sticky!important;top:0!important;z-index:110!important;width:calc(100% - 258px)!important;height:68px!important;min-height:68px!important;margin:0 0 0 258px!important;background:#fff!important;border-bottom:1px solid var(--md-line)!important;box-shadow:0 3px 16px #13355b08!important}
+body.staff-authenticated.staff-overview-page .nav-container.nav-multilevel{height:68px!important;min-height:68px!important;padding:0 25px!important;gap:16px!important}
+body.staff-authenticated.staff-overview-page .brand-box{display:none!important}
+body.staff-authenticated.staff-overview-page .header-tools{justify-content:space-between!important;gap:14px!important}
+body.staff-authenticated.staff-overview-page .staff-top-search,body.staff-authenticated.staff-overview-page #staffTopSearchWrap{flex:1 1 520px!important;width:auto!important;max-width:620px!important;min-width:220px!important;margin:0!important}
+body.staff-authenticated.staff-overview-page .staff-top-search input{height:40px!important;border-radius:9px!important;background:#fbfdff!important;font-size:12px!important}
+body.staff-authenticated.staff-overview-page #staffTopSearchBtn{height:40px!important;border-radius:9px!important;background:#1976e8!important;color:#fff!important;font-weight:800!important}
+body.staff-authenticated.staff-overview-page #opsControls{margin-left:auto!important}
+body.staff-authenticated.staff-overview-page #opsDashboardView.main-wrapper{width:calc(100% - 258px)!important;max-width:none!important;margin:0 0 0 258px!important;padding:26px clamp(18px,2.2vw,34px) 40px!important}
+body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page .staff-reference-sidebar{width:72px!important}
+body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page .staff-sidebar-brand{justify-content:center!important;padding:4px 0 20px!important}
+body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page .staff-sidebar-brand>span:last-child,body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page .staff-sidebar-label,body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page .staff-sidebar-help,body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page .staff-sidebar-foot{display:none!important}
+body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page .staff-side-link{justify-content:center!important;padding:9px 4px!important;font-size:0!important}
+body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page .staff-side-link>span{font-size:17px!important}
+body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page .nav-header{width:calc(100% - 72px)!important;margin-left:72px!important}
+body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page #opsDashboardView.main-wrapper{width:calc(100% - 72px)!important;margin-left:72px!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12{display:flex!important;flex-direction:column!important;gap:18px!important;max-width:1600px!important;margin:0 auto!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-page-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:20px!important;margin:0!important;padding:0 0 2px!important;border:0!important;background:transparent!important;box-shadow:none!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-title-block{min-width:0!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-eyebrow{font-size:10px!important;letter-spacing:.12em!important;color:#557898!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-page-title{margin:8px 0 3px!important;color:#102e54!important;font-size:clamp(25px,2.3vw,36px)!important;letter-spacing:-.055em!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-page-desc{margin:0!important;color:#7187a1!important;font-size:13px!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-button{min-height:48px!important;padding:0 20px!important;border-radius:10px!important;background:#0c98b4!important;font-size:13px!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-head-metrics{display:none!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-kpi-region{display:flex!important;flex-direction:column!important;gap:12px!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-section-label{display:flex!important;align-items:center!important;justify-content:space-between!important;margin:0!important;color:#627d99!important;font-size:11px!important;text-transform:uppercase!important;letter-spacing:.08em!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-kpi-region>.kpi-row{display:none!important}
+.md-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.md-kpi{display:flex;align-items:center;gap:14px;min-width:0;min-height:98px;padding:17px;border:1px solid #e5edf5;border-radius:13px;background:#fff;box-shadow:0 6px 20px #17385b08}
+.md-kpi-icon{display:grid;place-items:center;flex:0 0 52px;width:52px;height:52px;border-radius:50%;font-size:24px;font-weight:800}
+.md-kpi>div{display:flex;flex-direction:column;min-width:0}
+.md-kpi small{color:#526b89;font-size:11px;font-weight:750}
+.md-kpi strong{margin-top:4px;color:#0d3159;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.md-kpi em{margin-top:5px;color:#8495a8;font-size:9px;font-style:normal}
+.md-total{background:linear-gradient(120deg,#e8f4ff,#fff)}.md-total .md-kpi-icon{background:#d2e9ff;color:#1877e8}
+.md-transit{background:linear-gradient(120deg,#e9f8f0,#fff)}.md-transit .md-kpi-icon{background:#c9f1de;color:#149465}
+.md-arrived{background:linear-gradient(120deg,#fff8df,#fff)}.md-arrived .md-kpi-icon{background:#ffedb9;color:#d48a09}
+.md-delayed{background:linear-gradient(120deg,#fff0ee,#fff)}.md-delayed .md-kpi-icon{background:#ffd9d5;color:#db4c43}
+body.staff-authenticated.staff-overview-page .md-top-grid{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(360px,1fr);gap:16px;align-items:stretch}
+body.staff-authenticated.staff-overview-page .st12-map-block{min-width:0;margin:0!important}
+.md-map-with-timeline{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(210px,.82fr);min-height:0;overflow:hidden;border:1px solid #e0e8f1;border-radius:14px;background:#fff;box-shadow:0 8px 24px #17385b08}
+body.staff-authenticated.staff-overview-page .md-map-with-timeline .staff-map-panel{min-width:0!important;height:100%!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+body.staff-authenticated.staff-overview-page .md-map-with-timeline .staff-map-panel .staff-panel-heading{padding:13px 15px!important}
+body.staff-authenticated.staff-overview-page .md-map-with-timeline #staffMapCanvas{height:310px!important;min-height:310px!important;border-radius:0!important}
+.md-timeline-card{min-width:0;padding:0 14px 12px;border-left:1px solid #e7edf4;background:linear-gradient(180deg,#fff,#fbfdff)}
+.md-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:55px;padding:11px 14px;border-bottom:1px solid #e8eef5}
+.md-card-head h2{margin:0;color:#102f54;font-size:15px;font-weight:850;letter-spacing:-.035em}
+.md-card-head p{margin:4px 0 0;color:#8193a8;font-size:10px;line-height:1.4}
+.md-card-head button{flex:0 0 auto;padding:5px 7px;border:0;background:none;color:#1264d8;font-size:10px;font-weight:750;cursor:pointer}
+.md-live-tag{padding:5px 8px;border-radius:999px;background:#e5f8ef;color:#118654;font-size:9px;font-weight:850;letter-spacing:.08em}
+.md-track-summary{display:flex;flex-direction:column;gap:4px;padding:12px 0 7px}
+.md-track-summary strong{color:#14365d;font-size:11px;overflow-wrap:anywhere}
+.md-track-summary span{color:#46617e;font-size:10px}.md-track-summary span b{color:#1594b5}.md-track-summary small{color:#8495a9;font-size:9px}
+.md-timeline{position:relative;display:grid;gap:0;margin:0;padding:5px 0 0;list-style:none}
+.md-timeline:before{position:absolute;top:15px;bottom:20px;left:6px;width:2px;background:#e2eaf2;content:""}
+.md-timeline li{position:relative;display:grid;grid-template-columns:14px minmax(0,1fr);gap:9px;min-height:39px}
+.md-timeline li>i{position:relative;z-index:1;width:13px;height:13px;margin-top:2px;border:3px solid #d5dee7;border-radius:50%;background:#fff}
+.md-timeline li.is-done>i{border-color:#16a374;background:#16a374;box-shadow:inset 0 0 0 2px #fff}
+.md-timeline li.is-current>i{border-color:#1b7de1;background:#fff;box-shadow:0 0 0 3px #dcecff}
+.md-timeline li strong{display:block;color:#365475;font-size:9px;font-weight:750}
+.md-timeline li small{display:block;margin-top:2px;color:#8798ab;font-size:8px}
+.md-card{min-width:0;overflow:hidden;border:1px solid #e0e8f1;border-radius:14px;background:#fff;box-shadow:0 8px 24px #17385b08}
+.md-arrivals{display:flex;flex-direction:column;min-height:100%}
+.md-table-scroll{overflow:auto;min-width:0}
+.md-table-scroll table{width:100%;border-collapse:collapse;table-layout:auto}
+.md-table-scroll th{padding:10px 9px;background:#f3f7fb;color:#657b95;font-size:9px;font-weight:850;text-align:left;white-space:nowrap}
+.md-table-scroll td{padding:10px 9px;border-top:1px solid #ebf0f5;color:#263f5e;font-size:9px;vertical-align:middle}
+.md-record-link{max-width:140px;padding:0;border:0;background:transparent;color:#155eae;font-size:9px;font-weight:800;text-align:left;overflow-wrap:anywhere;cursor:pointer}
+.md-status{display:inline-block;padding:4px 7px;border:1px solid #c4ead5;border-radius:6px;background:#e8f8ef;color:#13764c;font-size:8px;font-weight:800;white-space:nowrap}
+.md-status.is-delayed{border-color:#f8d98a;background:#fff5d7;color:#995d00}
+.md-status.is-arrived{border-color:#c6e2fd;background:#edf6ff;color:#1b64aa}
+.md-empty{padding:18px!important;color:#778ba2!important;text-align:center!important;font-size:10px!important}
+body.staff-authenticated.staff-overview-page .md-insights-grid{display:grid;grid-template-columns:minmax(230px,.95fr) minmax(280px,1.18fr) minmax(240px,.95fr);gap:14px;align-items:stretch}
+body.staff-authenticated.staff-overview-page .md-insights-grid>.staff-status-panel{min-width:0!important;margin:0!important;border:1px solid #e0e8f1!important;border-radius:14px!important;background:#fff!important;box-shadow:0 8px 24px #17385b08!important}
+body.staff-authenticated.staff-overview-page .md-insights-grid .staff-status-content{padding:13px!important}
+body.staff-authenticated.staff-overview-page .md-insights-grid .staff-status-content{display:grid!important;grid-template-columns:minmax(105px,.9fr) minmax(105px,1.1fr)!important;align-items:center!important;gap:8px!important}
+body.staff-authenticated.staff-overview-page .md-insights-grid .staff-donut{display:grid!important;width:112px!important;height:112px!important;margin:auto!important;border-radius:50%!important;position:relative!important}
+body.staff-authenticated.staff-overview-page .md-insights-grid .staff-donut:before{position:absolute!important;inset:15px!important;border-radius:50%!important;background:#fff!important;content:""!important}
+body.staff-authenticated.staff-overview-page .md-insights-grid .staff-donut>div{position:relative!important;z-index:1!important;display:flex!important;flex-direction:column!important;align-items:center!important}
+body.staff-authenticated.staff-overview-page .md-insights-grid .staff-donut strong{color:#153456!important;font-size:22px!important;line-height:1.1!important}
+body.staff-authenticated.staff-overview-page .md-insights-grid .staff-donut small{color:#70849a!important;font-size:9px!important}
+body.staff-authenticated.staff-overview-page .md-insights-grid .st13-status-total,body.staff-authenticated.staff-overview-page .md-insights-grid .st13-status-bar{display:none!important}
+body.staff-authenticated.staff-overview-page .md-insights-grid .staff-status-legend{min-width:0!important}
+.md-trend,.md-lanes{min-height:190px}
+.md-bars{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:end;gap:9px;height:130px;padding:14px 15px 10px}
+.md-bar-col{display:grid;grid-template-rows:16px minmax(20px,1fr) 17px;align-items:end;justify-items:center;gap:4px;height:100%}
+.md-bar-col>span{color:#607995;font-size:9px;font-weight:700}.md-bar-col>i{align-self:end;width:min(32px,80%);height:var(--bar-height);min-height:4px;border-radius:5px 5px 1px 1px;background:linear-gradient(180deg,#3991f1,#1873df)}.md-bar-col>small{color:#768ba3;font-size:9px}
+.md-lanes{padding-bottom:12px}.md-lane{display:grid;grid-template-columns:minmax(0,1fr) minmax(65px,.9fr) 22px;align-items:center;gap:9px;padding:10px 14px 0}
+.md-lane>span{overflow:hidden;color:#415c79;font-size:9px;text-overflow:ellipsis;white-space:nowrap}.md-lane>i{height:7px;overflow:hidden;border-radius:10px;background:#e6edf4}.md-lane>i>b{display:block;height:100%;border-radius:inherit;background:#2680eb}.md-lane>strong{color:#1e3857;font-size:9px;text-align:right}
+.md-exception-row{min-width:0}.md-exception-row #staffExceptionQueue{margin:0!important;border:1px solid #f0d9b5!important;border-radius:14px!important;box-shadow:0 6px 20px #57371208!important}
+.md-recent-card{min-width:0;overflow:hidden;border:1px solid #e0e8f1;border-radius:14px;background:#fff;box-shadow:0 8px 24px #17385b08}
+.md-recent-card .approved-panel-head{padding:13px 16px!important;border-bottom:1px solid #e8eef5!important}
+.md-recent-card .approved-panel-title{color:#102f54!important;font-size:15px!important}
+.md-recent-card .approved-panel-subtitle{color:#8193a8!important;font-size:10px!important}
+.md-recent-card .approved-table-wrap{overflow:auto}
+.md-recent-card .approved-shipment-table{width:100%;min-width:920px!important;border-collapse:collapse}
+.md-recent-card .approved-shipment-table th{padding:10px 9px!important;background:#f3f7fb!important;color:#657b95!important;font-size:9px!important;white-space:nowrap}
+.md-recent-card .approved-shipment-table td{padding:9px!important;color:#263f5e!important;font-size:9px!important;white-space:nowrap}
+.md-view-record{padding:4px 8px;border:1px solid #b9d6fa;border-radius:5px;background:#f0f7ff;color:#1563bd;font-size:9px;font-weight:800;cursor:pointer}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-action-block,body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-integrity-slot{display:none!important}
+body.staff-authenticated.staff-overview-page .md-original-grid-hidden{display:none!important}
+@media(max-width:1320px){body.staff-authenticated.staff-overview-page .md-top-grid{grid-template-columns:minmax(0,1fr)!important}body.staff-authenticated.staff-overview-page .md-arrivals{min-height:0}body.staff-authenticated.staff-overview-page .md-insights-grid{grid-template-columns:repeat(2,minmax(0,1fr))}body.staff-authenticated.staff-overview-page .md-insights-grid>.staff-status-panel{grid-column:1/-1}}
+@media(max-width:900px){body.staff-authenticated.staff-overview-page .staff-reference-sidebar{width:72px!important;padding:14px 7px!important}body.staff-authenticated.staff-overview-page .staff-sidebar-brand{justify-content:center!important;padding:4px 0 18px!important}body.staff-authenticated.staff-overview-page .staff-sidebar-brand>span:last-child,body.staff-authenticated.staff-overview-page .staff-sidebar-label,body.staff-authenticated.staff-overview-page .staff-sidebar-help,body.staff-authenticated.staff-overview-page .staff-sidebar-foot{display:none!important}body.staff-authenticated.staff-overview-page .staff-side-link{display:flex!important;justify-content:center!important;padding:9px 4px!important;font-size:0!important}body.staff-authenticated.staff-overview-page .staff-side-link>span{font-size:17px!important}body.staff-authenticated.staff-overview-page .nav-header{width:calc(100% - 72px)!important;margin-left:72px!important}body.staff-authenticated.staff-overview-page #opsDashboardView.main-wrapper{width:calc(100% - 72px)!important;margin-left:72px!important}.md-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.md-map-with-timeline{grid-template-columns:minmax(0,1.4fr) minmax(190px,.8fr)}}
+@media(max-width:650px){body.staff-authenticated.staff-overview-page .nav-header{height:104px!important;min-height:104px!important}body.staff-authenticated.staff-overview-page .nav-container.nav-multilevel{height:104px!important;min-height:104px!important;padding:4px 10px!important}body.staff-authenticated.staff-overview-page .staff-top-search,body.staff-authenticated.staff-overview-page #staffTopSearchWrap{grid-column:1/-1!important;grid-row:1!important;min-width:0!important;width:100%!important}.md-kpi-grid{gap:8px}.md-kpi{min-height:82px;padding:10px;gap:9px}.md-kpi-icon{width:38px;height:38px;flex-basis:38px;font-size:18px}.md-kpi strong{font-size:22px}.md-kpi em{display:none}body.staff-authenticated.staff-overview-page #opsDashboardView.main-wrapper{padding:18px 10px 26px!important}body.staff-authenticated.staff-overview-page #staffControlTowerV12 .st12-page-head{align-items:flex-start!important;flex-direction:column!important}.md-map-with-timeline{grid-template-columns:1fr}.md-timeline-card{border-top:1px solid #e7edf4;border-left:0}.md-timeline{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.md-timeline:before{display:none}.md-timeline li{grid-template-columns:12px minmax(0,1fr);min-height:44px;gap:5px}.md-timeline li strong{font-size:8px}.md-timeline li small{font-size:7px}.md-insights-grid{grid-template-columns:1fr!important}.md-insights-grid>.staff-status-panel{grid-column:auto!important}.md-trend,.md-lanes{min-height:0}}
+body.staff-authenticated.staff-overview-page #staffReferenceSidebar{z-index:120!important;top:0!important;bottom:0!important;width:258px!important;max-height:100dvh!important;padding:20px 13px 16px!important;background:linear-gradient(180deg,#082348 0%,#0c315d 58%,#061d3b 100%)!important;border-right:1px solid #18456d!important}
+body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-sidebar-brand{padding:4px 9px 24px!important;margin:0 0 10px!important;border-bottom:1px solid #ffffff1a!important}
+body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-sidebar-mark{width:44px!important;height:44px!important;flex-basis:44px!important;border-radius:12px!important;background:#f5fbff!important;color:#0b345c!important;font-size:24px!important}
+body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-sidebar-brand strong{font-size:15px!important;letter-spacing:.035em!important}
+body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-sidebar-brand small{color:#9cb7d4!important;font-size:9px!important}
+body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-side-link{min-height:44px!important;margin:3px 0!important;padding:10px 12px!important;font-size:13px!important;color:#d5e1ee!important}
+body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-side-link>span{width:23px!important;color:#afc5dc!important;font-size:17px!important}
+body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-side-link.active{background:linear-gradient(100deg,#176bd2,#1159ad)!important;border-color:#3987e7!important;color:#fff!important;box-shadow:0 5px 16px #061c3b66!important}
+body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-side-link.active>span{background:transparent!important;color:#fff!important}
+body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-sidebar-label{color:#90aac7!important;font-size:10px!important}
+body.staff-authenticated.staff-overview-page .staff-top-search,body.staff-authenticated.staff-overview-page #staffTopSearchWrap{display:flex!important}
+body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page #staffReferenceSidebar{width:72px!important;padding:14px 7px!important}
+@media(max-width:900px){body.staff-authenticated.staff-overview-page #staffReferenceSidebar{width:72px!important;padding:14px 7px!important}body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-side-link{display:flex!important;justify-content:center!important;padding:9px 4px!important;font-size:0!important}body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-side-link>span{font-size:17px!important}body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page #staffReferenceSidebar{width:72px!important}}
+
 </style>
 </head>
 <body>
@@ -3994,7 +4128,8 @@ function parseLocalDate(str) {
 
 function getField(r, names) {
   if (!r) return "";
-  for (let name of names) {    const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (let name of names) {
+    const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     for (let k of Object.keys(r)) {
       const cleanK = k.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
       if (cleanK === cleanName && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") {
@@ -4993,7 +5128,8 @@ function renderExceptionQueue() {
     const remarks = getField(row, ["REMARKS", "STATUS", "OPERATIONAL REMARKS"]);
     const eta = getField(row, ["ETA"]);
     const portIn = getField(row, ["PORT IN"]);
-    const portOut = getField(row, ["PORT OUT"]);    const destuff = getField(row, ["DESTUFFING DATE", "DESTUFF DATE"]);
+    const portOut = getField(row, ["PORT OUT"]);
+    const destuff = getField(row, ["DESTUFFING DATE", "DESTUFF DATE"]);
     const returned = getField(row, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"]);
     const lfd = getField(row, ["EMPTY RETURN VALIDITY", "EMPTY RETURN LFD", "DETENTION LFD"]);
     const remarkMatch = remarks.match(/\b(hold|damage|damaged|delay|delayed|rollover|customs|not moved|pending|exception|short landed)\b/i);
@@ -5992,7 +6128,8 @@ function renderUI() {
 function getLfdHtml(daysLeft, isOverdue, label, totalDays) {
   if (isOverdue) return `<div class="lfd-wrap danger"><div class="lfd-label">${label}: OVERDUE</div><div class="lfd-bar"><div class="lfd-fill" style="width:100%"></div></div></div>`;
   if (daysLeft === null) return '';
-    const maxDays = totalDays || 14; 
+  
+  const maxDays = totalDays || 14; 
   const daysConsumed = Math.max(0, maxDays - daysLeft);
   const pct = Math.max(5, Math.min(100, (daysConsumed / maxDays) * 100));
   
@@ -6456,7 +6593,13 @@ async function loadFromCloud() {
   try {
     let data, error;
     if (currentUser?.authenticated) {
-      const result = await sb.functions.invoke("operations-data", { body: { action: "read" } });
+      let result = await sb.functions.invoke("operations-data", { body: { action: "read" } });
+      if (result.error && Number(result.error.context?.status) === 401) {
+        const refreshed = await sb.auth.refreshSession();
+        if (!refreshed.error && refreshed.data?.session) {
+          result = await sb.functions.invoke("operations-data", { body: { action: "read" } });
+        }
+      }
       data = result.data ? { data: result.data.data, updatedAt: result.data.updatedAt } : null;
       error = result.error || (Array.isArray(data?.data) ? null : new Error(result.data?.error || "Secure data read failed"));
     } else {
@@ -6471,9 +6614,21 @@ async function loadFromCloud() {
       console.warn("Container data cloud read failed:", error);
       const cached = localStorage.getItem("containerRows");
       const errorMessage = String(error.message || "");
-      const detail = /fetch|network|cors|failed to send/i.test(errorMessage)
-        ? "Open the approved HTTPS app and check the connection"
-        : errorMessage.slice(0, 120) || "Check the staff session and cloud connection";
+      const status = Number(error?.context?.status);
+      let serverMessage = "";
+      try {
+        if (error?.context && typeof error.context.clone === "function") {
+          const responseBody = await error.context.clone().json();
+          if (typeof responseBody?.error === "string") serverMessage = responseBody.error;
+        }
+      } catch (responseError) {}
+      const detail = status === 401
+        ? "Staff session expired · sign in again"
+        : status === 403
+          ? (serverMessage || "Staff account or GitHub Pages origin is not authorized")
+          : serverMessage || (/fetch|network|cors|failed to send/i.test(errorMessage)
+            ? "Open the approved HTTPS app and check the connection"
+            : errorMessage.slice(0, 120) || "Check the staff session and cloud connection");
       setCloudDataState(cached ? "offline" : "error", cached ? "Saved records · offline" : "Cloud read failed · " + detail); return;
     }
     cloudDatasetUpdatedAt = data?.updatedAt || null;
@@ -6992,6 +7147,7 @@ el("excelInput").addEventListener("change", e => processExcelFile(e.target.files
     detentionRate20: 75,
     detentionRate40: 150
   };
+
   const $ = id => document.getElementById(id);
   const escP = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const getCn = r => getField(r, ['CONTAINER NO.','CONTAINER','CONTAINER NO','CNTR NO']) || '—';
@@ -7844,6 +8000,69 @@ window.addEventListener('resize',update,{passive:true});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 
+/* Modern staff dashboard: composes the existing Supabase-backed records, map and controls. */
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const val=(r,keys)=>{try{if(typeof getField==='function'){const v=getField(r,keys);if(v!==undefined&&v!==null&&String(v).trim()&&String(v).trim()!=='—')return String(v).trim()}}catch(_){}for(const k of keys){const v=r?.[k];if(v!==undefined&&v!==null&&String(v).trim()&&String(v).trim()!=='—')return String(v).trim()}return ''};
+const allRows=()=>{try{return Array.isArray(rows)?rows.filter(r=>r&&typeof r==='object'):[]}catch(_){return []}};
+const status=r=>{try{if(typeof getStatus==='function')return String(getStatus(r)?.text||'Status unavailable').replace(/^\p{Extended_Pictographic}\s*/u,'')}catch(_){}return val(r,['STATUS','CURRENT STATUS','STAGE'])||'Pending'};
+const dateOf=(r,keys)=>{const raw=val(r,keys);if(!raw)return null;try{if(typeof parseLocalDate==='function'){const d=parseLocalDate(raw);if(d&&!Number.isNaN(d.getTime()))return d}}catch(_){}const d=new Date(raw);return Number.isNaN(d.getTime())?null:d};
+const displayDate=v=>{if(!v)return '—';const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})};
+const hbl=r=>val(r,['HBL NO','HBL','HOUSE BL','MBL NO','MBL','MASTER BL','BOOKING NO','CONTAINER NO.','CONTAINER NO','CONTAINER']);
+const vessel=r=>val(r,['VESSEL & VOY','VESSEL','VESSEL NAME','LINER','CARRIER']);
+const origin=r=>val(r,['POL','PORT OF LOADING','ORIGIN']);
+const destination=r=>val(r,['GATEWAY PORT','POD','DESTINATION','PORT']);
+const etaDate=r=>dateOf(r,['ETA','ESTIMATED ARRIVAL','ARRIVAL DATE']);
+const delayed=r=>{const s=status(r)+' '+val(r,['REMARKS','NOTES','STATUS']);const eta=etaDate(r);let done=false;try{done=typeof isFullyCompleted==='function'&&isFullyCompleted(r)}catch(_){}return /delay|overdue|exception|hold/i.test(s)||(!done&&eta&&eta<new Date(new Date().toDateString()))};
+const isArrived=r=>{const s=status(r);return /arriv|port in|cfs|destuff|return|complete|done/i.test(s)||!!val(r,['PORT IN','CFS IN','DESTUFFING DATE','CONTAINER RETURN DATE'])};
+function make(tag,cls){const n=document.createElement(tag);if(cls)n.className=cls;return n}
+function timelineHTML(r){
+ const steps=[['Vessel departure',['ETD']],['Port arrival',['PORT IN','ETA']],['Port release',['PORT OUT']],['CFS received',['CFS IN']],['Destuffing',['DESTUFFING DATE','DESTUFF DATE']],['Empty returned',['CONTAINER RETURN DATE','EMPTY RETURN DATE']]];
+ const current=steps.reduce((last,[,keys],i)=>keys.some(k=>val(r,[k]))?i:last,-1);const active=current<0?0:Math.min(current+1,steps.length-1);
+ return '<div class="md-track-summary"><strong>'+esc(hbl(r)||'Shipment progress')+'</strong><span>'+esc(origin(r)||'Origin pending')+' <b>→</b> '+esc(destination(r)||'Destination pending')+'</span><small>'+esc(vessel(r)||'Vessel not recorded')+'</small></div><ol class="md-timeline">'+steps.map(([label,keys],i)=>{const raw=keys.map(k=>val(r,[k])).find(Boolean);const done=!!raw;return '<li class="'+(done?'is-done':i===active?'is-current':'')+'"><i></i><div><strong>'+esc(label)+'</strong><small>'+esc(raw?displayDate(raw):(i===active?'Next recorded milestone':'Awaiting update'))+'</small></div></li>'}).join('')+'</ol>';
+}
+function buildArrivals(){const p=make('section','md-card md-arrivals');p.setAttribute('aria-label','Upcoming shipment arrivals');p.innerHTML='<header class="md-card-head"><div><h2>Upcoming arrivals</h2><p>Arrival dates from loaded shipment records</p></div><button type="button" data-md-view-all>View all</button></header><div class="md-table-scroll"><table><thead><tr><th>BL / Reference</th><th>Vessel</th><th>ETA</th><th>Status</th></tr></thead><tbody data-md-arrivals></tbody></table></div>';return p}
+function buildTrend(){const p=make('section','md-card md-trend');p.innerHTML='<header class="md-card-head"><div><h2>Monthly shipment trend</h2><p>Records grouped by ETA or ETD</p></div></header><div class="md-bars" data-md-trend></div>';return p}
+function buildLanes(){const p=make('section','md-card md-lanes');p.innerHTML='<header class="md-card-head"><div><h2>Top trading lanes</h2><p>Origin to destination counts</p></div></header><div data-md-lanes></div>';return p}
+function makeMetrics(){const grid=make('div','md-kpi-grid');grid.innerHTML='<article class="md-kpi md-total"><span class="md-kpi-icon">▣</span><div><small>Total shipments</small><strong data-md-total>0</strong><em>Loaded shipment records</em></div></article><article class="md-kpi md-transit"><span class="md-kpi-icon">⇢</span><div><small>In transit</small><strong data-md-transit>0</strong><em>Active movements</em></div></article><article class="md-kpi md-arrived"><span class="md-kpi-icon">⚓</span><div><small>Arrived</small><strong data-md-arrived>0</strong><em>Port and later milestones</em></div></article><article class="md-kpi md-delayed"><span class="md-kpi-icon">◷</span><div><small>Delayed</small><strong data-md-delayed>0</strong><em>Based on status and ETA</em></div></article>';return grid}
+function renderArrivals(host,data){const body=$('[data-md-arrivals]',host);if(!body)return;let items=data.map((r,i)=>({r,i,d:etaDate(r)})).filter(x=>(x.d||val(x.r,['ETA']))&&!isArrived(x.r));if(!items.length)items=data.map((r,i)=>({r,i,d:etaDate(r)})).filter(x=>x.d||val(x.r,['ETA']));items.sort((a,b)=>(a.d?.getTime()||Infinity)-(b.d?.getTime()||Infinity));items=items.slice(0,5);body.innerHTML=items.length?items.map(({r,i})=>'<tr><td><button type="button" class="md-record-link" data-md-record="'+i+'">'+esc(hbl(r)||'Shipment record')+'</button></td><td>'+esc(vessel(r)||'—')+'</td><td>'+esc(val(r,['ETA'])||'—')+'</td><td><span class="md-status '+(delayed(r)?'is-delayed':isArrived(r)?'is-arrived':'')+'">'+esc(delayed(r)?'Delayed':status(r))+'</span></td></tr>').join(''):'<tr><td colspan="4" class="md-empty">No arrival dates are available in the loaded records.</td></tr>'}
+function renderMetrics(grid,data){const count=(sel,n)=>{const e=$(sel,grid);if(e)e.textContent=String(n)};const transit=data.filter(r=>!/complete|returned|done/i.test(status(r))&&(/transit|sailing|depart|voyage|eta scheduled/i.test(status(r))||!!val(r,['ETD'])));count('[data-md-total]',data.length);count('[data-md-transit]',transit.length);count('[data-md-arrived]',data.filter(isArrived).length);count('[data-md-delayed]',data.filter(delayed).length)}
+function renderTrend(host,data){const box=$('[data-md-trend]',host);if(!box)return;const now=new Date(),months=[];for(let offset=5;offset>=0;offset--){const d=new Date(now.getFullYear(),now.getMonth()-offset,1);months.push({date:d,key:d.getFullYear()+'-'+d.getMonth(),label:d.toLocaleDateString(undefined,{month:'short'}),count:0})}for(const r of data){const d=dateOf(r,['ETA','ETD']);if(!d)continue;const item=months.find(m=>m.key===d.getFullYear()+'-'+d.getMonth());if(item)item.count++}const max=Math.max(1,...months.map(m=>m.count));box.innerHTML=months.map(m=>'<div class="md-bar-col"><span>'+m.count+'</span><i style="--bar-height:'+Math.max(5,Math.round(m.count/max*100))+'%"></i><small>'+m.label+'</small></div>').join('')}
+function renderLanes(host,data){const box=$('[data-md-lanes]',host);if(!box)return;const counts=new Map();for(const r of data){const a=origin(r),b=destination(r);if(!a&&!b)continue;const key=(a||'Origin pending')+' → '+(b||'Destination pending');counts.set(key,(counts.get(key)||0)+1)}const list=[...counts].sort((a,b)=>b[1]-a[1]).slice(0,5),max=Math.max(1,...list.map(x=>x[1]));box.innerHTML=list.length?list.map(([label,n])=>'<div class="md-lane"><span title="'+esc(label)+'">'+esc(label)+'</span><i><b style="width:'+Math.max(4,Math.round(n/max*100))+'%"></b></i><strong>'+n+'</strong></div>').join(''):'<div class="md-empty">No origin and destination pairs are recorded.</div>'}
+function renderTimeline(host,data){const box=$('[data-md-timeline]',host);if(!box)return;const chosen=data.find(r=>!isArrived(r)&&etaDate(r))||data.find(r=>!isArrived(r))||data[0];box.innerHTML=chosen?timelineHTML(chosen):'<div class="md-empty">Shipment milestones will appear when records are loaded.</div>'}
+function renderRecent(panel,data){const body=$('.approved-shipment-body',panel);if(!body)return;const shown=data.map((r,i)=>({r,i})).sort((a,b)=>(etaDate(b.r)?.getTime()||0)-(etaDate(a.r)?.getTime()||0)).slice(0,6);body.innerHTML=shown.length?shown.map(({r,i})=>'<tr><td><button type="button" class="md-record-link" data-approved-record="'+i+'">'+esc(hbl(r)||'Shipment record')+'</button></td><td>'+esc(val(r,['CONTAINER NO.','CONTAINER NO','CONTAINER','CNTR NO'])||'—')+'</td><td>'+esc(origin(r)||'—')+'</td><td>'+esc(destination(r)||'—')+'</td><td>'+esc(vessel(r)||'—')+'</td><td>'+esc(val(r,['ETD'])||'—')+'</td><td>'+esc(val(r,['ETA'])||'—')+'</td><td><span class="md-status '+(delayed(r)?'is-delayed':isArrived(r)?'is-arrived':'')+'">'+esc(delayed(r)?'Delayed':status(r))+'</span></td><td><button type="button" class="md-view-record" data-md-record="'+i+'">View</button></td></tr>').join(''):'<tr><td colspan="9" class="md-empty">Sign in and load shipment records to see the latest activity.</td></tr>'}
+function setup(){const shell=$('#staffControlTowerV12');if(!shell||!document.body.classList.contains('staff-overview-page'))return false;if(shell.dataset.modernDashboard==='ready')return true;
+ const head=$('.st12-page-head',shell),kpiRegion=$('.st12-kpi-region',shell),grid=$('.st12-main-grid',shell),mapBlock=$('.st12-map-block',shell),statusPanel=$('.st12-status-slot .staff-status-panel',shell),exception=$('#staffExceptionQueue',shell),recentPanel=$('.approved-live-shipments',shell),activity=$('.approved-activity-strip',shell),action=$('.st12-action-block',shell),quality=$('.st12-integrity-slot',shell);
+ if(!head||!kpiRegion||!grid||!mapBlock||!recentPanel)return false;
+ shell.dataset.modernDashboard='ready';
+ const metrics=makeMetrics();$('.kpi-row',kpiRegion)?.setAttribute('aria-hidden','true');
+ const mapPanel=$('.staff-map-panel',mapBlock),timeline=make('aside','md-timeline-card');timeline.innerHTML='<header class="md-card-head"><div><h2>Shipment progress</h2><p>Latest available milestones</p></div><span class="md-live-tag">LIVE</span></header><div data-md-timeline></div>';
+ const mapWrap=make('div','md-map-with-timeline');if(mapPanel)mapWrap.append(mapPanel,timeline);else mapWrap.append(timeline);mapBlock.replaceChildren(mapWrap);
+ const arrivals=buildArrivals(),top=make('section','md-top-grid');top.append(mapBlock,arrivals);
+ const trend=buildTrend(),lanes=buildLanes(),insights=make('section','md-insights-grid');if(statusPanel)insights.append(statusPanel);insights.append(trend,lanes);
+ const exceptionRow=make('section','md-exception-row');if(exception)exceptionRow.append(exception);
+ const recentHead=$('.approved-panel-head',recentPanel);if(recentHead){const title=$('.approved-panel-title',recentHead);if(title)title.textContent='Recent shipments';const subtitle=$('.approved-panel-subtitle',recentHead);if(subtitle)subtitle.textContent='Latest shipment records from your workspace';const actions=$('.approved-panel-actions',recentHead);if(actions)actions.innerHTML='<button class="approved-filter-chip active" type="button" data-approved-view-all>View all shipments →</button>'}
+ const table=$('.approved-shipment-table',recentPanel);if(table){table.querySelector('thead').innerHTML='<tr><th>HBL / BL No.</th><th>Container No.</th><th>Origin</th><th>Destination</th><th>Vessel</th><th>ETD</th><th>ETA</th><th>Status</th><th>Action</th></tr>';table.classList.add('md-recent-table')}
+ recentPanel.classList.add('md-recent-card');
+ grid.classList.add('md-original-grid-hidden');
+ const oldRail=$('.st12-recent-slot',shell);oldRail?.remove();activity?.remove();
+ const metricsLabel=$('.st12-section-label',kpiRegion);if(metricsLabel){const title=$('span',metricsLabel);if(title)title.textContent='Shipment snapshot';const sub=$('small',metricsLabel);if(sub)sub.textContent='Calculated from the loaded Supabase records'}
+ shell.replaceChildren(...[head,kpiRegion,top,insights,exceptionRow,recentPanel,action,quality].filter(Boolean));
+ kpiRegion.append(metrics);
+ arrivals.addEventListener('click',e=>{if(e.target.closest('[data-md-view-all]'))$('#staffReferenceSidebar [data-staff-nav="shipments"]')?.click()});
+ const openRecord=e=>{const btn=e.target.closest('[data-md-record]');if(!btn)return;const idx=btn.dataset.mdRecord;$('#staffReferenceSidebar [data-staff-nav="shipments"]')?.click();setTimeout(()=>$('#sheetTableBody tr[data-row="'+CSS.escape(idx)+'"] [data-st9-detail]')?.click(),260)};
+ shell.addEventListener('click',openRecord);
+ const sync=()=>{const data=allRows();renderMetrics(metrics,data);renderArrivals(arrivals,data);renderTrend(trend,data);renderLanes(lanes,data);renderTimeline(timeline,data);renderRecent(recentPanel,data);const summary=$('#approvedSyncSummary');if(summary)summary.textContent=data.length+' records loaded from the active workspace'};
+ sync();
+ if(typeof MutationObserver!=='undefined'){const src=$('#sheetTableBody'),count=$('#staffStatusTotal');if(src)new MutationObserver(sync).observe(src,{childList:true,subtree:true,characterData:true});if(count)new MutationObserver(sync).observe(count,{childList:true,characterData:true,subtree:true});}
+ return true;
+}
+function init(){let tries=0,observer=null;const poll=()=>{if(setup()){observer?.disconnect();return}if(tries++<80)setTimeout(poll,150)};if(typeof MutationObserver!=='undefined'){observer=new MutationObserver(()=>{if(setup())observer.disconnect()});observer.observe(document.body,{attributes:true,attributeFilter:['class']})}poll()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+
 ;
 /* ===== Consolidated from staff-portal-v9.js; original order preserved ===== */
 /* Shipment workspace v9: compact register + detail drawer using existing records/actions */
@@ -7990,7 +8209,8 @@ function init(){
  document.addEventListener('keydown',e=>{const tr=e.target.closest('#sheetTableBody tr[data-row]');if(tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openStaffShipmentDetail(Number(tr.dataset.row))}});
  document.addEventListener('click',e=>{if(e.target.closest('.view-btn'))setTimeout(enhance,0)});
  setTimeout(enhance,0);setTimeout(enhance,300);
-}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 
 ;
