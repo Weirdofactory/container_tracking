@@ -1,6 +1,7 @@
-/* GML Clean Control Tower — fresh visual system, replacing overlapping redesign layers. */
-:root{--ct-ink:#102b4e;--ct-muted:#667c95;--ct-line:#e2eaf2;--ct-canvas:#f3f7fb;--ct-card:#fff;--ct-blue:#1769e0;--ct-cyan:#13a8c7;--ct-green:#179b67;--ct-amber:#d98a12;--ct-red:#d94c54;--ct-radius:16px;--ct-shadow:0 5px 24px rgba(16,43,78,.055}
-html{background:var(--ct-canvas)}body{font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif!important;color:var(--ct-ink);background:var(--ct-canvas)}
+/* GML Clean Control Tower — consolidated visual layer; backend and operational scripts remain unchanged. */
+:root{--ct-ink:#102b4e;--ct-muted:#667c95;--ct-line:#e2eaf2;--ct-canvas:#f3f7fb;--ct-card:#fff;--ct-blue:#1769e0;--ct-cyan:#13a8c7;--ct-green:#179b67;--ct-amber:#d98a12;--ct-red:#d94c54;--ct-radius:16px;--ct-shadow:0 5px 24px rgba(16,43,78,.055)}
+html{background:var(--ct-canvas)}
+body{font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif!important;color:var(--ct-ink);background:var(--ct-canvas)}
 button,input,select,textarea{font:inherit}
 .nav-header{background:#fff!important;border-bottom:1px solid var(--ct-line)!important;box-shadow:none!important}
 .nav-container{max-width:none!important}
@@ -15,8 +16,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #1769e025!important;bo
 .one-hero{background:linear-gradient(115deg,#102f59 0%,#125c94 60%,#1689aa 100%)!important}
 .one-hero h1,.one-hero-title-row h1{letter-spacing:-.055em!important;line-height:1.08!important}
 .secure-access-panel,.secure-feature,.customer-help-section{border:1px solid var(--ct-line)!important;border-radius:var(--ct-radius)!important;box-shadow:var(--ct-shadow)!important}
-.secure-access-panel{background:#fff!important}
-.secure-feature{background:#fff!important}
+.secure-access-panel,.secure-feature{background:#fff!important}
 body.staff-authenticated{background:var(--ct-canvas)!important}
 body.staff-authenticated .nav-header{position:sticky;top:0;z-index:100;background:#fff!important}
 body.staff-authenticated #opsDashboardView.main-wrapper{max-width:none!important}
