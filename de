@@ -1,0 +1,5 @@
+git switch main
+git pull origin main
+git rm -r .
+git commit -m "Clear repository for complete rebuild"
+git push origin main
