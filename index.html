@@ -3638,6 +3638,42 @@ body.staff-authenticated.staff-overview-page .staff-top-search,body.staff-authen
 body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page #staffReferenceSidebar{width:72px!important;padding:14px 7px!important}
 @media(max-width:900px){body.staff-authenticated.staff-overview-page #staffReferenceSidebar{width:72px!important;padding:14px 7px!important}body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-side-link{display:flex!important;justify-content:center!important;padding:9px 4px!important;font-size:0!important}body.staff-authenticated.staff-overview-page #staffReferenceSidebar .staff-side-link>span{font-size:17px!important}body.staff-authenticated.staff-sidebar-collapsed.staff-overview-page #staffReferenceSidebar{width:72px!important}}
 
+/* Final staff workspace layout: one sidebar and one clean dashboard grid. */
+body.staff-authenticated #staffReferenceSidebar{display:flex!important}
+body.staff-authenticated .brand-box,body.staff-authenticated .header-bottom-row{display:none!important}
+body.staff-authenticated.staff-overview-page .approved-top-nav,body.staff-authenticated.staff-shipment-list-page .approved-top-nav,body.staff-authenticated.staff-shipment-detail-page .approved-top-nav{display:none!important}
+body.staff-authenticated #staffControlTowerV12 .st12-kpi-region .kpi-row{display:none!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .md-top-grid>.st12-map-block{grid-area:auto!important;grid-column:auto!important;grid-row:auto!important}
+body.staff-authenticated.staff-overview-page #staffControlTowerV12 .md-insights-grid>.staff-status-panel{grid-area:auto!important;grid-column:auto!important;grid-row:auto!important}
+body.staff-authenticated .main-wrapper#opsDashboardView{scroll-margin-top:82px!important}
+@media(min-width:761px){
+  body.staff-authenticated #staffReferenceSidebar{position:fixed!important;z-index:1200!important;top:0!important;bottom:0!important;left:0!important;width:258px!important;height:100dvh!important;max-height:100dvh!important}
+  body.staff-authenticated.staff-sidebar-collapsed #staffReferenceSidebar{width:72px!important}
+  body.staff-authenticated .nav-header{position:sticky!important;top:0!important;z-index:1100!important;width:calc(100% - 258px)!important;height:68px!important;min-height:68px!important;margin:0 0 0 258px!important}
+  body.staff-authenticated.staff-sidebar-collapsed .nav-header{width:calc(100% - 72px)!important;margin-left:72px!important}
+  body.staff-authenticated .nav-container.nav-multilevel{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;width:100%!important;height:68px!important;min-height:68px!important;padding:0 22px!important}
+  body.staff-authenticated .header-tools{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;flex:1 1 auto!important;min-width:0!important}
+  body.staff-authenticated .staff-top-search,body.staff-authenticated #staffTopSearchWrap{display:flex!important;flex:1 1 520px!important;width:auto!important;max-width:620px!important;min-width:180px!important;margin:0!important}
+  body.staff-authenticated #opsControls{display:flex!important;align-items:center!important;flex:0 0 auto!important;width:auto!important;margin:0!important}
+  body.staff-authenticated #opsDashboardView.main-wrapper{width:calc(100% - 258px)!important;max-width:none!important;margin:0 0 0 258px!important;padding:24px clamp(18px,2.2vw,34px) 40px!important}
+  body.staff-authenticated.staff-sidebar-collapsed #opsDashboardView.main-wrapper{width:calc(100% - 72px)!important;margin-left:72px!important}
+  body.staff-authenticated.staff-shipment-list-page #opsDashboardView.main-wrapper,body.staff-authenticated.staff-shipment-detail-page #opsDashboardView.main-wrapper{width:calc(100% - 258px)!important;max-width:none!important;margin:0 0 0 258px!important;padding:24px clamp(18px,2.2vw,34px) 40px!important}
+  body.staff-authenticated.staff-sidebar-collapsed.staff-shipment-list-page #opsDashboardView.main-wrapper,body.staff-authenticated.staff-sidebar-collapsed.staff-shipment-detail-page #opsDashboardView.main-wrapper{width:calc(100% - 72px)!important;margin-left:72px!important}
+}
+@media(min-width:761px) and (max-width:1000px){
+  body.staff-authenticated #staffReferenceSidebar{width:72px!important;padding:14px 7px!important}
+  body.staff-authenticated #staffReferenceSidebar .staff-sidebar-brand>span:last-child,body.staff-authenticated #staffReferenceSidebar .staff-sidebar-label,body.staff-authenticated #staffReferenceSidebar .staff-sidebar-toggle,body.staff-authenticated #staffReferenceSidebar .staff-sidebar-help,body.staff-authenticated #staffReferenceSidebar .staff-sidebar-foot{display:none!important}
+  body.staff-authenticated #staffReferenceSidebar .staff-side-link{justify-content:center!important;padding:9px 4px!important;font-size:0!important}
+  body.staff-authenticated #staffReferenceSidebar .staff-side-link>span{font-size:17px!important}
+  body.staff-authenticated .nav-header,body.staff-authenticated.staff-sidebar-collapsed .nav-header{width:calc(100% - 72px)!important;margin-left:72px!important}
+  body.staff-authenticated #opsDashboardView.main-wrapper,body.staff-authenticated.staff-shipment-list-page #opsDashboardView.main-wrapper,body.staff-authenticated.staff-shipment-detail-page #opsDashboardView.main-wrapper{width:calc(100% - 72px)!important;margin-left:72px!important}
+}
+@media(max-width:760px){
+  body.staff-authenticated.staff-overview-page .approved-top-nav,body.staff-authenticated.staff-shipment-list-page .approved-top-nav,body.staff-authenticated.staff-shipment-detail-page .approved-top-nav{display:none!important}
+  body.staff-authenticated #staffReferenceSidebar{display:flex!important}
+  body.staff-authenticated .nav-header{width:100%!important;margin:0!important}
+  body.staff-authenticated #opsDashboardView.main-wrapper,body.staff-authenticated.staff-shipment-list-page #opsDashboardView.main-wrapper,body.staff-authenticated.staff-shipment-detail-page #opsDashboardView.main-wrapper{width:100%!important;margin:0!important;padding:14px 12px calc(78px + env(safe-area-inset-bottom))!important}
+}
 </style>
 </head>
 <body>
