@@ -69,7 +69,7 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  let payload: { imo?: unknown; mmsi?: unknown };
+  let payload: { action?: unknown; vesselName?: unknown; imo?: unknown; mmsi?: unknown };
   try {
     const parsed = await req.json();
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return reply(400, { error: "Invalid request" }, origin);
@@ -77,15 +77,74 @@ Deno.serve(async (req: Request) => {
   } catch {
     return reply(400, { error: "Invalid request" }, origin);
   }
+
+  const apiKey = Deno.env.get("MARINETRAFFIC_API_KEY");
+  if (!apiKey) return reply(503, { error: "MarineTraffic is not configured yet. Add MARINETRAFFIC_API_KEY to Supabase Edge Function secrets." }, origin);
+  if (!/^[a-f0-9]{40}$/i.test(apiKey)) return reply(503, { error: "MarineTraffic API key format is invalid. Check the Supabase secret." }, origin);
+
+  if (payload.action === "search") {
+    const vesselName = typeof payload.vesselName === "string" ? payload.vesselName.replace(/\s+/g, " ").trim() : "";
+    if (vesselName.length < 3 || vesselName.length > 100) return reply(400, { error: "Enter a vessel name between 3 and 100 characters." }, origin);
+
+    const searchEndpoint = new URL("https://services.marinetraffic.com/api/shipsearch/" + encodeURIComponent(apiKey));
+    searchEndpoint.searchParams.set("shipname", vesselName);
+    searchEndpoint.searchParams.set("shiptype", "7");
+    searchEndpoint.searchParams.set("protocol", "json");
+
+    let searchResponse: Response;
+    try {
+      searchResponse = await fetch(searchEndpoint, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(15000) });
+    } catch {
+      return reply(502, { error: "Could not reach MarineTraffic vessel search. Try again shortly." }, origin);
+    }
+    if (searchResponse.status === 429) return reply(429, { error: "MarineTraffic request limit reached. Try again later." }, origin);
+    if (!searchResponse.ok) return reply(502, { error: "MarineTraffic rejected vessel search. Check API key and ship-search access on your plan." }, origin);
+
+    let searchRaw: unknown;
+    try {
+      searchRaw = await searchResponse.json();
+    } catch {
+      return reply(502, { error: "MarineTraffic returned an unreadable vessel-search response." }, origin);
+    }
+    const searchRows: unknown[] = Array.isArray(searchRaw) ? searchRaw :
+      searchRaw && typeof searchRaw === "object" && Array.isArray((searchRaw as Record<string, unknown>).DATA)
+        ? (searchRaw as { DATA: unknown[] }).DATA
+        : [];
+    const matches = searchRows.flatMap(record => {
+      if (!record || typeof record !== "object") return [];
+      const item = record as Record<string, unknown>;
+      const name = String(item.SHIPNAME ?? item.shipName ?? "").trim();
+      const rawIMO = String(item.IMO ?? item.imo ?? "").replace(/\D/g, "");
+      const rawMMSI = String(item.MMSI ?? item.mmsi ?? "").replace(/\D/g, "");
+      const imo = validIMO(rawIMO) ? rawIMO : "";
+      const mmsi = validMMSI(rawMMSI) ? rawMMSI : "";
+      if (!name || (!imo && !mmsi)) return [];
+      return [{
+        name, imo, mmsi,
+        shipId: String(item.SHIP_ID ?? item.shipId ?? "").replace(/\D/g, ""),
+        callSign: String(item.CALLSIGN ?? item.callSign ?? "").trim(),
+        type: String(item.TYPE_NAME ?? item.type ?? "").trim(),
+        flag: String(item.FLAG ?? item.flag ?? "").trim(),
+        country: String(item.COUNTRY ?? item.country ?? "").trim(),
+      }];
+    });
+    const unique = new Map<string, typeof matches[number]>();
+    for (const match of matches) {
+      const key = match.imo || match.mmsi || match.shipId;
+      if (key && !unique.has(key)) unique.set(key, match);
+    }
+    const exactName = vesselName.toUpperCase();
+    const candidates = Array.from(unique.values()).sort((a, b) =>
+      Number(b.name.toUpperCase() === exactName) - Number(a.name.toUpperCase() === exactName)
+    ).slice(0, 15);
+    return reply(200, { source: "MarineTraffic", results: candidates }, origin);
+  }
+
   const imo = typeof payload.imo === "string" ? payload.imo.replace(/\D/g, "") : "";
   const mmsi = typeof payload.mmsi === "string" ? payload.mmsi.replace(/\D/g, "") : "";
   if (!!imo === !!mmsi) return reply(400, { error: "Provide one IMO or MMSI." }, origin);
   if (imo && !validIMO(imo)) return reply(400, { error: "IMO is invalid. Check the seven-digit IMO number." }, origin);
   if (mmsi && !validMMSI(mmsi)) return reply(400, { error: "MMSI must contain nine digits." }, origin);
-
-  const apiKey = Deno.env.get("MARINETRAFFIC_API_KEY");
-  if (!apiKey) return reply(503, { error: "MarineTraffic is not configured yet. Add MARINETRAFFIC_API_KEY to Supabase Edge Function secrets." }, origin);
-  if (!/^[a-f0-9]{40}$/i.test(apiKey)) return reply(503, { error: "MarineTraffic API key format is invalid. Check the Supabase secret." }, origin);
 
   const endpoint = new URL(`https://services.marinetraffic.com/api/exportvesseltrack/${encodeURIComponent(apiKey)}`);
   endpoint.searchParams.set("v", "3");
