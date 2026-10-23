@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b2b50"><meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Track a Shipment | GML</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--navy:#0b2b50;--blue:#147bd1;--ink:#183550;--muted:#7187a0;--line:#dce6f0;--bg:#f2f6fa;--green:#08a872;--shadow:0 12px 34px rgba(17,52,86,.08)}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:"DM Sans",sans-serif;color:var(--ink);font-size:15px}a{color:inherit}button,input{font:inherit}.topbar{height:76px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 max(24px,calc((100vw - 1240px)/2));gap:16px}.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font:800 18px Manrope,sans-serif;color:var(--navy);letter-spacing:-.5px}.brand-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,#20b4d3,#087bbb);color:#fff;font-size:24px;box-shadow:0 8px 18px #03234222}.staff-link{font-weight:700;text-decoration:none;color:#4f6b86;background:#f5f8fb;border:1px solid var(--line);border-radius:10px;padding:10px 14px}.staff-link:hover{border-color:#94c9ed;color:#0877c4}.wrap{max-width:1240px;margin:auto;padding:40px 24px 56px}.hero{background:radial-gradient(circle at 100% 0,#1a8eaa 0,transparent 40%),linear-gradient(115deg,#0b2b50,#104b78 64%,#087c93);border-radius:22px;color:white;padding:46px clamp(24px,5vw,64px);display:grid;grid-template-columns:1fr minmax(300px,.76fr);gap:44px;align-items:center;box-shadow:0 20px 45px #103b6322}.eyebrow{font-size:11px;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;color:#8be6e1}.hero h1{font:800 clamp(34px,5vw,58px)/1.03 Manrope,sans-serif;letter-spacing:-2.2px;margin:18px 0 15px;max-width:640px}.hero-copy{font-size:17px;line-height:1.7;color:#c7ddec;max-width:650px;margin:0}.search-panel{background:white;color:var(--ink);border-radius:17px;padding:23px;box-shadow:0 18px 45px #041e3933}.search-panel label{display:block;font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#5c7791;margin-bottom:9px}.search-row{display:flex;gap:8px}.search-row input{flex:1;min-width:0;height:48px;border:1px solid #d8e3ed;background:#f8fafc;border-radius:10px;padding:0 13px;color:var(--ink);outline:none}.search-row input:focus{border-color:#48a7df;box-shadow:0 0 0 3px #1383d51a}.search-row button{border:0;border-radius:10px;padding:0 18px;min-width:105px;color:#fff;font-weight:800;background:linear-gradient(110deg,#1688df,#078da9);box-shadow:0 7px 17px #1387bc26}.search-row button:disabled{opacity:.65;cursor:wait}.search-hint{font-size:12px;color:#8195a9;line-height:1.55;margin:12px 0 0}.status-note{min-height:20px;font-size:13px;line-height:1.5;margin:10px 0 0;color:#637d96}.status-note.error{color:#ad3e38}.status-note.success{color:#07835d}.features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}.feature{background:#fff;border:1px solid #e2ebf3;border-radius:14px;padding:17px;box-shadow:var(--shadow)}.feature strong{display:block;color:#173b60;font:800 14px Manrope,sans-serif}.feature span{display:block;color:#7c91a6;font-size:12px;line-height:1.5;margin-top:5px}.results{margin-top:32px}.results-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:13px}.results-head h2{font:800 22px Manrope,sans-serif;color:var(--navy);margin:0}.results-head p{margin:5px 0 0;color:#8297aa;font-size:13px}.result-list{display:grid;gap:14px}.result-card{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:var(--shadow)}.result-top{display:flex;justify-content:space-between;align-items:start;gap:15px;padding:19px 21px;border-bottom:1px solid #edf2f7}.result-top h3{margin:0;color:#087fc9;font:800 20px Manrope,sans-serif;overflow-wrap:anywhere}.result-top p{margin:5px 0 0;color:#7b91a6;font-size:13px}.badge{border-radius:20px;padding:8px 12px;background:#e8f4ff;color:#0874c5;font-size:11px;font-weight:800;white-space:nowrap}.badge.done{background:#e5f8ef;color:#07835d}.result-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:16px 21px}.result-cell{border:1px solid #e7eef4;border-radius:10px;background:#f8fafc;padding:11px;min-width:0}.result-cell small{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:#879bad;font-weight:800}.result-cell b{display:block;margin-top:6px;color:#254765;font-size:13px;overflow-wrap:anywhere}.timeline{display:grid;grid-template-columns:repeat(6,minmax(105px,1fr));gap:0;padding:5px 21px 20px;overflow-x:auto}.mile{position:relative;border-top:2px solid #dce6ef;padding:13px 8px 0 0;min-width:105px}.mile:before{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:#fff;border:2px solid #cbd8e3;top:-7px;left:0}.mile.done{border-color:#14a778}.mile.done:before{background:#14a778;border-color:#14a778;box-shadow:0 0 0 3px #14a77820}.mile.estimate:before{border-color:#2789da;background:#e7f3ff}.mile b{display:block;font-size:11px;color:#355774}.mile span{display:block;color:#8195a9;font-size:11px;margin-top:4px}.empty-state{background:#fff;border:1px dashed #cbd9e6;border-radius:15px;padding:30px;text-align:center;color:#7b91a6;line-height:1.7}.empty-state strong{display:block;font:800 16px Manrope;color:#284b68;margin-bottom:5px}.footer{border-top:1px solid var(--line);margin-top:38px;padding:19px 24px;text-align:center;color:#8296a9;font-size:12px;line-height:1.6}.footer a{color:#176eab;font-weight:700;text-decoration:none}
+    @media(max-width:820px){.hero{grid-template-columns:1fr;gap:27px;padding:34px 26px}.result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.timeline{grid-template-columns:repeat(6,120px)}}
+    @media(max-width:540px){.topbar{height:67px;padding:0 15px}.brand{font-size:15px}.brand-icon{width:39px;height:39px}.staff-link{padding:9px 10px;font-size:12px}.wrap{padding:20px 13px 37px}.hero{padding:28px 18px;border-radius:16px}.hero h1{font-size:37px;letter-spacing:-1.5px}.hero-copy{font-size:14px}.search-panel{padding:17px}.search-row{display:grid;grid-template-columns:1fr}.search-row button{height:46px}.features{grid-template-columns:1fr;gap:8px}.feature{padding:13px}.results-head{align-items:start;flex-direction:column}.result-top{padding:16px}.result-grid{padding:13px;gap:7px}.timeline{padding:5px 14px 18px}.empty-state{padding:23px 17px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="GML Container Tracking home"><span class="brand-icon">⚓</span><span>Container Tracking Suite</span></a>
+    <a class="staff-link" href="./">🔒 Staff portal</a>
+  </header>
+  <main class="wrap">
+    <section class="hero">
+      <div><div class="eyebrow">Greenwich Meridian Logistics · Customer tracking</div><h1>Shipment visibility, without the guesswork.</h1><p class="hero-copy">Check your shipment’s latest recorded progress, vessel details and estimated arrival in one clear place.</p></div>
+      <form class="search-panel" id="trackForm">
+        <label for="reference">Container or bill of lading number</label>
+        <div class="search-row"><input id="reference" name="reference" autocomplete="off" maxlength="40" placeholder="e.g. WHSU6393302" required><button id="searchButton" type="submit">Track shipment</button></div>
+        <p class="search-hint">Enter the exact number shown on your shipping documents. Search works with a container number or master B/L.</p>
+        <p class="status-note" id="searchMessage" aria-live="polite"></p>
+      </form>
+    </section>
+    <section class="features" aria-label="Tracking information">
+      <article class="feature"><strong>Current progress</strong><span>See the latest status recorded by GML operations.</span></article>
+      <article class="feature"><strong>Vessel and route</strong><span>Review the vessel, origin and India gateway for your shipment.</span></article>
+      <article class="feature"><strong>Milestone dates</strong><span>Follow recorded terminal events and estimated dates.</span></article>
+    </section>
+    <section class="results" id="resultsSection" hidden>
+      <div class="results-head"><div><h2>Shipment results</h2><p>Operational updates supplied by Greenwich Meridian Logistics.</p></div></div>
+      <div class="result-list" id="resultList"></div>
+    </section>
+    <section class="results" id="emptySection" hidden><div class="empty-state"><strong>No shipment found</strong>Check the exact container or B/L number and try again. If the number is correct, contact your GML operations representative.</div></section>
+  </main>
+  <footer class="footer">This customer page shows shipment status, route, vessel and recorded milestone dates. Updates are supplied by <a href="https://gmlindia.net" rel="noopener noreferrer" target="_blank">GML operations</a>.<br><a href="./">Staff sign-in</a></footer>
+  <script>
+    "use strict";
+    const SUPABASE_URL="https://ykeucqritoexykqrggzz.supabase.co";
+    const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
+    const TRACK_FUNCTION="customer-track-public";
+    const $=id=>document.getElementById(id);
+    function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
+    function formatDate(value){
+      if(!value)return "Awaiting update";
+      const s=String(value).trim();
+      const match=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+      if(match){let year=Number(match[3]);if(year<100)year+=2000;const d=new Date(year,Number(match[2])-1,Number(match[1]));return Number.isNaN(+d)?s:new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",year:"numeric"}).format(d)}
+      const d=new Date(s);return Number.isNaN(+d)?s:new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",year:"numeric"}).format(d);
+    }
+    function renderShipment(item){
+      const statusDone=["Empty returned","Destuffing","At CFS","Port released","Arrived at port","Vessel departed"].includes(item.status);
+      const route=(item.origin||"Origin pending")+" → "+(item.gateway||"Gateway pending");
+      const milestones=(Array.isArray(item.milestones)?item.milestones:[]).map(m=>{
+        const recorded=!!m.date&&!m.estimate;
+        const estimate=!!m.date&&!!m.estimate;
+        return '<div class="mile '+(recorded?"done":estimate?"estimate":"")+'"><b>'+escapeHtml(m.label)+'</b><span>'+escapeHtml(m.date?formatDate(m.date):(m.estimate?"Scheduled":"Awaiting update"))+'</span></div>';
+      }).join("");
+      return '<article class="result-card"><div class="result-top"><div><h3>'+escapeHtml(item.container||"Shipment")+'</h3><p>'+escapeHtml(item.type||"Container")+'</p></div><span class="badge '+(statusDone?"done":"")+'">'+escapeHtml(item.status||"Awaiting update")+'</span></div><div class="result-grid"><div class="result-cell"><small>Route</small><b>'+escapeHtml(route)+'</b></div><div class="result-cell"><small>Vessel / voyage</small><b>'+escapeHtml(item.vessel||"Not recorded")+'</b></div><div class="result-cell"><small>Shipping line</small><b>'+escapeHtml(item.shippingLine||"Not recorded")+'</b></div><div class="result-cell"><small>Estimated arrival</small><b>'+escapeHtml(formatDate(item.eta))+'</b></div></div><div class="timeline">'+milestones+'</div></article>';
+    }
+    $("trackForm").addEventListener("submit",async event=>{
+      event.preventDefault();
+      const message=$("searchMessage"),button=$("searchButton"),reference=$("reference").value.trim();
+      message.textContent="Searching the latest GML shipment records…";message.className="status-note";button.disabled=true;$("resultsSection").hidden=true;$("emptySection").hidden=true;
+      try{
+        const response=await fetch(SUPABASE_URL+"/functions/v1/"+TRACK_FUNCTION,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY},body:JSON.stringify({reference}),cache:"no-store",credentials:"omit",referrerPolicy:"no-referrer"});
+        const data=await response.json().catch(()=>({}));
+        if(response.status===429)throw new Error(data.error||"Too many searches. Please try again in a minute.");
+        if(!response.ok||data.error)throw new Error(data.error||"Tracking service is temporarily unavailable.");
+        const results=Array.isArray(data.results)?data.results:[];
+        if(!results.length){$("emptySection").hidden=false;message.textContent="No matching shipment record was found.";message.className="status-note";}
+        else{$("resultList").innerHTML=results.map(renderShipment).join("")+(data.truncated?'<div class="empty-state">Some matching shipments were not shown. Contact GML operations for the complete B/L results.</div>':"");$("resultsSection").hidden=false;message.textContent=results.length+" shipment record"+(results.length===1?"":"s")+" found.";message.className="status-note success";}
+      }catch(error){message.textContent=error.message||"Could not search shipment records. Please try again.";message.className="status-note error";}
+      finally{button.disabled=false;}
+    });
+  </script>
+</body>
+</html>
