@@ -52,7 +52,7 @@ function safeShipment(row: Record<string, unknown>) {
   else if (cfsIn) status = "At CFS";
   else if (portOut) status = "Port released";
   else if (portIn) status = "Arrived at port";
-  else if (etd) status = "Vessel departed";
+  else if (etd) status = "Departure scheduled";
   return {
     container: field(row, ["CONTAINER NO.", "CONTAINER", "CONTAINER NO", "CNTR NO", "CONTAINER NUMBER"]),
     type: field(row, ["TYPE", "SIZE", "CONTAINER TYPE"]),
@@ -64,7 +64,7 @@ function safeShipment(row: Record<string, unknown>) {
     etd,
     eta: field(row, ["ETA", "ESTIMATED ARRIVAL"]),
     milestones: [
-      { label: "Vessel departure", date: etd, estimate: true },
+      { label: "Estimated departure", date: etd, estimate: true },
       { label: "Port arrival", date: portIn, estimate: false },
       { label: "Port release", date: portOut, estimate: false },
       { label: "CFS received", date: cfsIn, estimate: false },
