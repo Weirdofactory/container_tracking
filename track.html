@@ -54,7 +54,7 @@
       const d=new Date(s);return Number.isNaN(+d)?s:new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",year:"numeric"}).format(d);
     }
     function renderShipment(item){
-      const statusDone=["Empty returned","Destuffing","At CFS","Port released","Arrived at port","Vessel departed"].includes(item.status);
+      const statusDone=["Empty returned","Destuffing","At CFS","Port released","Arrived at port"].includes(item.status);
       const route=(item.origin||"Origin pending")+" → "+(item.gateway||"Gateway pending");
       const milestones=(Array.isArray(item.milestones)?item.milestones:[]).map(m=>{
         const recorded=!!m.date&&!m.estimate;
