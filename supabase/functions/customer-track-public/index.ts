@@ -1,6 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const allowedOrigin = () => Deno.env.get("CUSTOMER_TRACKING_ALLOWED_ORIGIN") ?? "https://weirdofactory.github.io";
+const PHOTO_BUCKET = "shipment-milestone-photos";
+
 function headersFor(origin: string | null) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json; charset=utf-8",
@@ -33,11 +35,43 @@ async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
-function clientAddress(req: Request): string {
-  const direct = req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip");
-  if (direct) return direct.trim().slice(0, 100);
-  const forwarded = req.headers.get("x-forwarded-for");
-  return forwarded ? forwarded.split(",")[0].trim().slice(0, 100) : "unknown";
+function parseDate(value: string): number | null {
+  const s = value.trim();
+  if (!s) return null;
+  const dmy = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+  if (dmy) {
+    let year = Number(dmy[3]);
+    if (year < 100) year += 2000;
+    const d = new Date(Date.UTC(year, Number(dmy[2]) - 1, Number(dmy[1])));
+    return d.getUTCFullYear() === year && d.getUTCMonth() === Number(dmy[2]) - 1 && d.getUTCDate() === Number(dmy[1]) ? d.getTime() : null;
+  }
+  const parsed = Date.parse(s);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+function validationWarnings(row: Record<string, unknown>): string[] {
+  const events = [
+    ["Port arrival", field(row, ["PORT IN"])],
+    ["Port release", field(row, ["PORT OUT"])],
+    ["CFS received", field(row, ["CFS IN"])],
+    ["Destuffing", field(row, ["DESTUFFING DATE", "DESTUFF DATE"])],
+    ["Empty returned", field(row, ["CONTAINER RETURN DATE", "EMPTY RETURN DATE"])],
+  ].map(([label, date]) => ({ label, date, value: parseDate(date) })).filter(item => item.value !== null);
+  const warnings: string[] = [];
+  for (let i = 1; i < events.length; i++) {
+    if (events[i].value! < events[i - 1].value!) {
+      warnings.push("Some recorded milestone dates appear out of order. Please confirm them with GML.");
+      break;
+    }
+  }
+  const eta = field(row, ["ETA", "ESTIMATED ARRIVAL"]);
+  const etaValue = parseDate(eta);
+  if (etaValue !== null && events.length && etaValue < Math.max(...events.map(item => item.value!))) {
+    warnings.push("The ETA is earlier than a milestone already recorded. Please confirm the arrival date with GML.");
+  }
+  if (etaValue !== null && etaValue < Date.now() && !field(row, ["PORT IN"])) {
+    warnings.push("The recorded ETA has passed and port arrival has not been recorded yet.");
+  }
+  return warnings;
 }
 function safeShipment(row: Record<string, unknown>) {
   const etd = field(row, ["ETD", "VESSEL DEPARTURE"]);
@@ -63,6 +97,8 @@ function safeShipment(row: Record<string, unknown>) {
     gateway: field(row, ["GATEWAY PORT", "GATEWAY"]),
     etd,
     eta: field(row, ["ETA", "ESTIMATED ARRIVAL"]),
+    warnings: validationWarnings(row),
+    photos: [] as Array<Record<string, string>>,
     milestones: [
       { label: "Estimated departure", date: etd, estimate: true },
       { label: "Port arrival", date: portIn, estimate: false },
@@ -73,6 +109,13 @@ function safeShipment(row: Record<string, unknown>) {
     ],
   };
 }
+function clientAddress(req: Request): string {
+  const direct = req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip");
+  if (direct) return direct.trim().slice(0, 100);
+  const forwarded = req.headers.get("x-forwarded-for");
+  return forwarded ? forwarded.split(",")[0].trim().slice(0, 100) : "unknown";
+}
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (req.method === "OPTIONS") {
@@ -120,7 +163,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const { data: source, error: sourceError } = await admin.from("containers")
-    .select("data").eq("id", "gml_tracking_records").maybeSingle();
+    .select("data,updated_at").eq("id", "gml_tracking_records").maybeSingle();
   if (sourceError || !Array.isArray(source?.data)) {
     return reply(503, { error: "Tracking service is temporarily unavailable." }, origin);
   }
@@ -134,5 +177,32 @@ Deno.serve(async (req: Request) => {
   }) as Record<string, unknown>[];
 
   const results = matches.slice(0, 12).map(safeShipment);
-  return reply(200, { results, truncated: matches.length > results.length }, origin);
+  if (results.length) {
+    const containerNumbers = Array.from(new Set(results.map(item => normalize(item.container)).filter(Boolean)));
+    if (containerNumbers.length) {
+      const { data: photoRows } = await admin.from("shipment_photos")
+        .select("container_no,milestone,caption,created_at,storage_path")
+        .in("container_no", containerNumbers).eq("customer_visible", true)
+        .order("created_at", { ascending: false }).limit(containerNumbers.length * 8);
+      if (Array.isArray(photoRows) && photoRows.length) {
+        const grouped = new Map<string, Array<Record<string, string>>>();
+        await Promise.all(photoRows.map(async (photo: Record<string, unknown>) => {
+          const { data: signed } = await admin.storage.from(PHOTO_BUCKET).createSignedUrl(String(photo.storage_path), 600);
+          if (!signed?.signedUrl) return;
+          const key = normalize(photo.container_no);
+          const bucket = grouped.get(key) || [];
+          if (bucket.length >= 8) return;
+          bucket.push({
+            url: signed.signedUrl,
+            milestone: String(photo.milestone || ""),
+            caption: String(photo.caption || ""),
+            createdAt: String(photo.created_at || ""),
+          });
+          grouped.set(key, bucket);
+        }));
+        for (const item of results) item.photos = grouped.get(normalize(item.container)) || [];
+      }
+    }
+  }
+  return reply(200, { results, truncated: matches.length > results.length, sourceUpdatedAt: source.updated_at || null }, origin);
 });
