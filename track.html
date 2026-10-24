@@ -42,6 +42,27 @@
     .legend-line.approx{height:0;border-top:2px dashed #758fa6;background:none}
     @media(max-width:700px){.map-panel-head{align-items:flex-start;flex-direction:column}.map-controls{width:100%}.map-controls select{flex:1;min-width:160px}.customer-map{height:310px}.customer-photo-gallery,.eta-warning{margin-left:0;margin-right:0}.customer-photo-gallery{padding-left:15px;padding-right:15px}}
 
+  
+    :root{color-scheme:dark;--navy:#071522;--blue:#49a8ff;--ink:#e2eef5;--muted:#91a8ba;--line:rgba(151,188,210,.17);--bg:#07131e;--green:#3cdaa6;--shadow:0 18px 45px rgba(0,0,0,.28)}
+    body{background:radial-gradient(ellipse at 80% 6%,rgba(10,145,167,.18),transparent 30%),radial-gradient(ellipse at 6% 48%,rgba(43,89,177,.13),transparent 35%),#06131f;color:#dceaf3}
+    body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(rgba(111,171,202,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(111,171,202,.025) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(to bottom,black,transparent 85%)}
+    .topbar{background:rgba(7,21,33,.87);backdrop-filter:blur(17px);border-color:var(--line);box-shadow:0 8px 30px rgba(0,0,0,.14)}.brand{color:#edf8fc}.brand-icon{background:linear-gradient(145deg,#36d8df,#247df5);box-shadow:0 0 26px rgba(47,198,220,.22)}.staff-link{background:#102333;border-color:var(--line);color:#b6cad6}.staff-link:hover{border-color:rgba(53,217,220,.4);color:#e9ffff}
+    .wrap{position:relative}.hero{position:relative;overflow:hidden;border:1px solid rgba(102,195,212,.2);background:radial-gradient(ellipse at 93% 0,rgba(17,177,187,.22),transparent 38%),linear-gradient(118deg,#091b2a,#0b3044 65%,#0b2936);box-shadow:0 24px 70px rgba(0,0,0,.25)}.hero:after{content:"";position:absolute;pointer-events:none;right:-155px;bottom:-270px;width:550px;height:550px;border:1px solid rgba(88,187,207,.14);border-radius:50%;box-shadow:0 0 0 38px rgba(88,187,207,.025),0 0 0 80px rgba(88,187,207,.018)}.hero>div,.hero>form{position:relative;z-index:1}
+    .eyebrow{color:#71dce1}.hero-copy{color:#a9becb}.hero h1{color:#f2fbff}.search-panel{background:rgba(8,26,40,.86);border:1px solid rgba(133,194,212,.2);box-shadow:0 20px 55px rgba(0,0,0,.28);backdrop-filter:blur(14px);color:#dcebf3}.search-panel label{color:#9db7c7}.search-row input{background:#0e2433;border-color:var(--line);color:#eef8fb}.search-row input::placeholder{color:#758fa2}.search-row input:focus{border-color:#35d9dc;box-shadow:0 0 0 3px rgba(53,217,220,.1)}.search-row button{background:linear-gradient(110deg,#208dde,#0caab5);box-shadow:0 8px 22px rgba(11,163,196,.2)}.search-hint{color:#829bac}.status-note{color:#91a8ba}.status-note.error{color:#ff9292}.status-note.success{color:#5be0ae}
+    .feature{background:linear-gradient(145deg,rgba(14,32,47,.96),rgba(9,25,38,.96));border-color:var(--line);box-shadow:var(--shadow)}.feature strong{color:#d8eef5}.feature span{color:#90a7b7}
+    .results-head h2{color:#eaf5fa}.results-head p{color:#899faf}.result-card,.map-panel{background:linear-gradient(145deg,rgba(13,31,46,.98),rgba(9,24,37,.98));border-color:var(--line);box-shadow:var(--shadow)}.result-top{border-color:var(--line)}.result-top h3{color:#69c3ff}.result-top p{color:#8ea5b6}.badge{background:rgba(73,168,255,.15);color:#79c3ff}.badge.done{background:rgba(60,218,166,.15);color:#57e0af}
+    .result-cell{background:#102433;border-color:var(--line)}.result-cell small{color:#8ea7b8}.result-cell b{color:#d5e7f0}.timeline .mile{border-color:#29404e}.mile.done{border-color:#37d5a3}.mile:before{background:#0c1c29;border-color:#43596a}.mile.done:before{background:#3cdaa6;border-color:#3cdaa6;box-shadow:0 0 0 4px rgba(60,218,166,.13)}.mile.estimate:before{background:#14374c;border-color:#49a8ff}.mile b{color:#b8cfdb}.mile span{color:#879eaf}
+    .empty-state{background:#0d2230;border-color:rgba(141,187,207,.25);color:#9bb1bf}.empty-state strong{color:#e0eef4}
+    .footer{border-color:var(--line);color:#8198a8}.footer a{color:#65c4ff}
+    .freshness-note{background:#102737;border-color:var(--line);color:#acc2cf}.freshness-note.stale{background:rgba(124,83,17,.2);border-color:rgba(255,195,106,.34);color:#ffd98e}
+    .eta-warning{background:rgba(130,86,19,.19);border-color:rgba(255,195,106,.35);color:#ffda91}
+    .customer-photo-gallery{border-color:var(--line)}.customer-photo-gallery h4{color:#dbedf4}.customer-photo{background:#102433;border-color:var(--line)}.customer-photo span{color:#99afbd}
+    .map-card-link{background:#102a3b;border-color:var(--line);color:#82c9ff}.map-card-link:hover{background:#12354a;border-color:rgba(73,168,255,.38)}
+    .map-panel-head{border-color:var(--line)}.map-panel-head h3{color:#e0f1f7}.map-panel-head p,.map-status{color:#91a8ba}.map-controls select{background:#102433;border-color:var(--line);color:#d9eaf1}.map-controls button{background:linear-gradient(135deg,#159bd0,#087eb4)}.map-status.error{color:#ff9494}.customer-map{background:#0b2535}
+    .map-legend{color:#93aab9}.map-legend .legend-line{border-color:#35d9dc}.map-legend .legend-line.approx{border-color:#ffc36a}
+    @media(max-width:820px){.hero{gap:27px}}@media(max-width:540px){.hero{border-radius:14px}.search-panel{border-radius:13px}.result-card{border-radius:13px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+
   </style>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.15.0/dist/maplibre-gl.css">
 </head>
