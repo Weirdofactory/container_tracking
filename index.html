@@ -114,6 +114,76 @@
     .coverage-card{margin-top:16px;overflow:hidden}.coverage-list{display:grid;padding:6px 17px 12px}.coverage-row{display:grid;grid-template-columns:minmax(120px,1.1fr) minmax(100px,2fr) 50px 105px;align-items:center;gap:15px;padding:12px 4px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;cursor:pointer;color:inherit}.coverage-row:last-child{border-bottom:0}.coverage-row:hover .coverage-review{color:#80dcdf}.coverage-row:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:8px}.coverage-stage{display:grid;gap:4px}.coverage-stage b{color:#d8edf4;font-size:11px}.coverage-stage small{color:#839eaf;font-size:9px}.coverage-track{height:7px;border-radius:20px;background:#172d3c;overflow:hidden}.coverage-track i{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#28c6d4,#398bf5);box-shadow:0 0 13px rgba(54,181,238,.22)}.coverage-percent{color:#9ed7e8;font:700 12px Manrope,sans-serif;text-align:right}.coverage-review{color:#75baff;font-size:10px;font-weight:700;text-align:right;white-space:nowrap}
     @media(max-width:700px){.coverage-row{grid-template-columns:minmax(120px,1fr) 48px;gap:8px}.coverage-track{grid-column:1/2;grid-row:2}.coverage-percent{grid-column:2;grid-row:1}.coverage-review{grid-column:2;grid-row:2;font-size:9px;white-space:normal}}
 
+  
+    .ops-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0 22px}
+    .ops-kpi{background:linear-gradient(145deg,#fff,#f8fbff);border:1px solid #dce7f3;border-radius:16px;padding:18px 20px;box-shadow:0 8px 24px rgba(12,43,80,.045)}
+    .ops-kpi-label{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7187a2}
+    .ops-kpi-value{font:800 27px Manrope,sans-serif;color:#0b2b50;margin-top:8px}
+    .ops-kpi-note{font-size:12px;color:#7f93ac;margin-top:4px}
+    .ops-workspace{overflow:hidden}
+    .ops-tabs{display:flex;gap:7px;overflow:auto;padding:14px 18px;border-bottom:1px solid #e3ebf4;background:#fbfdff}
+    .ops-tab{border:1px solid transparent;background:transparent;border-radius:10px;color:#647b96;padding:10px 13px;font:700 13px "DM Sans",sans-serif;white-space:nowrap;cursor:pointer}
+    .ops-tab.active{background:#e8f7fb;border-color:#c6edf5;color:#007d9a}
+    .ops-tab-count{display:inline-flex;min-width:20px;height:20px;border-radius:20px;align-items:center;justify-content:center;margin-left:6px;background:#eef3f8;color:#627892;font-size:11px}
+    .ops-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid #e7edf5}
+    .ops-toolbar h2{font:800 18px Manrope,sans-serif;color:#143756;margin:0}
+    .ops-toolbar p{font-size:12px;color:#8094ad;margin:5px 0 0}
+    .ops-toolbar-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+    .ops-status{font-size:11px;color:#8295ac}
+    .ops-content{padding:18px 20px 22px;min-height:200px}
+    .ops-table-wrap{overflow:auto;border:1px solid #e0e9f3;border-radius:12px}
+    .ops-table{width:100%;border-collapse:collapse;min-width:780px;background:white}
+    .ops-table th{background:#f5f8fc;color:#7489a2;text-align:left;padding:11px 12px;font-size:10px;letter-spacing:.07em;text-transform:uppercase}
+    .ops-table td{padding:12px;border-top:1px solid #ebf0f6;color:#304d6e;font-size:12px;vertical-align:middle}
+    .ops-table td strong{color:#133858}
+    .ops-muted{color:#8295ac;font-size:11px}
+    .ops-pills{display:flex;gap:5px;flex-wrap:wrap}
+    .ops-pill{display:inline-flex;align-items:center;border-radius:20px;padding:4px 8px;font-size:10px;font-weight:800;background:#eef4fa;color:#526b87;white-space:nowrap}
+    .ops-pill.due{background:#fff2df;color:#a45b08}.ops-pill.late{background:#ffebeb;color:#bd2929}.ops-pill.ok{background:#e6f8ef;color:#078653}.ops-pill.blue{background:#e8f4ff;color:#1671c4}
+    .ops-actions{display:flex;gap:6px;flex-wrap:wrap}
+    .ops-action{border:1px solid #d6e3f1;background:#fff;border-radius:8px;padding:7px 9px;color:#176ca5;font:700 11px "DM Sans",sans-serif;cursor:pointer}
+    .ops-action:hover{background:#f0f8ff}.ops-action.primary{background:#0796b2;color:white;border-color:#0796b2}.ops-action.approve{color:#078653}
+    .ops-empty{padding:46px 18px;text-align:center;border:1px dashed #cfdeeb;border-radius:13px;color:#778da7;background:#fbfdff}
+    .ops-empty b{display:block;color:#173a5a;margin-bottom:7px}
+    .ops-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .ops-group{border:1px solid #dfe8f2;border-radius:14px;background:#fff;padding:17px;box-shadow:0 5px 18px rgba(15,44,75,.035)}
+    .ops-group-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .ops-group h3{font:800 16px Manrope,sans-serif;color:#133858;margin:0 0 5px}
+    .ops-group-sub{font-size:11px;color:#8094ac}
+    .ops-capacity{margin:14px 0 8px}
+    .ops-capacity-line{display:flex;justify-content:space-between;font-size:11px;color:#6e839d;margin-bottom:5px}
+    .ops-capacity-track{height:8px;border-radius:20px;background:#edf2f7;overflow:hidden}
+    .ops-capacity-track i{display:block;height:100%;background:linear-gradient(90deg,#13b5c9,#1683d4);border-radius:20px}
+    .ops-items{border-top:1px solid #edf1f6;margin-top:14px;padding-top:10px}
+    .ops-item-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;font-size:11px;color:#536d89}
+    .ops-alert-row{display:grid;grid-template-columns:minmax(160px,1fr) 1fr auto;gap:14px;align-items:center;padding:13px 14px;border-bottom:1px solid #eaf0f6}
+    .ops-alert-row:last-child{border-bottom:0}
+    .ops-alert-row.overdue{border-left:3px solid #e64848}.ops-alert-row.soon{border-left:3px solid #e9a12d}
+    .ops-alert-title{font-weight:800;color:#193a59;font-size:13px}.ops-alert-detail{font-size:11px;color:#8093ab;margin-top:4px}
+    .ops-alerts{border:1px solid #e2eaf3;border-radius:12px;overflow:hidden}
+    .ops-finance-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:15px}
+    .ops-finance-box{background:#f6f9fc;border:1px solid #e1eaf3;border-radius:12px;padding:13px}
+    .ops-finance-box small{display:block;color:#7a8ea7;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+    .ops-finance-box b{display:block;color:#16395a;font:800 17px Manrope,sans-serif;margin-top:7px}
+    .ops-modal[hidden]{display:none}
+    .ops-modal{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;padding:18px}
+    .ops-modal-backdrop{position:absolute;inset:0;background:rgba(6,27,50,.62);backdrop-filter:blur(4px)}
+    .ops-dialog{position:relative;width:min(720px,100%);max-height:92vh;overflow:auto;background:white;border:1px solid #d8e4f0;border-radius:18px;box-shadow:0 26px 80px rgba(0,18,39,.32)}
+    .ops-dialog-head{position:sticky;top:0;z-index:1;padding:18px 22px;background:#fff;border-bottom:1px solid #e7edf4;display:flex;justify-content:space-between;align-items:flex-start}
+    .ops-dialog-head h2{font:800 19px Manrope,sans-serif;color:#143756;margin:0}
+    .ops-dialog-head p{font-size:12px;color:#8194ab;margin:5px 0 0}
+    .ops-dialog-body{padding:20px 22px}
+    .ops-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+    .ops-field{display:flex;flex-direction:column;gap:6px;color:#526c88;font-size:11px;font-weight:800}
+    .ops-field.full{grid-column:1/-1}
+    .ops-field input,.ops-field select,.ops-field textarea{width:100%;box-sizing:border-box;border:1px solid #d7e3ef;background:#fbfdff;border-radius:9px;padding:10px 11px;color:#173956;font:500 13px "DM Sans",sans-serif;outline:none}
+    .ops-field textarea{min-height:82px;resize:vertical}
+    .ops-field input:focus,.ops-field select:focus,.ops-field textarea:focus{border-color:#0ca5bd;box-shadow:0 0 0 3px rgba(12,165,189,.12)}
+    .ops-help{font-size:10px;font-weight:500;color:#8b9db2}
+    .ops-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px;padding-top:14px;border-top:1px solid #edf1f6}
+    @media(max-width:900px){.ops-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-card-grid{grid-template-columns:1fr}.ops-toolbar{align-items:flex-start;flex-direction:column}}
+    @media(max-width:600px){.ops-kpis{gap:8px}.ops-kpi{padding:13px}.ops-kpi-value{font-size:22px}.ops-content{padding:12px}.ops-finance-summary{grid-template-columns:1fr}.ops-alert-row{grid-template-columns:1fr;gap:8px}.ops-form-grid{grid-template-columns:1fr}.ops-field.full{grid-column:auto}.ops-dialog-body{padding:15px}}
+
   </style>
 </head>
 <body>
@@ -128,6 +198,7 @@
       </nav>
       <div class="nav-caption">OPERATIONS</div>
       <nav class="nav-list">
+        <button class="nav-link" data-page="logistics"><span class="nav-icon">◫</span>Logistics workspace</button>
         <button class="nav-link" data-page="exceptions"><span class="nav-icon">⚑</span>Exception queue</button>
         <button class="nav-link" data-page="documents"><span class="nav-icon">▧</span>Documents &amp; exports</button>
         <button class="nav-link" data-page="reports"><span class="nav-icon">▥</span>Reports</button>
@@ -176,7 +247,35 @@
         <section class="page-section" id="page-exceptions"><div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> OPERATIONS / EXCEPTIONS</div><h1>Exception queue</h1><p class="subtitle">Prioritize shipments with an overdue ETA or milestone that needs follow-up.</p></div></div><article class="card"><div class="toolbar"><label class="toolbar-search">⌕ <input id="exceptionSearch" placeholder="Search container, vessel or exception"></label><select id="exceptionPriority" class="btn" aria-label="Filter exceptions by priority"><option value="">All priorities</option><option value="High priority">High priority</option><option value="Follow up">Follow up</option></select><button class="btn ghost-blue small" id="exportExceptions">Export exception CSV</button><button class="btn small" id="clearExceptionFilters">Clear</button></div><div class="exception-list" id="allExceptions"></div><div class="exception-footer" id="exceptionSummaryFooter">Rules use recorded shipment data and calendar dates. Verify with the carrier or terminal.</div></article></section>
         <section class="page-section" id="page-documents"><div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> OPERATIONS / DOCUMENTS</div><h1>Documents &amp; exports</h1><p class="subtitle">Download the current register or import a spreadsheet into the shipment workspace.</p></div></div><article class="card"><div class="card-head"><div><div class="card-title">Shipment register</div><div class="card-sub">Exports reflect records currently loaded from Supabase.</div></div></div><div class="toolbar"><button class="btn primary" id="documentsExport">⇩ Export Excel</button><button class="btn" id="documentsCsv">⇩ Download CSV</button><button class="btn" id="documentsImport">⇧ Import spreadsheet</button></div><div class="exception-footer">Imports are previewed before they are saved. The original shipment rows remain in the register until you confirm.</div></article></section>
         <section class="page-section" id="page-reports"><div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> OPERATIONS / REPORTS</div><h1>Reports</h1><p class="subtitle">Status, arrival and lane summaries calculated from loaded records.</p></div><div class="head-actions"><button class="btn" id="reportPhotoBtn">📷 Download status photo</button><button class="btn primary" id="reportExportBtn">⇩ Export records</button></div></div><div id="reportMetrics" class="metrics"></div><div class="insight-grid"><article class="card insight-card"><div class="card-head"><div class="card-title">Status distribution</div></div><div class="donut-area"><div class="donut" id="reportDonut"></div><div class="legend-list" id="reportLegend"></div></div></article><article class="card insight-card"><div class="card-head"><div class="card-title">Monthly arrivals</div></div><div class="trend-bars" id="reportTrend"></div></article><article class="card insight-card"><div class="card-head"><div class="card-title">Top trading lanes</div></div><div class="lane-list" id="reportLanes"></div></article></div><article class="card coverage-card"><div class="card-head"><div><div class="card-title">Milestone data coverage</div><div class="card-sub">Recorded handoffs across the loaded shipment register. Select a row to review missing dates.</div></div><span class="status-pill blue">DATA QUALITY</span></div><div class="coverage-list" id="reportCoverage"></div><div class="exception-footer">A missing date indicates a blank shipment record; it does not confirm a carrier delay.</div></article></section>
+
+        <section class="page-section" id="page-logistics">
+          <div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> GML OPERATIONS / PLANNING &amp; CONTROL</div><h1>Logistics workspace</h1><p class="subtitle">Coordinate sailings, LCL loads, shipment economics, filings and last free day actions.</p></div><div class="head-actions"><button class="btn" id="opsRefreshBtn">↻ Refresh modules</button></div></div>
+          <div class="ops-kpis" id="opsKpis"></div>
+          <article class="card ops-workspace">
+            <div class="ops-tabs" id="opsTabs" role="tablist">
+              <button class="ops-tab active" data-ops-tab="sailings">Sailings &amp; cutoffs</button>
+              <button class="ops-tab" data-ops-tab="consolidations">LCL consolidation</button>
+              <button class="ops-tab" data-ops-tab="finance">Costing &amp; profit</button>
+              <button class="ops-tab" data-ops-tab="filings">HBL / MBL filings</button>
+              <button class="ops-tab" data-ops-tab="alerts">LFD &amp; alerts</button>
+            </div>
+            <div class="ops-toolbar"><div><h2 id="opsTitle">Sailing schedule</h2><p id="opsDescription">Cutoffs and departures from staff-entered schedule records.</p></div><div class="ops-toolbar-actions"><span class="ops-status" id="opsStatus">Loading module records…</span><button class="btn primary" id="opsAddBtn">＋ Add sailing</button></div></div>
+            <div class="ops-content" id="opsContent"></div>
+          </article>
+        </section>
         <section class="page-section" id="page-settings"><div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> WORKSPACE / SETTINGS</div><h1>Account settings</h1><p class="subtitle">Your access is managed through the authorized GML Supabase staff account.</p></div></div><article class="card"><div class="card-head"><div><div class="card-title">Signed-in staff</div><div class="card-sub">Staff roles and access are verified by the secure operations service.</div></div></div><div class="modal-body"><div class="detail-grid"><div class="detail-cell"><small>Account</small><b id="settingsEmail">—</b></div><div class="detail-cell"><small>Role</small><b id="settingsRole">—</b></div><div class="detail-cell"><small>Data source</small><b>Supabase · protected operations-data service</b></div><div class="detail-cell"><small>Map</small><b>Port coordinates matched from shipment records</b></div></div><div style="margin-top:18px"><button class="btn danger" id="settingsSignOut">Sign out</button></div></div></article></section>
+      <div class="ops-modal" id="opsModal" hidden>
+    <div class="ops-modal-backdrop" data-ops-close></div>
+    <section class="ops-dialog" role="dialog" aria-modal="true" aria-labelledby="opsFormTitle">
+      <header class="ops-dialog-head"><div><h2 id="opsFormTitle">Add record</h2><p id="opsFormDescription">Protected logistics workspace</p></div><button type="button" class="icon-btn" data-ops-close aria-label="Close">×</button></header>
+      <form id="opsForm" class="ops-dialog-body">
+        <input type="hidden" id="opsFormKind" value="">
+        <div id="opsFields"></div>
+        <div id="opsFormError" role="alert" style="color:#bd2929;font-size:12px;margin-top:12px"></div>
+        <div class="ops-dialog-actions"><button class="btn" type="button" data-ops-close>Cancel</button><button class="btn primary" type="submit" id="opsSaveBtn">Save record</button></div>
+      </form>
+    </section>
+  </div>
       </div>
     </main>
   </div>
@@ -266,7 +365,7 @@
   const DATA_FUNCTION = "operations-data";
   const AIS_FUNCTION = "vessel-ais";
   const COLUMNS = ["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-  const state = { rows: [], selected: new Set(), filter: "all", view: "cards", query: "", updatedAt: null, profile: null, loaded: false, page: "dashboard", map: null, fullMap: null, currentRoute: null, importRows: [], importSourceRows: [], importPreviewUpdatedAt: null, editIndex: -1, toastTimer: null, aisCache: new Map() };
+  const state = { rows: [], selected: new Set(), filter: "all", view: "cards", query: "", updatedAt: null, profile: null, loaded: false, page: "dashboard", map: null, fullMap: null, currentRoute: null, importRows: [], importSourceRows: [], importPreviewUpdatedAt: null, editIndex: -1, toastTimer: null, aisCache: new Map(), ops: { loaded:false, tab:"sailings", alertFilter:"open", sailings:[], sailingShipments:[], consolidations:[], consolidationItems:[], charges:[], filings:[], documents:[], alertActions:[] } };
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
   const keyOf = key => String(key ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -317,7 +416,7 @@
     catch(error){setCloud("error",errText(error));toast(`Save failed: ${errText(error)}`,"error");return false}
   }
   async function setAccess(session){
-    if(!session){state.profile=null;state.rows=[];state.loaded=false;$("staffShell").hidden=true;$("publicLanding").hidden=false;setCloud("error","Sign in to load shipments");return}
+    if(!session){state.profile=null;state.rows=[];state.loaded=false;state.ops={loaded:false,tab:"sailings",alertFilter:"open",sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]};$("staffShell").hidden=true;$("publicLanding").hidden=false;setCloud("error","Sign in to load shipments");return}
     state.profile={displayName:session.user?.email||"GML Staff",role:"Staff",email:session.user?.email||""};$("publicLanding").hidden=true;$("staffShell").hidden=false;$("userName").textContent=state.profile.displayName;
     try{await loadRecords()}catch(_){ }
   }
@@ -326,10 +425,10 @@
     try{if(!db)throw new Error("Supabase did not load. Check your internet connection and reload.");const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;if(!data.session)throw new Error("Supabase did not return a staff session.");modal("loginModal",false);await setAccess(data.session);if(state.profile?.role==="Staff"&&state.rows.length===0)toast("Staff session opened, but shipment records were not returned.","error");}
     catch(err){errorNode.textContent=errText(err);errorNode.classList.remove("hidden")}finally{button.disabled=false;button.textContent="Sign in"}
   }
-  async function signOut(){try{await db?.auth.signOut()}catch(_){}state.profile=null;state.rows=[];state.selected.clear();setAccess(null);toast("Signed out")}
+  async function signOut(){try{await db?.auth.signOut()}catch(_){}state.profile=null;state.rows=[];state.selected.clear();state.ops={loaded:false,tab:"sailings",alertFilter:"open",sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]};setAccess(null);toast("Signed out")}
   function canEdit(){return ["admin","editor","operator"].includes(String(state.profile?.role||"").toLowerCase())}
   function canDelete(){return String(state.profile?.role||"").toLowerCase()==="admin"}
-  function page(name){state.page=name;document.querySelectorAll(".nav-link[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===name));document.querySelectorAll(".page-section").forEach(s=>s.classList.toggle("active",s.id===`page-${name}`));document.body.classList.remove("menu-open");if(name==="shipments")renderShipments();if(name==="exceptions")renderExceptions();if(name==="reports")renderReports();if(name==="dashboard")setTimeout(()=>state.map?.invalidateSize(),70);window.scrollTo({top:0,behavior:"smooth"})}
+  function page(name){state.page=name;document.querySelectorAll(".nav-link[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===name));document.querySelectorAll(".page-section").forEach(section=>section.classList.toggle("active",section.id==="page-"+name));document.body.classList.remove("menu-open");if(name==="shipments")renderShipments();if(name==="exceptions")renderExceptions();if(name==="reports")renderReports();if(name==="logistics"){renderLogistics();if(!state.ops.loaded)loadOps()}if(name==="dashboard")setTimeout(()=>state.map?.invalidateSize(),70);window.scrollTo({top:0,behavior:"smooth"})}
 
   function localDayKey(value){const d=value instanceof Date?value:parseDate(value);return d&&!Number.isNaN(+d)?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:""}
   function filteredRows(){
@@ -675,6 +774,7 @@ async function confirmImport(){
     $("exportBtn").onclick=()=>exportData("xlsx");$("documentsExport").onclick=()=>exportData("xlsx");$("reportExportBtn").onclick=()=>exportData("xlsx");$("documentsCsv").onclick=()=>exportData("csv");$("importBtn").onclick=$("documentsImport").onclick=()=>$("singleImport").click();$("singleImport").onchange=e=>{const f=e.target.files?.[0];importFile(f);e.target.value=""};$("confirmImport").onclick=confirmImport;
     $("statusPhotoBtn").onclick=photoSelected;$("broadcastBtn").onclick=broadcast;$("emailBtn").onclick=emailSelected;$("destuffTodayBtn").onclick=bulkDestuff;$("bulkDeleteBtn").onclick=deleteSelected;$("clearSelectionBtn").onclick=()=>{state.selected.clear();renderShipments()};$("trendYear").onchange=()=>renderTrend($("trendBars"),state.rows,$("trendYear").value);
     $("trackingSearchBtn").onclick=runTrackingSearch;$("trackingSearch").onkeydown=e=>{if(e.key==="Enter")runTrackingSearch()};$("exceptionSearch").oninput=renderExceptions;$("exceptionPriority").onchange=renderExceptions;$("exportExceptions").onclick=exportExceptions;$("clearExceptionFilters").onclick=()=>{$("exceptionSearch").value="";$("exceptionPriority").value="";renderExceptions()};$("reportPhotoBtn").onclick=()=>state.selected.size?photoSelected():drawPhoto(state.rows.slice(0,Math.min(6,state.rows.length)));
+    initOpsControls();
   }
   function runTrackingSearch(){const q=$("trackingSearch").value.trim().toLowerCase();if(!q){$("trackingResults").innerHTML=`<div class="empty-row" style="grid-column:1/-1">Enter a container, MBL or vessel to search.</div>`;return}const hits=state.rows.map((row,index)=>({row,index})).filter(x=>Object.values(x.row).join(" ").toLowerCase().includes(q)).slice(0,12);$("trackingResults").innerHTML=hits.map(renderCard).join("")||`<div class="empty-row" style="grid-column:1/-1">No matching shipment was found in staff records.</div>`;bindRowActions($("trackingResults"))}
   function currentExceptions(){const q=$("exceptionSearch")?.value?.trim().toLowerCase()||"",priority=$("exceptionPriority")?.value||"";return getExceptions().filter(x=>{const row=state.rows[x.i],blob=[container(row),x.title,x.detail,x.level,field(row,["VESSEL & VOY"])].join(" ").toLowerCase();return(!q||blob.includes(q))&&(!priority||x.level===priority)})}
@@ -686,7 +786,316 @@ async function confirmImport(){
     $("reportCoverage").onclick=event=>{const button=event.target.closest("[data-milestone-filter]");if(!button)return;page("shipments");$("deepFilters").classList.remove("hidden");$("filterMissingMilestone").value=button.dataset.milestoneFilter;renderShipments()};
   }
   function renderReports(){const total=state.rows.length;$("reportMetrics").innerHTML=[["Total shipments",total,"▣"],["In transit",state.rows.filter(isTransit).length,"➜"],["Arrived",state.rows.filter(isArrived).length,"⚓"],["Delayed",state.rows.filter(isDelayed).length,"◷"]].map(([l,v,i])=>`<article class="metric"><div class="metric-icon">${i}</div><div><div class="metric-label">${l}</div><div class="metric-value">${v}</div><div class="metric-note">Loaded shipment records</div></div></article>`).join("");$("reportDonut").style.background=$("statusDonut").style.background;$("reportLegend").innerHTML=$("statusLegend").innerHTML;renderTrend($("reportTrend"),state.rows,String(new Date().getFullYear()));renderLaneList($("reportLanes"),countLanes(state.rows));renderMilestoneCoverage()}
-  function renderAll(){renderDashboard();renderShipments();if(state.page==="exceptions")renderExceptions();if(state.page==="reports")renderReports();$("settingsEmail").textContent=state.profile?.email||state.profile?.displayName||"—";$("settingsRole").textContent=state.profile?.role||"—"}
+
+
+  const OPS_TABS = {
+    sailings: { title:"Sailing schedule", description:"Cutoff dates, departures and the shipment records assigned to each voyage.", add:"＋ Add sailing" },
+    consolidations: { title:"LCL consolidation", description:"Capture HBL cargo, real equipment capacity and calculated load utilization.", add:"＋ New consolidation" },
+    finance: { title:"Freight costing & profitability", description:"Record actual shipment revenue and costs; INR totals use the entered exchange rate.", add:"＋ Add charge" },
+    filings: { title:"HBL / MBL filing control", description:"Track document readiness, filing deadlines, responses and private attachments.", add:"＋ Add filing" },
+    alerts: { title:"LFD & operational alerts", description:"Actionable alerts generated from recorded LFD and return-validity dates.", add:"Alerts are generated from shipment dates" }
+  };
+  function opsDateISO(value){
+    const d=parseDate(value);if(!d||Number.isNaN(+d))return "";
+    return new Date(d.getFullYear(),d.getMonth(),d.getDate()).toISOString().slice(0,10);
+  }
+  function opsDateLabel(value){const iso=opsDateISO(value);return iso?fmtDate(iso):"—"}
+  function opsDateTimeLocal(value){if(!value)return "";const d=new Date(value);if(Number.isNaN(+d))return "";const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes())}
+  function opsNumber(value){const n=Number(value);return Number.isFinite(n)?n:0}
+  function opsMoney(value){return "₹"+opsNumber(value).toLocaleString("en-IN",{minimumFractionDigits:0,maximumFractionDigits:2})}
+  function opsRoleCan(group){const role=String(state.profile?.role||"");if(role==="Admin"||role==="Editor")return true;return group!=="finance"&&["Operator"].includes(role)}
+  function opsBadge(value){
+    const label=String(value||"—").replace(/_/g," ");
+    const key=String(value||"").toLowerCase();
+    const cls=["accepted","approved","resolved","arrived"].includes(key)?"ok":["rejected","cancelled","overdue"].includes(key)?"late":["submitted","ready","booking_confirmed","acknowledged"].includes(key)?"blue":"";
+    return '<span class="ops-pill '+cls+'">'+esc(label.toUpperCase())+'</span>';
+  }
+  async function loadOps({quiet=false}={}){
+    if(!state.profile){$("opsStatus").textContent="Sign in to load protected records";return}
+    if(!quiet)$("opsStatus").textContent="Loading protected records…";
+    try{
+      const data=await invoke("logistics-workspace",{action:"read"});
+      state.ops.sailings=Array.isArray(data.sailings)?data.sailings:[];
+      state.ops.sailingShipments=Array.isArray(data.sailingShipments)?data.sailingShipments:[];
+      state.ops.consolidations=Array.isArray(data.consolidations)?data.consolidations:[];
+      state.ops.consolidationItems=Array.isArray(data.consolidationItems)?data.consolidationItems:[];
+      state.ops.charges=Array.isArray(data.charges)?data.charges:[];
+      state.ops.filings=Array.isArray(data.filings)?data.filings:[];
+      state.ops.documents=Array.isArray(data.documents)?data.documents:[];
+      state.ops.alertActions=Array.isArray(data.alertActions)?data.alertActions:[];
+      if(data.profile)state.profile={...state.profile,...data.profile};
+      state.ops.loaded=true;
+      $("opsStatus").textContent="Updated "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+      renderLogistics();
+    }catch(error){
+      $("opsStatus").textContent="Records could not load · "+errText(error);
+      if(!quiet)toast("Logistics modules could not load: "+errText(error),"error");
+      renderLogistics();
+    }
+  }
+  function opsAlertRecords(){
+    const rows=[];
+    const today=new Date();today.setHours(0,0,0,0);
+    state.rows.forEach(row=>{
+      const no=container(row);if(!no||no==="Unassigned container")return;
+      const returned=!!field(row,["CONTAINER RETURN DATE"]);
+      const candidates=[
+        {code:"terminal_lfd",title:"Terminal LFD",raw:field(row,["TERMINAL LFD"]),active:!field(row,["PORT OUT"])},
+        {code:"detention_lfd",title:"Detention LFD",raw:field(row,["DETENTION LFD"]),active:!returned},
+        {code:"empty_return",title:"Empty return validity",raw:field(row,["EMPTY RETURN VALIDITY"]),active:!returned}
+      ];
+      candidates.forEach(item=>{
+        if(!item.active||!item.raw)return;
+        const due=opsDateISO(item.raw);if(!due)return;
+        const at=new Date(due+"T00:00:00");const days=Math.round((at-today)/86400000);
+        if(days>7)return;
+        const key=no.toUpperCase().replace(/[^A-Z0-9]/g,"")+"|"+item.code+"|"+due;
+        const action=state.ops.alertActions.find(x=>x.alert_key===key);
+        rows.push({key,container:no,code:item.code,title:item.title,due,days,action,level:days<0?"overdue":days<=2?"soon":"normal",row});
+      });
+    });
+    return rows.sort((a,b)=>a.days-b.days||a.container.localeCompare(b.container));
+  }
+  function renderOpsKpis(){
+    const now=new Date();now.setHours(0,0,0,0);
+    const nextWeek=new Date(now);nextWeek.setDate(now.getDate()+7);
+    const cutoffs=state.ops.sailings.flatMap(s=>[s.si_cutoff,s.vgm_cutoff,s.cy_cutoff,s.document_cutoff]).filter(v=>{if(!v)return false;const d=new Date(String(v).slice(0,10)+"T00:00:00");return d>=now&&d<=nextWeek});
+    const openGroups=state.ops.consolidations.filter(x=>!["closed","cancelled"].includes(x.status));
+    const activeAlerts=opsAlertRecords().filter(x=>x.action?.status!=="resolved").length;
+    const approved=state.ops.charges.filter(x=>x.approval_status==="approved");
+    const rev=approved.filter(x=>x.direction==="revenue").reduce((a,x)=>a+opsNumber(x.amount_inr),0);
+    const cost=approved.filter(x=>x.direction==="cost").reduce((a,x)=>a+opsNumber(x.amount_inr),0);
+    const net=rev-cost;
+    const cards=[
+      ["Cutoffs · next 7 days",String(cutoffs.length),"Sailing and filing dates entered by staff"],
+      ["Open consolidations",String(openGroups.length),state.ops.consolidationItems.length+" HBL cargo records"],
+      ["Approved net · INR",approved.length?opsMoney(net):"—",approved.length?opsMoney(rev)+" revenue · "+opsMoney(cost)+" cost":"No approved charges yet"],
+      ["Open LFD alerts",String(activeAlerts),"From current Supabase shipment dates"]
+    ];
+    $("opsKpis").innerHTML=cards.map(x=>'<article class="ops-kpi"><div class="ops-kpi-label">'+esc(x[0])+'</div><div class="ops-kpi-value">'+esc(x[1])+'</div><div class="ops-kpi-note">'+esc(x[2])+'</div></article>').join("");
+  }
+  function opsEmpty(title,description,button){
+    return '<div class="ops-empty"><b>'+esc(title)+'</b>'+esc(description)+(button?'<div style="margin-top:15px"><button class="btn primary" data-op="'+esc(button)+'">＋ Create record</button></div>':"")+'</div>';
+  }
+  function renderSailings(){
+    const rows=state.ops.sailings.slice().sort((a,b)=>String(a.etd||"9999").localeCompare(String(b.etd||"9999")));
+    if(!rows.length)return opsEmpty("No sailing schedules yet","Add a confirmed or planned sailing to record carrier cutoffs and link shipment containers.","add-sailing");
+    const links=state.ops.sailingShipments;
+    const body=rows.map(s=>{
+      const cut=[["SI",s.si_cutoff],["VGM",s.vgm_cutoff],["CY",s.cy_cutoff],["DOC",s.document_cutoff]].filter(x=>x[1]);
+      const cutoffHtml=cut.length?cut.map(x=>'<span class="ops-pill '+(opsDateISO(x[1])<opsDateISO(todayISO())?"late":"due")+'">'+esc(x[0])+" "+esc(opsDateLabel(x[1]))+'</span>').join(""):'<span class="ops-muted">No cutoffs entered</span>';
+      const linked=links.filter(x=>x.sailing_id===s.id);
+      return '<tr><td><strong>'+esc(s.vessel_name)+'</strong><div class="ops-muted">'+esc(s.carrier||"Carrier not entered")+(s.voyage_no?" · "+esc(s.voyage_no):"")+'</div></td><td>'+esc((s.pol||"—")+" → "+(s.pod||"—"))+'</td><td>'+esc(opsDateLabel(s.etd))+'<div class="ops-muted">ETA '+esc(opsDateLabel(s.eta))+'</div></td><td><div class="ops-pills">'+cutoffHtml+'</div></td><td>'+opsBadge(s.status)+'<div class="ops-muted">'+linked.length+" linked container(s)"+'</div></td><td><div class="ops-actions">'+(opsRoleCan("sailing")?'<button class="ops-action" data-op="edit-sailing" data-id="'+esc(s.id)+'">Edit</button><button class="ops-action" data-op="link-sailing" data-id="'+esc(s.id)+'">Link container</button>':"")+'</div></td></tr>';
+    }).join("");
+    return '<div class="ops-table-wrap"><table class="ops-table"><thead><tr><th>Vessel / voyage</th><th>Route</th><th>ETD / ETA</th><th>Cutoffs</th><th>Status / linked</th><th>Actions</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+  }
+  function renderConsolidations(){
+    if(!state.ops.consolidations.length)return opsEmpty("No LCL consolidations yet","Create a group, enter actual available CBM or weight capacity, then add cargo by HBL.","add-consolidation");
+    return '<div class="ops-card-grid">'+state.ops.consolidations.map(g=>{
+      const items=state.ops.consolidationItems.filter(x=>x.consolidation_id===g.id);
+      const cbm=items.reduce((n,x)=>n+opsNumber(x.volume_cbm),0),kg=items.reduce((n,x)=>n+opsNumber(x.gross_weight_kg),0);
+      const cbmPct=g.capacity_cbm?Math.min(100,cbm/Number(g.capacity_cbm)*100):null,kgPct=g.capacity_weight_kg?Math.min(100,kg/Number(g.capacity_weight_kg)*100):null;
+      const cap=(title,used,total,pct,unit)=>'<div class="ops-capacity"><div class="ops-capacity-line"><span>'+title+'</span><b>'+used.toLocaleString("en-IN",{maximumFractionDigits:2})+" / "+(total?Number(total).toLocaleString("en-IN",{maximumFractionDigits:2}):"—")+" "+unit+'</b></div><div class="ops-capacity-track"><i style="width:'+Math.round(pct||0)+'%"></i></div></div>';
+      const capacities=(g.capacity_cbm?cap("Volume utilization",cbm,g.capacity_cbm,cbmPct,"CBM"):"")+(g.capacity_weight_kg?cap("Weight utilization",kg,g.capacity_weight_kg,kgPct,"kg"):"");
+      const itemRows=items.length?items.map(i=>'<div class="ops-item-row"><span><b>'+esc(i.hbl_no)+'</b> · '+esc(i.package_count+" "+(i.package_type||"packages"))+'<div class="ops-muted">'+esc(i.shipper||"")+(i.consignee?" → "+esc(i.consignee):"")+'</div></span><span>'+esc(opsNumber(i.volume_cbm).toFixed(3))+' CBM · '+esc(opsNumber(i.gross_weight_kg).toLocaleString("en-IN"))+' kg '+(opsRoleCan("consolidation")?'<button class="ops-action" data-op="edit-cargo" data-id="'+esc(i.id)+'">Edit</button>':"")+'</span></div>').join(""):'<div class="ops-muted">No HBL cargo added yet.</div>';
+      return '<article class="ops-group"><div class="ops-group-head"><div><h3>'+esc(g.reference)+'</h3><div class="ops-group-sub">'+esc((g.origin||"Origin pending")+" → "+(g.destination||"Destination pending"))+' · '+esc(g.container_type||"Equipment not specified")+'</div><div class="ops-group-sub">'+esc((g.vessel_name||"Vessel not entered")+(g.voyage_no?" · "+g.voyage_no:""))+'</div></div><div>'+opsBadge(g.status)+'</div></div>'+capacities+'<div class="ops-pills"><span class="ops-pill">'+items.length+" HBL(s)"+'</span><span class="ops-pill">'+esc(opsDateLabel(g.etd))+" ETD"+'</span><span class="ops-pill">'+esc(opsDateLabel(g.eta))+" ETA"+'</span></div><div class="ops-items">'+itemRows+'</div><div class="ops-actions" style="margin-top:13px">'+(opsRoleCan("consolidation")?'<button class="ops-action primary" data-op="add-cargo" data-id="'+esc(g.id)+'">＋ Add HBL cargo</button><button class="ops-action" data-op="edit-consolidation" data-id="'+esc(g.id)+'">Edit consolidation</button>':"")+'</div></article>';
+    }).join("")+'</div>';
+  }
+  function renderFinance(){
+    const charges=state.ops.charges.slice().sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")));
+    const approved=charges.filter(x=>x.approval_status==="approved");
+    const revenue=approved.filter(x=>x.direction==="revenue").reduce((a,x)=>a+opsNumber(x.amount_inr),0);
+    const cost=approved.filter(x=>x.direction==="cost").reduce((a,x)=>a+opsNumber(x.amount_inr),0);
+    const net=revenue-cost,margin=revenue?((net/revenue)*100).toFixed(1)+"%":"—";
+    const summary='<div class="ops-finance-summary"><div class="ops-finance-box"><small>Approved revenue · INR</small><b>'+esc(approved.length?opsMoney(revenue):"—")+'</b></div><div class="ops-finance-box"><small>Approved cost · INR</small><b>'+esc(approved.length?opsMoney(cost):"—")+'</b></div><div class="ops-finance-box"><small>Net · margin</small><b>'+esc(approved.length?opsMoney(net)+" · "+margin:"—")+'</b></div></div><div class="ops-muted" style="margin:0 0 13px">Profit uses approved ledger entries only. Unapproved and missing revenue/cost figures are not estimated.</div>';
+    if(!charges.length)return summary+opsEmpty("No freight charges recorded","Add actual supplier costs and customer revenue against a container. Non-INR entries need a staff-entered INR exchange rate.","add-charge");
+    const body=charges.map(c=>'<tr><td><strong>'+esc(c.container_no)+'</strong><div class="ops-muted">'+esc(c.counterparty||"Counterparty not entered")+'</div></td><td>'+opsBadge(c.direction)+'</td><td>'+esc(c.charge_code)+(c.description?'<div class="ops-muted">'+esc(c.description)+'</div>':"")+'</td><td>'+esc(c.currency+" "+opsNumber(c.amount).toLocaleString("en-IN",{maximumFractionDigits:2}))+'<div class="ops-muted">FX '+esc(opsNumber(c.exchange_rate_to_inr).toString())+' → '+esc(opsMoney(c.amount_inr))+'</div></td><td>'+opsBadge(c.approval_status)+'</td><td>'+esc(opsDateLabel(c.due_date))+'</td><td><div class="ops-actions">'+(opsRoleCan("finance")?'<button class="ops-action" data-op="edit-charge" data-id="'+esc(c.id)+'">Edit</button>':"")+(state.profile?.role==="Admin"&&c.approval_status==="draft"?'<button class="ops-action approve" data-op="approve-charge" data-id="'+esc(c.id)+'">Approve</button>':"")+'</div></td></tr>').join("");
+    return summary+'<div class="ops-table-wrap"><table class="ops-table"><thead><tr><th>Shipment / party</th><th>Ledger</th><th>Charge</th><th>Actual amount</th><th>Approval</th><th>Due</th><th>Actions</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+  }
+  function renderFilings(){
+    const rows=state.ops.filings.slice().sort((a,b)=>String(a.due_date||"9999").localeCompare(String(b.due_date||"9999")));
+    if(!rows.length)return opsEmpty("No filing records yet","Track HBL, MBL, CSN, IGM, SI or VGM filing state and attach the actual document.","add-filing");
+    const body=rows.map(f=>{
+      const docs=state.ops.documents.filter(d=>d.filing_id===f.id);
+      const due=f.due_date&&opsDateISO(f.due_date)<opsDateISO(todayISO())&&!["accepted","not_required"].includes(f.status);
+      return '<tr><td><strong>'+esc(f.container_no)+'</strong><div class="ops-muted">HBL '+esc(f.hbl_no||"—")+' · MBL '+esc(f.mbl_no||"—")+'</div></td><td>'+opsBadge(f.filing_type)+'</td><td>'+esc(f.filing_reference||"—")+'</td><td>'+opsBadge(f.status)+(due?'<div class="ops-pill late" style="margin-top:5px">DEADLINE PASSED</div>':"")+'</td><td>'+esc(opsDateLabel(f.due_date))+'<div class="ops-muted">Filed '+esc(opsDateLabel(f.filed_at))+'</div></td><td><div class="ops-actions">'+docs.map(d=>'<button class="ops-action" data-op="open-document" data-id="'+esc(d.id)+'">↗ '+esc(d.original_name)+'</button>').join("")+(opsRoleCan("filing")?'<button class="ops-action" data-op="upload-document" data-id="'+esc(f.id)+'">＋ Document</button>':"")+'</div></td><td><div class="ops-actions">'+(opsRoleCan("filing")?'<button class="ops-action" data-op="edit-filing" data-id="'+esc(f.id)+'">Edit</button>':"")+'</div></td></tr>';
+    }).join("");
+    return '<div class="ops-table-wrap"><table class="ops-table"><thead><tr><th>Container / bills</th><th>Filing</th><th>Reference</th><th>Status</th><th>Deadline / filed</th><th>Private documents</th><th>Action</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+  }
+  function renderOpsAlerts(){
+    const filter=state.ops.alertFilter||"open";
+    const alerts=opsAlertRecords().filter(a=>filter==="all"||filter==="resolved"?filter==="all"||a.action?.status==="resolved":a.action?.status!=="resolved");
+    const select='<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><label class="ops-muted">Show <select id="opsAlertFilter" style="margin-left:5px;border:1px solid #d7e3ef;border-radius:8px;padding:7px;color:#284762"><option value="open" '+(filter==="open"?"selected":"")+'>Open &amp; acknowledged</option><option value="resolved" '+(filter==="resolved"?"selected":"")+'>Resolved</option><option value="all" '+(filter==="all"?"selected":"")+'>All dates</option></select></label></div>';
+    if(!alerts.length)return select+opsEmpty("No matching LFD alerts","Alerts appear only when a shipment record has a recorded LFD or empty-return validity date.");
+    return select+'<div class="ops-alerts">'+alerts.map(a=>{
+      const action=a.action?.status||"open";
+      const desc=a.days<0?Math.abs(a.days)+" day(s) overdue":a.days===0?"Due today":"Due in "+a.days+" day(s)";
+      return '<div class="ops-alert-row '+(a.level==="overdue"?"overdue":a.level==="soon"?"soon":"")+'"><div><div class="ops-alert-title">'+esc(a.title)+' · '+esc(a.container)+'</div><div class="ops-alert-detail">'+esc(desc)+" · Due "+esc(opsDateLabel(a.due))+'</div></div><div>'+opsBadge(action)+(a.action?.note?'<div class="ops-alert-detail">'+esc(a.action.note)+'</div>':"")+'</div><div class="ops-actions">'+(opsRoleCan("alert")&&action!=="resolved"?'<button class="ops-action" data-op="ack-alert" data-key="'+esc(a.key)+'">Acknowledge</button><button class="ops-action primary" data-op="resolve-alert" data-key="'+esc(a.key)+'">Resolve</button>':"")+'</div></div>';
+    }).join("")+'</div>';
+  }
+  function renderLogistics(){
+    if(!$("opsContent"))return;
+    renderOpsKpis();
+    document.querySelectorAll("[data-ops-tab]").forEach(b=>b.classList.toggle("active",b.dataset.opsTab===state.ops.tab));
+    const config=OPS_TABS[state.ops.tab]||OPS_TABS.sailings;
+    $("opsTitle").textContent=config.title;$("opsDescription").textContent=config.description;$("opsAddBtn").textContent=config.add;
+    $("opsAddBtn").hidden=state.ops.tab==="alerts";
+    $("opsAddBtn").disabled=state.ops.tab!=="alerts"&&!opsRoleCan(state.ops.tab==="finance"?"finance":state.ops.tab==="sailings"?"sailing":state.ops.tab==="filings"?"filing":"consolidation");
+    if(!state.ops.loaded){
+      $("opsContent").innerHTML='<div class="ops-empty"><b>Protected workspace records are not loaded</b>Use Refresh modules after staff sign-in. Existing shipment data remains in the shipment register.</div>';
+      return;
+    }
+    const renderer={sailings:renderSailings,consolidations:renderConsolidations,finance:renderFinance,filings:renderFilings,alerts:renderOpsAlerts}[state.ops.tab];
+    $("opsContent").innerHTML=renderer();
+    const alertFilter=$("opsAlertFilter");if(alertFilter)alertFilter.onchange=()=>{state.ops.alertFilter=alertFilter.value;renderLogistics()};
+  }
+  function opsField(spec,value){
+    const name=spec.name,required=spec.required?" required":"",full=spec.full?" full":"",help=spec.help?'<span class="ops-help">'+esc(spec.help)+'</span>':"";
+    let control="";
+    if(spec.type==="select"){
+      const opts=(spec.options||[]).map(opt=>'<option value="'+esc(opt[0])+'" '+(String(value??spec.value??"")===String(opt[0])?"selected":"")+'>'+esc(opt[1])+'</option>').join("");
+      control='<select name="'+esc(name)+'"'+required+'>'+opts+'</select>';
+    }else if(spec.type==="textarea"){
+      control='<textarea name="'+esc(name)+'"'+required+'>'+esc(value??spec.value??"")+'</textarea>';
+    }else if(spec.type==="hidden"){
+      return '<input type="hidden" name="'+esc(name)+'" value="'+esc(value??spec.value??"")+'">';
+    }else{
+      control='<input type="'+esc(spec.type||"text")+'" name="'+esc(name)+'" value="'+esc(value??spec.value??"")+'"'+(spec.step?' step="'+esc(spec.step)+'"':"")+(spec.min!==undefined?' min="'+esc(spec.min)+'"':"")+required+(spec.accept?' accept="'+esc(spec.accept)+'"':"")+'>';
+    }
+    return '<label class="ops-field'+full+'">'+esc(spec.label)+control+help+'</label>';
+  }
+  function opsOpenForm(kind,row={},extra={}){
+    const id=row.id||"",specs=[];
+    const add=(name,label,type,value,more={})=>specs.push({name,label,type,value,...more});
+    if(kind==="sailing"){
+      add("carrier","Carrier","text",row.carrier);add("vessel_name","Vessel name","text",row.vessel_name,{required:true});
+      add("voyage_no","Voyage number","text",row.voyage_no);add("status","Schedule status","select",row.status||"planned",{options:[["planned","Planned"],["booking_confirmed","Booking confirmed"],["in_transit","In transit"],["arrived","Arrived"],["cancelled","Cancelled"]]});
+      add("pol","Port of loading","text",row.pol);add("pod","Port of discharge / gateway","text",row.pod);
+      add("etd","Estimated departure","date",row.etd);add("eta","Estimated arrival","date",row.eta);
+      add("si_cutoff","Shipping instruction cutoff","date",row.si_cutoff);add("vgm_cutoff","VGM cutoff","date",row.vgm_cutoff);add("cy_cutoff","Container yard cutoff","date",row.cy_cutoff);add("document_cutoff","Document cutoff","date",row.document_cutoff);
+      add("notes","Notes","textarea",row.notes,{full:true});
+    }else if(kind==="link"){
+      const linked=state.ops.sailingShipments.filter(x=>x.sailing_id===extra.sailing_id).map(x=>x.container_no);
+      const available=[...new Set(state.rows.map(container).filter(x=>x&&x!=="Unassigned container"&&!linked.some(y=>y.toUpperCase()===x.toUpperCase())))];
+      add("container_no","Shipment container","select","",{required:true,options:available.map(x=>[x,x])});
+    }else if(kind==="consolidation"){
+      add("reference","Consolidation reference","text",row.reference,{required:true});
+      add("status","Status","select",row.status||"open",{options:[["planned","Planned"],["open","Open"],["closed","Closed"],["cancelled","Cancelled"]]});
+      add("origin","Origin","text",row.origin);add("destination","Destination","text",row.destination);
+      add("carrier","Carrier","text",row.carrier);add("container_type","Equipment type","text",row.container_type,{help:"Enter the actual equipment type; capacity is never assumed."});
+      add("vessel_name","Vessel","text",row.vessel_name);add("voyage_no","Voyage","text",row.voyage_no);
+      add("capacity_cbm","Actual CBM capacity","number",row.capacity_cbm,{step:"0.001",min:"0.001"});add("capacity_weight_kg","Actual payload capacity (kg)","number",row.capacity_weight_kg,{step:"0.01",min:"0.01"});
+      add("etd","ETD","date",row.etd);add("eta","ETA","date",row.eta);add("notes","Notes","textarea",row.notes,{full:true});
+    }else if(kind==="cargo"){
+      add("consolidation_id","Group","hidden",extra.consolidation_id||row.consolidation_id);
+      add("hbl_no","House bill number","text",row.hbl_no,{required:true});add("package_count","Package count","number",row.package_count||1,{required:true,min:"1",step:"1"});
+      add("shipper","Shipper","text",row.shipper);add("consignee","Consignee","text",row.consignee);
+      add("package_type","Package type","text",row.package_type);add("gross_weight_kg","Gross weight (kg)","number",row.gross_weight_kg||"",{step:"0.01",min:"0"});
+      add("volume_cbm","Volume (CBM)","number",row.volume_cbm||"",{step:"0.001",min:"0",help:"Enter at least weight or volume; the service rejects capacity overloading."});
+      add("notes","Cargo notes","textarea",row.notes,{full:true});
+    }else if(kind==="charge"){
+      const containers=[...new Set(state.rows.map(container).filter(x=>x&&x!=="Unassigned container"))];
+      add("container_no","Shipment container","select",row.container_no||containers[0],{required:true,options:containers.map(x=>[x,x])});
+      add("direction","Ledger type","select",row.direction||"cost",{options:[["cost","Cost / payable"],["revenue","Revenue / receivable"]]});
+      add("charge_code","Charge name / code","text",row.charge_code,{required:true});add("counterparty","Supplier or customer","text",row.counterparty);
+      add("amount","Actual amount","number",row.amount,{required:true,min:"0.01",step:"0.01"});
+      add("currency","Currency code","text",row.currency||"INR",{required:true,help:"Use a 3-letter code. INR uses rate 1; other currencies need an entered rate."});
+      add("exchange_rate_to_inr","Exchange rate to INR","number",row.currency==="INR"?"1":row.exchange_rate_to_inr,{step:"0.000001",min:"0.000001"});
+      add("invoice_reference","Invoice reference","text",row.invoice_reference);add("invoice_date","Invoice date","date",row.invoice_date);add("due_date","Due date","date",row.due_date);add("description","Description","text",row.description);
+      add("notes","Notes","textarea",row.notes,{full:true});
+    }else if(kind==="filing"){
+      const containers=[...new Set(state.rows.map(container).filter(x=>x&&x!=="Unassigned container"))];
+      add("container_no","Shipment container","select",row.container_no||containers[0],{required:true,options:containers.map(x=>[x,x])});
+      add("filing_type","Filing type","select",row.filing_type||"HBL",{options:[["HBL","HBL"],["MBL","MBL"],["CSN","CSN"],["IGM","IGM"],["SI","Shipping instructions"],["VGM","VGM"],["OTHER","Other"]]});
+      add("status","Filing status","select",row.status||"draft",{options:[["draft","Draft"],["ready","Ready"],["submitted","Submitted"],["accepted","Accepted"],["rejected","Rejected"],["not_required","Not required"]]});
+      add("hbl_no","HBL number","text",row.hbl_no);add("mbl_no","MBL number","text",row.mbl_no);
+      add("filing_reference","Filing / acknowledgment reference","text",row.filing_reference);add("due_date","Filing deadline","date",row.due_date);
+      add("filed_at","Actually filed at","datetime-local",opsDateTimeLocal(row.filed_at));add("acknowledged_at","Acknowledged at","datetime-local",opsDateTimeLocal(row.acknowledged_at));
+      add("notes","Notes / response detail","textarea",row.notes,{full:true});
+    }else if(kind==="document"){
+      add("filing_id","Filing record","hidden",extra.filing_id);
+      add("file","Select PDF, image or Word file","file","",{required:true,accept:".pdf,.jpg,.jpeg,.png,.doc,.docx",help:"Private staff-only storage · maximum 8 MB."});
+    }else if(kind==="alert"){
+      add("alert_key","Alert key","hidden",extra.alert.key);add("container_no","Container","hidden",extra.alert.container);
+      add("alert_code","Alert type","hidden",extra.alert.code);add("due_date","Due date","hidden",extra.alert.due);
+      add("status","Action","select",extra.status,{options:[["acknowledged","Acknowledge and assign to me"],["resolved","Mark resolved"]]});
+      add("note","Operations note","textarea",extra.alert.action?.note||"",{full:true,help:"Add the action taken or reason for resolving."});
+    }
+    if(id)specs.unshift({name:"id",type:"hidden",value:id});
+    const names={sailing:"Sailing schedule",link:"Link shipment to sailing",consolidation:"LCL consolidation",cargo:"LCL HBL cargo",charge:"Freight charge",filing:"Filing record",document:"Attach private document",alert:"Update LFD alert"};
+    $("opsFormTitle").textContent=(id?"Edit ":"Add ")+names[kind];
+    $("opsFormDescription").textContent=kind==="document"?"The document is stored privately and only signed staff can request a short-lived viewing link.":kind==="cargo"?"Utilization is calculated against the capacity entered for this group.":kind==="charge"?"Use recorded invoice amounts. Admin approval is required before figures enter approved profitability.":"Save operational details to the protected Supabase workspace.";
+    $("opsFormError").textContent="";$("opsFormKind").value=kind;
+    $("opsFields").innerHTML='<div class="ops-form-grid">'+specs.map(s=>opsField(s)).join("")+'</div>';
+    $("opsSaveBtn").textContent=kind==="document"?"Upload securely":"Save record";
+    $("opsModal").hidden=false;document.body.style.overflow="hidden";
+  }
+  function opsCloseForm(){ $("opsModal").hidden=true;document.body.style.overflow="";$("opsForm").reset() }
+  async function opsSubmitForm(event){
+    event.preventDefault();const button=$("opsSaveBtn"),error=$("opsFormError"),kind=$("opsFormKind").value;
+    button.disabled=true;button.textContent=kind==="document"?"Uploading…":"Saving…";error.textContent="";
+    try{
+      const values=Object.fromEntries(new FormData($("opsForm")).entries());let result;
+      if(kind==="sailing")result=await invoke("logistics-workspace",{action:"upsertSailing",data:values});
+      else if(kind==="link")result=await invoke("logistics-workspace",{action:"linkSailingShipment",sailing_id:$("opsModal").dataset.sailingId,container_no:values.container_no});
+      else if(kind==="consolidation")result=await invoke("logistics-workspace",{action:"upsertConsolidation",data:values});
+      else if(kind==="cargo")result=await invoke("logistics-workspace",{action:"upsertConsolidationItem",data:values});
+      else if(kind==="charge")result=await invoke("logistics-workspace",{action:"upsertCharge",data:values});
+      else if(kind==="filing")result=await invoke("logistics-workspace",{action:"upsertFiling",data:values});
+      else if(kind==="alert")result=await invoke("logistics-workspace",{action:"saveAlertAction",...values});
+      else if(kind==="document"){
+        const input=$("opsFields").querySelector('input[type="file"]'),file=input?.files?.[0];
+        if(!file)throw new Error("Choose a file to upload.");
+        if(file.size>8*1024*1024)throw new Error("Choose a file smaller than 8 MB.");
+        const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]||"");reader.onerror=()=>reject(new Error("The selected file could not be read."));reader.readAsDataURL(file)});
+        const mime=file.type||({pdf:"application/pdf",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}[file.name.split(".").pop().toLowerCase()]||"");
+        result=await invoke("logistics-workspace",{action:"uploadFilingDocument",filing_id:values.filing_id,filename:file.name,content_type:mime,base64});
+      }
+      if(!result)throw new Error("The service did not confirm the save.");
+      opsCloseForm();await loadOps({quiet:true});toast(kind==="document"?"Private document uploaded.":"Saved to the logistics workspace.","success");
+    }catch(err){error.textContent=errText(err);toast("Save failed: "+errText(err),"error")}
+    finally{button.disabled=false;button.textContent=kind==="document"?"Upload securely":"Save record"}
+  }
+  async function opsOpenDocument(id){
+    const tab=window.open("about:blank","_blank");try{const data=await invoke("logistics-workspace",{action:"signedDocumentUrl",id});if(!data?.url)throw new Error("Secure document link unavailable.");if(tab)tab.location.href=data.url;else location.href=data.url}catch(err){if(tab)tab.close();toast("Document could not open: "+errText(err),"error")}
+  }
+  async function opsActionClick(action,id,key){
+    if(action==="add-sailing")return opsOpenForm("sailing");
+    if(action==="edit-sailing")return opsOpenForm("sailing",state.ops.sailings.find(x=>x.id===id)||{});
+    if(action==="link-sailing"){const modal=$("opsModal");modal.dataset.sailingId=id;return opsOpenForm("link",{}, {sailing_id:id})}
+    if(action==="add-consolidation")return opsOpenForm("consolidation");
+    if(action==="edit-consolidation")return opsOpenForm("consolidation",state.ops.consolidations.find(x=>x.id===id)||{});
+    if(action==="add-cargo")return opsOpenForm("cargo",{}, {consolidation_id:id});
+    if(action==="edit-cargo")return opsOpenForm("cargo",state.ops.consolidationItems.find(x=>x.id===id)||{});
+    if(action==="add-charge")return opsOpenForm("charge");
+    if(action==="edit-charge")return opsOpenForm("charge",state.ops.charges.find(x=>x.id===id)||{});
+    if(action==="approve-charge"){
+      if(!confirm("Approve this actual invoice entry for profitability reporting?"))return;
+      try{await invoke("logistics-workspace",{action:"approveCharge",id});await loadOps({quiet:true});toast("Charge approved.","success")}catch(err){toast("Approval failed: "+errText(err),"error")}return;
+    }
+    if(action==="add-filing")return opsOpenForm("filing");
+    if(action==="edit-filing")return opsOpenForm("filing",state.ops.filings.find(x=>x.id===id)||{});
+    if(action==="upload-document")return opsOpenForm("document",{}, {filing_id:id});
+    if(action==="open-document")return opsOpenDocument(id);
+    if(action==="ack-alert"||action==="resolve-alert"){
+      const alert=opsAlertRecords().find(x=>x.key===key);if(!alert)return toast("This alert changed. Refresh and retry.","error");
+      return opsOpenForm("alert",{}, {alert,status:action==="resolve-alert"?"resolved":"acknowledged"});
+    }
+  }
+  function initOpsControls(){
+    $("opsRefreshBtn").onclick=async()=>{await loadRecords({quiet:true});await loadOps()};
+    $("opsAddBtn").onclick=()=>{
+      const action={sailings:"add-sailing",consolidations:"add-consolidation",finance:"add-charge",filings:"add-filing"}[state.ops.tab];
+      if(action)opsActionClick(action);
+    };
+    $("opsTabs").onclick=e=>{const button=e.target.closest("[data-ops-tab]");if(!button)return;state.ops.tab=button.dataset.opsTab;renderLogistics()};
+    $("opsContent").onclick=e=>{const button=e.target.closest("[data-op]");if(button)opsActionClick(button.dataset.op,button.dataset.id,button.dataset.key)};
+    $("opsForm").onsubmit=opsSubmitForm;
+    document.querySelectorAll("[data-ops-close]").forEach(el=>el.onclick=opsCloseForm);
+    document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("opsModal").hidden)opsCloseForm()});
+  }
+
+  function renderAll(){renderDashboard();renderShipments();if(state.page==="exceptions")renderExceptions();if(state.page==="reports")renderReports();if(state.page==="logistics")renderLogistics();$("settingsEmail").textContent=state.profile?.email||state.profile?.displayName||"—";$("settingsRole").textContent=state.profile?.role||"—"}
   function initialize(){bind();if(location.protocol!=="https:")$("httpsWarning").classList.remove("hidden");$("publicLanding").hidden=false;if(!db){setCloud("error","Supabase client unavailable");return}db.auth.getSession().then(({data,error})=>{if(error)throw error;return setAccess(data.session)}).catch(e=>{setCloud("error",`Sign-in service unavailable · ${errText(e)}`)});}
   document.addEventListener("DOMContentLoaded",initialize);
   </script>
