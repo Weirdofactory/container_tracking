@@ -131,7 +131,7 @@
   const DATA_FUNCTION = "operations-data";
   const AIS_FUNCTION = "vessel-ais";
   const COLUMNS = ["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-  const state = { rows: [], selected: new Set(), filter: "all", view: "cards", query: "", updatedAt: null, profile: null, loaded: false, page: "dashboard", map: null, fullMap: null, currentRoute: null, importRows: [], editIndex: -1, toastTimer: null, aisCache: new Map() };
+  const state = { rows: [], selected: new Set(), filter: "all", view: "cards", query: "", updatedAt: null, profile: null, loaded: false, page: "dashboard", map: null, fullMap: null, currentRoute: null, importRows: [], importSourceRows: [], importPreviewUpdatedAt: null, editIndex: -1, toastTimer: null, aisCache: new Map() };
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
   const keyOf = key => String(key ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -376,8 +376,65 @@
   function recordsCSV(rows){const headers=COLUMNS,quote=v=>`"${String(v??"").replace(/"/g,'""')}"`;return [headers.map(quote).join(","),...rows.map(r=>headers.map(c=>quote(field(r,[c]))).join(","))].join("\r\n")}
   function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
   function exportData(format="xlsx"){if(!state.rows.length)return toast("There are no shipment records to export.");if(format==="csv"){downloadBlob(new Blob(["\ufeff"+recordsCSV(state.rows)],{type:"text/csv;charset=utf-8"}),"GML_Shipments.csv");return}if(window.XLSX){const ws=XLSX.utils.json_to_sheet(state.rows,{header:COLUMNS}),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Shipments");XLSX.writeFile(wb,"GML_Shipments.xlsx")}else{downloadBlob(new Blob(["\ufeff"+recordsCSV(state.rows)],{type:"text/csv;charset=utf-8"}),"GML_Shipments.csv");toast("Excel library did not load; downloaded CSV instead.")}}
-  async function importFile(file){if(!file)return;try{let parsed;if(window.XLSX){const buf=await file.arrayBuffer(),wb=XLSX.read(buf,{type:"array",cellDates:true}),ws=wb.Sheets[wb.SheetNames[0]];parsed=XLSX.utils.sheet_to_json(ws,{defval:""})}else if(file.name.toLowerCase().endsWith(".csv")){const text=await file.text(),[head,...lines]=text.split(/\r?\n/),headers=head.split(",").map(x=>x.trim().replace(/^"|"$/g,""));parsed=lines.filter(Boolean).map(line=>{const cells=line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(x=>x.trim().replace(/^"|"$/g,""));return Object.fromEntries(headers.map((h,i)=>[h,cells[i]||""]))})}else throw new Error("Spreadsheet support did not load. Try a CSV file.");state.importRows=parsed.map(r=>{const out={};COLUMNS.forEach(c=>{const v=field(r,[c]);if(v!=="")out[c]=v});return out}).filter(r=>r["CONTAINER NO."]);if(!state.importRows.length)throw new Error("No rows with a container number were found. Check the spreadsheet column headings.");$("importSummary").textContent=`${state.importRows.length} shipment rows are ready to add. Existing rows will be kept.`;const sample=state.importRows.slice(0,4);$("importPreview").innerHTML=`<table><thead><tr><th>Container</th><th>MBL</th><th>Vessel</th><th>ETA</th></tr></thead><tbody>${sample.map(r=>`<tr><td>${esc(container(r))}</td><td>${esc(field(r,["MBL NO"]))}</td><td>${esc(field(r,["VESSEL & VOY"]))}</td><td>${esc(fmtDate(field(r,["ETA"])))}</td></tr>`).join("")}</tbody></table>`;modal("importModal")}catch(err){toast(errText(err),"error")}}
-  async function confirmImport(){const merged=[...state.importRows,...state.rows];if(await saveRecords(merged)){state.importRows=[];modal("importModal",false)}}
+  
+function containerKey(row){return String(field(row,["CONTAINER NO.","CONTAINER NO","CONTAINER","CNTR NO","CONTAINER NUMBER"])).trim().toUpperCase().replace(/[^A-Z0-9]/g,"")}
+function normalizedImportCell(row,column){if(column==="CONTAINER NO.")return containerKey(row);const value=field(row,[column]);if(value instanceof Date)return Number.isNaN(+value)?"":value.toISOString().slice(0,10);return String(value??"").trim().replace(/\s+/g," ").toUpperCase()}
+function sameShipmentRecord(a,b){return COLUMNS.every(function(column){return normalizedImportCell(a,column)===normalizedImportCell(b,column)})}
+function reviewShipmentImport(incoming){
+  const byKey=new Map(),existingByKey=new Map();let missingContainer=0;
+  incoming.forEach(function(row){const key=containerKey(row);if(!key){missingContainer++;return}if(!byKey.has(key))byKey.set(key,[]);byKey.get(key).push(row)});
+  state.rows.forEach(function(row){const key=containerKey(row);if(key){if(!existingByKey.has(key))existingByKey.set(key,[]);existingByKey.get(key).push(row)}});
+  const additions=[],conflicts=[];let identicalDuplicates=0;
+  byKey.forEach(function(rows,key){
+    const existing=existingByKey.get(key)||[],first=rows[0],sameIncoming=rows.every(function(row){return sameShipmentRecord(first,row)});
+    if(existing.length>1){conflicts.push({container:key,row:first,reason:"The loaded dataset already contains this container more than once."});return}
+    if(existing.length===1){
+      if(sameIncoming&&sameShipmentRecord(existing[0],first)){identicalDuplicates+=rows.length;return}
+      conflicts.push({container:key,row:first,reason:"A shipment with this container already exists and has different values. It was not overwritten."});return
+    }
+    if(!sameIncoming){conflicts.push({container:key,row:first,reason:"The import file contains different rows for the same container. Both were skipped."});return}
+    additions.push(first);identicalDuplicates+=rows.length-1
+  });
+  return {additions,conflicts,identicalDuplicates,missingContainer}
+}
+function renderImportReview(review){
+  const conflicts=review.conflicts.length,added=review.additions.length;
+  $("importSummary").textContent=added+" new shipment row(s) ready. "+review.identicalDuplicates+" identical duplicate(s) ignored; "+conflicts+" conflicting container number(s) skipped; "+review.missingContainer+" row(s) without a container number skipped. Existing records will not be overwritten.";
+  const previewRows=review.additions.slice(0,6).map(function(row){return {row,decision:"New",reason:"Ready to add"}}).concat(review.conflicts.slice(0,12).map(function(item){return {row:item.row,decision:"Skipped",reason:item.reason}}));
+  $("importPreview").innerHTML=previewRows.length?'<table><thead><tr><th>Decision</th><th>Container</th><th>MBL</th><th>Vessel</th><th>ETA</th><th>Review</th></tr></thead><tbody>'+previewRows.map(function(item){return '<tr><td><span class="'+(item.decision==="New"?"status-pill":"status-pill red")+'">'+esc(item.decision)+'</span></td><td>'+esc(container(item.row))+'</td><td>'+esc(field(item.row,["MBL NO"]))+'</td><td>'+esc(field(item.row,["VESSEL & VOY"]))+'</td><td>'+esc(fmtDate(field(item.row,["ETA"])))+'</td><td>'+esc(item.reason)+'</td></tr>'}).join("")+'</tbody></table>':'<div class="empty-row">No new shipment rows to add. Check the skipped duplicates and conflicts above.</div>';
+  if(review.conflicts.length>12)$("importPreview").insertAdjacentHTML("beforeend",'<p class="tracking-message">Showing 12 of '+review.conflicts.length+' conflicting container numbers.</p>');
+  const button=$("confirmImport");button.disabled=!added;button.textContent=added?"Add "+added+" new row"+(added===1?"":"s"):"No new rows to add";
+}
+async function importFile(file){
+  if(!file)return;
+  try{
+    if(file.size>15*1024*1024)throw new Error("Choose a spreadsheet smaller than 15 MB.");
+    let parsed;
+    if(window.XLSX){
+      const buf=await file.arrayBuffer(),wb=XLSX.read(buf,{type:"array",cellDates:true});
+      if(!wb.SheetNames?.length)throw new Error("The selected file has no worksheet.");
+      parsed=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
+    }else if(file.name.toLowerCase().endsWith(".csv")){
+      const text=await file.text(),[head,...lines]=text.split(/\r?\n/),headers=head.split(",").map(function(x){return x.trim().replace(/^"|"$/g,"")});
+      parsed=lines.filter(Boolean).map(function(line){const cells=line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(function(x){return x.trim().replace(/^"|"$/g,"")});return Object.fromEntries(headers.map(function(h,i){return [h,cells[i]||""]}))});
+    }else throw new Error("Spreadsheet support did not load. Try a CSV file.");
+    const incoming=parsed.map(function(row){const out={};COLUMNS.forEach(function(column){const value=field(row,[column]);if(value!==""&&value!=null)out[column]=value});return out});
+    if(!incoming.length)throw new Error("The selected sheet has no shipment rows.");
+    state.importSourceRows=incoming;state.importPreviewUpdatedAt=state.updatedAt;
+    const review=reviewShipmentImport(incoming);state.importRows=review.additions;renderImportReview(review);modal("importModal");
+  }catch(error){toast(errText(error),"error")}
+}
+async function confirmImport(){
+  if(!state.importSourceRows.length)return toast("Choose a shipment spreadsheet first.","error");
+  if(state.importPreviewUpdatedAt!==state.updatedAt){
+    const refreshed=reviewShipmentImport(state.importSourceRows);state.importRows=refreshed.additions;state.importPreviewUpdatedAt=state.updatedAt;renderImportReview(refreshed);
+    return toast("Shipment records changed after the preview. Review the refreshed import before adding rows.","error");
+  }
+  if(!state.importRows.length)return toast("There are no new shipment rows to add.","error");
+  const merged=[...state.importRows,...state.rows];
+  if(await saveRecords(merged)){state.importRows=[];state.importSourceRows=[];state.importPreviewUpdatedAt=null;modal("importModal",false)}
+}
+  
 
   function drawPhoto(records){
     if(!records.length)return toast("No shipment records are available for the photo.","error");
