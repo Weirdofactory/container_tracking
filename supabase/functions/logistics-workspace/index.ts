@@ -153,7 +153,7 @@ Deno.serve(async (req: Request) => {
         etd: date(d.etd), eta: date(d.eta), si_cutoff: date(d.si_cutoff), vgm_cutoff: date(d.vgm_cutoff),
         cy_cutoff: date(d.cy_cutoff), document_cutoff: date(d.document_cutoff),
         status: val(d.status || "planned", ["planned","booking_confirmed","in_transit","arrived","cancelled"], "sailing status"),
-        notes: text(d.notes, 2000), updated_by: actorId,
+        notes: text(d.notes, 2000), updated_by: actorId, updated_at: new Date().toISOString(),
         ...(!id ? { created_by: actorId } : {}),
       };
       if (!row.vessel_name) throw new Error("Vessel name is required.");
@@ -197,7 +197,7 @@ Deno.serve(async (req: Request) => {
         carrier: text(d.carrier, 100), vessel_name: text(d.vessel_name, 160), voyage_no: text(d.voyage_no, 80),
         container_type: text(d.container_type, 80), capacity_cbm: cbm, capacity_weight_kg: kg,
         status: val(d.status || "open", ["planned","open","closed","cancelled"], "consolidation status"),
-        etd: date(d.etd), eta: date(d.eta), notes: text(d.notes, 2000), updated_by: actorId,
+        etd: date(d.etd), eta: date(d.eta), notes: text(d.notes, 2000), updated_by: actorId, updated_at: new Date().toISOString(),
         ...(!id ? { created_by: actorId } : {}),
       };
       if (!row.reference) throw new Error("Consolidation reference is required.");
@@ -235,7 +235,7 @@ Deno.serve(async (req: Request) => {
         ...(itemId ? { id: itemId } : {}), consolidation_id: consolidationId,
         hbl_no: text(d.hbl_no, 100), shipper: text(d.shipper, 160), consignee: text(d.consignee, 160),
         package_count: packageCount, package_type: text(d.package_type, 80), gross_weight_kg: grossWeight,
-        volume_cbm: volume, notes: text(d.notes, 1500), updated_by: actorId,
+        volume_cbm: volume, notes: text(d.notes, 1500), updated_by: actorId, updated_at: new Date().toISOString(),
         ...(!itemId ? { created_by: actorId } : {}),
       };
       if (!row.hbl_no) throw new Error("HBL number is required for each LCL cargo item.");
@@ -263,7 +263,7 @@ Deno.serve(async (req: Request) => {
         currency, exchange_rate_to_inr: fx, invoice_reference: text(d.invoice_reference, 120),
         invoice_date: date(d.invoice_date), due_date: date(d.due_date),
         approval_status: "draft", approved_by: null, approved_at: null,
-        notes: text(d.notes, 1500), updated_by: actorId,
+        notes: text(d.notes, 1500), updated_by: actorId, updated_at: new Date().toISOString(),
         ...(!id ? { created_by: actorId } : {}),
       };
       if (!row.charge_code) throw new Error("Charge code/name is required.");
@@ -303,7 +303,7 @@ Deno.serve(async (req: Request) => {
         ...(id ? { id } : {}), container_no: containerNo, hbl_no: text(d.hbl_no, 100), mbl_no: text(d.mbl_no, 100),
         filing_type: val(d.filing_type, ["HBL","MBL","CSN","IGM","SI","VGM","OTHER"], "filing type"),
         filing_reference: text(d.filing_reference, 140), status: filingStatus, due_date: date(d.due_date),
-        filed_at: filedAt, acknowledged_at: acknowledgedAt, notes: text(d.notes, 2000), updated_by: actorId,
+        filed_at: filedAt, acknowledged_at: acknowledgedAt, notes: text(d.notes, 2000), updated_by: actorId, updated_at: new Date().toISOString(),
         ...(!id ? { created_by: actorId } : {}),
       };
       const { data, error } = await admin.from("shipment_filings").upsert(row).select("*").single();
