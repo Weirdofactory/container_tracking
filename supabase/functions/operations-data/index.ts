@@ -194,7 +194,8 @@ Deno.serve(async (req: Request) => {
 
     // Compare-and-swap in the database update prevents a second staff session
     // from overwriting a save that lands after the version check above.
-    const updatedAt = new Date().toISOString();
+    const previousVersionMs = Date.parse(expectedUpdatedAt);
+    const updatedAt = new Date(Math.max(Date.now(), previousVersionMs + 1)).toISOString();
     const { data: saved, error: writeError } = await admin.from("containers").update({
       data: payload.data, updated_at: updatedAt,
     }).eq("id", "gml_tracking_records").eq("updated_at", expectedUpdatedAt)
