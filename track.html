@@ -70,10 +70,10 @@
       <div class="freshness-note" id="sourceFreshness" hidden></div>
       <div class="result-list" id="resultList"></div>
       <section class="map-panel" id="mapPanel" hidden aria-label="Vessel map">
-        <div class="map-panel-head"><div><h3>Vessel route map</h3><p>Reported AIS positions and the shipment’s recorded port route.</p></div><div class="map-controls"><select id="mapShipment" aria-label="Choose a shipment"></select><button id="loadVesselMap" type="button">Load vessel map</button></div></div>
+        <div class="map-panel-head"><div><h3>Vessel route map</h3><p>Reported AIS positions and the shipment’s recorded port route. The corridor line is approximate.</p></div><div class="map-controls"><select id="mapShipment" aria-label="Choose a shipment"></select><button id="loadVesselMap" type="button">Load vessel map</button></div></div>
         <div class="map-status" id="mapStatus" aria-live="polite">Choose a shipment and load its vessel map.</div>
         <div class="customer-map" id="customerMap" role="img" aria-label="Shipment vessel map"></div>
-        <div class="map-legend"><span><i class="legend-dot"></i>Origin port</span><span><i class="legend-dot destination"></i>India gateway</span><span><i class="legend-line"></i>Reported AIS track</span><span><i class="legend-line approx"></i>Approximate port corridor</span></div>
+        <div class="map-legend"><span><i class="legend-dot"></i>Origin port</span><span><i class="legend-dot destination"></i>India gateway</span><span><i class="legend-line"></i>Reported AIS track</span><span><i class="legend-line approx"></i>Approximate port corridor</span><span>Map data © OpenStreetMap contributors · OpenFreeMap</span></div>
       </section>
     </section>
     <section class="results" id="emptySection" hidden><div class="empty-state"><strong>No shipment found</strong>Check the exact container or B/L number and try again. If the number is correct, contact your GML operations representative.</div></section>
@@ -131,7 +131,7 @@
       ["NINGBO",[121.544,29.868]],["SHANGHAI",[121.474,31.230]],["QINGDAO",[120.382,36.067]],["TIANJIN",[117.735,38.982]],["XINGANG",[117.735,38.982]],
       ["YANTIAN",[114.269,22.563]],["SHENZHEN",[114.057,22.543]],["HONG KONG",[114.170,22.319]],["HONGKONG",[114.170,22.319]],["SINGAPORE",[103.822,1.264]],
       ["LAEM CHABANG",[100.883,13.085]],["BANGKOK",[100.501,13.756]],["COLOMBO",[79.861,6.927]],["PORT KLANG",[101.399,3.000]],["KLANG",[101.399,3.000]],
-      ["KATTUPALLI",[80.348,13.305]],["ENNORE",[80.322,13.246]],["CHENNAI",[80.270,13.083]],["TUTICORIN",[78.135,8.764]],["THOOTHUKUDI",[78.135,8.764]],
+      ["CITPL",[80.300,13.100]],["CCTPL",[80.300,13.100]],["KATTUPALLI",[80.348,13.305]],["ENNORE",[80.322,13.246]],["CHENNAI",[80.270,13.083]],["TUTICORIN",[78.135,8.764]],["THOOTHUKUDI",[78.135,8.764]],
       ["COCHIN",[76.267,9.931]],["KOCHI",[76.267,9.931]],["NHAVA SHEVA",[72.950,18.950]],["J N P T",[72.950,18.950]],["MUMBAI",[72.835,18.940]],
       ["MUNDRA",[69.720,22.740]],["KOLKATA",[88.310,22.540]],["VISAKHAPATNAM",[83.218,17.687]],["KRISHNAPATNAM",[80.121,14.253]],["PIPAVAV",[71.500,20.900]]
     ];
@@ -259,7 +259,6 @@
           window.customerShipmentResults=results;
           $("resultList").innerHTML=results.map(renderShipment).join("")+(data.truncated?'<div class="empty-state">Some matching shipments were not shown. Contact GML operations for the complete B/L results.</div>':"");
           $("mapShipment").innerHTML=results.map((item,index)=>'<option value="'+index+'">'+escapeHtml(item.container||"Shipment "+(index+1))+'</option>').join("");
-          $("mapPanel").hidden=false;
           $("resultList").querySelectorAll("[data-map-index]").forEach(link=>link.addEventListener("click",()=>{
             $("mapShipment").value=link.dataset.mapIndex;$("mapPanel").scrollIntoView({behavior:"smooth",block:"start"});loadCustomerMap();
           }));
