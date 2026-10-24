@@ -788,6 +788,7 @@ async function confirmImport(){
   function renderReports(){const total=state.rows.length;$("reportMetrics").innerHTML=[["Total shipments",total,"▣"],["In transit",state.rows.filter(isTransit).length,"➜"],["Arrived",state.rows.filter(isArrived).length,"⚓"],["Delayed",state.rows.filter(isDelayed).length,"◷"]].map(([l,v,i])=>`<article class="metric"><div class="metric-icon">${i}</div><div><div class="metric-label">${l}</div><div class="metric-value">${v}</div><div class="metric-note">Loaded shipment records</div></div></article>`).join("");$("reportDonut").style.background=$("statusDonut").style.background;$("reportLegend").innerHTML=$("statusLegend").innerHTML;renderTrend($("reportTrend"),state.rows,String(new Date().getFullYear()));renderLaneList($("reportLanes"),countLanes(state.rows));renderMilestoneCoverage()}
 
 
+
   const OPS_TABS = {
     sailings: { title:"Sailing schedule", description:"Cutoff dates, departures and the shipment records assigned to each voyage.", add:"＋ Add sailing" },
     consolidations: { title:"LCL consolidation", description:"Capture HBL cargo, real equipment capacity and calculated load utilization.", add:"＋ New consolidation" },
@@ -859,7 +860,9 @@ async function confirmImport(){
   function renderOpsKpis(){
     const now=new Date();now.setHours(0,0,0,0);
     const nextWeek=new Date(now);nextWeek.setDate(now.getDate()+7);
-    const cutoffs=state.ops.sailings.flatMap(s=>[s.si_cutoff,s.vgm_cutoff,s.cy_cutoff,s.document_cutoff]).filter(v=>{if(!v)return false;const d=new Date(String(v).slice(0,10)+"T00:00:00");return d>=now&&d<=nextWeek});
+    const cutoffDates=state.ops.sailings.flatMap(s=>[s.si_cutoff,s.vgm_cutoff,s.cy_cutoff,s.document_cutoff]);
+    const filingDates=state.ops.filings.filter(f=>!["accepted","not_required"].includes(f.status)).map(f=>f.due_date);
+    const cutoffs=[...cutoffDates,...filingDates].filter(v=>{if(!v)return false;const d=new Date(String(v).slice(0,10)+"T00:00:00");return d>=now&&d<=nextWeek});
     const openGroups=state.ops.consolidations.filter(x=>!["closed","cancelled"].includes(x.status));
     const activeAlerts=opsAlertRecords().filter(x=>x.action?.status!=="resolved").length;
     const approved=state.ops.charges.filter(x=>x.approval_status==="approved");
@@ -867,10 +870,10 @@ async function confirmImport(){
     const cost=approved.filter(x=>x.direction==="cost").reduce((a,x)=>a+opsNumber(x.amount_inr),0);
     const net=rev-cost;
     const cards=[
-      ["Cutoffs · next 7 days",String(cutoffs.length),"Sailing and filing dates entered by staff"],
+      ["Cutoffs & filings · next 7 days",String(cutoffs.length),"Staff-entered sailing and filing deadlines"],
       ["Open consolidations",String(openGroups.length),state.ops.consolidationItems.length+" HBL cargo records"],
       ["Approved net · INR",approved.length?opsMoney(net):"—",approved.length?opsMoney(rev)+" revenue · "+opsMoney(cost)+" cost":"No approved charges yet"],
-      ["Open LFD alerts",String(activeAlerts),"From current Supabase shipment dates"]
+      ["Active LFD alerts",String(activeAlerts),"From current Supabase shipment dates"]
     ];
     $("opsKpis").innerHTML=cards.map(x=>'<article class="ops-kpi"><div class="ops-kpi-label">'+esc(x[0])+'</div><div class="ops-kpi-value">'+esc(x[1])+'</div><div class="ops-kpi-note">'+esc(x[2])+'</div></article>').join("");
   }
@@ -1041,7 +1044,10 @@ async function confirmImport(){
       else if(kind==="consolidation")result=await invoke("logistics-workspace",{action:"upsertConsolidation",data:values});
       else if(kind==="cargo")result=await invoke("logistics-workspace",{action:"upsertConsolidationItem",data:values});
       else if(kind==="charge")result=await invoke("logistics-workspace",{action:"upsertCharge",data:values});
-      else if(kind==="filing")result=await invoke("logistics-workspace",{action:"upsertFiling",data:values});
+      else if(kind==="filing"){
+        ["filed_at","acknowledged_at"].forEach(key=>{if(values[key])values[key]=new Date(values[key]).toISOString()});
+        result=await invoke("logistics-workspace",{action:"upsertFiling",data:values});
+      }
       else if(kind==="alert")result=await invoke("logistics-workspace",{action:"saveAlertAction",...values});
       else if(kind==="document"){
         const input=$("opsFields").querySelector('input[type="file"]'),file=input?.files?.[0];
