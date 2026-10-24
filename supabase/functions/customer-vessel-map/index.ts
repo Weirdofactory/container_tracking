@@ -75,6 +75,13 @@ async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
 }
+async function consumeProviderSlot(admin: ReturnType<typeof createClient>, serviceKey: string, endpoint: string): Promise<boolean> {
+  const bucketKey = await sha256Hex("customer-vessel-map:provider:" + endpoint + ":" + serviceKey);
+  const { data, error } = await admin.rpc("consume_edge_rate_limit", {
+    p_bucket_key: bucketKey, p_window_seconds: 60, p_limit: 2,
+  });
+  return !error && Array.isArray(data) && !!data[0]?.allowed;
+}
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (req.method === "OPTIONS") {
@@ -144,6 +151,9 @@ Deno.serve(async (req: Request) => {
     searchUrl.searchParams.set("shipname", vesselName);
     searchUrl.searchParams.set("shiptype", "7");
     searchUrl.searchParams.set("protocol", "json");
+    if (!await consumeProviderSlot(admin, serviceKey, "search")) {
+      return reply(200, { source: "MarineTraffic", status: "provider_limit", positions: [], latest: null }, origin);
+    }
     let searchResponse: Response;
     try {
       searchResponse = await fetch(searchUrl, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(15000) });
@@ -188,6 +198,9 @@ Deno.serve(async (req: Request) => {
   trackUrl.searchParams.set("msgtype", "simple");
   trackUrl.searchParams.set("protocol", "json");
   trackUrl.searchParams.set(imo ? "imo" : "mmsi", imo || mmsi);
+  if (!await consumeProviderSlot(admin, serviceKey, "track")) {
+    return reply(200, { source: "MarineTraffic", status: "provider_limit", positions: [], latest: null }, origin);
+  }
   let providerResponse: Response;
   try {
     providerResponse = await fetch(trackUrl, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(15000) });
