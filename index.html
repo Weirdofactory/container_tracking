@@ -680,7 +680,7 @@
   const DATA_FUNCTION = "operations-data";
   const AIS_FUNCTION = "vessel-ais";
   const COLUMNS = ["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-  const state = { rows: [], selected: new Set(), filter: "all", view: "cards", query: "", updatedAt: null, profile: null, loaded: false, page: "dashboard", map: null, fullMap: null, currentRoute: null, mapVesselCandidates: [], spotlightIndex: null, importRows: [], importSourceRows: [], importPreviewUpdatedAt: null, editIndex: -1, toastTimer: null, aisCache: new Map(), ops: { loaded:false, tab:"sailings", alertFilter:"open", sailings:[], sailingShipments:[], consolidations:[], consolidationItems:[], charges:[], filings:[], documents:[], alertActions:[] } };
+  const state = { rows: [], etaHistory: [], selected: new Set(), filter: "all", view: "cards", query: "", updatedAt: null, profile: null, loaded: false, page: "dashboard", map: null, fullMap: null, currentRoute: null, mapVesselCandidates: [], spotlightIndex: null, importRows: [], importSourceRows: [], importPreviewUpdatedAt: null, editIndex: -1, toastTimer: null, aisCache: new Map(), ops: { loaded:false, tab:"sailings", alertFilter:"open", sailings:[], sailingShipments:[], consolidations:[], consolidationItems:[], charges:[], filings:[], documents:[], alertActions:[] } };
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
   const keyOf = key => String(key ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -720,18 +720,18 @@
     try{
       const data=await invoke(DATA_FUNCTION,{action:"read"});
       if(!Array.isArray(data?.data))throw new Error("Supabase returned an invalid shipment dataset.");
-      state.rows=data.data.map(row=>({"PORT OUT":"","CONTAINER RETURN DATE":"","TRUCK NO.":"",...row}));state.updatedAt=data.updatedAt||null;state.profile={...state.profile,...(data.profile||{})};state.loaded=true;
+      state.rows=data.data.map(row=>({"PORT OUT":"","CONTAINER RETURN DATE":"","TRUCK NO.":"",...row}));state.etaHistory=Array.isArray(data.etaHistory)?data.etaHistory:[];state.updatedAt=data.updatedAt||null;state.profile={...state.profile,...(data.profile||{})};state.loaded=true;
       setCloud("connected",`${state.rows.length} records · Supabase`);renderAll();
     }catch(error){setCloud("error",`Cloud read failed · ${errText(error)}`);toast(`Shipment data could not load: ${errText(error)}`,"error");renderAll()}
   }
   async function saveRecords(nextRows){
     if(!state.profile||!state.updatedAt){toast("Reload the latest shipment records before saving.","error");return false}
     setCloud("loading","Saving changes…");
-    try{const data=await invoke(DATA_FUNCTION,{action:"write",data:nextRows,expectedUpdatedAt:state.updatedAt});if(!data?.saved)throw new Error(data?.error||"Supabase did not confirm the save.");state.rows=nextRows;state.updatedAt=data.updatedAt||state.updatedAt;setCloud("connected",`${state.rows.length} records · Supabase`);renderAll();toast("Saved to Supabase","success");return true}
+    try{const data=await invoke(DATA_FUNCTION,{action:"write",data:nextRows,expectedUpdatedAt:state.updatedAt});if(!data?.saved)throw new Error(data?.error||"Supabase did not confirm the save.");state.rows=nextRows;if(Array.isArray(data.etaHistory)){state.etaHistory=[...data.etaHistory,...state.etaHistory].sort((a,b)=>Date.parse(b.timestamp||0)-Date.parse(a.timestamp||0)).slice(0,500)}state.updatedAt=data.updatedAt||state.updatedAt;setCloud("connected",`${state.rows.length} records · Supabase`);renderAll();toast(data.auditWarning||"Saved to Supabase",data.auditWarning?"error":"success");return true}
     catch(error){setCloud("error",errText(error));toast(`Save failed: ${errText(error)}`,"error");return false}
   }
   async function setAccess(session){
-    if(!session){state.profile=null;state.rows=[];state.loaded=false;state.ops={loaded:false,tab:"sailings",alertFilter:"open",sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]};$("staffShell").hidden=true;$("publicLanding").hidden=false;setCloud("error","Sign in to load shipments");return}
+    if(!session){state.profile=null;state.rows=[];state.etaHistory=[];state.loaded=false;state.ops={loaded:false,tab:"sailings",alertFilter:"open",sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]};$("staffShell").hidden=true;$("publicLanding").hidden=false;setCloud("error","Sign in to load shipments");return}
     state.profile={displayName:session.user?.email||"GML Staff",role:"Staff",email:session.user?.email||""};$("publicLanding").hidden=true;$("staffShell").hidden=false;$("userName").textContent=state.profile.displayName;
     try{await loadRecords()}catch(_){ }
   }
@@ -1340,9 +1340,21 @@ async function confirmImport(){
 }
   
 
-  function drawPhoto(records){
+  async function drawPhoto(records){
     if(!records.length)return toast("No shipment records are available for the photo.","error");
-    const W=1200,headerH=164,summaryH=86,cardH=266,gap=14,footerH=64;
+    let qrImages;
+    try{
+      const qr=await ensurePhotoQRCode();
+      qrImages=await Promise.all(records.map(async record=>{
+        const url=new URL("https://weirdofactory.github.io/container_tracking/track.html");
+        url.searchParams.set("reference",container(record));
+        const dataUrl=await qr.toDataURL(url.toString(),{errorCorrectionLevel:"M",margin:1,width:256,color:{dark:"#0b2b50",light:"#ffffff"}});
+        const image=new Image();
+        await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error("QR image could not be decoded."));image.src=dataUrl});
+        return image;
+      }));
+    }catch(_){return toast("Could not create tracking QR codes. Check your internet connection and try again.","error")}
+    const W=1200,headerH=164,summaryH=86,cardH=314,gap=14,footerH=64;
     const summaryY=headerH+16,top=summaryY+summaryH+16;
     const H=top+records.length*cardH+Math.max(0,records.length-1)*gap+footerH;
     const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;
@@ -1466,14 +1478,24 @@ async function confirmImport(){
       });
 
       c.strokeStyle="#e6edf3";c.lineWidth=1;c.beginPath();
-      c.moveTo(x+24,y+203);c.lineTo(x+w-24,y+203);c.stroke();
-      const milestone=photoMilestone(r);
-      c.fillStyle="#6d8499";c.font="800 9px DM Sans, sans-serif";
-      c.fillText("LATEST RECORDED UPDATE",x+24,y+223);
-      c.fillStyle="#173b5d";c.font="800 13px DM Sans, sans-serif";
-      c.fillText(milestone.label,x+24,y+245,650);
-      c.fillStyle="#5e7891";c.font="700 12px DM Sans, sans-serif";
-      c.textAlign="right";c.fillText(milestone.date,x+w-24,y+245,280);c.textAlign="left";
+      c.moveTo(x+24,y+203);c.lineTo(x+w-104,y+203);c.stroke();
+      const latest=photoMilestone(r),next=photoNextMilestone(r,milestoneFields),etaChange=photoEtaChange(r);
+      const detailX=x+24,detailW=w-48-104,colW=detailW/3;
+      const details=[
+        {label:"LATEST UPDATE",value:latest.label+" · "+latest.date},
+        {label:"NEXT MILESTONE",value:next.label+" · "+next.date},
+        {label:"ETA CHANGE",value:etaChange}
+      ];
+      details.forEach((item,j)=>{
+        const dx=detailX+j*colW;
+        c.fillStyle="#6d8499";c.font="800 9px DM Sans, sans-serif";
+        c.fillText(item.label,dx,y+224,colW-14);
+        c.fillStyle="#173b5d";c.font="700 11px DM Sans, sans-serif";
+        c.fillText(item.value,dx,y+247,colW-14);
+      });
+      c.drawImage(qrImages[i],x+w-99,y+214,80,80);
+      c.fillStyle="#6d8499";c.font="800 7px DM Sans, sans-serif";
+      c.textAlign="center";c.fillText("SCAN TO TRACK",x+w-59,y+305,86);c.textAlign="left";
     });
 
     const fy=H-footerH;c.fillStyle="#e2eaf1";c.fillRect(34,fy,W-68,1);
@@ -1484,6 +1506,54 @@ async function confirmImport(){
 
 
     canvas.toBlob(blob=>blob?downloadBlob(blob,`GML_Status_${records.length===1?container(records[0]).replace(/[^A-Z0-9-]/gi,"_"):"Update"}.png`):toast("Could not create the status photo.","error"),"image/png");
+  }
+  let photoQRCodePromise=null;
+  function ensurePhotoQRCode(){
+    if(window.QRCode?.toDataURL)return Promise.resolve(window.QRCode);
+    if(photoQRCodePromise)return photoQRCodePromise;
+    photoQRCodePromise=new Promise((resolve,reject)=>{
+      const script=document.createElement("script");
+      script.src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/lib/browser.min.js";
+      script.async=true;
+      script.onload=()=>window.QRCode?.toDataURL?resolve(window.QRCode):reject(new Error("QR library unavailable."));
+      script.onerror=()=>reject(new Error("QR library could not load."));
+      document.head.appendChild(script);
+    }).catch(error=>{photoQRCodePromise=null;throw error});
+    return photoQRCodePromise;
+  }
+  function photoNextMilestone(row,milestoneFields){
+    const completed=value=>!!value&&!/^(?:-|—|n\/?a|na)$/i.test(String(value).trim());
+    let last=-1;
+    milestoneFields.forEach((item,index)=>{if(completed(field(row,[item.key])))last=index});
+    const next=milestoneFields.find((item,index)=>index>last&&!completed(field(row,[item.key])));
+    if(!next)return{label:"All milestones complete",date:"No further update"};
+    const names={"PORT IN":"Port in","PORT OUT":"Port out","CFS IN":"CFS receipt","DESTUFFING DATE":"Destuffing","CONTAINER RETURN DATE":"Empty return"};
+    const eta=next.key==="PORT IN"?field(row,["ETA"]):"";
+    return{label:names[next.key]||next.label,date:eta?"ETA "+fmtDate(eta):"Awaiting update"};
+  }
+  function photoEtaChange(row){
+    const current=field(row,["ETA"]);
+    if(!current)return"No ETA recorded";
+    const dateKey=value=>{
+      const d=parseDate(value);
+      return d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"):String(value??"").trim().toUpperCase();
+    };
+    const containerKey=container(row).toUpperCase().replace(/[^A-Z0-9]/g,"");
+    const vessel=String(field(row,["VESSEL & VOY"])||"").replace(/\s+/g," ").trim().toUpperCase();
+    const prior=(state.etaHistory||[]).find(log=>{
+      if(String(log.containerNo||"").toUpperCase().replace(/[^A-Z0-9]/g,"")!==containerKey)return false;
+      if(dateKey(log.newVal)!==dateKey(current)||!String(log.oldVal??"").trim()||dateKey(log.oldVal)===dateKey(current))return false;
+      const logVessel=String(log.field||"").replace(/:ETA$/i,"").replace(/\s+/g," ").trim().toUpperCase();
+      return !vessel||logVessel===vessel;
+    });
+    if(!prior)return"No prior ETA change recorded";
+    const oldDate=parseDate(prior.oldVal),newDate=parseDate(current);
+    let shift="";
+    if(oldDate&&newDate){
+      const days=Math.round((Date.UTC(newDate.getFullYear(),newDate.getMonth(),newDate.getDate())-Date.UTC(oldDate.getFullYear(),oldDate.getMonth(),oldDate.getDate()))/86400000);
+      shift=" ("+(days>0?"+":"")+days+"d)";
+    }
+    return (oldDate?fmtDate(oldDate):String(prior.oldVal))+" → "+(newDate?fmtDate(newDate):String(current))+shift;
   }
   function photoTimestamp(value){const d=value instanceof Date?value:new Date(value);return Number.isNaN(+d)?"Unavailable":new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:true}).format(d)}
   function photoMilestone(row){
