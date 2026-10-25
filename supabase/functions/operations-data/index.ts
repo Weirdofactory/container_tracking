@@ -161,7 +161,15 @@ Deno.serve(async (req: Request) => {
       .eq("id", "gml_tracking_records").maybeSingle();
     if (error) return reply(503, { error: "Shipment data unavailable" }, origin);
     if (!data || !Array.isArray(data.data)) return reply(503, { error: "Shipment dataset unavailable" }, origin);
-    return reply(200, { data: data.data, updatedAt: data.updated_at, profile: { displayName: profile.display_name, role: profile.role } }, origin);
+    const { data: etaHistory } = await admin.from("audit_logs")
+      .select("containerNo,field,oldVal,newVal,timestamp")
+      .ilike("field", "%:ETA").order("timestamp", { ascending: false, nullsFirst: false }).limit(500);
+    return reply(200, {
+      data: data.data,
+      updatedAt: data.updated_at,
+      etaHistory: Array.isArray(etaHistory) ? etaHistory : [],
+      profile: { displayName: profile.display_name, role: profile.role },
+    }, origin);
   }
 
 
@@ -185,12 +193,39 @@ Deno.serve(async (req: Request) => {
     if (current.updated_at !== expectedUpdatedAt) {
       return reply(409, { error: "Shipment data changed since you loaded it. Reload the latest records and reapply your changes." }, origin);
     }
-    const permissionError = validateShipmentWrite(
-      profile.role,
-      current.data as Record<string, unknown>[],
-      payload.data as Record<string, unknown>[],
-    );
+    const existingRows = current.data as Record<string, unknown>[];
+    const incomingRows = payload.data as Record<string, unknown>[];
+    const permissionError = validateShipmentWrite(profile.role, existingRows, incomingRows);
     if (permissionError) return reply(403, { error: permissionError }, origin);
+
+    const rowsByContainer = new Map<string, Record<string, unknown>[]>();
+    for (const row of existingRows) {
+      const key = shipmentContainerKey(row);
+      if (!key) continue;
+      const matches = rowsByContainer.get(key) ?? [];
+      matches.push(row);
+      rowsByContainer.set(key, matches);
+    }
+    const etaChanges: Record<string, unknown>[] = [];
+    for (const after of incomingRows) {
+      const key = shipmentContainerKey(after);
+      const before = rowsByContainer.get(key)?.shift();
+      if (!before) continue;
+      const oldEta = rowValueByKey(before, "eta");
+      const newEta = rowValueByKey(after, "eta");
+      if (compareValue(oldEta) === compareValue(newEta)) continue;
+      const vessel = String(rowValueByKey(after, "vesselandvoy") ?? rowValueByKey(before, "vesselandvoy") ?? "").trim();
+      etaChanges.push({
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        operator: String(profile.display_name || userData.user.email || "Staff"),
+        action: "ETA updated",
+        containerNo: String(rowValueByKey(after, "containerno") ?? ""),
+        field: (vessel ? vessel + ":" : "") + "ETA",
+        oldVal: compareValue(oldEta),
+        newVal: compareValue(newEta),
+      });
+    }
 
     // Compare-and-swap in the database update prevents a second staff session
     // from overwriting a save that lands after the version check above.
@@ -202,7 +237,21 @@ Deno.serve(async (req: Request) => {
       .select("updated_at").maybeSingle();
     if (writeError) return reply(503, { error: "Could not save shipment data" }, origin);
     if (!saved) return reply(409, { error: "Shipment data changed since you loaded it. Reload the latest records and reapply your changes." }, origin);
-    return reply(200, { saved: true, count: payload.data.length, updatedAt: saved.updated_at }, origin);
+    let auditWarning = "";
+    let etaHistory: Record<string, unknown>[] = [];
+    if (etaChanges.length) {
+      const { data: inserted, error: auditError } = await admin.from("audit_logs")
+        .insert(etaChanges).select("containerNo,field,oldVal,newVal,timestamp");
+      if (auditError) auditWarning = "Shipment saved, but ETA history could not be recorded.";
+      else if (Array.isArray(inserted)) etaHistory = inserted;
+    }
+    return reply(200, {
+      saved: true,
+      count: payload.data.length,
+      updatedAt: saved.updated_at,
+      etaHistory,
+      ...(auditWarning ? { auditWarning } : {}),
+    }, origin);
   }
   return reply(400, { error: "Unsupported action" }, origin);
 });
