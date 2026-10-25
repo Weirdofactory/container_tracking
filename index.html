@@ -209,7 +209,88 @@
     .vessel-marker.replay span{background:linear-gradient(145deg,#f29a2c,#de6c12);border-color:#fff}
     @media(max-width:620px){.map-vessel-matches{grid-template-columns:1fr}.ais-playback-meta{text-align:left;width:100%}.ais-playback-head strong{width:100%}}
 
-  </style>
+  /* Route intelligence workspace */
+    #mapModal{padding:16px}
+    #mapModal .map-experience{width:min(1500px,calc(100vw - 32px));max-width:none;height:min(960px,calc(100vh - 32px));max-height:none;display:flex;flex-direction:column;overflow:hidden;border:1px solid #d4e0ea;border-radius:22px;background:#f3f7fa;box-shadow:0 35px 100px #061d3470}
+    .map-experience-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 24px;background:linear-gradient(108deg,#092844,#103f64 72%,#12647a);color:#fff}
+    .map-experience-title{min-width:0}.map-eyebrow{display:flex;align-items:center;gap:7px;color:#8ed8e7;font-size:9px;font-weight:800;letter-spacing:1.5px}
+    .map-eyebrow i{width:7px;height:7px;border-radius:50%;background:#45d3ae;box-shadow:0 0 0 4px #45d3ae22}
+    .map-experience-title h2{margin:6px 0 2px;color:#fff;font:800 21px Manrope,sans-serif;letter-spacing:-.45px}
+    .map-experience-title p{margin:0;color:#b4c9d9;font-size:11px}
+    .map-experience-actions{display:flex;align-items:center;gap:9px;flex:none}
+    .map-experience-actions .close-btn{background:#ffffff15;border:1px solid #ffffff2a;color:#fff}
+    .map-live-badge{display:inline-flex;align-items:center;gap:7px;border:1px solid #ffffff24;border-radius:20px;padding:8px 10px;color:#d6e4ed;font-size:9px;font-weight:800;letter-spacing:.65px;white-space:nowrap}
+    .map-live-badge:before{content:"";width:6px;height:6px;border-radius:50%;background:#9cb3c4}
+    .map-live-badge.live{color:#9af2cf;background:#0b604a55}.map-live-badge.live:before{background:#30d9a0;box-shadow:0 0 0 4px #30d9a022}
+    .map-live-badge.stale{color:#ffd884;background:#80570e38}.map-live-badge.stale:before{background:#f0b53d}
+    .map-live-badge.loading{color:#bfe6ff;background:#1678b545}.map-live-badge.loading:before{background:#44c6f2;animation:vesselGlow 1.5s ease-in-out infinite}
+    .map-live-badge.error{color:#ffb8b3;background:#8b2d2b50}.map-live-badge.error:before{background:#f16f66}
+    .map-live-badge.neutral{color:#d2e0e9}
+    .map-command-bar{flex:none;min-height:62px;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;background:#fff;border-bottom:1px solid #e2eaf0}
+    .map-route-brief{display:flex;align-items:center;gap:10px;min-width:0}.map-command-icon{display:grid;place-items:center;width:35px;height:35px;border-radius:11px;background:#e8f7fb;color:#078ca8;font-size:20px}
+    .map-route-brief small{display:block;color:#91a3b3;font-size:8px;letter-spacing:1.1px;font-weight:800}.map-route-brief strong{display:block;color:#1a3b57;font:800 12px Manrope,sans-serif;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:min(58vw,700px)}
+    .map-command-actions{display:flex;gap:7px;flex:none}.map-command-btn{padding:8px 11px;color:#31536f}.map-command-btn:disabled{opacity:.42;cursor:not-allowed;transform:none}
+    .map-workspace-grid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 326px}
+    .map-main-column{min-width:0;min-height:0;display:flex;flex-direction:column;background:#eaf1f4}
+    .map-canvas-shell{position:relative;flex:1;min-height:300px;background:#dfecee}
+    .map-modal{position:absolute;inset:0;width:100%;height:100%;min-height:0;border-radius:0;overflow:hidden;background:#e4edf0}
+    .map-canvas-label{position:absolute;z-index:450;top:13px;left:54px;display:flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid #ffffffb5;border-radius:9px;background:#ffffffed;box-shadow:0 5px 20px #17395414;color:#54708a;font-size:8px;font-weight:800;letter-spacing:.8px;pointer-events:none}
+    .map-canvas-dot{width:6px;height:6px;background:#19b383;border-radius:50%;box-shadow:0 0 0 4px #19b3831c}.map-canvas-separator{width:1px;height:11px;background:#d9e4ec}
+    .map-canvas-help{position:absolute;z-index:450;right:13px;top:13px;border-radius:8px;background:#0c2d49d9;padding:8px 10px;color:#d7e4ed;font-size:9px;pointer-events:none}
+    .map-data-footer{flex:none;padding:11px 15px 12px;background:#fff;border-top:1px solid #dce7ee}
+    .map-route-legend{padding:0 0 9px;gap:14px;color:#71869a;font-size:9px}
+    .map-route-legend i{width:14px;height:3px;background:#2383c5}.map-route-legend i.actual{background:#0ba875}.map-route-legend i.transship{width:7px;height:7px}.map-route-legend i.origin,.map-route-legend i.destination{width:7px;height:7px}
+    .map-status-line{display:flex;align-items:flex-start;gap:8px;padding-top:8px;border-top:1px solid #eef2f5;color:#657e95;font-size:10px;line-height:1.45}
+    .map-status-dot{flex:none;width:6px;height:6px;margin-top:4px;border-radius:50%;background:#0da978}
+    .map-status-line.error .map-status-dot{background:#d64c46}
+    .map-side-panel{min-height:0;overflow:auto;padding:13px;display:flex;flex-direction:column;gap:10px;background:#f5f8fa;border-left:1px solid #dde7ee}
+    .map-side-card{background:#fff;border:1px solid #e0e8ee;border-radius:13px;box-shadow:0 4px 14px #18385208;padding:14px}
+    .map-vessel-card{background:linear-gradient(145deg,#fff,#f7fbfd)}
+    .map-side-kicker{display:flex;align-items:center;justify-content:space-between;color:#8299ad;font-size:8px;font-weight:800;letter-spacing:1.15px}
+    .map-signal-icon{display:grid;place-items:center;width:24px;height:24px;border-radius:8px;background:#e7f6f8;color:#088aa4;font-size:17px}
+    .map-vessel-card h3{margin:10px 0 3px;color:#123858;font:800 16px Manrope,sans-serif;overflow-wrap:anywhere}
+    .map-vessel-id{margin:0;color:#8295a8;font-size:10px;font-family:ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
+    .map-telemetry{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+    .map-telemetry>div{padding:10px;border:1px solid #e7edf1;border-radius:10px;background:#fbfcfd}
+    .map-telemetry small,.map-last-fix small{display:block;color:#94a5b4;font-size:8px;font-weight:800;letter-spacing:.7px}
+    .map-telemetry strong{display:block;margin-top:4px;color:#184c70;font:800 15px Manrope,sans-serif}
+    .map-last-fix{display:flex;align-items:center;gap:9px;margin-top:9px;padding:10px 9px;border-radius:9px;background:#eef8fa}
+    .map-fix-icon{display:grid;place-items:center;flex:none;width:25px;height:25px;border-radius:8px;background:#fff;color:#0d92aa}
+    .map-last-fix strong{display:block;margin-top:3px;color:#42627c;font-size:9px;font-weight:700}
+    .map-side-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .map-side-kicker-text{color:#8ca0b1;font-size:8px;font-weight:800;letter-spacing:1px}
+    .map-side-card-head h3{margin:3px 0 0;color:#173b59;font:800 14px Manrope,sans-serif}
+    .map-estimate-tag{border:1px solid #f2e1be;border-radius:20px;background:#fff9eb;color:#a57619;padding:5px 7px;font-size:7px;font-weight:800;letter-spacing:.55px;white-space:nowrap}
+    .map-route-stops{list-style:none;margin:13px 0 0;padding:0;position:relative}
+    .map-route-stops:before{content:"";position:absolute;top:10px;bottom:12px;left:8px;width:1px;background:#dce7ed}
+    .map-route-stops li{position:relative;display:flex;align-items:flex-start;gap:10px;padding:0 0 12px 0}
+    .map-route-stops li:last-child{padding-bottom:0}
+    .map-stop-mark{position:relative;z-index:1;display:grid;place-items:center;flex:none;width:17px;height:17px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #d4e1e9;background:#2384e6;color:#fff;font-size:0}
+    .map-route-stops li.transshipment .map-stop-mark{background:#ef9b28}.map-route-stops li.destination .map-stop-mark{background:#12a779}
+    .map-route-stops li strong{display:block;color:#2a4b67;font-size:10px;line-height:1.3}.map-route-stops li small{display:block;margin-top:3px;color:#94a4b2;font-size:8px;letter-spacing:.65px;text-transform:uppercase}
+    .map-route-empty{color:#8b9eaf!important;font-size:10px;padding:5px 0 0 27px!important}
+    .map-route-footnote{margin:12px 0 0;padding-top:9px;border-top:1px solid #edf1f4;color:#8b9eaf;font-size:9px;line-height:1.5}
+    .map-identity-panel{margin:0;background:#f3fbfd;border-color:#d2e8ef;box-shadow:none;padding:12px}
+    .map-identity-head{display:grid;gap:7px}.map-identity-head strong{font-size:11px}.map-identity-head span{font-size:9px}
+    .map-vessel-matches{grid-template-columns:1fr;max-height:180px;overflow:auto}
+    .map-vessel-match{padding:9px}.map-vessel-match b{font-size:9px}.map-vessel-match small{font-size:8px}
+    .map-side-disclaimer{display:flex;gap:8px;padding:4px 3px;color:#8498a9;font-size:9px;line-height:1.5}
+    .map-side-disclaimer>span{color:#138fac}.map-side-disclaimer p{margin:0}
+    .ais-playback{margin:0 0 8px;padding:10px 11px;border-color:#dce8f1;border-radius:11px;background:#f6fafc}
+    .ais-playback-head{gap:7px;margin-bottom:5px}.playback-symbol{display:grid;place-items:center;width:24px;height:24px;flex:none;border-radius:8px;background:#e6f5f8;color:#0a91aa;font-size:10px}
+    .playback-heading{margin-right:auto}.playback-heading strong{display:block;color:#1c405d;font:800 10px Manrope,sans-serif}.playback-heading small{display:block;margin-top:2px;color:#8b9eaf;font-size:8px}
+    .playback-action{padding:6px 8px!important;font-size:9px!important}.playback-speed{display:flex;align-items:center;gap:5px;color:#8b9cad;font-size:8px}
+    .ais-playback-head select{padding:5px 6px;font-size:9px}.ais-playback-meta{display:block;min-width:0;margin-top:5px;text-align:left;font-size:8px}
+    .ais-playback input[type=range]{height:16px}
+    .map-route-brief strong{font-size:11px}
+    @media(max-width:980px){#mapModal .map-experience{height:calc(100vh - 20px);width:calc(100vw - 20px);border-radius:16px}.map-workspace-grid{grid-template-columns:minmax(0,1fr) 290px}}
+    @media(max-width:720px){#mapModal{padding:8px}.map-experience-head{align-items:flex-start;padding:14px}.map-experience-title h2{font-size:17px}.map-experience-title p{font-size:9px;max-width:55vw}.map-experience-actions{gap:5px}.map-experience-actions .map-live-badge{display:none}.map-experience-actions .btn{padding:7px 8px;font-size:9px}.map-command-bar{padding:8px 12px}.map-route-brief strong{max-width:46vw}.map-workspace-grid{display:flex;flex-direction:column;overflow:auto}.map-main-column{flex:none}.map-canvas-shell{height:43vh;min-height:260px;flex:none}.map-side-panel{overflow:visible;border-left:0;border-top:1px solid #dde7ee;padding:10px}.map-side-card{padding:12px}.map-identity-head{display:flex;align-items:center}.map-vessel-matches{grid-template-columns:1fr}.map-data-footer{padding:9px 11px}.map-route-legend{gap:8px}.map-canvas-help{display:none}}
+    @media(max-width:480px){.map-command-actions{gap:4px}.map-command-btn{font-size:8px;padding:7px 6px}.map-command-icon{width:29px;height:29px}.map-route-brief small{font-size:7px}.map-route-brief strong{font-size:9px;max-width:42vw}.map-experience-title .map-eyebrow{font-size:7px;letter-spacing:1px}.map-experience-title p{display:none}.map-experience-actions #refreshAisBtn{max-width:82px;overflow:hidden;text-overflow:ellipsis}.map-canvas-label{left:48px;top:10px;padding:7px 8px;font-size:7px}.map-route-legend span{font-size:8px}.map-status-line{font-size:9px}}
+    .map-overview-label{position:absolute;z-index:5;top:12px;left:14px;display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #ffffffc7;border-radius:9px;background:#fffffff0;box-shadow:0 4px 14px #14334b18;color:#51708b;font-size:8px;font-weight:800;letter-spacing:.8px;pointer-events:none}
+    .map-overview-pulse{width:6px;height:6px;border-radius:50%;background:#18b587;box-shadow:0 0 0 4px #18b58722}.map-overview-label small{margin-left:5px;border-left:1px solid #dce6ed;padding-left:8px;color:#99a9b7;font-size:7px}
+    .map-overview-help{position:absolute;z-index:5;right:12px;bottom:12px;padding:7px 9px;border-radius:8px;background:#0d2c47db;color:#e3edf4;font-size:9px;pointer-events:none}
+    .vessel-marker span svg{width:21px;height:21px;display:block}
+    </style>
 </head>
 <body>
   <div class="shell" id="staffShell" hidden>
@@ -248,7 +329,7 @@
             <article class="metric"><div class="metric-icon">◷</div><div><div class="metric-label">Delayed</div><div class="metric-value" id="metricDelayed">—</div><div class="metric-note">Overdue ETA with no arrival</div></div></article>
           </div>
           <div class="grid-main">
-            <article class="card"><div class="card-head"><div><div class="card-title">Shipment port network</div><div class="card-sub">Ports matched from the loaded shipment records</div></div><div class="card-tools"><button class="btn ghost-blue small" id="showMapBtn">⛶ Full map</button><button class="btn ghost-blue small" id="refreshMapBtn">↻ Refresh map</button></div></div><div class="map-wrap"><div id="dashboardMap" class="map"></div><div id="mapEmpty" class="map-empty hidden">No shipment ports are available to map yet.</div></div><div class="map-legend"><span><i class="legend-dot"></i> Origin / loading port</span><span><i class="legend-dot transship"></i> Transshipment</span><span><i class="legend-dot dest"></i> India gateway / terminal</span><span id="mappedCount">0 mapped ports</span></div><div class="map-note">Dashed blue lines are estimated sea corridors; open a shipment map for the vessel’s recorded AIS track and playback.</div></article>
+            <article class="card"><div class="card-head"><div><div class="card-title">Shipment port network</div><div class="card-sub">Ports matched from the loaded shipment records</div></div><div class="card-tools"><button class="btn ghost-blue small" id="showMapBtn">⛶ Full map</button><button class="btn ghost-blue small" id="refreshMapBtn">↻ Refresh map</button></div></div><div class="map-wrap"><div id="dashboardMap" class="map"></div><div class="map-overview-label"><span class="map-overview-pulse"></span><span>GLOBAL PORT NETWORK</span><small>PLANNED LANES</small></div><div class="map-overview-help">Open Full map for vessel routes &amp; AIS playback</div><div id="mapEmpty" class="map-empty hidden">No shipment ports are available to map yet.</div></div><div class="map-legend"><span><i class="legend-dot"></i> Origin / loading port</span><span><i class="legend-dot transship"></i> Transshipment</span><span><i class="legend-dot dest"></i> India gateway / terminal</span><span id="mappedCount">0 mapped ports</span></div><div class="map-note">Dashed blue lines are estimated sea corridors; open a shipment map for the vessel’s recorded AIS track and playback.</div></article>
             <article class="card"><div class="card-head"><div><div class="card-title">Upcoming arrivals</div><div class="card-sub">Next estimated arrivals</div></div><button class="btn ghost-blue small" id="arrivalsAllBtn">View all</button></div><div class="arrival-list" id="upcomingList"></div></article>
           </div>
           <div class="insight-grid">
@@ -376,19 +457,74 @@
   <div class="modal-backdrop" id="loginModal"><section class="modal" style="max-width:440px"><div class="modal-head"><h2>Authorized staff access</h2><button class="close-btn" data-close="loginModal">×</button></div><form class="modal-body" id="loginForm"><p style="color:var(--muted);margin-top:0">Sign in with your authorized Supabase staff account.</p><div class="field"><label for="loginEmail">Staff email</label><input type="email" id="loginEmail" autocomplete="username" placeholder="name@company.com" required></div><div class="field" style="margin-top:12px"><label for="loginPassword">Password</label><input type="password" id="loginPassword" autocomplete="current-password" placeholder="Enter your password" required></div><div class="login-error hidden" id="loginError"></div><div class="form-actions"><button type="button" class="btn" data-close="loginModal">Cancel</button><button class="btn primary" id="loginSubmit">Sign in</button></div></form></section></div>
   <div class="modal-backdrop" id="shipmentModal"><section class="modal wide"><div class="modal-head"><h2 id="shipmentModalTitle">New shipment</h2><button class="close-btn" data-close="shipmentModal">×</button></div><form class="modal-body" id="shipmentForm"><div class="form-grid" id="shipmentFields"></div><div class="field full"><label>MARINETRAFFIC VESSEL LOOKUP</label><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button class="btn ghost-blue" type="button" id="findVesselBtn">🔎 Find IMO / MMSI by vessel name</button><span id="vesselLookupStatus" style="color:var(--muted);font-size:12px"></span></div><div id="vesselLookupResults" style="margin-top:8px"></div><small style="color:var(--muted)">Voyage suffixes are trimmed for the search. Choose the matching ship; the identifiers are saved when you save this shipment.</small></div><div class="form-actions"><button type="button" class="btn" data-close="shipmentModal">Cancel</button><button class="btn primary" type="submit">Save shipment</button></div></form></section></div>
   <div class="modal-backdrop" id="detailModal"><section class="modal wide"><div class="modal-head"><h2 id="detailTitle">Shipment details</h2><button class="close-btn" data-close="detailModal">×</button></div><div class="modal-body" id="detailBody"></div></section></div>
-  <div class="modal-backdrop" id="mapModal"><section class="modal wide"><div class="modal-head"><h2 id="mapModalTitle">Shipment port network</h2><div class="head-actions"><button class="btn ghost-blue small" id="refreshAisBtn">↻ Refresh AIS</button><button class="close-btn" data-close="mapModal">×</button></div></div><div class="modal-body">
-    <div id="fullMap" class="map-modal"></div>
-    <div class="map-route-legend"><span><i class="origin"></i> Origin</span><span><i class="transship"></i> Transshipment</span><span><i class="destination"></i> Destination</span><span><i></i> Planned corridor · estimate</span><span><i class="actual"></i> Recorded AIS track</span></div>
-    <div class="ais-playback" id="aisPlayback" hidden>
-      <div class="ais-playback-head"><strong>Recorded AIS history · playback</strong><button class="btn small" type="button" id="aisPlayBtn" disabled>▶ Play</button><button class="btn small" type="button" id="aisResetBtn" disabled>↺ Reset</button><label class="ops-muted">Speed <select id="aisPlaySpeed"><option value="1800">Slow</option><option value="900" selected>Normal</option><option value="350">Fast</option></select></label><span class="ais-playback-meta" id="aisTrackTime">Waiting for AIS history</span></div>
-      <input type="range" id="aisTrackRange" min="0" max="0" value="0" disabled aria-label="AIS history playback position">
-    </div>
-    <div class="map-identity-panel" id="aisIdentityPanel" hidden>
-      <div class="map-identity-head"><strong>Resolve vessel identity</strong><span>Search the vessel name, confirm the correct match, then save its IMO/MMSI to this shipment.</span><button class="btn ghost-blue small" type="button" id="aisLookupBtn">🔎 Find vessel ID</button></div>
-      <div class="map-identity-status" id="aisIdentityStatus"></div><div class="map-vessel-matches" id="aisVesselMatches"></div>
-    </div>
-    <div class="map-note" id="aisMapStatus" style="padding:12px 0 0">Open a shipment map to load its actual AIS track.</div>
-  </div></section></div>
+  <div class="modal-backdrop" id="mapModal">
+    <section class="modal map-experience" aria-label="Shipment route intelligence">
+      <header class="map-experience-head">
+        <div class="map-experience-title">
+          <span class="map-eyebrow"><i></i> GML · ROUTE INTELLIGENCE</span>
+          <h2 id="mapModalTitle">Global shipment map</h2>
+          <p id="mapTitleSub">Planned corridors and recorded vessel movement in one view.</p>
+        </div>
+        <div class="map-experience-actions">
+          <span class="map-live-badge neutral" id="mapLiveBadge">NETWORK OVERVIEW</span>
+          <button class="btn ghost-blue small" id="refreshAisBtn">↻ Refresh AIS</button>
+          <button class="close-btn" data-close="mapModal" aria-label="Close map">×</button>
+        </div>
+      </header>
+      <div class="map-command-bar">
+        <div class="map-route-brief">
+          <span class="map-command-icon">↗</span>
+          <div><small>ROUTE CONTEXT</small><strong id="mapRouteBrief">Shipment network overview</strong></div>
+        </div>
+        <div class="map-command-actions">
+          <button class="btn small map-command-btn" id="mapFitBtn">⌖ Fit route</button>
+          <button class="btn small map-command-btn" id="mapAisToggleBtn" disabled>◉ Hide AIS trail</button>
+        </div>
+      </div>
+      <div class="map-workspace-grid">
+        <main class="map-main-column">
+          <div class="map-canvas-shell">
+            <div id="fullMap" class="map-modal"></div>
+            <div class="map-canvas-label"><span class="map-canvas-dot"></span><span id="mapModeChip">NETWORK VIEW</span><span class="map-canvas-separator"></span><span>OPENSTREETMAP · LIVE BASEMAP</span></div>
+            <div class="map-canvas-help">Select a port marker to inspect linked shipments</div>
+          </div>
+          <div class="map-data-footer">
+            <div class="map-route-legend">
+              <span><i class="origin"></i> Origin</span><span><i class="transship"></i> Transshipment</span><span><i class="destination"></i> Gateway</span><span><i></i> Estimated lane</span><span><i class="actual"></i> AIS reports</span>
+            </div>
+            <div class="ais-playback" id="aisPlayback" hidden>
+              <div class="ais-playback-head"><span class="playback-symbol">▶</span><div class="playback-heading"><strong>Recorded track replay</strong><small>Moves only between reported AIS fixes</small></div><button class="btn small playback-action" type="button" id="aisPlayBtn" disabled>▶ Play</button><button class="btn small playback-action" type="button" id="aisResetBtn" disabled>↺ Reset</button><label class="playback-speed">Speed <select id="aisPlaySpeed"><option value="1800">Slow</option><option value="900" selected>Normal</option><option value="350">Fast</option></select></label></div>
+              <input type="range" id="aisTrackRange" min="0" max="0" value="0" disabled aria-label="AIS history playback position">
+              <span class="ais-playback-meta" id="aisTrackTime">Waiting for AIS history</span>
+            </div>
+            <div class="map-status-line"><span class="map-status-dot"></span><span id="aisMapStatus">Open a shipment map to load its recorded AIS track.</span></div>
+          </div>
+        </main>
+        <aside class="map-side-panel">
+          <section class="map-side-card map-vessel-card">
+            <div class="map-side-kicker"><span>VESSEL SIGNAL</span><span class="map-signal-icon">⌁</span></div>
+            <h3 id="mapVesselName">Select a shipment</h3>
+            <p class="map-vessel-id" id="mapVesselId">Open a shipment’s map to inspect the route.</p>
+            <div class="map-telemetry">
+              <div><small>SPEED</small><strong id="mapSpeedStat">—</strong></div>
+              <div><small>COURSE</small><strong id="mapCourseStat">—</strong></div>
+            </div>
+            <div class="map-last-fix"><span class="map-fix-icon">⌖</span><div><small>LAST REPORTED POSITION</small><strong id="mapLastFixStat">Waiting for a vessel report</strong></div></div>
+          </section>
+          <section class="map-side-card map-route-card">
+            <div class="map-side-card-head"><div><span class="map-side-kicker-text">PLANNED JOURNEY</span><h3>Port sequence</h3></div><span class="map-estimate-tag" id="mapRouteEstimate">ESTIMATED</span></div>
+            <ol class="map-route-stops" id="mapRouteStops"><li class="map-route-empty">Choose a shipment to show its route.</li></ol>
+            <p class="map-route-footnote" id="mapRouteHint">The dashed lane is an indicative corridor between recorded ports.</p>
+          </section>
+          <section class="map-identity-panel" id="aisIdentityPanel" hidden>
+            <div class="map-identity-head"><strong>Link vessel identity</strong><span>Confirm the name match before saving its IMO/MMSI.</span><button class="btn ghost-blue small" type="button" id="aisLookupBtn">⌕ Find vessel ID</button></div>
+            <div class="map-identity-status" id="aisIdentityStatus"></div><div class="map-vessel-matches" id="aisVesselMatches"></div>
+          </section>
+          <div class="map-side-disclaimer"><span>ⓘ</span><p>AIS positions are provider reports. The map does not predict a vessel’s future position.</p></div>
+        </aside>
+      </div>
+    </section>
+  </div>
   <div class="modal-backdrop" id="importModal"><section class="modal"><div class="modal-head"><h2>Import preview</h2><button class="close-btn" data-close="importModal">×</button></div><div class="modal-body"><p id="importSummary" class="tracking-message"></p><div class="table-scroll" id="importPreview"></div><div class="form-actions"><button class="btn" data-close="importModal">Cancel</button><button class="btn primary" id="confirmImport">Add imported rows</button></div></div></section></div>
     <input id="singleImport" type="file" accept=".xlsx,.xls,.csv" hidden>
   <div class="toast hidden" id="toast"></div>
@@ -577,7 +713,7 @@
   }
   function vesselMapIcon(course=0,replay=false){
     const heading=Number(course),rotation=Number.isFinite(heading)&&heading>=0&&heading<=360?heading:0;
-    return L.divIcon({className:"vessel-marker"+(replay?" replay":""),html:'<span aria-label="AIS vessel position" style="transform:rotate('+rotation+'deg)">🚢</span>',iconSize:[40,40],iconAnchor:[20,20]});
+    return L.divIcon({className:"vessel-marker"+(replay?" replay":""),html:'<span aria-label="AIS vessel position" style="transform:rotate('+rotation+'deg)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c.65 0 1.18.53 1.18 1.18v6.08h4.7l3.07 4.59-2.55 4.35H5.6l-2.55-4.35 3.07-4.59h4.7V3.68c0-.65.53-1.18 1.18-1.18Z" fill="#fff"/><path d="M7.2 12.3h9.6M8.1 15.1h7.8" stroke="#0c719b" stroke-width="1.2" stroke-linecap="round"/></svg></span>',iconSize:[40,40],iconAnchor:[20,20]});
   }
   
   function resetVisibleAisControls(){
@@ -587,7 +723,45 @@
     const identity=$("aisIdentityPanel");if(identity)identity.hidden=true;
   }
   function mappedPortCount(rows){const set=new Set();rows.forEach(r=>routeStopsForRow(r).forEach(p=>set.add(p.key)));return set.size}
-  function setAisMapStatus(message,isError=false){const node=$("aisMapStatus");if(node){node.textContent=message;node.style.color=isError?"var(--red)":""}}
+  function setMapLiveBadge(label,type="neutral"){
+    const badge=$("mapLiveBadge");if(!badge)return;
+    badge.className="map-live-badge "+type;badge.textContent=label;
+  }
+  function setMapTelemetry({name,id,speed,course,lastFix}={}){
+    if(name!==undefined)$("mapVesselName").textContent=name||"Vessel not named";
+    if(id!==undefined)$("mapVesselId").textContent=id||"IMO / MMSI not linked";
+    if(speed!==undefined)$("mapSpeedStat").textContent=speed||"—";
+    if(course!==undefined)$("mapCourseStat").textContent=course||"—";
+    if(lastFix!==undefined)$("mapLastFixStat").textContent=lastFix||"Waiting for a vessel report";
+  }
+  function renderMapRoutePanel(row){
+    const mapped=mappedPortCount(state.rows),total=state.rows.length,stops=row?routeStopsForRow(row):[];
+    if(!row){
+      $("mapRouteBrief").textContent=total?total.toLocaleString()+" shipments · "+mapped+" mapped ports":"Shipment network overview";
+      $("mapTitleSub").textContent="Planned port corridors across the loaded shipment register.";
+      $("mapModeChip").textContent="NETWORK OVERVIEW";
+      $("mapRouteEstimate").textContent="NETWORK";
+      $("mapRouteHint").textContent="Select a shipment to inspect its planned stops and recorded AIS track.";
+      $("mapRouteStops").innerHTML='<li class="map-route-empty">'+(total?esc(mapped+" mapped ports · "+total+" shipments in this network"):"No mapped port sequence available.")+'</li>';
+      setMapTelemetry({name:"Global port network",id:total.toLocaleString()+" loaded shipments · "+mapped+" ports",speed:"—",course:"—",lastFix:"Select a shipment’s Map button to view AIS data"});
+      setMapLiveBadge("NETWORK OVERVIEW","neutral");
+      return;
+    }
+    const vessel=String(field(row,["VESSEL & VOY"])||"").trim(),names=stops.map(p=>String(p.label||p.key).trim());
+    $("mapRouteBrief").textContent=names.length?names.join(" → "):"Port details not recorded";
+    $("mapTitleSub").textContent=container(row)+" · "+(vessel||"Vessel name not recorded");
+    $("mapModeChip").textContent="SHIPMENT ROUTE";
+    $("mapRouteEstimate").textContent=stops.length>1?"ESTIMATED":"PORT DATA NEEDED";
+    $("mapRouteHint").textContent=stops.length>1?"Dashed blue lanes are estimates. Green AIS segments contain reported positions only.":"Add a recognized POL and gateway port to show the planned route.";
+    $("mapRouteStops").innerHTML=stops.map((port,i)=>{
+      const role=i===0?"origin":i===stops.length-1?"destination":"transshipment",label=role==="origin"?"Loading port":role==="destination"?"Gateway / destination":"Transshipment";
+      return '<li class="'+role+'"><span class="map-stop-mark"></span><div><strong>'+esc(port.label||port.key)+'</strong><small>'+label+'</small></div></li>';
+    }).join("")||'<li class="map-route-empty">This shipment is missing a recognized POL or gateway.</li>';
+    const imo=String(field(row,["IMO","IMO NO.","IMO NUMBER"])||"").replace(/\D/g,""),mmsi=String(field(row,["MMSI","MMSI NO."])||"").replace(/\D/g,"");
+    setMapTelemetry({name:vessel||container(row),id:[imo?"IMO "+imo:"",mmsi?"MMSI "+mmsi:""].filter(Boolean).join(" · ")||"IMO / MMSI not linked",speed:"—",course:"—",lastFix:"Waiting for AIS report"});
+    setMapLiveBadge(imo||mmsi?"CONNECTING AIS":"ID REQUIRED",imo||mmsi?"loading":"stale");
+  }
+  function setAisMapStatus(message,isError=false){const node=$("aisMapStatus");if(node){node.textContent=message;node.style.color=isError?"var(--red)":"";node.closest(".map-status-line")?.classList.toggle("error",isError)}}
   function aisDistanceNm(a,b){
     const rad=Math.PI/180,lat1=Number(a.lat)*rad,lat2=Number(b.lat)*rad,dLat=lat2-lat1,dLon=(Number(b.lon)-Number(a.lon))*rad;
     const h=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
@@ -617,6 +791,7 @@
     let tileErrors=0;
     base.on("tileerror",()=>{tileErrors++;if(tileErrors===4&&containerId==="fullMap")setAisMapStatus("The map background is having trouble loading. Shipment and AIS route overlays will remain available.",true)});
     const points=[],portBuckets=new Map(),routeItems=routeIndex==null?state.rows.map((row,index)=>({row,index})):[{row:state.rows[routeIndex],index:routeIndex}];
+    let fitPoints=points;
     routeItems.slice(0,80).forEach(({row,index})=>{
       if(!row)return;
       const stops=routeStopsForRow(row);
@@ -641,8 +816,11 @@
     });
     if(points.length)map.fitBounds(L.latLngBounds(points).pad(.2),{maxZoom:routeIndex==null?5:6});
     else if(containerId==="dashboardMap")$("mapEmpty").classList.remove("hidden");
+    map._fitRoute=()=>{if(fitPoints.length)map.fitBounds(L.latLngBounds(fitPoints).pad(.2),{maxZoom:routeIndex==null?5:8})};
     if(routeIndex!=null){
       const row=state.rows[routeIndex],actualLayer=L.layerGroup().addTo(map),replayLayer=L.layerGroup().addTo(map);
+      let aisVisible=true;
+      map._toggleAis=()=>{aisVisible=!aisVisible;if(aisVisible){if(!map.hasLayer(actualLayer))actualLayer.addTo(map);if(!map.hasLayer(replayLayer))replayLayer.addTo(map)}else{map.removeLayer(actualLayer);map.removeLayer(replayLayer)}$("mapAisToggleBtn").textContent=aisVisible?"◉ Hide AIS trail":"◎ Show AIS trail";return aisVisible};
       let shipMarker=null,pollTimer=null,replayFrame=null,inFlight=false,replayPoints=[],replayMarker=null,replayLine=null,replayIndex=0;
       const playback=$("aisPlayback"),range=$("aisTrackRange"),playBtn=$("aisPlayBtn"),resetBtn=$("aisResetBtn"),speedSelect=$("aisPlaySpeed"),timeLabel=$("aisTrackTime");
       function stopReplay(){if(replayFrame){cancelAnimationFrame(replayFrame);replayFrame=null}if(playBtn)playBtn.textContent="▶ Play"}
@@ -701,9 +879,9 @@
         if(!row||!map._container?.isConnected||inFlight)return;
         const imo=String(field(row,["IMO","IMO NO.","IMO NUMBER"])).replace(/\D/g,"");
         const mmsi=String(field(row,["MMSI","MMSI NO."])).replace(/\D/g,"");
-        if(!imo&&!mmsi){setAisMapStatus("No vessel ID saved. Use “Find vessel ID” to search the name, confirm the match, and save it to this shipment.");return}
+        if(!imo&&!mmsi){setMapLiveBadge("ID REQUIRED","stale");setAisMapStatus("No IMO/MMSI linked. Use “Find vessel ID” to search the vessel name and confirm its identity.");return}
         const vesselId=imo?"IMO "+imo:"MMSI "+mmsi;
-        setAisMapStatus("Loading MarineTraffic AIS track for "+vesselId+"…");inFlight=true;
+        setMapLiveBadge("CONNECTING AIS","loading");setAisMapStatus("Loading reported AIS positions for "+vesselId+"…");inFlight=true;
         try{
           let cached=state.aisCache.get(vesselId),data=cached?.data;
           if(force||!cached||Date.now()-cached.at>180000){data=await invoke(AIS_FUNCTION,imo?{imo}:{mmsi});state.aisCache.set(vesselId,{at:Date.now(),data})}
@@ -716,7 +894,7 @@
           }
           const coords=validPositions.map(p=>[Number(p.lat),Number(p.lon)]);
           if(!latest||!Number.isFinite(Number(latest.lat))||!Number.isFinite(Number(latest.lon))){
-            resetReplay();setAisMapStatus("No AIS fixes were returned for "+vesselId+" in the last 24 hours. Check the vessel ID and MarineTraffic access.",true);return;
+            resetReplay();setMapLiveBadge("NO RECENT FIX","stale");setMapTelemetry({speed:"—",course:"—",lastFix:"No position reported in the last 24 hours"});setAisMapStatus("No AIS fixes were returned for "+vesselId+" in the last 24 hours. Check the vessel ID and provider access.",true);return;
           }
           resetReplay();actualLayer.clearLayers();
           aisTrackSegments(validPositions).forEach(segment=>L.polyline(segment.map(p=>[Number(p.lat),Number(p.lon)]),{color:"#08a873",weight:4,opacity:.96,lineCap:"round",lineJoin:"round"}).addTo(actualLayer));
@@ -731,11 +909,13 @@
           shipMarker.bindTooltip(esc(vesselName)+" · AIS",{direction:"top",offset:[0,-14]});
           shipMarker.bindPopup("<b>"+esc(vesselName)+"</b><br>"+esc(latest.imo||latest.mmsi||vesselId)+"<br>Last AIS fix: "+esc(formatAisTime(latest.timestamp))+speedText+courseText);
           setReplayData(validPositions);
+          setMapTelemetry({name:vesselName,id:[latest.imo?"IMO "+latest.imo:"",latest.mmsi?"MMSI "+latest.mmsi:""].filter(Boolean).join(" · ")||vesselId,speed:Number.isFinite(speed)?speed.toFixed(1)+" kn":"—",course:Number.isFinite(heading)?Math.round(heading)+"°":"—",lastFix:formatAisTime(latest.timestamp)});
+          setMapLiveBadge(fresh?"AIS LIVE":"AIS STALE",fresh?"live":"stale");
           setAisMapStatus((fresh?"Current AIS fix":"Last reported AIS fix")+" · "+formatAisTime(latest.timestamp)+" · "+validPositions.length+" fixes / "+aisTrackSegments(validPositions).length+" connected track segments. Long reporting gaps are left unconnected; blue dashed is an estimated sea corridor.");
           const planned=routeStopsForRow(row).flatMap((port,i,arr)=>i<arr.length-1?seaRoute(port,arr[i+1]):[]);
-          const bounds=coords.concat(planned.length?planned:[target]);if(bounds.length)map.fitBounds(L.latLngBounds(bounds).pad(.15),{maxZoom:6});
+          fitPoints=coords.concat(planned,target);map._fitRoute?.();
           if(!pollTimer)pollTimer=window.setInterval(()=>refreshAIS(true),300000);
-        }catch(error){setAisMapStatus("AIS unavailable · "+errText(error),true)}finally{inFlight=false}
+        }catch(error){setMapLiveBadge("AIS UNAVAILABLE","error");setMapTelemetry({speed:"—",course:"—"});setAisMapStatus("AIS unavailable · "+errText(error),true)}finally{inFlight=false}
       };
       map._refreshAIS=()=>refreshAIS(true);
       map.on("unload",()=>{if(pollTimer)clearInterval(pollTimer);if(replayFrame)cancelAnimationFrame(replayFrame)});
@@ -748,6 +928,44 @@
     return map;
   }
   function renderMap(){if(state.map){state.map.remove();state.map=null}$("mapEmpty").classList.toggle("hidden",state.rows.some(r=>routeStopsForRow(r).length)&&!!window.L);state.map=buildMap("dashboardMap")}
+  function setMapLiveBadge(label,type="neutral"){
+    const badge=$("mapLiveBadge");if(!badge)return;
+    badge.className="map-live-badge "+type;badge.textContent=label;
+  }
+  function setMapTelemetry({name,id,speed,course,lastFix}={}){
+    if(name!==undefined)$("mapVesselName").textContent=name||"Vessel not named";
+    if(id!==undefined)$("mapVesselId").textContent=id||"IMO / MMSI not linked";
+    if(speed!==undefined)$("mapSpeedStat").textContent=speed||"—";
+    if(course!==undefined)$("mapCourseStat").textContent=course||"—";
+    if(lastFix!==undefined)$("mapLastFixStat").textContent=lastFix||"Waiting for a vessel report";
+  }
+  function renderMapRoutePanel(row){
+    const mapped=mappedPortCount(state.rows),total=state.rows.length,stops=row?routeStopsForRow(row):[];
+    if(!row){
+      $("mapRouteBrief").textContent=total?total.toLocaleString()+" shipments · "+mapped+" mapped ports":"Shipment network overview";
+      $("mapTitleSub").textContent="Planned port corridors across the loaded shipment register.";
+      $("mapModeChip").textContent="NETWORK OVERVIEW";
+      $("mapRouteEstimate").textContent="NETWORK";
+      $("mapRouteHint").textContent="Select a shipment to inspect its planned stops and recorded AIS track.";
+      $("mapRouteStops").innerHTML='<li class="map-route-empty">'+(total?esc(mapped+" mapped ports · "+total+" shipments in this network"):"No mapped port sequence available.")+'</li>';
+      setMapTelemetry({name:"Global port network",id:total.toLocaleString()+" loaded shipments · "+mapped+" ports",speed:"—",course:"—",lastFix:"Select a shipment’s Map button to view AIS data"});
+      setMapLiveBadge("NETWORK OVERVIEW","neutral");
+      return;
+    }
+    const vessel=String(field(row,["VESSEL & VOY"])||"").trim(),names=stops.map(p=>String(p.label||p.key).trim());
+    $("mapRouteBrief").textContent=names.length?names.join(" → "):"Port details not recorded";
+    $("mapTitleSub").textContent=container(row)+" · "+(vessel||"Vessel name not recorded");
+    $("mapModeChip").textContent="SHIPMENT ROUTE";
+    $("mapRouteEstimate").textContent=stops.length>1?"ESTIMATED":"PORT DATA NEEDED";
+    $("mapRouteHint").textContent=stops.length>1?"Dashed blue lanes are estimates. Green AIS segments contain reported positions only.":"Add a recognized POL and gateway port to show the planned route.";
+    $("mapRouteStops").innerHTML=stops.map((port,i)=>{
+      const role=i===0?"origin":i===stops.length-1?"destination":"transshipment",label=role==="origin"?"Loading port":role==="destination"?"Gateway / destination":"Transshipment";
+      return '<li class="'+role+'"><span class="map-stop-mark"></span><div><strong>'+esc(port.label||port.key)+'</strong><small>'+label+'</small></div></li>';
+    }).join("")||'<li class="map-route-empty">This shipment is missing a recognized POL or gateway.</li>';
+    const imo=String(field(row,["IMO","IMO NO.","IMO NUMBER"])||"").replace(/\D/g,""),mmsi=String(field(row,["MMSI","MMSI NO."])||"").replace(/\D/g,"");
+    setMapTelemetry({name:vessel||container(row),id:[imo?"IMO "+imo:"",mmsi?"MMSI "+mmsi:""].filter(Boolean).join(" · ")||"IMO / MMSI not linked",speed:"—",course:"—",lastFix:"Waiting for AIS report"});
+    setMapLiveBadge(imo||mmsi?"CONNECTING AIS":"ID REQUIRED",imo||mmsi?"loading":"stale");
+  }
   async function lookupMapVessel(){
     const index=state.currentRoute,row=index==null?null:state.rows[index],button=$("aisLookupBtn"),status=$("aisIdentityStatus"),results=$("aisVesselMatches");
     if(!row){status.textContent="Open a shipment map first.";return}
@@ -784,15 +1002,20 @@
     state.currentRoute=index;
     const row=index==null?null:state.rows[index];
     const hasId=!!(field(row,["IMO","IMO NO.","IMO NUMBER"])||field(row,["MMSI","MMSI NO."]));
-    $("mapModalTitle").textContent=row?`${container(row)} · AIS route`:"Shipment port network";
+    $("mapModalTitle").textContent=row?`${container(row)} · Route intelligence`:"Global shipment map";
+    renderMapRoutePanel(row);
     $("refreshAisBtn").disabled=!row||!hasId;
+    $("mapAisToggleBtn").disabled=!row||!hasId;
+    $("mapAisToggleBtn").textContent="◉ Hide AIS trail";
     $("aisIdentityPanel").hidden=!row||hasId;
     $("aisVesselMatches").innerHTML="";
-    $("aisIdentityStatus").style.color="";$("aisIdentityStatus").textContent=row&&!hasId?"Find the vessel by name, then confirm a matching IMO or MMSI.": "";
+    $("aisIdentityStatus").style.color="";
+    $("aisIdentityStatus").textContent=row&&!hasId?"Search the vessel name, then confirm its IMO or MMSI.":"";
     state.mapVesselCandidates=[];
     resetVisibleAisControls();
     $("aisIdentityPanel").hidden=!row||hasId;
-    setAisMapStatus(row?(hasId?"Opening the selected shipment route…":"No IMO/MMSI is saved. Find and confirm the vessel identity to load its AIS track."):"Select a shipment from its Map button to see the route and actual AIS track.");
+    $("mapAisToggleBtn").disabled=!row||!hasId;
+    setAisMapStatus(row?(hasId?"Opening the selected vessel’s AIS feed…":"No IMO/MMSI linked. Confirm the vessel identity to load its track."):"Select a shipment to inspect its route and recorded vessel positions.");
     modal("mapModal");
     if(state.fullMap){state.fullMap.remove();state.fullMap=null}
     setTimeout(()=>{state.fullMap=buildMap("fullMap",index);state.fullMap?.invalidateSize()},100);
@@ -985,7 +1208,7 @@ async function confirmImport(){
   function bind(){
     document.querySelectorAll(".nav-link[data-page]").forEach(b=>b.onclick=()=>page(b.dataset.page));
     $("mobileMenu").onclick=()=>document.body.classList.toggle("menu-open");$("publicLoginBtn").onclick=()=>modal("loginModal");$("loginForm").onsubmit=signIn;
-    $("refreshBtn").onclick=()=>loadRecords();$("refreshMapBtn").onclick=()=>{renderMap();toast("Map refreshed")};$("showMapBtn").onclick=()=>showRoute(null);$("refreshAisBtn").onclick=()=>state.fullMap?._refreshAIS?.()||setAisMapStatus("Choose a shipment map to refresh AIS.");$("aisLookupBtn").onclick=lookupMapVessel;$("signOutBtn").onclick=signOut;$("settingsSignOut").onclick=signOut;
+    $("refreshBtn").onclick=()=>loadRecords();$("refreshMapBtn").onclick=()=>{renderMap();toast("Map refreshed")};$("showMapBtn").onclick=()=>showRoute(null);$("refreshAisBtn").onclick=()=>state.fullMap?._refreshAIS?.()||setAisMapStatus("Choose a shipment map to refresh AIS.");$("aisLookupBtn").onclick=lookupMapVessel;$("mapFitBtn").onclick=()=>state.fullMap?._fitRoute?.();$("mapAisToggleBtn").onclick=()=>state.fullMap?._toggleAis?.();$("signOutBtn").onclick=signOut;$("settingsSignOut").onclick=signOut;
     $("newShipmentTop").onclick=$("newShipmentBtn").onclick=()=>openShipment();$("viewShipmentsBtn").onclick=$("recentAllBtn").onclick=()=>page("shipments");$("arrivalsAllBtn").onclick=()=>{state.filter="active";document.querySelectorAll(".filter-chip").forEach(x=>x.classList.toggle("active",x.dataset.filter==="active"));page("shipments")};
     $("shipmentForm").onsubmit=saveShipment;
     document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>{modal(b.dataset.close,false);if(b.dataset.close==="mapModal"&&state.fullMap){state.fullMap.remove();state.fullMap=null}});document.querySelectorAll(".modal-backdrop").forEach(bg=>bg.addEventListener("click",e=>{if(e.target===bg){modal(bg.id,false);if(bg.id==="mapModal"&&state.fullMap){state.fullMap.remove();state.fullMap=null}}}));document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelectorAll(".modal-backdrop.open").forEach(m=>modal(m.id,false));if(state.fullMap){state.fullMap.remove();state.fullMap=null}}});
