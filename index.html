@@ -1354,18 +1354,16 @@ async function confirmImport(){
     // Header and source freshness.
     c.fillStyle="#0b2b50";c.fillRect(0,0,W,headerH);
     c.fillStyle="#123c65";roundRect(c,770,28,390,108,14);c.fill();
-    drawPhotoAnchor(c,64,64);
-    c.fillStyle="#90e4e7";c.font="800 12px DM Sans, sans-serif";
-    c.fillText("GREENWICH MERIDIAN LOGISTICS",107,41);
+    drawPhotoAnchor(c,64,82);
     c.fillStyle="#fff";c.font="800 29px Manrope, sans-serif";
-    c.fillText("Shipment status update",42,106);
+    c.fillText("Shipment status update",107,94,620);
     c.fillStyle="#b8cee1";c.font="700 10px DM Sans, sans-serif";
     c.fillText("GENERATED",792,54);c.fillText("DATA LAST SYNCED",974,54);
     c.fillStyle="#fff";c.font="600 13px DM Sans, sans-serif";
     c.fillText(photoTimestamp(new Date()),792,79,165);
     c.fillText(state.updatedAt?photoTimestamp(state.updatedAt):"Unavailable",974,79,172);
     c.fillStyle="#b8cee1";c.font="500 11px DM Sans, sans-serif";
-    c.fillText("Private shipment summary · Verify milestones with GML operations",792,111,345);
+    c.fillText("Private shipment summary · Verify milestones with the operations team",792,111,345);
 
     // Compact status mix: counts are computed from the selected shipment records.
     const sx=34,sw=W-68;
@@ -1475,11 +1473,10 @@ async function confirmImport(){
 
     const fy=H-footerH;c.fillStyle="#e2eaf1";c.fillRect(34,fy,W-68,1);
     c.fillStyle="#6f859a";c.font="600 11px DM Sans, sans-serif";
-    c.fillText("Source: GML shipment records · ETAs are estimates · This image does not show live carrier positions.",42,fy+25);
+    c.fillText("Source: shipment records · ETAs are estimates · Vessel positions are not shown in this image.",42,fy+25);
     c.fillStyle="#91a2b2";c.font="500 10px DM Sans, sans-serif";
     c.fillText("Share shipment information only with its intended recipient.",42,fy+44);
-    c.fillStyle="#91a2b2";c.font="500 10px DM Sans, sans-serif";
-    c.textAlign="right";c.fillText("GREENWICH MERIDIAN LOGISTICS",W-42,fy+44);c.textAlign="left";
+
 
     canvas.toBlob(blob=>blob?downloadBlob(blob,`GML_Status_${records.length===1?container(records[0]).replace(/[^A-Z0-9-]/gi,"_"):"Update"}.png`):toast("Could not create the status photo.","error"),"image/png");
   }
