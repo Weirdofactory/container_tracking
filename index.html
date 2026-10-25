@@ -1342,33 +1342,145 @@ async function confirmImport(){
 
   function drawPhoto(records){
     if(!records.length)return toast("No shipment records are available for the photo.","error");
-    const W=1200,headerH=174,cardH=204,gap=16,footerH=62,top=headerH+20,H=top+records.length*cardH+Math.max(0,records.length-1)*gap+footerH;
-    const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;const c=canvas.getContext("2d");
-    c.fillStyle="#f1f5f9";c.fillRect(0,0,W,H);c.fillStyle="#10aec1";c.fillRect(0,0,10,H);
-    c.fillStyle="#0b2b50";c.fillRect(0,0,W,headerH);c.fillStyle="#123c65";roundRect(c,770,32,390,106,14);c.fill();
-    drawPhotoAnchor(c,64,66);c.fillStyle="#90e4e7";c.font="800 12px DM Sans, sans-serif";c.fillText("GREENWICH MERIDIAN LOGISTICS",107,43);
-    c.fillStyle="#fff";c.font="800 29px Manrope, sans-serif";c.fillText("Shipment status update",42,111);
-    c.fillStyle="#b8cee1";c.font="700 10px DM Sans, sans-serif";c.fillText("GENERATED",792,57);c.fillText("DATA LAST SYNCED",974,57);
-    c.fillStyle="#fff";c.font="600 13px DM Sans, sans-serif";c.fillText(photoTimestamp(new Date()),792,82,160);c.fillText(state.updatedAt?photoTimestamp(state.updatedAt):"Unavailable",974,82,170);
-    c.fillStyle="#b8cee1";c.font="500 11px DM Sans, sans-serif";c.fillText(`${records.length} shipment${records.length===1?"":"s"} · Shipment records`,792,112);
-    records.forEach((r,i)=>{
-      const x=34,y=top+i*(cardH+gap),w=W-68,h=cardH,status=statusOf(r),palette=photoStatusColors(status);
-      c.save();c.shadowColor="#16365714";c.shadowBlur=14;c.shadowOffsetY=4;c.fillStyle="#fff";roundRect(c,x,y,w,h,15);c.fill();c.restore();
-      c.fillStyle=palette.edge;roundRect(c,x,y,6,h,4);c.fill();
-      c.fillStyle="#6e8499";c.font="800 10px DM Sans, sans-serif";c.fillText("CONTAINER",x+24,y+29);
-      c.fillStyle="#087fc8";c.font="800 23px Manrope, sans-serif";c.fillText(container(r),x+24,y+59,500);
-      const refs=[field(r,["MBL NO"])&&`MBL ${field(r,["MBL NO"])}`,field(r,["TYPE"])&&`TYPE ${field(r,["TYPE"])}`].filter(Boolean).join("   ·   ");
-      c.fillStyle="#75899d";c.font="600 11px DM Sans, sans-serif";c.fillText(refs||"Shipment reference not recorded",x+24,y+82,620);
-      const badgeText=status.toUpperCase();c.font="800 11px DM Sans, sans-serif";const badgeW=Math.min(245,c.measureText(badgeText).width+30),badgeX=x+w-badgeW-24;
-      c.fillStyle=palette.bg;roundRect(c,badgeX,y+24,badgeW,30,15);c.fill();c.fillStyle=palette.text;c.fillText(badgeText,badgeX+15,y+43,badgeW-26);
-      const cols=[{x:x+24,w:350,label:"ROUTE",value:routeOf(r)},{x:x+405,w:355,label:"VESSEL & VOYAGE",value:field(r,["VESSEL & VOY"])||"Not recorded"},{x:x+790,w:235,label:"ESTIMATED ARRIVAL · ETA",value:field(r,["ETA"])?fmtDate(field(r,["ETA"])):"Not scheduled"}];
-      cols.forEach(col=>{c.fillStyle="#8a9db0";c.font="800 9px DM Sans, sans-serif";c.fillText(col.label,col.x,y+111);c.fillStyle="#294965";c.font="700 13px DM Sans, sans-serif";c.fillText(String(col.value),col.x,y+134,col.w)});
-      c.strokeStyle="#e6edf3";c.lineWidth=1;c.beginPath();c.moveTo(x+24,y+150);c.lineTo(x+w-24,y+150);c.stroke();
-      const milestone=photoMilestone(r);c.fillStyle="#6d8499";c.font="800 9px DM Sans, sans-serif";c.fillText("LATEST RECORDED UPDATE",x+24,y+173);
-      c.fillStyle="#173b5d";c.font="800 13px DM Sans, sans-serif";c.fillText(milestone.label,x+24,y+192,480);
-      c.fillStyle="#5e7891";c.font="700 12px DM Sans, sans-serif";c.textAlign="right";c.fillText(milestone.date,x+w-24,y+185,300);c.textAlign="left";
+    const W=1200,headerH=164,summaryH=86,cardH=266,gap=14,footerH=64;
+    const summaryY=headerH+16,top=summaryY+summaryH+16;
+    const H=top+records.length*cardH+Math.max(0,records.length-1)*gap+footerH;
+    const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;
+    const c=canvas.getContext("2d");
+    if(!c)return toast("Could not prepare the shipment status image.","error");
+    c.fillStyle="#f1f5f9";c.fillRect(0,0,W,H);
+    c.fillStyle="#10aec1";c.fillRect(0,0,10,H);
+
+    // Header and source freshness.
+    c.fillStyle="#0b2b50";c.fillRect(0,0,W,headerH);
+    c.fillStyle="#123c65";roundRect(c,770,28,390,108,14);c.fill();
+    drawPhotoAnchor(c,64,64);
+    c.fillStyle="#90e4e7";c.font="800 12px DM Sans, sans-serif";
+    c.fillText("GREENWICH MERIDIAN LOGISTICS",107,41);
+    c.fillStyle="#fff";c.font="800 29px Manrope, sans-serif";
+    c.fillText("Shipment status update",42,106);
+    c.fillStyle="#b8cee1";c.font="700 10px DM Sans, sans-serif";
+    c.fillText("GENERATED",792,54);c.fillText("DATA LAST SYNCED",974,54);
+    c.fillStyle="#fff";c.font="600 13px DM Sans, sans-serif";
+    c.fillText(photoTimestamp(new Date()),792,79,165);
+    c.fillText(state.updatedAt?photoTimestamp(state.updatedAt):"Unavailable",974,79,172);
+    c.fillStyle="#b8cee1";c.font="500 11px DM Sans, sans-serif";
+    c.fillText("Private shipment summary · Verify milestones with GML operations",792,111,345);
+
+    // Compact status mix: counts are computed from the selected shipment records.
+    const sx=34,sw=W-68;
+    c.save();c.shadowColor="#16365712";c.shadowBlur=12;c.shadowOffsetY=3;
+    c.fillStyle="#fff";roundRect(c,sx,summaryY,sw,summaryH,14);c.fill();c.restore();
+    c.fillStyle="#71879c";c.font="800 9px DM Sans, sans-serif";
+    c.fillText("SHIPMENTS SELECTED",sx+20,summaryY+25);
+    c.fillStyle="#14395c";c.font="800 24px Manrope, sans-serif";
+    c.fillText(String(records.length),sx+20,summaryY+57);
+    c.fillStyle="#738ba1";c.font="600 10px DM Sans, sans-serif";
+    c.fillText(records.length===1?"record":"records",sx+54,summaryY+56);
+
+    const order=["Awaiting update","ETA scheduled","In transit","Delayed","Arrived","Port out","At CFS","Destuffing","Empty returned"];
+    const counts=new Map();
+    records.forEach(r=>{const st=statusOf(r);counts.set(st,(counts.get(st)||0)+1)});
+    const statuses=order.filter(st=>counts.has(st)).concat([...counts.keys()].filter(st=>!order.includes(st)).sort());
+    const chipFont="800 10px DM Sans, sans-serif",chipH=25,chipGap=7,startX=sx+188,maxX=sx+sw-16;
+    let chipX=startX,chipY=summaryY+14;
+    c.font=chipFont;
+    statuses.forEach(status=>{
+      const palette=photoStatusColors(status);
+      const label=`${status}  ·  ${counts.get(status)}`;
+      const chipW=Math.min(190,Math.ceil(c.measureText(label).width+22));
+      if(chipX+chipW>maxX&&chipX>startX){chipX=startX;chipY=summaryY+49}
+      c.fillStyle=palette.bg;roundRect(c,chipX,chipY,chipW,chipH,12);c.fill();
+      c.fillStyle=palette.text;c.fillText(label,chipX+11,chipY+16,chipW-18);
+      chipX+=chipW+chipGap;
     });
-    const fy=H-footerH;c.fillStyle="#e2eaf1";c.fillRect(34,fy,W-68,1);c.fillStyle="#6f859a";c.font="600 11px DM Sans, sans-serif";c.fillText("Source: GML shipment records · ETAs are estimates · This image does not show live carrier positions.",42,fy+27);c.fillStyle="#91a2b2";c.font="500 10px DM Sans, sans-serif";c.fillText("Share shipment information only with its intended recipient.",42,fy+45);
+
+    // Shipment cards with an explicit five-step milestone line.
+    const milestoneFields=[
+      {label:"PORT IN",key:"PORT IN"},
+      {label:"PORT OUT",key:"PORT OUT"},
+      {label:"CFS RECEIPT",key:"CFS IN"},
+      {label:"DESTUFFING",key:"DESTUFFING DATE"},
+      {label:"EMPTY RETURN",key:"CONTAINER RETURN DATE"}
+    ];
+    records.forEach((r,i)=>{
+      const x=34,y=top+i*(cardH+gap),w=W-68,h=cardH;
+      const status=statusOf(r),palette=photoStatusColors(status);
+      c.save();c.shadowColor="#16365714";c.shadowBlur=14;c.shadowOffsetY=4;
+      c.fillStyle="#fff";roundRect(c,x,y,w,h,15);c.fill();c.restore();
+      c.fillStyle=palette.edge;roundRect(c,x,y,6,h,4);c.fill();
+
+      c.fillStyle="#6e8499";c.font="800 10px DM Sans, sans-serif";
+      c.fillText("CONTAINER",x+24,y+27);
+      c.fillStyle="#087fc8";c.font="800 23px Manrope, sans-serif";
+      c.fillText(container(r),x+24,y+56,500);
+      const refs=[field(r,["MBL NO"])&&`MBL ${field(r,["MBL NO"])}`,field(r,["TYPE"])&&`TYPE ${field(r,["TYPE"])}`].filter(Boolean).join("   ·   ");
+      c.fillStyle="#75899d";c.font="600 11px DM Sans, sans-serif";
+      c.fillText(refs||"Shipment reference not recorded",x+24,y+77,620);
+
+      const badgeText=status.toUpperCase();c.font="800 11px DM Sans, sans-serif";
+      const badgeW=Math.min(245,c.measureText(badgeText).width+30),badgeX=x+w-badgeW-24;
+      c.fillStyle=palette.bg;roundRect(c,badgeX,y+20,badgeW,30,15);c.fill();
+      c.fillStyle=palette.text;c.fillText(badgeText,badgeX+15,y+39,badgeW-26);
+
+      const cols=[
+        {x:x+24,w:350,label:"ROUTE",value:routeOf(r)},
+        {x:x+405,w:355,label:"VESSEL & VOYAGE",value:field(r,["VESSEL & VOY"])||"Not recorded"},
+        {x:x+790,w:235,label:"ESTIMATED ARRIVAL · ETA",value:field(r,["ETA"])?fmtDate(field(r,["ETA"])):"Not scheduled"}
+      ];
+      cols.forEach(col=>{
+        c.fillStyle="#8a9db0";c.font="800 9px DM Sans, sans-serif";
+        c.fillText(col.label,col.x,y+102);
+        c.fillStyle="#294965";c.font="700 13px DM Sans, sans-serif";
+        c.fillText(String(col.value),col.x,y+122,col.w);
+      });
+
+      c.strokeStyle="#e6edf3";c.lineWidth=1;c.beginPath();
+      c.moveTo(x+24,y+137);c.lineTo(x+w-24,y+137);c.stroke();
+
+      const innerX=x+24,innerW=w-48,cellW=innerW/milestoneFields.length;
+      const nodeY=y+164;
+      c.fillStyle="#71879b";c.font="800 9px DM Sans, sans-serif";
+      milestoneFields.forEach((m,j)=>c.fillText(m.label,innerX+j*cellW,y+155,cellW-8));
+
+      // Connect milestone dots. Completed milestones are green; pending ones remain neutral.
+      milestoneFields.forEach((m,j)=>{
+        const value=field(r,[m.key]),centerX=innerX+j*cellW+cellW/2;
+        if(j<milestoneFields.length-1){
+          const next=field(r,[milestoneFields[j+1].key]);
+          c.strokeStyle=value&&next?"#10a878":"#dce6ee";c.lineWidth=2;
+          c.beginPath();c.moveTo(centerX+5,nodeY);c.lineTo(innerX+(j+1)*cellW+cellW/2-5,nodeY);c.stroke();
+        }
+      });
+      milestoneFields.forEach((m,j)=>{
+        const raw=field(r,[m.key]),centerX=innerX+j*cellW+cellW/2,complete=!!raw;
+        c.beginPath();c.arc(centerX,nodeY,5,0,Math.PI*2);
+        c.fillStyle=complete?"#10a878":"#dce6ee";c.fill();
+        c.strokeStyle=complete?"#d9f5e9":"#fff";c.lineWidth=2;c.stroke();
+        const value=raw?(parseDate(raw)?fmtDate(raw,{day:"2-digit",month:"short",year:"numeric"}):String(raw)):"—";
+        c.fillStyle=complete?"#294965":"#9aaaba";c.font=complete?"700 11px DM Sans, sans-serif":"600 11px DM Sans, sans-serif";
+        c.textAlign="center";c.fillText(value,centerX,y+188,cellW-10);c.textAlign="left";
+      });
+
+      c.strokeStyle="#e6edf3";c.lineWidth=1;c.beginPath();
+      c.moveTo(x+24,y+203);c.lineTo(x+w-24,y+203);c.stroke();
+      const milestone=photoMilestone(r);
+      c.fillStyle="#6d8499";c.font="800 9px DM Sans, sans-serif";
+      c.fillText("LATEST RECORDED UPDATE",x+24,y+223);
+      c.fillStyle="#173b5d";c.font="800 13px DM Sans, sans-serif";
+      c.fillText(milestone.label,x+24,y+245,650);
+      c.fillStyle="#5e7891";c.font="700 12px DM Sans, sans-serif";
+      c.textAlign="right";c.fillText(milestone.date,x+w-24,y+245,280);c.textAlign="left";
+    });
+
+    const fy=H-footerH;c.fillStyle="#e2eaf1";c.fillRect(34,fy,W-68,1);
+    c.fillStyle="#6f859a";c.font="600 11px DM Sans, sans-serif";
+    c.fillText("Source: GML shipment records · ETAs are estimates · This image does not show live carrier positions.",42,fy+25);
+    c.fillStyle="#91a2b2";c.font="500 10px DM Sans, sans-serif";
+    c.fillText("Share shipment information only with its intended recipient.",42,fy+44);
+    c.fillStyle="#91a2b2";c.font="500 10px DM Sans, sans-serif";
+    c.textAlign="right";c.fillText("GREENWICH MERIDIAN LOGISTICS",W-42,fy+44);c.textAlign="left";
+
     canvas.toBlob(blob=>blob?downloadBlob(blob,`GML_Status_${records.length===1?container(records[0]).replace(/[^A-Z0-9-]/gi,"_"):"Update"}.png`):toast("Could not create the status photo.","error"),"image/png");
   }
   function photoTimestamp(value){const d=value instanceof Date?value:new Date(value);return Number.isNaN(+d)?"Unavailable":new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:true}).format(d)}
