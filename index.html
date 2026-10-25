@@ -290,7 +290,65 @@
     .map-overview-pulse{width:6px;height:6px;border-radius:50%;background:#18b587;box-shadow:0 0 0 4px #18b58722}.map-overview-label small{margin-left:5px;border-left:1px solid #dce6ed;padding-left:8px;color:#99a9b7;font-size:7px}
     .map-overview-help{position:absolute;z-index:5;right:12px;bottom:12px;padding:7px 9px;border-radius:8px;background:#0d2c47db;color:#e3edf4;font-size:9px;pointer-events:none}
     .vessel-marker span svg{width:21px;height:21px;display:block}
-    </style>
+    /* Restrained carrier-portal visual system */
+    .public-landing{background:#f4f6f8;color:#18364f;padding:0 clamp(18px,5.2vw,76px) 22px;overflow:hidden}
+    .public-landing:before{display:none}
+    .landing-frame{max-width:1320px}
+    .landing-nav{min-height:76px;border-color:#dfe6ec}
+    .landing-brand{color:#0b2f50}.landing-brand b{font-size:15px}.landing-brand small{color:#8498a8;font-size:8px}
+    .landing-mark{width:39px;height:39px;border:0;border-radius:9px;background:#0e3b60;color:#fff;box-shadow:none;font-size:21px}
+    .landing-nav-links{gap:22px}
+    .landing-nav-links>a{color:#49677f;font-size:11px}.landing-nav-links>a:hover{color:#0878b5}
+    .landing-system{color:#6e8496;font-size:10px}.landing-system i,.visual-live i{background:#13a67d;box-shadow:none}
+    .landing-login{border:1px solid #d3dfe7;border-radius:8px;background:#fff;color:#345671;padding:9px 13px;font-size:11px}
+    .landing-login:hover{border-color:#9bb8ca;background:#f8fbfc}
+    .landing-hero{grid-template-columns:minmax(0,1.03fr) minmax(390px,.97fr);gap:clamp(28px,5vw,68px);min-height:0;padding:clamp(54px,8vh,88px) 0 45px}
+    .landing-kicker{color:#607f96;font-size:9px;letter-spacing:1.25px}.kicker-line{background:#1886bb}.kicker-chip{border-color:#d9e5ec;color:#7890a2;background:#fff}
+    .landing-copy h1{margin:20px 0 16px;color:#0d3152;font-size:clamp(42px,5.2vw,68px);letter-spacing:-3.3px;line-height:1.01}
+    .landing-copy h1 span{color:#087bb4;text-shadow:none}
+    .landing-lead{max-width:560px;color:#667f93;font-size:15px;line-height:1.75}
+    .landing-actions{gap:18px;margin-top:25px}
+    .landing-track{gap:20px;padding:13px 17px;border:0;border-radius:8px;background:#0877b5;box-shadow:0 4px 12px #0b568a24;color:#fff;font-size:12px}
+    .landing-track:hover{background:#075f93;box-shadow:0 7px 18px #0b568a2b}
+    .landing-trust{color:#46677f}.trust-lock{border:1px solid #dce7ed;background:#f5f9fb;color:#1686a8}
+    .landing-trust b{font-size:10px;color:#385a74}.landing-trust small{font-size:9px;color:#8498a8}
+    .landing-proof{gap:12px;margin-top:30px;color:#7d91a2;font-size:8px;letter-spacing:.6px}
+    .landing-proof span+span{border-color:#dbe5eb}.landing-proof i{background:#13a67d;box-shadow:none}
+    .landing-visual{border:1px solid #d6e1e8;border-radius:13px;background:#fff;box-shadow:0 10px 28px #123b5a0c}
+    .landing-visual:before{background:radial-gradient(circle,#b7deee55,transparent 68%)}
+    .visual-head{padding:15px 17px;border-color:#e7edf1}
+    .visual-head b{color:#234862;font-size:12px}.visual-eyebrow{color:#8298a8;font-size:7px}
+    .visual-live{border-color:#d7ebe2;border-radius:6px;background:#f3faf6;color:#16815f;font-size:7px}
+    .route-visual{min-height:340px;background:linear-gradient(180deg,#f5f9fb,#edf4f7)}
+    .route-visual svg{min-height:320px}
+    .contour-lines{stroke:#91aebe!important;stroke-opacity:.22!important}
+    .route-halo{stroke:#2e9cc5!important;opacity:.1!important}
+    .route-line{stroke:#1282ba!important;animation:none}
+    .route-node.origin-node circle:first-child{fill:#087eb9;stroke:#fff}
+    .route-node.destination-node circle:first-child{fill:#12a477;stroke:#fff}
+    .route-node circle:last-child{fill:#fff}
+    .route-pulse{opacity:.42}
+    .ship-illustration{filter:drop-shadow(0 5px 8px #123b5a28)}
+    .ship-illustration path:first-child{fill:#15587c}
+    .map-label rect{fill:#ffffffed;stroke:#cad9e2}
+    .map-label text{fill:#315670}
+    .visual-coordinate{color:#277c9e;font-size:7px}.visual-coordinate span{color:#7b91a1}
+    .visual-callout{border-color:#dbe6ec;border-radius:9px;background:#ffffffed;box-shadow:0 4px 12px #123b5a12;backdrop-filter:blur(8px)}
+    .callout-icon{background:#e8f5f8;color:#0d82a5}
+    .visual-callout b{color:#284b65}.visual-callout small{color:#8395a4}
+    .landing-capabilities{grid-template-columns:1.1fr repeat(3,1fr);gap:0;padding:8px;border:1px solid #dce5eb;border-radius:11px;background:#fff}
+    .capabilities-intro{padding:10px 17px}.capabilities-intro .visual-eyebrow{color:#8599a8}
+    .capabilities-intro>b{color:#244864;font-size:12px}
+    .landing-capabilities article{gap:10px;margin:4px;padding:11px;border:0;border-left:1px solid #e8edf1;border-radius:0;background:#fff}
+    .capability-icon{width:27px;height:27px;border-radius:7px;background:#edf5f8;color:#187ba5}
+    .landing-capabilities article b{color:#2f5068;font-size:9px}.landing-capabilities article small{color:#8294a3;font-size:8px}
+    .capability-arrow{color:#4c89a9}
+    .landing-footer{padding:21px 1px 0;color:#8395a4;font-size:8px}
+    .landing-footer span:first-child{color:#677f91}.landing-footer a{color:#0c72a4}
+    .landing-https-warning{border-radius:8px}
+    @media(max-width:1050px){.landing-hero{grid-template-columns:1fr;max-width:860px;margin:auto;padding-top:48px}.landing-visual{max-width:860px;width:100%;margin:auto}.landing-capabilities{grid-template-columns:repeat(3,1fr)}.capabilities-intro{grid-column:1/-1;border-bottom:1px solid #edf1f4}.landing-capabilities article:first-of-type{border-left:0}}
+    @media(max-width:650px){.public-landing{padding-left:14px;padding-right:14px}.landing-nav{min-height:65px}.landing-nav-links{gap:9px}.landing-nav-links>a{font-size:9px}.landing-system{display:none}.landing-login{padding:8px 9px;font-size:9px}.landing-hero{padding:34px 0 28px}.landing-copy h1{font-size:43px;letter-spacing:-2.2px}.landing-lead{font-size:13px}.landing-actions{gap:12px}.landing-proof{gap:8px;margin-top:23px}.landing-proof span+span{padding-left:8px}.landing-visual{border-radius:10px}.route-visual{min-height:250px}.route-visual svg{min-height:235px}.visual-head{padding:12px}.visual-callout{left:10px;right:10px;bottom:10px;padding:8px}.landing-capabilities{grid-template-columns:1fr;padding:5px}.capabilities-intro{padding:10px}.landing-capabilities article,.landing-capabilities article:first-of-type{margin:0;border-left:0;border-top:1px solid #edf1f4}.landing-footer{flex-wrap:wrap;line-height:1.5}.landing-footer span:nth-child(2){display:none}}
+</style>
 </head>
 <body>
   <div class="shell" id="staffShell" hidden>
@@ -401,14 +459,14 @@
     </header>
     <section class="landing-hero">
       <div class="landing-copy">
-        <div class="landing-kicker"><span class="kicker-line"></span> GREENWICH MERIDIAN LOGISTICS <span class="kicker-chip">GML / 01</span></div>
-        <h1>Every shipment.<br><span>One clear signal.</span></h1>
-        <p class="landing-lead">Know where your cargo stands, what has happened, and what needs attention next. A clearer view for customers and operations teams.</p>
+        <div class="landing-kicker"><span class="kicker-line"></span> GREENWICH MERIDIAN LOGISTICS <span class="kicker-chip">TRACK &amp; TRACE</span></div>
+        <h1>Cargo visibility.<br><span>Clear at every step.</span></h1>
+        <p class="landing-lead">Follow the latest operational update, key shipment milestones and vessel movement when AIS data is available.</p>
         <div class="landing-actions"><a class="landing-track" href="./track.html">Track a shipment <span>↗</span></a><div class="landing-trust"><span class="trust-lock">⌁</span><span><b>Operations verified</b><small>Updates recorded by GML staff</small></span></div></div>
-        <div class="landing-proof"><span><i></i> CUSTOMER TRACKING</span><span>Container or bill of lading</span><span>Milestones · route · photos</span></div>
+        <div class="landing-proof"><span><i></i> CUSTOMER TRACKING</span><span>Container or bill of lading</span><span>Milestones · ETA · shipment photos</span></div>
       </div>
       <div class="landing-visual" aria-label="Illustrative shipping route visualization">
-        <div class="visual-head"><div><span class="visual-eyebrow">NETWORK / 001</span><b>Global cargo movement</b></div><span class="visual-live"><i></i> ROUTE VIEW</span></div>
+        <div class="visual-head"><div><span class="visual-eyebrow">NETWORK / 001</span><b>Global cargo movement</b></div><span class="visual-live"><i></i> ILLUSTRATIVE ROUTE</span></div>
         <div class="route-visual">
           <div class="route-crosshair"></div>
           <svg viewBox="0 0 760 470" role="img" aria-label="Illustrative vessel traveling along a route between Asia and India">
