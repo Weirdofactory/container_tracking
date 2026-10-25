@@ -145,6 +145,31 @@
     @media print{body{background:#fff!important}.topbar,.hero,.features,.footer,.map-panel,.print-report,.result-card-actions,#searchMessage,#emptySection{display:none!important}.wrap{max-width:none;padding:0;margin:0}.results{margin:0}}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.15.0/dist/maplibre-gl.css">
+<style id="customer-tracking-readability">
+  #trackForm.search-panel{background:#fff!important;color:#173550!important;border:1px solid #cbd8e4!important;box-shadow:0 12px 28px rgba(19,54,82,.10)!important;backdrop-filter:none!important;color-scheme:light}
+  #trackForm.search-panel label{color:#415c74!important}
+  #trackForm #reference{background:#fff!important;color:#102f49!important;-webkit-text-fill-color:#102f49!important;border:1px solid #879fb3!important;font-size:16px!important;font-weight:700!important;caret-color:#0879b5}
+  #trackForm #reference::placeholder{color:#667d92!important;-webkit-text-fill-color:#667d92!important;opacity:1!important;font-weight:500!important}
+  #trackForm #reference:focus{border-color:#0788c4!important;box-shadow:0 0 0 3px rgba(7,136,196,.16)!important}
+  #trackForm .search-hint{color:#536d84!important}
+  .result-card{background:#fff!important;color:#173b56!important}
+  .result-top{background:#f7fafc!important}
+  .result-top h3{color:#0876b5!important}
+  .result-top p{color:#526d84!important}
+  .result-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;background:#fff!important}
+  .result-cell{background:#f4f8fb!important;border:1px solid #d5e0e8!important;border-left:3px solid #168bb9!important;border-radius:8px!important;padding:12px!important;min-height:64px}
+  .result-cell small{color:#526b82!important;font-size:10px!important;letter-spacing:.55px}
+  .result-cell b{color:#153b59!important;font-size:14px!important;line-height:1.4;white-space:normal!important;overflow-wrap:anywhere}
+  .eta-countdown,.eta-countdown.soon,.eta-countdown.late,.eta-countdown.done,.eta-countdown.gray{background:#eef6f8!important;border-color:#c7dce4!important}
+  .eta-countdown span,.eta-countdown small{color:#526b7d!important}
+  .eta-countdown b,.eta-countdown.soon b,.eta-countdown.late b,.eta-countdown.done b,.eta-countdown.gray b{color:#153d59!important}
+  .mile b{color:#24435d!important;font-size:11px!important}
+  .mile span{color:#526b80!important;font-size:11px!important}
+  .timeline{border-color:#d5e0e8!important}
+  .result-card-actions button{background:#fff!important;color:#1d526e!important;border-color:#b8cad7!important}
+  @media(max-width:820px){.result-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+  @media(max-width:540px){.result-grid{grid-template-columns:1fr!important}.result-cell{min-height:0}.search-row{gap:8px!important}.search-row input,.search-row button{height:46px!important;border-radius:8px!important}}
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -236,7 +261,7 @@
     async function copyShipmentUpdate(index){
       const item=(window.customerShipmentResults||[])[Number(index)];if(!item)return;
       const events=(Array.isArray(item.milestones)?item.milestones:[]).map(m=>m.label+": "+(m.date?formatDate(m.date):(m.estimate?"Scheduled":"Awaiting update")));
-      const message=["SHIPMENT UPDATE","Container: "+(item.container||"—"),"Status: "+(item.status||"Awaiting update"),"Route: "+(item.origin||"Origin pending")+" → "+(item.gateway||"Gateway pending"),"Vessel / voyage: "+(item.vessel||"Not recorded"),"Shipping line: "+(item.shippingLine||"Not recorded"),"Recorded ETA: "+(item.eta?formatDate(item.eta):"Awaiting update"),"Milestones:",...events.map(x=>"• "+x),"Updates reflect the latest recorded shipment data."].join("\n");
+      const message=["SHIPMENT UPDATE","Container: "+(item.container||"—"),"Status: "+(item.status||"Awaiting update"),"Route: "+(item.origin||"Origin pending")+" → "+(item.gateway||"Gateway pending"),"Vessel / voyage: "+(item.vessel||"Not recorded"),"Recorded ETA: "+(item.eta?formatDate(item.eta):"Awaiting update"),"Milestones:",...events.map(x=>"• "+x),"Updates reflect the latest recorded shipment data."].join("\n");
       try{
         if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(message);
         else{const area=document.createElement("textarea");area.value=message;area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);area.select();const ok=document.execCommand("copy");area.remove();if(!ok)throw new Error("Clipboard access is unavailable.")}
@@ -253,7 +278,7 @@
       const warnings=(Array.isArray(item.warnings)?item.warnings:[]).map(w=>'<div class="eta-warning" role="note">⚠ '+escapeHtml(w)+'</div>').join("");
       const mapButton=item.container?'<button class="map-card-link" type="button" data-map-index="'+index+'">🗺 View vessel map</button>':"";
       const copyButton='<button class="map-card-link" type="button" data-copy-index="'+index+'">Copy update</button>';
-      return '<article class="result-card"><div class="result-top"><div><h3>'+escapeHtml(item.container||"Shipment")+'</h3><p>'+escapeHtml(item.type||"Container")+'</p></div><span class="badge '+(statusDone?"done":"")+'">'+escapeHtml(item.status||"Awaiting update")+'</span></div><div class="result-grid"><div class="result-cell"><small>Route</small><b>'+escapeHtml(route)+'</b></div><div class="result-cell"><small>Vessel / voyage</small><b>'+escapeHtml(item.vessel||"Not recorded")+'</b></div><div class="result-cell"><small>Shipping line</small><b>'+escapeHtml(item.shippingLine||"Not recorded")+'</b></div><div class="result-cell"><small>Estimated arrival</small><b>'+escapeHtml(formatDate(item.eta))+'</b></div></div><div class="eta-countdown '+etaWindow.tone+'"><span>RECORDED ETA WINDOW</span><b>'+escapeHtml(etaWindow.text)+'</b><small>Countdown is based on the recorded estimated arrival date.</small></div><div class="timeline">'+milestones+'</div>'+warnings+renderPhotos(item.photos)+'<div class="result-card-actions">'+copyButton+mapButton+'</div></article>';
+      return '<article class="result-card"><div class="result-top"><div><h3>'+escapeHtml(item.container||"Shipment")+'</h3><p>'+escapeHtml(item.type||"Container")+'</p></div><span class="badge '+(statusDone?"done":"")+'">'+escapeHtml(item.status||"Awaiting update")+'</span></div><div class="result-grid"><div class="result-cell"><small>Route</small><b>'+escapeHtml(route)+'</b></div><div class="result-cell"><small>Vessel / voyage</small><b>'+escapeHtml(item.vessel||"Not recorded")+'</b></div><div class="result-cell"><small>Estimated arrival</small><b>'+escapeHtml(formatDate(item.eta))+'</b></div></div><div class="eta-countdown '+etaWindow.tone+'"><span>RECORDED ETA WINDOW</span><b>'+escapeHtml(etaWindow.text)+'</b><small>Countdown is based on the recorded estimated arrival date.</small></div><div class="timeline">'+milestones+'</div>'+warnings+renderPhotos(item.photos)+'<div class="result-card-actions">'+copyButton+mapButton+'</div></article>';
     }
     const ports=[
       ["NINGBO",[121.544,29.868]],["SHANGHAI",[121.474,31.230]],["QINGDAO",[120.382,36.067]],["TIANJIN",[117.735,38.982]],["XINGANG",[117.735,38.982]],
