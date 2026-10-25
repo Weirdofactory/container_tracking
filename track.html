@@ -71,21 +71,93 @@
     @page{size:A4;margin:14mm}
     @media print{body{background:#fff!important;color:#111!important}.topbar,.hero,.features,.footer,.map-panel,.print-report,.result-card-actions,#searchMessage,#emptySection{display:none!important}.wrap{max-width:none;padding:0;margin:0}.results{margin:0}.results-head{margin-bottom:8px}.results-head h2{color:#10253a}.results-head p,.freshness-note{color:#41576a}.result-card{break-inside:avoid;background:#fff!important;border:1px solid #ccd5dc!important;box-shadow:none!important;color:#142536}.result-top{border-color:#d5dde4}.result-top h3,.result-grid .result-cell b,.mile b,.customer-photo-gallery h4{color:#10253a!important}.result-top p,.result-cell small,.mile span{color:#536a7e!important}.result-cell{background:#f6f8fa!important;border-color:#dbe1e6!important}.badge,.badge.done{background:#eaf3f8!important;color:#163957!important}.eta-countdown,.eta-countdown.soon,.eta-countdown.late,.eta-countdown.done{background:#f4f7f9!important;border-color:#d4dde4!important}.eta-countdown span,.eta-countdown small{color:#536a7e!important}.eta-countdown b{color:#173f5d!important}.mile.done{border-color:#169b71}.mile.done:before{background:#169b71;border-color:#169b71}.customer-photo{background:#fff!important;border-color:#d5dde4!important}.customer-photo span{color:#40576a!important}}
     
-  </style>
+  /* Carrier-style customer tracking interface */
+    :root{--navy:#0c2e50;--blue:#0877b9;--ink:#18364f;--muted:#6d8296;--line:#d9e2ea;--bg:#f4f6f8;--green:#108a66;--shadow:0 4px 18px rgba(20,47,72,.045)}
+    body{background:#f4f6f8;color:#18364f}
+    .topbar{height:72px;background:#fff;padding:0 max(24px,calc((100vw - 1280px)/2));border-bottom:1px solid #dfe6ec;box-shadow:0 1px 4px #102b4310}
+    .brand{font-size:16px;letter-spacing:-.25px;color:#0c2e50}
+    .brand>span:last-child{display:grid;gap:2px}.brand-subtitle{font:800 8px "DM Sans",sans-serif;letter-spacing:1.2px;color:#7b8fa1}
+    .brand-icon{width:40px;height:40px;border-radius:10px;background:#0c3b63;color:#fff;box-shadow:none;font-size:21px}
+    .staff-link{border:0;background:transparent;color:#2d5878;font-size:12px;padding:10px 11px}.staff-link:hover{background:#f1f5f8;border-color:transparent;color:#086da7}
+    .wrap{max-width:1320px;padding:34px 26px 56px}
+    .hero{position:relative;grid-template-columns:minmax(0,1fr) minmax(380px,.88fr);gap:44px;padding:42px clamp(24px,4vw,58px);border:1px solid #dce4ea;border-radius:12px;background:#fff;color:#18364f;box-shadow:0 8px 24px #18385208}
+    .hero:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;border-radius:12px 0 0 12px;background:#0a82bd}
+    .eyebrow{color:#55758e;font-size:9px;letter-spacing:1.25px}.eyebrow span{color:#9cb0bf}
+    .hero h1{margin:15px 0 12px;color:#0d3152;font-size:clamp(35px,4vw,53px);line-height:1.05;letter-spacing:-2px}
+    .hero-copy{max-width:540px;color:#667f94;font-size:15px;line-height:1.7}
+    .search-panel{border:1px solid #e0e8ee;border-radius:11px;padding:20px;background:#f8fafb;box-shadow:none}
+    .search-panel label{color:#526d83;font-size:10px;letter-spacing:.5px}
+    .search-row{gap:0}.search-row input{height:49px;border-radius:8px 0 0 8px;background:#fff;border-color:#cfdbe4;padding:0 13px}
+    .search-row button{min-width:104px;border-radius:0 8px 8px 0;background:#0879b5;box-shadow:none}
+    .search-row button:hover{background:#05689e}
+    .search-hint{color:#8193a2;font-size:11px}
+    .status-note{font-size:12px}
+    .features{gap:0;margin-top:16px;border:1px solid #dce4ea;border-radius:10px;background:#fff;box-shadow:none;overflow:hidden}
+    .feature{position:relative;min-height:85px;padding:17px 20px;border:0;border-radius:0;box-shadow:none;background:#fff}
+    .feature+.feature{border-left:1px solid #e8edf1}
+    .feature:before{content:"";display:block;width:22px;height:2px;margin-bottom:10px;background:#0b8bbf}
+    .feature strong{color:#234967;font-size:12px}.feature span{color:#7f92a2;font-size:11px}
+    .results{margin-top:30px}
+    .results-head{align-items:center;margin-bottom:12px}
+    .results-head h2{color:#113656;font-size:23px}.results-head p{color:#70869a;font-size:12px}
+    .print-report{border:1px solid #cdd9e3;border-radius:8px;background:#fff;color:#31546e;padding:9px 12px;font-size:11px}
+    .print-report:hover{border-color:#6ea9c8;background:#f7fbfd;color:#126f9f}
+    .freshness-note{border:1px solid #dce8ef;border-radius:8px;background:#f7fbfd;color:#607d91;padding:10px 13px;font-size:11px}
+    .result-list{gap:13px}
+    .result-card{border:1px solid #dce4ea;border-radius:12px;box-shadow:0 5px 18px #18385208}
+    .result-top{align-items:center;padding:17px 20px;background:#f8fafb;border-bottom:1px solid #e6ecf0}
+    .result-top h3{color:#0876b5;font-size:19px;letter-spacing:.2px}
+    .result-top p{font-size:11px;color:#7d90a0}
+    .badge{border:1px solid #d9e8f1;border-radius:6px;background:#edf5f8;color:#275e7e;padding:7px 9px;font-size:9px;letter-spacing:.35px;text-transform:uppercase}
+    .badge.done{border-color:#cbe7dc;background:#edf8f3;color:#137957}
+    .result-grid{gap:8px;padding:13px 20px}
+    .result-cell{border:0;border-left:2px solid #dce8ef;border-radius:0;background:transparent;padding:6px 10px;min-height:52px}
+    .result-cell small{color:#8b9ba8;font-size:8px;letter-spacing:.8px}
+    .result-cell b{margin-top:5px;color:#234760;font-size:12px}
+    .eta-countdown{margin:0 20px 13px;padding:10px 12px;border-radius:8px;background:#f3f8fb;border-color:#dfeaf0}
+    .eta-countdown span{color:#748b9c;font-size:8px}.eta-countdown b{color:#28617f;font-size:12px}.eta-countdown small{color:#8193a2;font-size:9px}
+    .timeline{grid-template-columns:repeat(6,minmax(105px,1fr));padding:8px 20px 20px}
+    .mile{padding-top:14px;border-color:#d9e3eb}.mile.done{border-color:#15976e}
+    .mile b{color:#355a74;font-size:10px}.mile span{font-size:10px;color:#8192a0}
+    .eta-warning{margin:0 20px 12px;border:1px solid #f1d9b5;border-radius:8px;background:#fff9ef;color:#89622d;padding:9px 11px;font-size:11px}
+    .customer-photo-gallery{margin:0 20px 14px;padding-top:13px;border-top:1px solid #e9eef2}
+    .customer-photo-gallery h4{color:#345770;font-size:11px;letter-spacing:.25px}
+    .customer-photo{border:1px solid #dbe4ea;border-radius:8px;background:#fff;box-shadow:none}
+    .result-card-actions{padding:0 20px 16px}
+    .result-card-actions button{min-height:36px;border:1px solid #d4e0e8;border-radius:7px;background:#fff;color:#31556e;padding:8px 11px;font-size:10px;font-weight:700}
+    .result-card-actions button:hover{border-color:#77acc8;background:#f6fafc}
+    .map-panel{margin-top:16px;border-radius:12px;border-color:#dce4ea;box-shadow:0 5px 18px #18385208}
+    .map-panel-head{padding:15px 18px}
+    .map-panel-head h3{color:#153a59;font-size:16px}
+    .map-panel-head p{font-size:11px;color:#7d8fa0}
+    .map-controls select,.map-controls button{height:37px;border-radius:7px;font-size:11px}
+    .map-controls button{background:#0879b5}
+    .map-status{padding:9px 18px;font-size:10px}
+    .customer-map{height:450px;background:#e7eef2}
+    .map-legend{gap:12px;padding:10px 18px;color:#718597;font-size:9px}
+    .footer{margin-top:28px;background:#fff;border-top:1px solid #e0e7ed;color:#758a9c;font-size:10px}
+    .footer a{color:#176e9e}
+    .empty-state{border-style:solid;border-color:#dce5eb;border-radius:12px;text-align:left;padding:22px 25px}
+    .empty-state strong{color:#153b5b}
+    @media(max-width:900px){.hero{grid-template-columns:1fr;gap:25px}.search-panel{max-width:none}.features{grid-template-columns:1fr}.feature{min-height:0}.feature+.feature{border-left:0;border-top:1px solid #e8edf1}}
+    @media(max-width:700px){.map-panel-head{gap:12px}.customer-map{height:340px}}
+    @media(max-width:540px){.topbar{height:64px}.brand{font-size:13px}.brand-icon{width:36px;height:36px}.brand-subtitle{font-size:7px}.staff-link{padding:8px;font-size:10px}.wrap{padding:18px 12px 32px}.hero{padding:25px 17px;border-radius:10px}.hero h1{font-size:36px;letter-spacing:-1.35px}.hero-copy{font-size:13px}.search-panel{padding:15px}.search-row input{border-radius:7px}.search-row button{height:44px;border-radius:7px}.features{margin-top:11px}.feature{padding:13px 15px}.results-head{align-items:flex-start}.results-head h2{font-size:19px}.print-report{padding:8px 9px;font-size:9px}.result-top{padding:13px}.result-grid{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px 13px}.result-cell{padding:7px;border-left:1px solid #dce8ef}.eta-countdown{margin:0 13px 10px;grid-template-columns:1fr}.eta-countdown b{grid-column:auto;grid-row:auto;text-align:left}.timeline{grid-template-columns:repeat(6,115px);padding:8px 13px 16px}.eta-warning{margin:0 13px 10px}.customer-photo-gallery{margin:0 13px 12px}.result-card-actions{padding:0 13px 13px}.map-panel-head{padding:13px}.map-controls{width:100%}.map-controls select{flex:1;min-width:0}.map-controls button{flex:1}.map-status{padding:9px 13px}.map-legend{padding:9px 13px}}
+    @media print{body{background:#fff!important}.topbar,.hero,.features,.footer,.map-panel,.print-report,.result-card-actions,#searchMessage,#emptySection{display:none!important}.wrap{max-width:none;padding:0;margin:0}.results{margin:0}}
+</style>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.15.0/dist/maplibre-gl.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="GML Container Tracking home"><span class="brand-icon">⚓</span><span>Container Tracking Suite</span></a>
-    <a class="staff-link" href="./">🔒 Staff portal</a>
+    <a class="brand" href="./" aria-label="GML Container Tracking home"><span class="brand-icon">⚓</span><span>Greenwich Meridian Logistics<small class="brand-subtitle">CONTAINER TRACKING</small></span></a>
+    <a class="staff-link" href="./">Staff portal <span aria-hidden="true">↗</span></a>
   </header>
   <main class="wrap">
     <section class="hero">
-      <div><div class="eyebrow">Greenwich Meridian Logistics · Customer tracking</div><h1>Shipment visibility, without the guesswork.</h1><p class="hero-copy">Check your shipment’s latest recorded progress, vessel details and estimated arrival in one clear place.</p></div>
+      <div><div class="eyebrow">CUSTOMER SERVICES <span> / </span> TRACK &amp; TRACE</div><h1>Track your shipment</h1><p class="hero-copy">View the latest update recorded by GML operations, along with vessel, route, milestone dates and estimated arrival.</p></div>
       <form class="search-panel" id="trackForm">
-        <label for="reference">Container or bill of lading number</label>
-        <div class="search-row"><input id="reference" name="reference" autocomplete="off" maxlength="40" placeholder="e.g. WHSU6393302" required><button id="searchButton" type="submit">Track shipment</button></div>
-        <p class="search-hint">Enter the exact number shown on your shipping documents. Search works with a container number or master B/L.</p>
+        <label for="reference">Container number or bill of lading</label>
+        <div class="search-row"><input id="reference" name="reference" autocomplete="off" maxlength="40" placeholder="Enter a container or master B/L number" required><button id="searchButton" type="submit">Track shipment</button></div>
+        <p class="search-hint">Use the exact container number or master bill of lading shared by GML.</p>
         <p class="status-note" id="searchMessage" aria-live="polite"></p>
       </form>
     </section>
@@ -95,11 +167,11 @@
       <article class="feature"><strong>Milestone dates</strong><span>Follow recorded terminal events and estimated dates.</span></article>
     </section>
     <section class="results" id="resultsSection" hidden>
-      <div class="results-head"><div><h2>Shipment results</h2><p>Operational updates supplied by Greenwich Meridian Logistics.</p></div><button class="print-report" id="printResults" type="button">Print / Save PDF ↗</button></div>
+      <div class="results-head"><div><h2>Shipment results</h2><p>Operational updates supplied by Greenwich Meridian Logistics.</p></div><button class="print-report" id="printResults" type="button">Print shipment update</button></div>
       <div class="freshness-note" id="sourceFreshness" hidden></div>
       <div class="result-list" id="resultList"></div>
       <section class="map-panel" id="mapPanel" hidden aria-label="Vessel map">
-        <div class="map-panel-head"><div><h3>Vessel route map</h3><p>Reported AIS positions and the shipment’s recorded port route. The corridor line is approximate.</p></div><div class="map-controls"><select id="mapShipment" aria-label="Choose a shipment"></select><button id="loadVesselMap" type="button">Load vessel map</button></div></div>
+        <div class="map-panel-head"><div><h3>Vessel movement</h3><p>Reported AIS positions and the shipment’s recorded ports. The dashed corridor is indicative only.</p></div><div class="map-controls"><select id="mapShipment" aria-label="Choose a shipment"></select><button id="loadVesselMap" type="button">Load vessel map</button></div></div>
         <div class="map-status" id="mapStatus" aria-live="polite">Choose a shipment and load its vessel map.</div>
         <div class="customer-map" id="customerMap" role="img" aria-label="Shipment vessel map"></div>
         <div class="map-legend"><span><i class="legend-dot"></i>Origin port</span><span><i class="legend-dot destination"></i>India gateway</span><span><i class="legend-line"></i>Reported AIS track</span><span><i class="legend-line approx"></i>Approximate port corridor</span><span>Map data © OpenStreetMap contributors · OpenFreeMap</span></div>
