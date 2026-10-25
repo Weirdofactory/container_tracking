@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0b2b50">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>GML Container Tracking Suite</title>
+  <title>Container Tracking Suite</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -422,7 +422,7 @@
 <body>
   <div class="shell" id="staffShell" hidden>
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><div class="brand-icon">⚓</div><div><div class="brand-name">GML</div><div class="brand-sub">CONTAINER TRACKING</div></div></div>
+      <div class="brand"><div class="brand-icon">⚓</div><div><div class="brand-name">Container</div><div class="brand-sub">TRACKING SUITE</div></div></div>
       <div class="nav-caption">WORKSPACE</div>
       <nav class="nav-list">
         <button class="nav-link active" data-page="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
@@ -437,7 +437,7 @@
         <button class="nav-link" data-page="reports"><span class="nav-icon">▥</span>Reports</button>
         <button class="nav-link" data-page="settings"><span class="nav-icon">⚙</span>Settings</button>
       </nav>
-      <div class="sidebar-bottom"><b>GML OPERATIONS</b><br>Logistics control · Shipment records are protected by staff sign-in.</div>
+      <div class="sidebar-bottom"><b>OPERATIONS</b><br>Shipment records are protected by staff sign-in.</div>
     </aside>
     <main class="main">
       <header class="topbar">
@@ -447,7 +447,7 @@
       </header>
       <div class="page">
         <section class="page-section active dashboard-section" id="page-dashboard">
-          <div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> GML OPERATIONS / CONTROL TOWER</div><h1>Logistics control tower</h1><p class="subtitle">Shipment progress, port activity and the next operational action in one view.</p></div><div class="head-actions"><button class="btn primary" id="viewShipmentsBtn">View shipments&nbsp; →</button></div></div>
+          <div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> OPERATIONS / CONTROL TOWER</div><h1>Logistics control tower</h1><p class="subtitle">Shipment progress, port activity and the next operational action in one view.</p></div><div class="head-actions"><button class="btn primary" id="viewShipmentsBtn">View shipments&nbsp; →</button></div></div>
           <div class="section-label"><span>SHIPMENT SNAPSHOT</span><span>Calculated from loaded Supabase records</span></div>
           <div class="metrics">
             <article class="metric"><div class="metric-icon">▣</div><div><div class="metric-label">Total shipments</div><div class="metric-value" id="metricTotal">—</div><div class="metric-note">Loaded shipment records</div></div></article>
@@ -497,7 +497,7 @@
         <section class="page-section" id="page-reports"><div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> OPERATIONS / REPORTS</div><h1>Reports</h1><p class="subtitle">Status, arrival and lane summaries calculated from loaded records.</p></div><div class="head-actions"><button class="btn" id="reportPhotoBtn">📷 Download status photo</button><button class="btn primary" id="reportExportBtn">⇩ Export records</button></div></div><div id="reportMetrics" class="metrics"></div><div class="insight-grid"><article class="card insight-card"><div class="card-head"><div class="card-title">Status distribution</div></div><div class="donut-area"><div class="donut" id="reportDonut"></div><div class="legend-list" id="reportLegend"></div></div></article><article class="card insight-card"><div class="card-head"><div class="card-title">Monthly arrivals</div></div><div class="trend-bars" id="reportTrend"></div></article><article class="card insight-card"><div class="card-head"><div class="card-title">Top trading lanes</div></div><div class="lane-list" id="reportLanes"></div></article></div><article class="card coverage-card"><div class="card-head"><div><div class="card-title">Milestone data coverage</div><div class="card-sub">Recorded handoffs across the loaded shipment register. Select a row to review missing dates.</div></div><span class="status-pill blue">DATA QUALITY</span></div><div class="coverage-list" id="reportCoverage"></div><div class="exception-footer">A missing date indicates a blank shipment record; it does not confirm a carrier delay.</div></article></section>
 
         <section class="page-section" id="page-logistics">
-          <div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> GML OPERATIONS / PLANNING &amp; CONTROL</div><h1>Logistics workspace</h1><p class="subtitle">Coordinate sailings, LCL loads, shipment economics, filings and last free day actions.</p></div><div class="head-actions"><button class="btn" id="opsRefreshBtn">↻ Refresh modules</button></div></div>
+          <div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> OPERATIONS / PLANNING &amp; CONTROL</div><h1>Logistics workspace</h1><p class="subtitle">Coordinate sailings, LCL loads, shipment economics, filings and last free day actions.</p></div><div class="head-actions"><button class="btn" id="opsRefreshBtn">↻ Refresh modules</button></div></div>
           <div class="ops-kpis" id="opsKpis"></div>
           <article class="card ops-workspace">
             <div class="ops-tabs" id="opsTabs" role="tablist">
@@ -511,7 +511,7 @@
             <div class="ops-content" id="opsContent"></div>
           </article>
         </section>
-        <section class="page-section" id="page-settings"><div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> WORKSPACE / SETTINGS</div><h1>Account settings</h1><p class="subtitle">Your access is managed through the authorized GML Supabase staff account.</p></div></div><article class="card"><div class="card-head"><div><div class="card-title">Signed-in staff</div><div class="card-sub">Staff roles and access are verified by the secure operations service.</div></div></div><div class="modal-body"><div class="detail-grid"><div class="detail-cell"><small>Account</small><b id="settingsEmail">—</b></div><div class="detail-cell"><small>Role</small><b id="settingsRole">—</b></div><div class="detail-cell"><small>Data source</small><b>Supabase · protected operations-data service</b></div><div class="detail-cell"><small>Map</small><b>Port coordinates matched from shipment records</b></div></div><div style="margin-top:18px"><button class="btn danger" id="settingsSignOut">Sign out</button></div></div></article></section>
+        <section class="page-section" id="page-settings"><div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> WORKSPACE / SETTINGS</div><h1>Account settings</h1><p class="subtitle">Your access is managed through an authorized staff account.</p></div></div><article class="card"><div class="card-head"><div><div class="card-title">Signed-in staff</div><div class="card-sub">Staff roles and access are verified by the secure operations service.</div></div></div><div class="modal-body"><div class="detail-grid"><div class="detail-cell"><small>Account</small><b id="settingsEmail">—</b></div><div class="detail-cell"><small>Role</small><b id="settingsRole">—</b></div><div class="detail-cell"><small>Data source</small><b>Supabase · protected operations-data service</b></div><div class="detail-cell"><small>Map</small><b>Port coordinates matched from shipment records</b></div></div><div style="margin-top:18px"><button class="btn danger" id="settingsSignOut">Sign out</button></div></div></article></section>
       <div class="ops-modal" id="opsModal" hidden>
     <div class="ops-modal-backdrop" data-ops-close></div>
     <section class="ops-dialog" role="dialog" aria-modal="true" aria-labelledby="opsFormTitle">
@@ -531,9 +531,9 @@
   <main class="public-landing" id="publicLanding" hidden>
   <div class="landing-frame">
     <header class="landing-nav">
-      <a class="landing-brand" href="./" aria-label="Greenwich Meridian Logistics home">
+      <a class="landing-brand" href="./" aria-label="Shipment tracking home">
         <span class="landing-mark">⚓</span>
-        <span><b>GML</b><small>CONTAINER TRACKING SUITE</small></span>
+        <span><b>Container Tracking</b><small>SHIPMENT VISIBILITY</small></span>
       </a>
       <nav class="landing-nav-links" aria-label="Main navigation">
         <a href="./track.html">Customer tracking</a>
@@ -543,10 +543,10 @@
     </header>
     <section class="landing-hero">
       <div class="landing-copy">
-        <div class="landing-kicker"><span class="kicker-line"></span> GREENWICH MERIDIAN LOGISTICS <span class="kicker-chip">TRACK &amp; TRACE</span></div>
+        <div class="landing-kicker"><span class="kicker-line"></span> GLOBAL SHIPMENT VISIBILITY <span class="kicker-chip">TRACK &amp; TRACE</span></div>
         <h1>Cargo visibility.<br><span>Clear at every step.</span></h1>
         <p class="landing-lead">Follow the latest operational update, key shipment milestones and vessel movement when AIS data is available.</p>
-        <div class="landing-actions"><a class="landing-track" href="./track.html">Track a shipment <span>↗</span></a><div class="landing-trust"><span class="trust-lock">⌁</span><span><b>Operations verified</b><small>Updates recorded by GML staff</small></span></div></div>
+        <div class="landing-actions"><a class="landing-track" href="./track.html">Track a shipment <span>↗</span></a><div class="landing-trust"><span class="trust-lock">⌁</span><span><b>Operations verified</b><small>Updates recorded by operations staff</small></span></div></div>
         <div class="landing-proof"><span><i></i> CUSTOMER TRACKING</span><span>Container or bill of lading</span><span>Milestones · ETA · shipment photos</span></div>
       </div>
       <div class="landing-visual" aria-label="Illustrative shipping route visualization">
@@ -591,7 +591,7 @@
       <article><span class="capability-icon">02</span><div><b>Customer tracking</b><small>Look up a shipment using its container or bill of lading number.</small></div><span class="capability-arrow">↗</span></article>
       <article><span class="capability-icon">03</span><div><b>Operations control</b><small>Staff manage records, exceptions and shipment evidence.</small></div><span class="capability-arrow">↗</span></article>
     </section>
-    <footer class="landing-footer"><span>GREENWICH MERIDIAN LOGISTICS</span><span>Shipment information supplied by GML operations.</span><a href="./track.html">Open customer tracking →</a></footer>
+    <footer class="landing-footer"><span>GLOBAL SHIPMENT VISIBILITY</span><span>Shipment information is updated by authorized staff.</span><a href="./track.html">Open customer tracking →</a></footer>
     <div id="httpsWarning" class="login-error hidden landing-https-warning">For secure sign-in and shipment data, open this site from its GitHub Pages HTTPS address.</div>
   </div>
 </main>
@@ -603,7 +603,7 @@
     <section class="modal map-experience" aria-label="Shipment route intelligence">
       <header class="map-experience-head">
         <div class="map-experience-title">
-          <span class="map-eyebrow"><i></i> GML · ROUTE INTELLIGENCE</span>
+          <span class="map-eyebrow"><i></i> ROUTE INTELLIGENCE</span>
           <h2 id="mapModalTitle">Global shipment map</h2>
           <p id="mapTitleSub">Planned corridors and recorded vessel movement in one view.</p>
         </div>
@@ -733,7 +733,7 @@
   }
   async function setAccess(session){
     if(!session){state.profile=null;state.rows=[];state.etaHistory=[];state.loaded=false;state.ops={loaded:false,tab:"sailings",alertFilter:"open",sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]};$("staffShell").hidden=true;$("publicLanding").hidden=false;setCloud("error","Sign in to load shipments");return}
-    state.profile={displayName:session.user?.email||"GML Staff",role:"Staff",email:session.user?.email||""};$("publicLanding").hidden=true;$("staffShell").hidden=false;$("userName").textContent=state.profile.displayName;
+    state.profile={displayName:session.user?.email||"Staff User",role:"Staff",email:session.user?.email||""};$("publicLanding").hidden=true;$("staffShell").hidden=false;$("userName").textContent=state.profile.displayName;
     try{await loadRecords()}catch(_){ }
   }
   function modal(id,open=true){$(id).classList.toggle("open",open)}
@@ -800,7 +800,7 @@
   function saveCurrentView(){const name=$("savedViewName").value.trim();if(!name)return toast("Enter a name for this saved view.","error");const views=readSavedViews(),id="view-"+Date.now().toString(36),snapshot=currentShipmentView(),existing=views.findIndex(v=>v.name.toLowerCase()===name.toLowerCase());const item={id,name,filters:snapshot};if(existing>=0)views.splice(existing,1);views.unshift(item);try{localStorage.setItem(savedViewsKey(),JSON.stringify(views.slice(0,20)));$("savedViewName").value="";syncSavedViewSelect();$("savedViewSelect").value=id;toast("Shipment view saved on this browser.","success")}catch(_){toast("Could not save this view in browser storage.","error")}}
   function applySavedView(){const id=$("savedViewSelect").value,view=readSavedViews().find(v=>v.id===id);if(!view)return toast("Choose a saved view first.","error");const snapshot=view.filters||{},filters=snapshot.filters||{};state.query=String(snapshot.query||"");state.filter=["all","active","eta","transit","delayed","arrived","portout","cfs","destuffing","returned","awaiting"].includes(snapshot.filter)?snapshot.filter:"all";state.view=["cards","table","pipeline"].includes(snapshot.view)?snapshot.view:"cards";$("shipmentSearch").value=state.query;$("globalSearch").value=state.query;Object.entries(filters).forEach(([key,value])=>{if($(key))$(key).value=String(value||"")});document.querySelectorAll(".filter-chip").forEach(b=>b.classList.toggle("active",b.dataset.filter===state.filter));document.querySelectorAll("#viewSwitch button").forEach(b=>b.classList.toggle("active",b.dataset.view===state.view));renderShipments();toast("Saved shipment view applied.","success")}
   function deleteSavedView(){const select=$("savedViewSelect"),id=select.value;if(!id)return toast("Choose a saved view to delete.","error");const views=readSavedViews().filter(v=>v.id!==id);try{localStorage.setItem(savedViewsKey(),JSON.stringify(views));syncSavedViewSelect();toast("Saved view removed from this browser.","success")}catch(_){toast("Could not update browser storage.","error")}}
-  function exportCurrentView(){const items=filteredRows().map(x=>x.row);if(!items.length)return toast("There are no shipments in the current view to export.","error");const stamp=new Date().toISOString().slice(0,10);downloadBlob(new Blob(["\uFEFF"+recordsCSV(items)],{type:"text/csv;charset=utf-8"}),`GML_Shipments_View_${stamp}.csv`);toast(items.length+" filtered shipment row(s) exported.","success")}
+  function exportCurrentView(){const items=filteredRows().map(x=>x.row);if(!items.length)return toast("There are no shipments in the current view to export.","error");const stamp=new Date().toISOString().slice(0,10);downloadBlob(new Blob(["\uFEFF"+recordsCSV(items)],{type:"text/csv;charset=utf-8"}),`Shipment_View_${stamp}.csv`);toast(items.length+" filtered shipment row(s) exported.","success")}
   function renderShipments(){fillFilters();syncSavedViewSelect();const items=filteredRows();let html=state.view==="table"?renderTable(items):state.view==="pipeline"?renderPipeline(items):`<div class="shipment-grid">${items.map(renderCard).join("")||`<div class="empty-row" style="grid-column:1/-1">No shipment records match this view.</div>`}</div>`;$("shipmentContent").innerHTML=html;$("shipmentCountFooter").textContent=`Showing ${items.length.toLocaleString()} of ${state.rows.length.toLocaleString()} loaded shipment records.`;$("bulkActions").hidden=state.selected.size===0;$("selectedCount").textContent=`${state.selected.size} selected`;bindRowActions($("shipmentContent"));const all=$("selectVisible");if(all)all.onchange=()=>{items.forEach(({index})=>all.checked?state.selected.add(index):state.selected.delete(index));renderShipments()}}
   function bindRowActions(root=document){root.querySelectorAll("[data-detail]").forEach(b=>b.onclick=()=>showDetails(+b.dataset.detail));root.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openShipment(+b.dataset.edit));root.querySelectorAll("[data-route]").forEach(b=>b.onclick=()=>showRoute(+b.dataset.route));root.querySelectorAll("[data-select]").forEach(b=>b.onchange=()=>{b.checked?state.selected.add(+b.dataset.select):state.selected.delete(+b.dataset.select);renderShipments()})}
   function getExceptions(){const out=[],today=new Date(new Date().setHours(0,0,0,0));state.rows.forEach((r,i)=>{const eta=parseDate(field(r,["ETA"])),portOut=parseDate(field(r,["PORT OUT"])),destuff=parseDate(field(r,["DESTUFFING DATE"])),ret=parseDate(field(r,["CONTAINER RETURN DATE"]));if(isDone(r))return;if(eta&&eta<today&&!isArrived(r))out.push({i,title:"Estimated arrival is overdue",detail:`ETA ${fmtDate(eta)} · ${container(r)}`,level:"High priority"});if(portOut&&!destuff){const due=new Date(portOut);due.setDate(due.getDate()+3);if(due<today)out.push({i,title:"Destuffing milestone overdue",detail:`Port-out ${fmtDate(portOut)} · ${field(r,["VESSEL & VOY"])||"Vessel unavailable"}`,level:"High priority"})}if(destuff&&!ret){const due=new Date(destuff);due.setDate(due.getDate()+14);if(due<today)out.push({i,title:"Empty return milestone overdue",detail:`Destuffing ${fmtDate(destuff)} · ${container(r)}`,level:"Follow up"})}});return out.sort((a,b)=>a.level.localeCompare(b.level))}
@@ -1280,7 +1280,7 @@
 
   function recordsCSV(rows){const headers=COLUMNS,quote=v=>`"${String(v??"").replace(/"/g,'""')}"`;return [headers.map(quote).join(","),...rows.map(r=>headers.map(c=>quote(field(r,[c]))).join(","))].join("\r\n")}
   function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
-  function exportData(format="xlsx"){if(!state.rows.length)return toast("There are no shipment records to export.");if(format==="csv"){downloadBlob(new Blob(["\ufeff"+recordsCSV(state.rows)],{type:"text/csv;charset=utf-8"}),"GML_Shipments.csv");return}if(window.XLSX){const ws=XLSX.utils.json_to_sheet(state.rows,{header:COLUMNS}),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Shipments");XLSX.writeFile(wb,"GML_Shipments.xlsx")}else{downloadBlob(new Blob(["\ufeff"+recordsCSV(state.rows)],{type:"text/csv;charset=utf-8"}),"GML_Shipments.csv");toast("Excel library did not load; downloaded CSV instead.")}}
+  function exportData(format="xlsx"){if(!state.rows.length)return toast("There are no shipment records to export.");if(format==="csv"){downloadBlob(new Blob(["\ufeff"+recordsCSV(state.rows)],{type:"text/csv;charset=utf-8"}),"Shipments.csv");return}if(window.XLSX){const ws=XLSX.utils.json_to_sheet(state.rows,{header:COLUMNS}),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Shipments");XLSX.writeFile(wb,"Shipments.xlsx")}else{downloadBlob(new Blob(["\ufeff"+recordsCSV(state.rows)],{type:"text/csv;charset=utf-8"}),"Shipments.csv");toast("Excel library did not load; downloaded CSV instead.")}}
   
 function containerKey(row){return String(field(row,["CONTAINER NO.","CONTAINER NO","CONTAINER","CNTR NO","CONTAINER NUMBER"])).trim().toUpperCase().replace(/[^A-Z0-9]/g,"")}
 function normalizedImportCell(row,column){if(column==="CONTAINER NO.")return containerKey(row);const value=field(row,[column]);if(value instanceof Date)return Number.isNaN(+value)?"":value.toISOString().slice(0,10);return String(value??"").trim().replace(/\s+/g," ").toUpperCase()}
@@ -1512,7 +1512,7 @@ async function confirmImport(){
     c.fillText("Share shipment information only with its intended recipient.",42,fy+40);
 
 
-    canvas.toBlob(blob=>blob?downloadBlob(blob,`GML_Status_${records.length===1?container(records[0]).replace(/[^A-Z0-9-]/gi,"_"):"Update"}.png`):toast("Could not create the status photo.","error"),"image/png");
+    canvas.toBlob(blob=>blob?downloadBlob(blob,`Shipment_Status_${records.length===1?container(records[0]).replace(/[^A-Z0-9-]/gi,"_"):"Update"}.png`):toast("Could not create the status photo.","error"),"image/png");
   }
   function photoNextMilestone(row,milestoneFields){
     const completed=value=>!!value&&!/^(?:-|—|n\/?a|na)$/i.test(String(value).trim());
@@ -1570,8 +1570,8 @@ async function confirmImport(){
   function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
   function selectedRecords(){return [...state.selected].map(i=>state.rows[i]).filter(Boolean)}
   function photoSelected(){const records=selectedRecords();if(!records.length)return toast("Select one or more shipments first.","error");if(records.length>12)return toast("Select up to 12 shipments for one status photo.","error");drawPhoto(records)}
-  function broadcast(){const records=selectedRecords();if(!records.length)return toast("Select shipments to prepare a broadcast.","error");const text=["GML shipment status update:",...records.map(r=>`${container(r)} | ${routeOf(r)} | ${statusOf(r)} | ETA ${fmtDate(field(r,["ETA"]))}`)].join("\n");window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,"_blank","noopener,noreferrer")}
-  function emailSelected(){const records=selectedRecords();if(!records.length)return toast("Select shipments to prepare an email.","error");const subject=encodeURIComponent(`GML shipment update · ${records.length} container${records.length===1?"":"s"}`),body=encodeURIComponent(records.map(r=>`${container(r)}\nRoute: ${routeOf(r)}\nStatus: ${statusOf(r)}\nETA: ${fmtDate(field(r,["ETA"]))}`).join("\n\n"));location.href=`mailto:?subject=${subject}&body=${body}`}
+  function broadcast(){const records=selectedRecords();if(!records.length)return toast("Select shipments to prepare a broadcast.","error");const text=["Shipment status update:",...records.map(r=>`${container(r)} | ${routeOf(r)} | ${statusOf(r)} | ETA ${fmtDate(field(r,["ETA"]))}`)].join("\n");window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,"_blank","noopener,noreferrer")}
+  function emailSelected(){const records=selectedRecords();if(!records.length)return toast("Select shipments to prepare an email.","error");const subject=encodeURIComponent(`Shipment update · ${records.length} container${records.length===1?"":"s"}`),body=encodeURIComponent(records.map(r=>`${container(r)}\nRoute: ${routeOf(r)}\nStatus: ${statusOf(r)}\nETA: ${fmtDate(field(r,["ETA"]))}`).join("\n\n"));location.href=`mailto:?subject=${subject}&body=${body}`}
 
   function bind(){
     document.querySelectorAll(".nav-link[data-page]").forEach(b=>b.onclick=()=>page(b.dataset.page));
@@ -1591,7 +1591,7 @@ async function confirmImport(){
   function runTrackingSearch(){const q=$("trackingSearch").value.trim().toLowerCase();if(!q){$("trackingResults").innerHTML=`<div class="empty-row" style="grid-column:1/-1">Enter a container, MBL or vessel to search.</div>`;return}const hits=state.rows.map((row,index)=>({row,index})).filter(x=>Object.values(x.row).join(" ").toLowerCase().includes(q)).slice(0,12);$("trackingResults").innerHTML=hits.map(renderCard).join("")||`<div class="empty-row" style="grid-column:1/-1">No matching shipment was found in staff records.</div>`;bindRowActions($("trackingResults"))}
   function currentExceptions(){const q=$("exceptionSearch")?.value?.trim().toLowerCase()||"",priority=$("exceptionPriority")?.value||"";return getExceptions().filter(x=>{const row=state.rows[x.i],blob=[container(row),x.title,x.detail,x.level,field(row,["VESSEL & VOY"])].join(" ").toLowerCase();return(!q||blob.includes(q))&&(!priority||x.level===priority)})}
   function renderExceptions(){const all=getExceptions(),items=currentExceptions();renderExceptionList($("allExceptions"),Infinity,items);const footer=$("exceptionSummaryFooter");if(footer)footer.textContent=`Showing ${items.length} of ${all.length} flagged shipments. Confirm with the carrier or terminal before taking action.`}
-  function exportExceptions(){const items=currentExceptions();if(!items.length)return toast("There are no exceptions in this view to export.","error");const headers=["Container","Issue","Priority","Details","ETA","Vessel","Gateway"],quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"',rows=items.map(x=>{const row=state.rows[x.i];return[container(row),x.title,x.level,x.detail,fmtDate(field(row,["ETA"])),field(row,["VESSEL & VOY"]),field(row,["GATEWAY PORT"])]});const csv=[headers,...rows].map(r=>r.map(quote).join(",")).join("\r\n");downloadBlob(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}),"GML_Exceptions.csv");toast(items.length+" exception row(s) exported.","success")}
+  function exportExceptions(){const items=currentExceptions();if(!items.length)return toast("There are no exceptions in this view to export.","error");const headers=["Container","Issue","Priority","Details","ETA","Vessel","Gateway"],quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"',rows=items.map(x=>{const row=state.rows[x.i];return[container(row),x.title,x.level,x.detail,fmtDate(field(row,["ETA"])),field(row,["VESSEL & VOY"]),field(row,["GATEWAY PORT"])]});const csv=[headers,...rows].map(r=>r.map(quote).join(",")).join("\r\n");downloadBlob(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}),"Shipment_Exceptions.csv");toast(items.length+" exception row(s) exported.","success")}
   function renderMilestoneCoverage(){
     const stages=[["portin","Port arrival",["PORT IN"]],["portout","Port release",["PORT OUT"]],["cfsin","CFS received",["CFS IN"]],["destuff","Destuffing",["DESTUFFING DATE"]],["return","Empty returned",["CONTAINER RETURN DATE"]]],total=state.rows.length;
     $("reportCoverage").innerHTML=stages.map(([key,label,fields])=>{const recorded=state.rows.filter(row=>!!field(row,fields)).length,percent=total?Math.round(recorded/total*100):0;return '<button type="button" class="coverage-row" data-milestone-filter="'+key+'"><span class="coverage-stage"><b>'+esc(label)+'</b><small>'+recorded.toLocaleString()+' of '+total.toLocaleString()+' recorded</small></span><span class="coverage-track"><i style="width:'+percent+'%"></i></span><strong class="coverage-percent">'+percent+'%</strong><span class="coverage-review">Review missing →</span></button>'}).join("")||'<div class="empty-row">No shipment records are available.</div>';
