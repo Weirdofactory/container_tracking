@@ -1355,56 +1355,60 @@ async function confirmImport(){
         return code;
       });
     }catch(error){console.error("Shipment QR generation failed:",error);return toast("Could not create tracking QR codes. Please try again.","error")}
-    const W=1200,headerH=164,summaryH=86,cardH=326,gap=14,footerH=64;
-    const summaryY=headerH+16,top=summaryY+summaryH+16;
+    const W=1200,pixelRatio=1.5,headerH=138,summaryH=86,cardH=326,gap=12,footerH=50;
+    const hasSummary=records.length>1,summaryY=headerH+14,top=hasSummary?summaryY+summaryH+14:headerH+14;
     const H=top+records.length*cardH+Math.max(0,records.length-1)*gap+footerH;
-    const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;
+    const canvas=document.createElement("canvas");canvas.width=W*pixelRatio;canvas.height=H*pixelRatio;
     const c=canvas.getContext("2d");
     if(!c)return toast("Could not prepare the shipment status image.","error");
+    c.scale(pixelRatio,pixelRatio);
     c.fillStyle="#f1f5f9";c.fillRect(0,0,W,H);
     c.fillStyle="#10aec1";c.fillRect(0,0,10,H);
 
     // Header and source freshness.
     c.fillStyle="#0b2b50";c.fillRect(0,0,W,headerH);
     c.fillStyle="#123c65";roundRect(c,770,28,390,108,14);c.fill();
-    drawPhotoAnchor(c,64,82);
-    c.fillStyle="#fff";c.font="800 29px Manrope, sans-serif";
-    c.fillText("Shipment status update",107,94,620);
-    c.fillStyle="#b8cee1";c.font="700 10px DM Sans, sans-serif";
+    drawPhotoAnchor(c,64,69);
+    c.fillStyle="#fff";c.font="800 32px Manrope, sans-serif";
+    c.fillText("Shipment status update",107,82,620);
+    c.fillStyle="#b8cee1";c.font="700 11px DM Sans, sans-serif";
     c.fillText("GENERATED",792,54);c.fillText("DATA LAST SYNCED",974,54);
-    c.fillStyle="#fff";c.font="600 13px DM Sans, sans-serif";
+    c.fillStyle="#fff";c.font="600 14px DM Sans, sans-serif";
     c.fillText(photoTimestamp(new Date()),792,79,165);
     c.fillText(state.updatedAt?photoTimestamp(state.updatedAt):"Unavailable",974,79,172);
-    c.fillStyle="#b8cee1";c.font="500 11px DM Sans, sans-serif";
+    c.fillStyle="#b8cee1";c.font="500 12px DM Sans, sans-serif";
     c.fillText("Private shipment summary · Verify milestones with the operations team",792,111,345);
 
+    if(hasSummary){
     // Compact status mix: counts are computed from the selected shipment records.
-    const sx=34,sw=W-68;
-    c.save();c.shadowColor="#16365712";c.shadowBlur=12;c.shadowOffsetY=3;
-    c.fillStyle="#fff";roundRect(c,sx,summaryY,sw,summaryH,14);c.fill();c.restore();
-    c.fillStyle="#71879c";c.font="800 9px DM Sans, sans-serif";
-    c.fillText("SHIPMENTS SELECTED",sx+20,summaryY+25);
-    c.fillStyle="#14395c";c.font="800 24px Manrope, sans-serif";
-    c.fillText(String(records.length),sx+20,summaryY+57);
-    c.fillStyle="#738ba1";c.font="600 10px DM Sans, sans-serif";
-    c.fillText(records.length===1?"record":"records",sx+54,summaryY+56);
-
-    const order=["Awaiting update","ETA scheduled","In transit","Delayed","Arrived","Port out","At CFS","Destuffing","Empty returned"];
-    const counts=new Map();
-    records.forEach(r=>{const st=statusOf(r);counts.set(st,(counts.get(st)||0)+1)});
-    const statuses=order.filter(st=>counts.has(st)).concat([...counts.keys()].filter(st=>!order.includes(st)).sort());
-    const chipFont="800 10px DM Sans, sans-serif",chipH=25,chipGap=7,startX=sx+188,maxX=sx+sw-16;
-    let chipX=startX,chipY=summaryY+14;
-    c.font=chipFont;
-    statuses.forEach(status=>{
-      const palette=photoStatusColors(status);
-      const label=`${status}  ·  ${counts.get(status)}`;
-      const chipW=Math.min(190,Math.ceil(c.measureText(label).width+22));
-      if(chipX+chipW>maxX&&chipX>startX){chipX=startX;chipY=summaryY+49}
-      c.fillStyle=palette.bg;roundRect(c,chipX,chipY,chipW,chipH,12);c.fill();
-      c.fillStyle=palette.text;c.fillText(label,chipX+11,chipY+16,chipW-18);
-      chipX+=chipW+chipGap;
-    });
+      const sx=34,sw=W-68;
+      c.save();c.shadowColor="#16365712";c.shadowBlur=12;c.shadowOffsetY=3;
+      c.fillStyle="#fff";roundRect(c,sx,summaryY,sw,summaryH,14);c.fill();c.restore();
+      c.fillStyle="#71879c";c.font="800 12px DM Sans, sans-serif";
+      c.fillText("SHIPMENTS SELECTED",sx+20,summaryY+25);
+      c.fillStyle="#14395c";c.font="800 28px Manrope, sans-serif";
+      c.fillText(String(records.length),sx+20,summaryY+57);
+      c.fillStyle="#738ba1";c.font="600 12px DM Sans, sans-serif";
+      c.fillText(records.length===1?"record":"records",sx+54,summaryY+56);
+  
+      const order=["Awaiting update","ETA scheduled","In transit","Delayed","Arrived","Port out","At CFS","Destuffing","Empty returned"];
+      const counts=new Map();
+      records.forEach(r=>{const st=statusOf(r);counts.set(st,(counts.get(st)||0)+1)});
+      const statuses=order.filter(st=>counts.has(st)).concat([...counts.keys()].filter(st=>!order.includes(st)).sort());
+      const chipFont="800 11px DM Sans, sans-serif",chipH=25,chipGap=7,startX=sx+188,maxX=sx+sw-16;
+      let chipX=startX,chipY=summaryY+14;
+      c.font=chipFont;
+      statuses.forEach(status=>{
+        const palette=photoStatusColors(status);
+        const label=`${status}  ·  ${counts.get(status)}`;
+        const chipW=Math.min(190,Math.ceil(c.measureText(label).width+22));
+        if(chipX+chipW>maxX&&chipX>startX){chipX=startX;chipY=summaryY+49}
+        c.fillStyle=palette.bg;roundRect(c,chipX,chipY,chipW,chipH,12);c.fill();
+        c.fillStyle=palette.text;c.fillText(label,chipX+11,chipY+16,chipW-18);
+        chipX+=chipW+chipGap;
+      });
+  
+      }
 
     // Shipment cards with an explicit five-step milestone line.
     const milestoneFields=[
@@ -1421,12 +1425,12 @@ async function confirmImport(){
       c.fillStyle="#fff";roundRect(c,x,y,w,h,15);c.fill();c.restore();
       c.fillStyle=palette.edge;roundRect(c,x,y,6,h,4);c.fill();
 
-      c.fillStyle="#6e8499";c.font="800 10px DM Sans, sans-serif";
+      c.fillStyle="#6e8499";c.font="800 11px DM Sans, sans-serif";
       c.fillText("CONTAINER",x+24,y+27);
-      c.fillStyle="#087fc8";c.font="800 23px Manrope, sans-serif";
+      c.fillStyle="#087fc8";c.font="800 25px Manrope, sans-serif";
       c.fillText(container(r),x+24,y+56,500);
       const refs=[field(r,["MBL NO"])&&`MBL ${field(r,["MBL NO"])}`,field(r,["TYPE"])&&`TYPE ${field(r,["TYPE"])}`].filter(Boolean).join("   ·   ");
-      c.fillStyle="#75899d";c.font="600 11px DM Sans, sans-serif";
+      c.fillStyle="#75899d";c.font="700 12px DM Sans, sans-serif";
       c.fillText(refs||"Shipment reference not recorded",x+24,y+77,620);
 
       const badgeText=status.toUpperCase();c.font="800 11px DM Sans, sans-serif";
@@ -1440,9 +1444,9 @@ async function confirmImport(){
         {x:x+790,w:235,label:"ESTIMATED ARRIVAL · ETA",value:field(r,["ETA"])?fmtDate(field(r,["ETA"])):"Not scheduled"}
       ];
       cols.forEach(col=>{
-        c.fillStyle="#8a9db0";c.font="800 9px DM Sans, sans-serif";
+        c.fillStyle="#8a9db0";c.font="800 10px DM Sans, sans-serif";
         c.fillText(col.label,col.x,y+102);
-        c.fillStyle="#294965";c.font="700 13px DM Sans, sans-serif";
+        c.fillStyle="#294965";c.font="700 14px DM Sans, sans-serif";
         c.fillText(String(col.value),col.x,y+122,col.w);
       });
 
@@ -1451,7 +1455,7 @@ async function confirmImport(){
 
       const innerX=x+24,innerW=w-48,cellW=innerW/milestoneFields.length;
       const nodeY=y+164;
-      c.fillStyle="#71879b";c.font="800 9px DM Sans, sans-serif";
+      c.fillStyle="#71879b";c.font="800 10px DM Sans, sans-serif";
       c.textAlign="center";
       milestoneFields.forEach((m,j)=>{
         const centerX=innerX+j*cellW+cellW/2;
@@ -1474,7 +1478,7 @@ async function confirmImport(){
         c.fillStyle=complete?"#10a878":"#dce6ee";c.fill();
         c.strokeStyle=complete?"#d9f5e9":"#fff";c.lineWidth=2;c.stroke();
         const value=raw?(parseDate(raw)?fmtDate(raw,{day:"2-digit",month:"short",year:"numeric"}):String(raw)):"—";
-        c.fillStyle=complete?"#294965":"#9aaaba";c.font=complete?"700 11px DM Sans, sans-serif":"600 11px DM Sans, sans-serif";
+        c.fillStyle=complete?"#294965":"#9aaaba";c.font=complete?"700 12px DM Sans, sans-serif":"600 12px DM Sans, sans-serif";
         c.textAlign="center";c.fillText(value,centerX,y+188,cellW-10);c.textAlign="left";
       });
 
@@ -1489,23 +1493,23 @@ async function confirmImport(){
       ];
       details.forEach((item,j)=>{
         const dx=detailX+j*colW;
-        c.fillStyle="#6d8499";c.font="800 9px DM Sans, sans-serif";
+        c.fillStyle="#6d8499";c.font="800 10px DM Sans, sans-serif";
         c.fillText(item.label,dx,y+224,colW-14);
-        c.fillStyle="#173b5d";c.font="700 11px DM Sans, sans-serif";
+        c.fillStyle="#173b5d";c.font="700 13px DM Sans, sans-serif";
         c.fillText(item.value,dx,y+247,colW-14);
       });
       const qrX=x+w-100,qrY=y+209;
       c.fillStyle="#fff";c.fillRect(qrX,qrY,88,88);
       c.drawImage(qrImages[i],qrX+8,qrY+8,72,72);
-      c.fillStyle="#6d8499";c.font="800 7px DM Sans, sans-serif";
+      c.fillStyle="#6d8499";c.font="800 9px DM Sans, sans-serif";
       c.textAlign="center";c.fillText("SCAN TO TRACK",qrX+44,y+312,88);c.textAlign="left";
     });
 
     const fy=H-footerH;c.fillStyle="#e2eaf1";c.fillRect(34,fy,W-68,1);
     c.fillStyle="#6f859a";c.font="600 11px DM Sans, sans-serif";
-    c.fillText("Source: shipment records · ETAs are estimates · Vessel positions are not shown in this image.",42,fy+25);
+    c.fillText("Source: shipment records · ETAs are estimates · Vessel positions are not shown in this image.",42,fy+22);
     c.fillStyle="#91a2b2";c.font="500 10px DM Sans, sans-serif";
-    c.fillText("Share shipment information only with its intended recipient.",42,fy+44);
+    c.fillText("Share shipment information only with its intended recipient.",42,fy+40);
 
 
     canvas.toBlob(blob=>blob?downloadBlob(blob,`GML_Status_${records.length===1?container(records[0]).replace(/[^A-Z0-9-]/gi,"_"):"Update"}.png`):toast("Could not create the status photo.","error"),"image/png");
