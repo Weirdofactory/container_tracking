@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b2b50"><meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Track a Shipment | GML</title>
+  <title>Track a Shipment | Container Tracking</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -148,26 +148,26 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="GML Container Tracking home"><span class="brand-icon">⚓</span><span>Greenwich Meridian Logistics<small class="brand-subtitle">CONTAINER TRACKING</small></span></a>
+    <a class="brand" href="./" aria-label="Shipment tracking home"><span class="brand-icon">⚓</span><span>Container Tracking<small class="brand-subtitle">SHIPMENT VISIBILITY</small></span></a>
     <a class="staff-link" href="./">Staff portal <span aria-hidden="true">↗</span></a>
   </header>
   <main class="wrap">
     <section class="hero">
-      <div><div class="eyebrow">CUSTOMER SERVICES <span> / </span> TRACK &amp; TRACE</div><h1>Track your shipment</h1><p class="hero-copy">View the latest update recorded by GML operations, along with vessel, route, milestone dates and estimated arrival.</p></div>
+      <div><div class="eyebrow">CUSTOMER SERVICES <span> / </span> TRACK &amp; TRACE</div><h1>Track your shipment</h1><p class="hero-copy">View the latest recorded update, including vessel, route, milestone dates and estimated arrival.</p></div>
       <form class="search-panel" id="trackForm">
         <label for="reference">Container number or bill of lading</label>
         <div class="search-row"><input id="reference" name="reference" autocomplete="off" maxlength="40" placeholder="Enter a container or master B/L number" required><button id="searchButton" type="submit">Track shipment</button></div>
-        <p class="search-hint">Use the exact container number or master bill of lading shared by GML.</p>
+        <p class="search-hint">Enter the container number or master bill of lading provided for this shipment.</p>
         <p class="status-note" id="searchMessage" aria-live="polite"></p>
       </form>
     </section>
     <section class="features" aria-label="Tracking information">
-      <article class="feature"><strong>Current progress</strong><span>See the latest status recorded by GML operations.</span></article>
+      <article class="feature"><strong>Current progress</strong><span>See the latest status recorded for this shipment.</span></article>
       <article class="feature"><strong>Vessel and route</strong><span>Review the vessel, origin and India gateway for your shipment.</span></article>
       <article class="feature"><strong>Milestone dates</strong><span>Follow recorded terminal events and estimated dates.</span></article>
     </section>
     <section class="results" id="resultsSection" hidden>
-      <div class="results-head"><div><h2>Shipment results</h2><p>Operational updates supplied by Greenwich Meridian Logistics.</p></div><button class="print-report" id="printResults" type="button">Print shipment update</button></div>
+      <div class="results-head"><div><h2>Shipment results</h2><p>Shipment details and milestone dates.</p></div><button class="print-report" id="printResults" type="button">Print shipment update</button></div>
       <div class="freshness-note" id="sourceFreshness" hidden></div>
       <div class="result-list" id="resultList"></div>
       <section class="map-panel" id="mapPanel" hidden aria-label="Vessel map">
@@ -177,9 +177,9 @@
         <div class="map-legend"><span><i class="legend-dot"></i>Origin port</span><span><i class="legend-dot destination"></i>India gateway</span><span><i class="legend-line"></i>Reported AIS track</span><span><i class="legend-line approx"></i>Approximate port corridor</span><span>Map data © OpenStreetMap contributors · OpenFreeMap</span></div>
       </section>
     </section>
-    <section class="results" id="emptySection" hidden><div class="empty-state"><strong>No shipment found</strong>Check the exact container or B/L number and try again. If the number is correct, contact your GML operations representative.</div></section>
+    <section class="results" id="emptySection" hidden><div class="empty-state"><strong>No shipment found</strong>Check the exact container or B/L number and try again. If the number is correct, contact your operations team.</div></section>
   </main>
-  <footer class="footer">This customer page shows shipment status, route, vessel and recorded milestone dates. Updates are supplied by <a href="https://gmlindia.net" rel="noopener noreferrer" target="_blank">GML operations</a>.<br><a href="./">Staff sign-in</a></footer>
+  <footer class="footer">This customer page shows shipment status, route, vessel and recorded milestone dates. Updates are recorded by authorized staff.<br><a href="./">Staff sign-in</a></footer>
   <script>
     "use strict";
     const SUPABASE_URL="https://ykeucqritoexykqrggzz.supabase.co";
@@ -208,11 +208,11 @@
       const ageHours=(Date.now()-d.getTime())/36e5;
       note.hidden=false;
       note.classList.toggle("stale",ageHours>72);
-      note.textContent="GML shipment records last refreshed "+formatTimestamp(value)+(ageHours>72?". This data is over 3 days old; contact GML if you expect a newer update.":". Dates reflect updates supplied by GML operations.");
+      note.textContent="Shipment records last refreshed "+formatTimestamp(value)+(ageHours>72?". This data is over 3 days old; contact your operations team for a newer update.":". Dates reflect the latest recorded shipment updates.");
     }
     function renderPhotos(photos){
       if(!Array.isArray(photos)||!photos.length)return "";
-      return '<section class="customer-photo-gallery"><h4>Milestone photos shared by GML</h4><div class="customer-photo-grid">'+photos.map(photo=>{
+      return '<section class="customer-photo-gallery"><h4>Milestone photos for this shipment</h4><div class="customer-photo-grid">'+photos.map(photo=>{
         const caption=photo.caption||photo.milestone||"Shipment photo";
         return '<a class="customer-photo" href="'+escapeHtml(photo.url)+'" target="_blank" rel="noopener noreferrer"><img loading="lazy" src="'+escapeHtml(photo.url)+'" alt="'+escapeHtml(caption)+'"><span>'+escapeHtml(caption)+(photo.createdAt?" · "+escapeHtml(formatDate(photo.createdAt)):"")+'</span></a>';
       }).join("")+'</div></section>';
@@ -236,7 +236,7 @@
     async function copyShipmentUpdate(index){
       const item=(window.customerShipmentResults||[])[Number(index)];if(!item)return;
       const events=(Array.isArray(item.milestones)?item.milestones:[]).map(m=>m.label+": "+(m.date?formatDate(m.date):(m.estimate?"Scheduled":"Awaiting update")));
-      const message=["GREENWICH MERIDIAN LOGISTICS · SHIPMENT UPDATE","Container: "+(item.container||"—"),"Status: "+(item.status||"Awaiting update"),"Route: "+(item.origin||"Origin pending")+" → "+(item.gateway||"Gateway pending"),"Vessel / voyage: "+(item.vessel||"Not recorded"),"Shipping line: "+(item.shippingLine||"Not recorded"),"Recorded ETA: "+(item.eta?formatDate(item.eta):"Awaiting update"),"Milestones:",...events.map(x=>"• "+x),"Updates supplied by GML operations."].join("\n");
+      const message=["SHIPMENT UPDATE","Container: "+(item.container||"—"),"Status: "+(item.status||"Awaiting update"),"Route: "+(item.origin||"Origin pending")+" → "+(item.gateway||"Gateway pending"),"Vessel / voyage: "+(item.vessel||"Not recorded"),"Shipping line: "+(item.shippingLine||"Not recorded"),"Recorded ETA: "+(item.eta?formatDate(item.eta):"Awaiting update"),"Milestones:",...events.map(x=>"• "+x),"Updates reflect the latest recorded shipment data."].join("\n");
       try{
         if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(message);
         else{const area=document.createElement("textarea");area.value=message;area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);area.select();const ok=document.execCommand("copy");area.remove();if(!ok)throw new Error("Clipboard access is unavailable.")}
@@ -253,7 +253,7 @@
       const warnings=(Array.isArray(item.warnings)?item.warnings:[]).map(w=>'<div class="eta-warning" role="note">⚠ '+escapeHtml(w)+'</div>').join("");
       const mapButton=item.container?'<button class="map-card-link" type="button" data-map-index="'+index+'">🗺 View vessel map</button>':"";
       const copyButton='<button class="map-card-link" type="button" data-copy-index="'+index+'">Copy update</button>';
-      return '<article class="result-card"><div class="result-top"><div><h3>'+escapeHtml(item.container||"Shipment")+'</h3><p>'+escapeHtml(item.type||"Container")+'</p></div><span class="badge '+(statusDone?"done":"")+'">'+escapeHtml(item.status||"Awaiting update")+'</span></div><div class="result-grid"><div class="result-cell"><small>Route</small><b>'+escapeHtml(route)+'</b></div><div class="result-cell"><small>Vessel / voyage</small><b>'+escapeHtml(item.vessel||"Not recorded")+'</b></div><div class="result-cell"><small>Shipping line</small><b>'+escapeHtml(item.shippingLine||"Not recorded")+'</b></div><div class="result-cell"><small>Estimated arrival</small><b>'+escapeHtml(formatDate(item.eta))+'</b></div></div><div class="eta-countdown '+etaWindow.tone+'"><span>RECORDED ETA WINDOW</span><b>'+escapeHtml(etaWindow.text)+'</b><small>Countdown is based on the ETA supplied by GML operations.</small></div><div class="timeline">'+milestones+'</div>'+warnings+renderPhotos(item.photos)+'<div class="result-card-actions">'+copyButton+mapButton+'</div></article>';
+      return '<article class="result-card"><div class="result-top"><div><h3>'+escapeHtml(item.container||"Shipment")+'</h3><p>'+escapeHtml(item.type||"Container")+'</p></div><span class="badge '+(statusDone?"done":"")+'">'+escapeHtml(item.status||"Awaiting update")+'</span></div><div class="result-grid"><div class="result-cell"><small>Route</small><b>'+escapeHtml(route)+'</b></div><div class="result-cell"><small>Vessel / voyage</small><b>'+escapeHtml(item.vessel||"Not recorded")+'</b></div><div class="result-cell"><small>Shipping line</small><b>'+escapeHtml(item.shippingLine||"Not recorded")+'</b></div><div class="result-cell"><small>Estimated arrival</small><b>'+escapeHtml(formatDate(item.eta))+'</b></div></div><div class="eta-countdown '+etaWindow.tone+'"><span>RECORDED ETA WINDOW</span><b>'+escapeHtml(etaWindow.text)+'</b><small>Countdown is based on the recorded estimated arrival date.</small></div><div class="timeline">'+milestones+'</div>'+warnings+renderPhotos(item.photos)+'<div class="result-card-actions">'+copyButton+mapButton+'</div></article>';
     }
     const ports=[
       ["NINGBO",[121.544,29.868]],["SHANGHAI",[121.474,31.230]],["QINGDAO",[120.382,36.067]],["TIANJIN",[117.735,38.982]],["XINGANG",[117.735,38.982]],
@@ -376,7 +376,7 @@
     $("trackForm").addEventListener("submit",async event=>{
       event.preventDefault();
       const message=$("searchMessage"),button=$("searchButton"),reference=$("reference").value.trim();
-      message.textContent="Searching the latest GML shipment records…";message.className="status-note";button.disabled=true;$("resultsSection").hidden=true;$("emptySection").hidden=true;$("mapPanel").hidden=true;
+      message.textContent="Searching the latest shipment records…";message.className="status-note";button.disabled=true;$("resultsSection").hidden=true;$("emptySection").hidden=true;$("mapPanel").hidden=true;
       try{
         const response=await fetch(SUPABASE_URL+"/functions/v1/"+TRACK_FUNCTION,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY},body:JSON.stringify({reference}),cache:"no-store",credentials:"omit",referrerPolicy:"no-referrer"});
         const data=await response.json().catch(()=>({}));
@@ -386,7 +386,7 @@
         if(!results.length){$("emptySection").hidden=false;message.textContent="No matching shipment record was found.";message.className="status-note";$("sourceFreshness").hidden=true;}
         else{
           window.customerShipmentResults=results;
-          $("resultList").innerHTML=results.map(renderShipment).join("")+(data.truncated?'<div class="empty-state">Some matching shipments were not shown. Contact GML operations for the complete B/L results.</div>':"");
+          $("resultList").innerHTML=results.map(renderShipment).join("")+(data.truncated?'<div class="empty-state">Some matching shipments were not shown. Contact your operations team for the complete B/L results.</div>':"");
           $("mapShipment").innerHTML=results.map((item,index)=>'<option value="'+index+'">'+escapeHtml(item.container||"Shipment "+(index+1))+'</option>').join("");
           $("resultList").querySelectorAll("[data-map-index]").forEach(link=>link.addEventListener("click",()=>{
             $("mapShipment").value=link.dataset.mapIndex;$("mapPanel").scrollIntoView({behavior:"smooth",block:"start"});loadCustomerMap();
