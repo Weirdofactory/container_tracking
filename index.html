@@ -348,7 +348,76 @@
     .landing-https-warning{border-radius:8px}
     @media(max-width:1050px){.landing-hero{grid-template-columns:1fr;max-width:860px;margin:auto;padding-top:48px}.landing-visual{max-width:860px;width:100%;margin:auto}.landing-capabilities{grid-template-columns:repeat(3,1fr)}.capabilities-intro{grid-column:1/-1;border-bottom:1px solid #edf1f4}.landing-capabilities article:first-of-type{border-left:0}}
     @media(max-width:650px){.public-landing{padding-left:14px;padding-right:14px}.landing-nav{min-height:65px}.landing-nav-links{gap:9px}.landing-nav-links>a{font-size:9px}.landing-system{display:none}.landing-login{padding:8px 9px;font-size:9px}.landing-hero{padding:34px 0 28px}.landing-copy h1{font-size:43px;letter-spacing:-2.2px}.landing-lead{font-size:13px}.landing-actions{gap:12px}.landing-proof{gap:8px;margin-top:23px}.landing-proof span+span{padding-left:8px}.landing-visual{border-radius:10px}.route-visual{min-height:250px}.route-visual svg{min-height:235px}.visual-head{padding:12px}.visual-callout{left:10px;right:10px;bottom:10px;padding:8px}.landing-capabilities{grid-template-columns:1fr;padding:5px}.capabilities-intro{padding:10px}.landing-capabilities article,.landing-capabilities article:first-of-type{margin:0;border-left:0;border-top:1px solid #edf1f4}.landing-footer{flex-wrap:wrap;line-height:1.5}.landing-footer span:nth-child(2){display:none}}
-</style>
+/* Staff control tower: shipment-first hierarchy and direct workflow access */
+    #page-dashboard .page-head{align-items:center;margin-bottom:15px}
+    #page-dashboard .page-head h1{font-size:clamp(28px,3vw,36px);letter-spacing:-1.3px}
+    #page-dashboard .page-head .subtitle{font-size:13px}
+    #page-dashboard .section-label{margin-top:15px}
+    #page-dashboard .metrics{gap:10px}
+    #page-dashboard .metric{position:relative;min-height:96px;padding:14px 15px;border-radius:12px;box-shadow:0 3px 12px #18385208}
+    #page-dashboard .metric-icon{width:43px;height:43px;font-size:20px}
+    #page-dashboard .metric-label{font-size:10px;letter-spacing:.2px}
+    #page-dashboard .metric-value{font-size:29px}
+    #page-dashboard .metric-note{font-size:9px}
+    .dashboard-module-rail{display:grid;grid-template-columns:minmax(160px,1.1fr) repeat(5,minmax(140px,1fr));gap:0;margin-top:13px;padding:8px;border:1px solid #dce5ec;border-radius:12px;background:#fff;box-shadow:0 3px 12px #18385206}
+    .module-rail-intro{display:flex;flex-direction:column;justify-content:center;padding:8px 13px}
+    .module-rail-intro span{color:#8a9baa;font-size:8px;font-weight:800;letter-spacing:1px}
+    .module-rail-intro strong{margin-top:4px;color:#234965;font:800 12px Manrope,sans-serif}
+    .module-rail-intro small{margin-top:3px;color:#8a9baa;font-size:8px}
+    .dashboard-module{display:flex;align-items:center;gap:8px;min-width:0;padding:9px 8px;border:0;border-left:1px solid #e8edf1;background:#fff;text-align:left;color:#31536d;transition:background .15s}
+    .dashboard-module:hover{background:#f5fafc}
+    .module-number{display:grid;place-items:center;width:25px;height:25px;flex:none;border-radius:7px;background:#edf5f8;color:#18789c;font:800 8px Manrope,sans-serif}
+    .dashboard-module>span:nth-child(2){display:grid;gap:3px;min-width:0}
+    .dashboard-module b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#294b65;font-size:8px}
+    .dashboard-module small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8a9baa;font-size:7px}
+    .dashboard-module i{margin-left:auto;color:#7495a9;font-size:11px;font-style:normal}
+    .dashboard-spotlight{margin-top:13px;overflow:hidden;border-radius:13px;box-shadow:0 4px 15px #18385208}
+    .dashboard-spotlight-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 18px;border-bottom:1px solid #e9eef2}
+    .spotlight-kicker{color:#7892a4;font-size:8px;font-weight:800;letter-spacing:1px}
+    .dashboard-spotlight-head h2{margin:3px 0 2px;color:#153b5a;font:800 16px Manrope,sans-serif}
+    .dashboard-spotlight-head p{margin:0;color:#8294a3;font-size:9px}
+    .spotlight-actions{display:flex;align-items:center;gap:6px;flex:none}
+    .spotlight-actions select{max-width:260px;min-width:180px;border:1px solid #dbe4ea;border-radius:7px;background:#f9fbfc;color:#31536d;padding:7px 9px;font:600 9px "DM Sans",sans-serif}
+    .spotlight-actions .btn{font-size:9px;padding:7px 9px}
+    .spotlight-actions .btn:disabled{opacity:.45;cursor:not-allowed}
+    .spotlight-body{padding:14px 18px 13px}
+    .spotlight-empty{padding:13px 0;color:#8294a3;font-size:10px}
+    .spotlight-summary{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:16px;align-items:center}
+    .spotlight-container{display:flex;align-items:center;gap:10px}
+    .spotlight-container-mark{display:grid;place-items:center;width:35px;height:35px;flex:none;border-radius:9px;background:#e9f4f8;color:#1683a8;font-size:17px}
+    .spotlight-container strong{display:block;color:#0878b6;font:800 14px Manrope,sans-serif}
+    .spotlight-container small{display:block;margin-top:3px;color:#8798a6;font-size:8px}
+    .spotlight-route{margin-top:10px;color:#2e526d;font:700 12px Manrope,sans-serif}
+    .spotlight-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:11px}
+    .spotlight-meta div{border-left:2px solid #dce8ef;padding:4px 8px}
+    .spotlight-meta small{display:block;color:#91a0ad;font-size:7px;font-weight:800;letter-spacing:.55px}
+    .spotlight-meta b{display:block;margin-top:4px;color:#375a74;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .spotlight-status-side{padding:10px 12px;border:1px solid #e8eef2;border-radius:9px;background:#fafcfd}
+    .spotlight-status-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .spotlight-status-head span:first-child{color:#8294a3;font-size:8px;font-weight:800;letter-spacing:.7px}
+    .spotlight-status-head b{color:#355a73;font-size:9px}
+    .spotlight-progress{display:grid;grid-template-columns:repeat(6,1fr);margin-top:13px}
+    .spotlight-step{position:relative;min-width:0;padding-top:15px;color:#889aa8}
+    .spotlight-step:before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:#e3eaf0}
+    .spotlight-step:first-child:before{left:5px}.spotlight-step:last-child:before{right:calc(100% - 5px)}
+    .spotlight-step:after{content:"";position:absolute;z-index:1;top:-4px;left:4px;width:8px;height:8px;border:2px solid #c8d5df;border-radius:50%;background:#fff}
+    .spotlight-step.done:before{background:#15a37b}.spotlight-step.done:after{background:#15a37b;border-color:#15a37b;box-shadow:0 0 0 3px #15a37b1c}
+    .spotlight-step.current:after{border-color:#1385bf;box-shadow:0 0 0 3px #1385bf20}
+    .spotlight-step b{display:block;padding-right:4px;color:#6c8395;font-size:7px;line-height:1.35}
+    .spotlight-step small{display:block;margin-top:3px;color:#94a3af;font-size:7px;line-height:1.3}
+    .spotlight-next{margin-top:9px;color:#7990a1;font-size:8px}
+    .spotlight-next strong{color:#35617c}
+    #page-dashboard .grid-main{grid-template-columns:minmax(0,1.55fr) minmax(295px,.85fr);gap:12px;margin-top:13px}
+    #page-dashboard .insight-grid{gap:12px;margin-top:12px}
+    #page-dashboard .insight-card{min-height:195px}
+    #page-dashboard .recent,#page-dashboard .exception-card{margin-top:12px}
+    #page-dashboard .card-head{padding:13px 16px}
+    #page-dashboard .recent td{padding:10px 12px;font-size:10px}
+    #page-dashboard .recent th{padding:9px 12px;font-size:8px}
+    @media(max-width:1200px){.dashboard-module-rail{grid-template-columns:repeat(3,minmax(0,1fr))}.module-rail-intro{grid-column:1/-1;padding:8px 10px 10px;border-bottom:1px solid #edf1f4}.dashboard-module:nth-of-type(2){border-left:0}.dashboard-spotlight-head{align-items:flex-start}.spotlight-summary{grid-template-columns:1fr}}
+    @media(max-width:850px){#page-dashboard .grid-main{grid-template-columns:1fr}.dashboard-module-rail{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-module:nth-of-type(odd){border-left:0}.spotlight-actions select{min-width:130px;max-width:180px}}
+    @media(max-width:560px){#page-dashboard .page-head{align-items:flex-start}.dashboard-module-rail{grid-template-columns:1fr 1fr}.dashboard-module{border-left:0;border-top:1px solid #edf1f4}.module-rail-intro{grid-column:1/-1}.dashboard-spotlight-head{flex-direction:column;align-items:stretch}.spotlight-actions{width:100%;flex-wrap:wrap}.spotlight-actions select{flex:1;max-width:none}.spotlight-summary{grid-template-columns:1fr}.spotlight-meta{grid-template-columns:1fr 1fr}.spotlight-progress{grid-template-columns:repeat(6,minmax(70px,1fr));overflow-x:auto}.spotlight-step b,.spotlight-step small{font-size:7px}}
+    </style>
 </head>
 <body>
   <div class="shell" id="staffShell" hidden>
@@ -378,7 +447,7 @@
       </header>
       <div class="page">
         <section class="page-section active dashboard-section" id="page-dashboard">
-          <div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> GML OPERATIONS / CONTROL TOWER</div><h1>Operations overview</h1><p class="subtitle">A clear view of shipment progress, exceptions and port operations.</p></div><div class="head-actions"><button class="btn primary" id="viewShipmentsBtn">View shipments&nbsp; →</button></div></div>
+          <div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> GML OPERATIONS / CONTROL TOWER</div><h1>Logistics control tower</h1><p class="subtitle">Shipment progress, port activity and the next operational action in one view.</p></div><div class="head-actions"><button class="btn primary" id="viewShipmentsBtn">View shipments&nbsp; →</button></div></div>
           <div class="section-label"><span>SHIPMENT SNAPSHOT</span><span>Calculated from loaded Supabase records</span></div>
           <div class="metrics">
             <article class="metric"><div class="metric-icon">▣</div><div><div class="metric-label">Total shipments</div><div class="metric-value" id="metricTotal">—</div><div class="metric-note">Loaded shipment records</div></div></article>
@@ -386,6 +455,21 @@
             <article class="metric"><div class="metric-icon">⚓</div><div><div class="metric-label">Arrived</div><div class="metric-value" id="metricArrived">—</div><div class="metric-note">Port and later milestones</div></div></article>
             <article class="metric"><div class="metric-icon">◷</div><div><div class="metric-label">Delayed</div><div class="metric-value" id="metricDelayed">—</div><div class="metric-note">Overdue ETA with no arrival</div></div></article>
           </div>
+          <section class="dashboard-module-rail" id="dashboardModules" aria-label="Quick access to logistics operations">
+            <div class="module-rail-intro"><span>OPERATIONS WORKSPACE</span><strong>Daily control points</strong><small>Open a module to manage its records.</small></div>
+            <button type="button" class="dashboard-module" data-ops-shortcut="sailings"><span class="module-number">01</span><span><b>Sailings &amp; cutoffs</b><small>Schedules and deadlines</small></span><i>↗</i></button>
+            <button type="button" class="dashboard-module" data-ops-shortcut="consolidations"><span class="module-number">02</span><span><b>LCL consolidation</b><small>Cargo and utilization</small></span><i>↗</i></button>
+            <button type="button" class="dashboard-module" data-ops-shortcut="finance"><span class="module-number">03</span><span><b>Costing &amp; profit</b><small>Actuals and margin</small></span><i>↗</i></button>
+            <button type="button" class="dashboard-module" data-ops-shortcut="filings"><span class="module-number">04</span><span><b>HBL / MBL filings</b><small>Documents and filing</small></span><i>↗</i></button>
+            <button type="button" class="dashboard-module" data-ops-shortcut="alerts"><span class="module-number">05</span><span><b>LFD &amp; alerts</b><small>Deadlines and exceptions</small></span><i>↗</i></button>
+          </section>
+          <article class="card dashboard-spotlight" id="dashboardSpotlight">
+            <div class="dashboard-spotlight-head">
+              <div><span class="spotlight-kicker">SHIPMENT PROGRESS</span><h2>Journey overview</h2><p id="spotlightSubtitle">Select a loaded shipment to inspect its recorded milestones.</p></div>
+              <div class="spotlight-actions"><select id="spotlightShipment" aria-label="Choose shipment for journey overview"></select><button class="btn ghost-blue small" id="spotlightMapBtn" type="button">⌖ Map</button><button class="btn small" id="spotlightDetailBtn" type="button">Details ↗</button></div>
+            </div>
+            <div id="spotlightBody" class="spotlight-body"><div class="spotlight-empty">Shipment progress appears after shipment records load.</div></div>
+          </article>
           <div class="grid-main">
             <article class="card"><div class="card-head"><div><div class="card-title">Shipment port network</div><div class="card-sub">Ports matched from the loaded shipment records</div></div><div class="card-tools"><button class="btn ghost-blue small" id="showMapBtn">⛶ Full map</button><button class="btn ghost-blue small" id="refreshMapBtn">↻ Refresh map</button></div></div><div class="map-wrap"><div id="dashboardMap" class="map"></div><div class="map-overview-label"><span class="map-overview-pulse"></span><span>GLOBAL PORT NETWORK</span><small>PLANNED LANES</small></div><div class="map-overview-help">Open Full map for vessel routes &amp; AIS playback</div><div id="mapEmpty" class="map-empty hidden">No shipment ports are available to map yet.</div></div><div class="map-legend"><span><i class="legend-dot"></i> Origin / loading port</span><span><i class="legend-dot transship"></i> Transshipment</span><span><i class="legend-dot dest"></i> India gateway / terminal</span><span id="mappedCount">0 mapped ports</span></div><div class="map-note">Dashed blue lines are estimated sea corridors; open a shipment map for the vessel’s recorded AIS track and playback.</div></article>
             <article class="card"><div class="card-head"><div><div class="card-title">Upcoming arrivals</div><div class="card-sub">Next estimated arrivals</div></div><button class="btn ghost-blue small" id="arrivalsAllBtn">View all</button></div><div class="arrival-list" id="upcomingList"></div></article>
@@ -596,7 +680,7 @@
   const DATA_FUNCTION = "operations-data";
   const AIS_FUNCTION = "vessel-ais";
   const COLUMNS = ["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-  const state = { rows: [], selected: new Set(), filter: "all", view: "cards", query: "", updatedAt: null, profile: null, loaded: false, page: "dashboard", map: null, fullMap: null, currentRoute: null, mapVesselCandidates: [], importRows: [], importSourceRows: [], importPreviewUpdatedAt: null, editIndex: -1, toastTimer: null, aisCache: new Map(), ops: { loaded:false, tab:"sailings", alertFilter:"open", sailings:[], sailingShipments:[], consolidations:[], consolidationItems:[], charges:[], filings:[], documents:[], alertActions:[] } };
+  const state = { rows: [], selected: new Set(), filter: "all", view: "cards", query: "", updatedAt: null, profile: null, loaded: false, page: "dashboard", map: null, fullMap: null, currentRoute: null, mapVesselCandidates: [], spotlightIndex: null, importRows: [], importSourceRows: [], importPreviewUpdatedAt: null, editIndex: -1, toastTimer: null, aisCache: new Map(), ops: { loaded:false, tab:"sailings", alertFilter:"open", sailings:[], sailingShipments:[], consolidations:[], consolidationItems:[], charges:[], filings:[], documents:[], alertActions:[] } };
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
   const keyOf = key => String(key ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -710,7 +794,46 @@
   function bindRowActions(root=document){root.querySelectorAll("[data-detail]").forEach(b=>b.onclick=()=>showDetails(+b.dataset.detail));root.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openShipment(+b.dataset.edit));root.querySelectorAll("[data-route]").forEach(b=>b.onclick=()=>showRoute(+b.dataset.route));root.querySelectorAll("[data-select]").forEach(b=>b.onchange=()=>{b.checked?state.selected.add(+b.dataset.select):state.selected.delete(+b.dataset.select);renderShipments()})}
   function getExceptions(){const out=[],today=new Date(new Date().setHours(0,0,0,0));state.rows.forEach((r,i)=>{const eta=parseDate(field(r,["ETA"])),portOut=parseDate(field(r,["PORT OUT"])),destuff=parseDate(field(r,["DESTUFFING DATE"])),ret=parseDate(field(r,["CONTAINER RETURN DATE"]));if(isDone(r))return;if(eta&&eta<today&&!isArrived(r))out.push({i,title:"Estimated arrival is overdue",detail:`ETA ${fmtDate(eta)} · ${container(r)}`,level:"High priority"});if(portOut&&!destuff){const due=new Date(portOut);due.setDate(due.getDate()+3);if(due<today)out.push({i,title:"Destuffing milestone overdue",detail:`Port-out ${fmtDate(portOut)} · ${field(r,["VESSEL & VOY"])||"Vessel unavailable"}`,level:"High priority"})}if(destuff&&!ret){const due=new Date(destuff);due.setDate(due.getDate()+14);if(due<today)out.push({i,title:"Empty return milestone overdue",detail:`Destuffing ${fmtDate(destuff)} · ${container(r)}`,level:"Follow up"})}});return out.sort((a,b)=>a.level.localeCompare(b.level))}
   function renderExceptionList(target,limit=Infinity,provided=null){const list=(provided||getExceptions()).slice(0,limit);target.innerHTML=list.map(x=>`<div class="exception-row"><i class="exception-bar"></i><div><h4>${esc(x.title)} <span class="status-pill red" style="margin-left:7px">${esc(x.level)}</span></h4><p>${esc(container(state.rows[x.i]))} · ${esc(x.detail)}</p></div><button class="btn small" data-detail="${x.i}">Review</button></div>`).join("")||`<div class="empty-row">No rule-based exceptions detected in the loaded open shipments.</div>`;bindRowActions(target)}
-  function renderDashboard(){const total=state.rows.length,transit=state.rows.filter(isTransit).length,arrived=state.rows.filter(isArrived).length,delayed=state.rows.filter(isDelayed).length;$("metricTotal").textContent=state.loaded?total.toLocaleString():"—";$("metricTransit").textContent=state.loaded?transit.toLocaleString():"—";$("metricArrived").textContent=state.loaded?arrived.toLocaleString():"—";$("metricDelayed").textContent=state.loaded?delayed.toLocaleString():"—";renderArrivals();renderAnalytics();const exceptions=getExceptions();$("exceptionCount").textContent=state.loaded?exceptions.length:"—";renderExceptionList($("dashboardExceptions"),8);$("exceptionFooter").textContent=state.loaded?`Showing ${Math.min(8,exceptions.length)} of ${exceptions.length} flagged open shipments. Based on loaded records, not a live carrier feed.`:"Exception counts appear after shipment data loads.";renderRecent();renderMap()}
+  function renderSpotlight(){
+    const select=$("spotlightShipment"),body=$("spotlightBody");
+    if(!state.rows.length){
+      select.innerHTML="";select.disabled=true;$("spotlightMapBtn").disabled=true;$("spotlightDetailBtn").disabled=true;
+      $("spotlightSubtitle").textContent="Shipment progress appears once Supabase records are loaded.";
+      body.innerHTML='<div class="spotlight-empty">No shipment records are available yet.</div>';state.spotlightIndex=null;return;
+    }
+    const candidates=state.rows.map((row,index)=>({row,index})).sort((a,b)=>{
+      const aDone=isDone(a.row),bDone=isDone(b.row);if(aDone!==bDone)return aDone?1:-1;
+      const aEta=parseDate(field(a.row,["ETA"])),bEta=parseDate(field(b.row,["ETA"]));
+      if(aEta&&bEta)return aEta-bEta;if(aEta)return -1;if(bEta)return 1;
+      return (latestMilestone(b.row)?.getTime()||0)-(latestMilestone(a.row)?.getTime()||0);
+    });
+    if(!candidates.some(x=>x.index===state.spotlightIndex))state.spotlightIndex=candidates[0].index;
+    select.disabled=false;
+    select.innerHTML=candidates.slice(0,100).map(({row,index})=>'<option value="'+index+'">'+esc(container(row))+' · '+esc(statusOf(row))+'</option>').join("");
+    select.value=String(state.spotlightIndex);
+    const row=state.rows[state.spotlightIndex];
+    if(!row){body.innerHTML='<div class="spotlight-empty">Choose a shipment to view its progress.</div>';return}
+    $("spotlightMapBtn").disabled=false;$("spotlightDetailBtn").disabled=false;
+    const steps=[
+      {label:"Departure",field:"ETD"},
+      {label:"Port arrival",field:"PORT IN"},
+      {label:"Port release",field:"PORT OUT"},
+      {label:"CFS received",field:"CFS IN"},
+      {label:"Destuffing",field:"DESTUFFING DATE"},
+      {label:"Empty returned",field:"CONTAINER RETURN DATE"}
+    ];
+    let next=steps.findIndex(step=>!field(row,[step.field]));if(next<0)next=steps.length;
+    const stepHtml=steps.map((step,index)=>{
+      const value=field(row,[step.field]),done=!!value,current=!done&&index===next;
+      return '<div class="spotlight-step '+(done?"done":current?"current":"")+'"><b>'+esc(step.label)+'</b><small>'+esc(value?fmtDate(value):current?"Next update":"Awaiting")+'</small></div>';
+    }).join("");
+    const from=field(row,["POL"])||"Origin pending",via=field(row,["TRANSSHIPMENT PORT"]),to=field(row,["GATEWAY PORT"])||"Gateway pending";
+    const route=[from,via,to].filter(Boolean).join(" → "),milestoneCount=steps.filter(x=>!!field(row,[x.field])).length;
+    const nextLabel=next<steps.length?steps[next].label:"Journey milestones recorded";
+    $("spotlightSubtitle").textContent=container(row)+" · "+route;
+    body.innerHTML='<div class="spotlight-summary"><div><div class="spotlight-container"><span class="spotlight-container-mark">▣</span><span><strong>'+esc(container(row))+'</strong><small>'+esc(field(row,["TYPE"])||"Container")+" · "+esc(milestoneCount)+" of "+steps.length+" key milestones recorded"+'</small></span><span class="status-pill '+statusClass(statusOf(row))+'">'+esc(statusOf(row))+'</span></div><div class="spotlight-route">'+esc(route)+'</div><div class="spotlight-meta"><div><small>VESSEL / VOYAGE</small><b>'+esc(field(row,["VESSEL & VOY"])||"Not recorded")+'</b></div><div><small>SHIPPING LINE</small><b>'+esc(field(row,["LINER"])||"Not recorded")+'</b></div><div><small>ESTIMATED ARRIVAL</small><b>'+esc(fmtDate(field(row,["ETA"])))+'</b></div></div></div><div class="spotlight-status-side"><div class="spotlight-status-head"><span>RECORDED JOURNEY</span><b>'+esc(milestoneCount)+" / "+steps.length+' milestones</b></div><div class="spotlight-progress">'+stepHtml+'</div><div class="spotlight-next">Next milestone <strong>'+esc(nextLabel)+'</strong></div></div></div>';
+  }
+  function renderDashboard(){const total=state.rows.length,transit=state.rows.filter(isTransit).length,arrived=state.rows.filter(isArrived).length,delayed=state.rows.filter(isDelayed).length;$("metricTotal").textContent=state.loaded?total.toLocaleString():"—";$("metricTransit").textContent=state.loaded?transit.toLocaleString():"—";$("metricArrived").textContent=state.loaded?arrived.toLocaleString():"—";$("metricDelayed").textContent=state.loaded?delayed.toLocaleString():"—";renderArrivals();renderSpotlight();renderAnalytics();const exceptions=getExceptions();$("exceptionCount").textContent=state.loaded?exceptions.length:"—";renderExceptionList($("dashboardExceptions"),8);$("exceptionFooter").textContent=state.loaded?`Showing ${Math.min(8,exceptions.length)} of ${exceptions.length} flagged open shipments. Based on loaded records, not a live carrier feed.`:"Exception counts appear after shipment data loads.";renderRecent();renderMap()}
   function renderArrivals(){const list=state.rows.map((row,index)=>({row,index,date:parseDate(field(row,["ETA"]))})).filter(x=>x.date&&!isDone(x.row)&&!isArrived(x.row)).sort((a,b)=>a.date-b.date).slice(0,7);$("upcomingList").innerHTML=list.map(x=>{const eta=etaCountdown(x.row);return `<div class="arrival"><div><strong>${esc(field(x.row,["MBL NO"])||container(x.row))}</strong><div class="arrival-sub">${esc(field(x.row,["VESSEL & VOY"])||"Vessel pending")} · ${esc(field(x.row,["GATEWAY PORT"])||"Gateway pending")}</div><div class="arrival-sub">ETA ${esc(fmtDate(x.date))}</div><div style="margin-top:6px"><span class="eta-window ${eta.tone}">${esc(eta.text)}</span></div></div><span class="status-pill ${statusClass(statusOf(x.row))}">${esc(statusOf(x.row))}</span></div>`}).join("")||`<div class="empty-row">No future arrivals are available.</div>`}
   function renderAnalytics(){const vals=[state.rows.filter(r=>isDone(r)).length,state.rows.filter(r=>/In transit/i.test(statusOf(r))).length,state.rows.filter(r=>/ETA scheduled/i.test(statusOf(r))).length,state.rows.filter(isDelayed).length];const names=["Delivered","In transit","Pending","Delayed"],classes=["","blue","amber","red"],colors=["#18a778","#2184ef","#ffb21b","#e94d47"];const denom=Math.max(1,vals.reduce((a,b)=>a+b,0));let start=0;const parts=vals.map((v,i)=>{const p=v/denom*100,a=start;start+=p;return `${colors[i]} ${a}% ${start}%`});$("statusDonut").style.background=`conic-gradient(${parts.join(",")})`;$("donutTotal").innerHTML=`${state.rows.length}<small>Shipments</small>`;$("statusLegend").innerHTML=names.map((n,i)=>`<div class="legend-row"><i class="swatch ${classes[i]}"></i>${n}<b>${vals[i]}</b></div>`).join("");
     const yearSelect=$("trendYear"),years=[...new Set(state.rows.map(r=>parseDate(field(r,["ETA"]))?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a),current=yearSelect.value||String(years[0]||new Date().getFullYear());yearSelect.innerHTML=years.map(y=>`<option>${y}</option>`).join("")||`<option>${new Date().getFullYear()}</option>`;yearSelect.value=current;
@@ -1266,7 +1389,7 @@ async function confirmImport(){
   function bind(){
     document.querySelectorAll(".nav-link[data-page]").forEach(b=>b.onclick=()=>page(b.dataset.page));
     $("mobileMenu").onclick=()=>document.body.classList.toggle("menu-open");$("publicLoginBtn").onclick=()=>modal("loginModal");$("loginForm").onsubmit=signIn;
-    $("refreshBtn").onclick=()=>loadRecords();$("refreshMapBtn").onclick=()=>{renderMap();toast("Map refreshed")};$("showMapBtn").onclick=()=>showRoute(null);$("refreshAisBtn").onclick=()=>state.fullMap?._refreshAIS?.()||setAisMapStatus("Choose a shipment map to refresh AIS.");$("aisLookupBtn").onclick=lookupMapVessel;$("mapFitBtn").onclick=()=>state.fullMap?._fitRoute?.();$("mapAisToggleBtn").onclick=()=>state.fullMap?._toggleAis?.();$("signOutBtn").onclick=signOut;$("settingsSignOut").onclick=signOut;
+    $("refreshBtn").onclick=()=>loadRecords();$("refreshMapBtn").onclick=()=>{renderMap();toast("Map refreshed")};$("spotlightShipment").onchange=e=>{state.spotlightIndex=Number(e.target.value);renderSpotlight()};$("spotlightMapBtn").onclick=()=>state.spotlightIndex!=null&&showRoute(state.spotlightIndex);$("spotlightDetailBtn").onclick=()=>state.spotlightIndex!=null&&showDetails(state.spotlightIndex);$("dashboardModules").onclick=e=>{const b=e.target.closest("[data-ops-shortcut]");if(!b)return;state.ops.tab=b.dataset.opsShortcut;page("logistics")};$("showMapBtn").onclick=()=>showRoute(null);$("refreshAisBtn").onclick=()=>state.fullMap?._refreshAIS?.()||setAisMapStatus("Choose a shipment map to refresh AIS.");$("aisLookupBtn").onclick=lookupMapVessel;$("mapFitBtn").onclick=()=>state.fullMap?._fitRoute?.();$("mapAisToggleBtn").onclick=()=>state.fullMap?._toggleAis?.();$("signOutBtn").onclick=signOut;$("settingsSignOut").onclick=signOut;
     $("newShipmentTop").onclick=$("newShipmentBtn").onclick=()=>openShipment();$("viewShipmentsBtn").onclick=$("recentAllBtn").onclick=()=>page("shipments");$("arrivalsAllBtn").onclick=()=>{state.filter="active";document.querySelectorAll(".filter-chip").forEach(x=>x.classList.toggle("active",x.dataset.filter==="active"));page("shipments")};
     $("shipmentForm").onsubmit=saveShipment;
     document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>{modal(b.dataset.close,false);if(b.dataset.close==="mapModal"&&state.fullMap){state.fullMap.remove();state.fullMap=null}});document.querySelectorAll(".modal-backdrop").forEach(bg=>bg.addEventListener("click",e=>{if(e.target===bg){modal(bg.id,false);if(bg.id==="mapModal"&&state.fullMap){state.fullMap.remove();state.fullMap=null}}}));document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelectorAll(".modal-backdrop.open").forEach(m=>modal(m.id,false));if(state.fullMap){state.fullMap.remove();state.fullMap=null}}});
