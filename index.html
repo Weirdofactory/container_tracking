@@ -1439,7 +1439,12 @@ async function confirmImport(){
       const innerX=x+24,innerW=w-48,cellW=innerW/milestoneFields.length;
       const nodeY=y+164;
       c.fillStyle="#71879b";c.font="800 9px DM Sans, sans-serif";
-      milestoneFields.forEach((m,j)=>c.fillText(m.label,innerX+j*cellW,y+155,cellW-8));
+      c.textAlign="center";
+      milestoneFields.forEach((m,j)=>{
+        const centerX=innerX+j*cellW+cellW/2;
+        c.fillText(m.label,centerX,y+155,cellW-12);
+      });
+      c.textAlign="left";
 
       // Connect milestone dots. Completed milestones are green; pending ones remain neutral.
       milestoneFields.forEach((m,j)=>{
