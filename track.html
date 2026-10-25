@@ -398,6 +398,8 @@
       }catch(error){message.textContent=error.message||"Could not search shipment records. Please try again.";message.className="status-note error";}
       finally{button.disabled=false;}
     });
+    const sharedReference=new URLSearchParams(window.location.search).get("reference");
+    if(sharedReference){const value=sharedReference.trim().slice(0,40);if(value){$("reference").value=value;queueMicrotask(()=> $("trackForm").requestSubmit())}}
   </script>
 
 </body>
