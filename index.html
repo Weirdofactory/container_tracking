@@ -682,6 +682,222 @@
   }
 </style>
 
+
+<style id="staff-dashboard-colour-refresh">
+  /* Staff workspace palette: deep navy structure, clean neutrals, ocean-blue actions */
+  #staffShell{
+    --navy:#143449;
+    --navy2:#1d4c62;
+    --blue:#0f7897;
+    --cyan:#258da3;
+    --ink:#183647;
+    --muted:#687e8d;
+    --line:#dce5e9;
+    --bg:#f3f6f7;
+    --white:#fff;
+    --green:#187b5b;
+    --amber:#a96d1c;
+    --red:#b94b45;
+    --shadow:0 3px 14px rgba(20,48,65,.045);
+  }
+  #staffShell .main{background:#f3f6f7}
+  #staffShell .sidebar{
+    background:#143449;color:#eaf1f4;border-right:1px solid #23485b;
+    box-shadow:2px 0 12px rgba(15,42,58,.07)
+  }
+  #staffShell .sidebar .brand{border-bottom-color:rgba(255,255,255,.13)}
+  #staffShell .sidebar .brand-icon{
+    background:#1d6279;color:#fff;border:1px solid rgba(255,255,255,.12);
+    box-shadow:none
+  }
+  #staffShell .brand-name{color:#f4f8fa}
+  #staffShell .brand-sub{color:#9db7c3}
+  #staffShell .nav-caption{color:#8daab7}
+  #staffShell .nav-link{color:#c7d7df;background:transparent}
+  #staffShell .nav-link:hover{background:#1b4358;color:#fff}
+  #staffShell .nav-link.active{
+    color:#fff;background:#20536a;box-shadow:inset 3px 0 0 #48b5b2
+  }
+  #staffShell .nav-icon{color:inherit}
+  #staffShell .sidebar-bottom{border-top-color:rgba(255,255,255,.13);color:#a4bbc6}
+  #staffShell .sidebar-bottom b{color:#fff}
+  #staffShell .topbar{
+    background:#fff;border-bottom:1px solid #dce5e9;
+    box-shadow:0 1px 4px rgba(20,48,65,.025)
+  }
+  #staffShell .top-search{
+    background:#f8fafb;border-color:#dce5e9;color:#758b99
+  }
+  #staffShell .top-search input{color:#183647}
+  #staffShell .top-search input::placeholder{color:#91a2ad}
+  #staffShell .top-search button,
+  #staffShell .top-right .btn.primary{
+    background:#0f7897;border-color:#0f7897;color:#fff;box-shadow:none
+  }
+  #staffShell .top-search button:hover,
+  #staffShell .top-right .btn.primary:hover{
+    background:#0c637d;border-color:#0c637d
+  }
+  #staffShell .icon-btn,
+  #staffShell .user-chip{
+    color:#35576b;border-color:#dce5e9;background:#fff
+  }
+  #staffShell .user-chip{background:#f5f8f9}
+  #staffShell .page{color:#183647}
+  #staffShell .eyebrow{color:#678394}
+  #staffShell .page h1{color:#143449}
+  #staffShell .subtitle{color:#718592}
+  #staffShell .btn{
+    color:#35596d;border-color:#d6e1e6;background:#fff;box-shadow:none
+  }
+  #staffShell .btn:hover{border-color:#a8c2cd;background:#f8fbfc;transform:none}
+  #staffShell .btn.primary{
+    color:#fff;background:#0f7897;border-color:#0f7897;box-shadow:none
+  }
+  #staffShell .btn.primary:hover{background:#0c637d;border-color:#0c637d}
+  #staffShell .btn.ghost-blue{
+    color:#0f718e;border-color:#c8dce3;background:#fff
+  }
+  #staffShell .btn.ghost-blue:hover{color:#0b6079;background:#edf6f8;border-color:#a9cad5}
+  #staffShell .btn.danger{
+    color:#ad4540;border-color:#ebd1ce;background:#fff8f7
+  }
+  #staffShell .card{
+    background:#fff;border-color:#dce5e9;
+    box-shadow:0 3px 14px rgba(20,48,65,.04)
+  }
+  #staffShell .card-head{border-bottom-color:#e9eef1}
+  #staffShell .card-title{color:#1d465d}
+  #staffShell .card-sub{color:#8295a0}
+  #staffShell .section-label{color:#607e90}
+  #staffShell .section-label span:last-child{color:#8799a4}
+  #staffShell .metric{
+    background:#fff!important;border-color:#dce5e9;
+    box-shadow:0 3px 12px rgba(20,48,65,.035)
+  }
+  #staffShell .metric:before{background:#0f7897}
+  #staffShell .metric:nth-child(2):before{background:#258d78}
+  #staffShell .metric:nth-child(3):before{background:#4a91a5}
+  #staffShell .metric:nth-child(4):before{background:#c28a36}
+  #staffShell .metric-icon{
+    background:#eaf3f6!important;color:#0f718e!important
+  }
+  #staffShell .metric:nth-child(2) .metric-icon{
+    background:#eaf5ef!important;color:#187b5b!important
+  }
+  #staffShell .metric:nth-child(3) .metric-icon{
+    background:#edf4f6!important;color:#477e91!important
+  }
+  #staffShell .metric:nth-child(4) .metric-icon{
+    background:#fbf3e7!important;color:#a96d1c!important
+  }
+  #staffShell .metric-label{color:#667f8e}
+  #staffShell .metric-value{color:#143449}
+  #staffShell .metric-note{color:#8798a3}
+  #staffShell .dashboard-module-rail{
+    background:#fff;border-color:#dce5e9;box-shadow:0 3px 12px rgba(20,48,65,.03)
+  }
+  #staffShell .module-rail-intro span{color:#8498a4}
+  #staffShell .module-rail-intro strong{color:#1d465d}
+  #staffShell .module-rail-intro small{color:#8497a3}
+  #staffShell .dashboard-module{background:#fff;border-left-color:#e8eef1;color:#35596d}
+  #staffShell .dashboard-module:hover{background:#f3f8f9}
+  #staffShell .module-number{background:#eaf3f6;color:#0f718e}
+  #staffShell .dashboard-module b{color:#294e63}
+  #staffShell .dashboard-module small{color:#8295a0}
+  #staffShell .dashboard-module i{color:#648a9b}
+  #staffShell .dashboard-spotlight{background:#fff;border-color:#dce5e9}
+  #staffShell .dashboard-spotlight-head{border-bottom-color:#e8eef1}
+  #staffShell .spotlight-kicker{color:#748e9c}
+  #staffShell .dashboard-spotlight-head h2{color:#143c54}
+  #staffShell .dashboard-spotlight-head p{color:#8295a0}
+  #staffShell .spotlight-container-mark{background:#eaf3f6;color:#0f7897}
+  #staffShell .spotlight-container strong{color:#0f718e}
+  #staffShell .spotlight-route{color:#31566c}
+  #staffShell .spotlight-meta div{border-left-color:#dce7eb}
+  #staffShell .spotlight-meta small{color:#8396a2}
+  #staffShell .spotlight-meta b{color:#35596d}
+  #staffShell .spotlight-status-side{background:#f8fafb;border-color:#e4ecef}
+  #staffShell .spotlight-progress .spotlight-step:before{background:#e1e9ed}
+  #staffShell .spotlight-progress .spotlight-step.done:before{background:#258d78}
+  #staffShell .spotlight-progress .spotlight-step.done:after{
+    background:#258d78;border-color:#258d78;box-shadow:0 0 0 3px rgba(37,141,120,.12)
+  }
+  #staffShell .spotlight-progress .spotlight-step.current:after{
+    border-color:#0f7897;box-shadow:0 0 0 3px rgba(15,120,151,.13)
+  }
+  #staffShell .spotlight-step b{color:#627d8d}
+  #staffShell .spotlight-step small{color:#91a1ab}
+  #staffShell .toolbar{border-bottom-color:#e8eef1}
+  #staffShell .toolbar-search{background:#fff;border-color:#d8e3e8;color:#718a99}
+  #staffShell .toolbar-search input{color:#183647}
+  #staffShell .toolbar-search input::placeholder{color:#93a3ad}
+  #staffShell .segmented{background:#f3f7f8;border-color:#dce5e9}
+  #staffShell .segmented button{color:#607c8c}
+  #staffShell .segmented button.active{color:#0f718e;background:#fff}
+  #staffShell .filter-chip{background:#fff;border-color:#dce5e9;color:#627c8c}
+  #staffShell .filter-chip.active{background:#eaf3f6;color:#0f718e;border-color:#bad3dc}
+  #staffShell .shipment-card{background:#fff;border-color:#dce5e9;border-left-color:#0f7897;box-shadow:none}
+  #staffShell .shipment-card h3,
+  #staffShell .cell-primary{color:#0f718e}
+  #staffShell .shipment-card .mbl{color:#8295a0}
+  #staffShell .ship-info{background:#f7fafb;border-color:#e1e9ed;color:#5d7889}
+  #staffShell .ship-milestones{background:#f7fafb;border-color:#e1e9ed}
+  #staffShell .ship-milestones label{color:#8195a1}
+  #staffShell .ship-milestones strong{color:#31566b}
+  #staffShell .pipe-col{background:#f6f9fa;border-color:#dfe8ec}
+  #staffShell .pipe-col h3{color:#45677b}
+  #staffShell .pipe-item{background:#fff;border-color:#dce6ea;color:#0f718e}
+  #staffShell table th{background:#f3f7f8;color:#6d8796;border-bottom-color:#e2eaee}
+  #staffShell table td{color:#3d5c70;border-top-color:#ebf0f2}
+  #staffShell table tbody tr:hover{background:#f7fafb}
+  #staffShell .status-pill{border-radius:5px;font-weight:800}
+  #staffShell .status-pill.blue{background:#eaf3f7;color:#176b8a}
+  #staffShell .status-pill.gray{background:#eff3f5;color:#687e8b}
+  #staffShell .status-pill.amber{background:#fff4e3;color:#99651c}
+  #staffShell .status-pill.red{background:#fff0ee;color:#b24740}
+  #staffShell .status-pill:not(.blue):not(.gray):not(.amber):not(.red){
+    background:#eaf5ef;color:#187b5b
+  }
+  #staffShell .exception-row{border-bottom-color:#edf1f3}
+  #staffShell .exception-row h4{color:#294e63}
+  #staffShell .exception-row p{color:#8295a0}
+  #staffShell .exception-bar{background:#c45a4d}
+  #staffShell .exception-footer{background:#fafcfc;border-top-color:#e8eef1;color:#8295a0}
+  #staffShell .map-legend{color:#718795;border-top-color:#e7edef}
+  #staffShell .map-note{color:#81939e}
+  #staffShell .field label{color:#607c8d}
+  #staffShell .field input,
+  #staffShell .field select,
+  #staffShell .field textarea{
+    background:#fff;border-color:#d6e1e6;color:#23465b
+  }
+  #staffShell .field input:focus,
+  #staffShell .field select:focus,
+  #staffShell .field textarea:focus{
+    border-color:#5d9eb1;box-shadow:0 0 0 3px rgba(15,120,151,.09)
+  }
+  #staffShell .modal{border-color:#dce5e9}
+  #staffShell .modal-head{border-bottom-color:#e8eef1}
+  #staffShell .modal-head h2{color:#143c54}
+  #staffShell .close-btn{background:#eef3f5;color:#536f80}
+  #staffShell .detail-cell{background:#f7fafb;border-color:#e2eaee}
+  #staffShell .detail-cell small{color:#8295a0}
+  #staffShell .detail-cell b{color:#294e63}
+  #staffShell .cloud-state{background:#f0f5f7;border-color:#dce6ea;color:#607b8b}
+  #staffShell .cloud-state[data-state="connected"]{background:#eaf5ef;color:#187b5b;border-color:#d0e7d9}
+  #staffShell .cloud-state[data-state="error"]{background:#fff0ee;color:#b24740;border-color:#efd2cf}
+  #staffShell .cloud-state[data-state="loading"]{background:#fff4e3;color:#99651c;border-color:#efdfc3}
+  #staffShell .toast{border-radius:8px}
+  @media(max-width:900px){
+    #staffShell .sidebar{background:#143449;border-right-color:#23485b}
+    #staffShell .main{background:#f3f6f7}
+  }
+  @media(max-width:600px){
+    #staffShell .dashboard-module{border-left:0;border-top-color:#e8eef1}
+  }
+</style>
+
 </head>
 <body>
   <div class="shell" id="staffShell" hidden>
