@@ -1787,6 +1787,65 @@
 }
 
 </style>
+<style id="shipment-milestone-alignment">
+
+/* Milestone alignment: centres, labels, dates and progress all share one six-step grid. */
+#page-shipments .shipment-journey{padding:13px 15px 11px}
+#page-shipments .shipment-journey-track{
+  height:5px;
+  margin:13px calc(100% / 12) 0;
+  border-radius:999px;
+  background:#e5edf5;
+  overflow:hidden
+}
+#page-shipments .shipment-journey-track i{
+  display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,#1ca9b0,#16865f);
+  transition:width .22s ease
+}
+#page-shipments .shipment-journey-steps{
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:0;padding-top:9px;align-items:start
+}
+#page-shipments .shipment-journey-step{
+  display:grid;grid-template-rows:13px auto auto;
+  justify-items:center;align-content:start;gap:5px;
+  min-width:0;text-align:center
+}
+#page-shipments .shipment-journey-step>i{
+  justify-self:center;align-self:center;
+  display:block;width:11px;height:11px;
+  margin:0;border:2px solid #c5d4e3;border-radius:50%;background:#fff
+}
+#page-shipments .shipment-journey-step.done>i{
+  border-color:#15966d;background:#15966d;
+  box-shadow:0 0 0 3px #15966d20
+}
+#page-shipments .shipment-journey-step.current>i{
+  border-color:#2874db;background:#fff;
+  box-shadow:0 0 0 3px #2874db20
+}
+#page-shipments .shipment-journey-step b{
+  width:100%;color:#58748f;font-size:8px;
+  font-weight:750;line-height:1.25;text-align:center;
+  overflow-wrap:anywhere
+}
+#page-shipments .shipment-journey-step.done b{color:#147b59}
+#page-shipments .shipment-journey-step small{
+  width:100%;color:#7890a7;font-size:8px;
+  line-height:1.25;text-align:center;overflow-wrap:anywhere
+}
+@media(max-width:650px){
+  #page-shipments .shipment-journey{padding:12px 12px 10px}
+  #page-shipments .shipment-journey-steps{grid-template-columns:repeat(6,minmax(62px,1fr));overflow-x:auto}
+  #page-shipments .shipment-journey-step b,
+  #page-shipments .shipment-journey-step small{font-size:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  #page-shipments .shipment-journey-track i{transition:none}
+}
+
+</style>
 </head>
 <body>
   <div class="shell" id="staffShell" hidden>
@@ -2227,7 +2286,7 @@
       </div>
       <div class="shipment-journey">
         <div class="shipment-journey-heading"><b>Shipment milestones</b><span>${progress.lastDone<0?"No milestone dates recorded":progress.percent+"% of listed milestones recorded"}</span></div>
-        <div class="shipment-journey-track"><i style="width:${progress.percent}%"></i></div>
+        <div class="shipment-journey-track"><i style="width:${progress.lastDone<0?0:(progress.steps.length>1?Math.min(100,progress.lastDone/(progress.steps.length-1)*100):100)}%"></i></div>
         <div class="shipment-journey-steps">${progressSteps}</div>
       </div>
       <div class="ship-actions">
