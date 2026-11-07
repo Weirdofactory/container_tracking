@@ -234,37 +234,52 @@ Deno.serve(async (req: Request) => {
   const visibleJobIds = visibleJobs.map((job: Record<string, unknown>) => String(job.id || "")).filter(Boolean);
   let jobLinks: Record<string, unknown>[] = [];
   let jobEvents: Record<string, unknown>[] = [];
-  if (visibleJobIds.length) {
+  // Batch ID filters to keep the PostgREST URL comfortably below gateway limits.
+  for (let offset = 0; offset < visibleJobIds.length; offset += 200) {
+    const idBatch = visibleJobIds.slice(offset, offset + 200);
     const [linksResult, eventsResult] = await Promise.all([
-      admin.from("job_container_links").select("job_id,container_no").in("job_id", visibleJobIds).limit(10000),
+      admin.from("job_container_links").select("job_id,container_no").in("job_id", idBatch).limit(10000),
       admin.from("shipment_milestones")
         .select("job_id,container_no,milestone_code,milestone_name,planned_at,actual_at,status,customer_visible,created_at")
-        .in("job_id", visibleJobIds).eq("customer_visible", true)
+        .in("job_id", idBatch).eq("customer_visible", true)
         .order("created_at", { ascending: true }).limit(10000),
     ]);
     if (linksResult.error || eventsResult.error || !Array.isArray(linksResult.data) || !Array.isArray(eventsResult.data)) {
       return reply(503, { error: "Tracking service is temporarily unavailable." }, origin);
     }
-    jobLinks = linksResult.data as Record<string, unknown>[];
-    jobEvents = eventsResult.data as Record<string, unknown>[];
+    jobLinks.push(...linksResult.data as Record<string, unknown>[]);
+    jobEvents.push(...eventsResult.data as Record<string, unknown>[]);
   }
 
+  const linksByJob = new Map<string, Record<string, unknown>[]>();
+  const eventsByJob = new Map<string, Record<string, unknown>[]>();
+  for (const link of jobLinks) {
+    const key = String(link.job_id || "");
+    const group = linksByJob.get(key) || [];
+    group.push(link);
+    linksByJob.set(key, group);
+  }
+  for (const event of jobEvents) {
+    const key = String(event.job_id || "");
+    const group = eventsByJob.get(key) || [];
+    group.push(event);
+    eventsByJob.set(key, group);
+  }
   const matchedJobs = (visibleJobs as Record<string, unknown>[]).filter(job => {
     const jobMatches = [job.job_no, job.hbl_no, job.mbl_no].some(value => normalize(value) === reference);
-    const containerMatches = jobLinks.some(link => String(link.job_id) === String(job.id) && normalize(link.container_no) === reference);
+    const containerMatches = (linksByJob.get(String(job.id)) || []).some(link => normalize(link.container_no) === reference);
     return jobMatches || containerMatches;
   });
   const jobResults: ReturnType<typeof safeForwardingJob>[] = [];
   for (const job of matchedJobs) {
-    const links = jobLinks.filter(link => String(link.job_id) === String(job.id));
+    const links = linksByJob.get(String(job.id)) || [];
     const matchedByContainer = links.some(link => normalize(link.container_no) === reference);
     const targetContainers = matchedByContainer
       ? links.filter(link => normalize(link.container_no) === reference).map(link => String(link.container_no || ""))
       : links.map(link => String(link.container_no || ""));
     const containers = targetContainers.length ? Array.from(new Set(targetContainers)) : [""];
     for (const containerNo of containers) {
-      const events = jobEvents.filter(event =>
-        String(event.job_id) === String(job.id) &&
+      const events = (eventsByJob.get(String(job.id)) || []).filter(event =>
         (!String(event.container_no || "").trim() || !containerNo || normalize(event.container_no) === normalize(containerNo))
       );
       jobResults.push(safeForwardingJob(job, containerNo, events));
