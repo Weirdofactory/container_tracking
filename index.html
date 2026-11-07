@@ -968,272 +968,14 @@
 </style>
 
 
-<style id="colour-accessible-monochrome-dashboard">
-  /*
-    Colour-accessible staff workspace:
-    - neutral grayscale surfaces and controls
-    - high-contrast text and focus states
-    - status semantics are conveyed by labels and symbols, not hue
-  */
-  #staffShell{
-    --navy:#20272e;--navy2:#343d46;--blue:#343d46;--cyan:#59636e;
-    --ink:#171c21;--muted:#58616a;--line:#cbd1d6;--bg:#f1f3f4;
-    --white:#fff;--green:#303840;--amber:#454d55;--red:#171c21;
-    --shadow:0 2px 10px rgba(15,20,25,.055)
-  }
-  #staffShell,#staffShell *{accent-color:#343d46}
-  #staffShell .main{background:#f1f3f4;color:#171c21}
-  #staffShell .sidebar{
-    background:#20272e;color:#f5f6f7;border-right:1px solid #11161b;
-    box-shadow:2px 0 12px rgba(0,0,0,.1)
-  }
-  #staffShell .sidebar .brand{border-bottom-color:#48515a}
-  #staffShell .sidebar .brand-icon{
-    background:#414b55;border:1px solid #78828b;color:#fff;box-shadow:none
-  }
-  #staffShell .brand-name{color:#fff}
-  #staffShell .brand-sub,#staffShell .nav-caption{color:#c1c7cc}
-  #staffShell .nav-link{color:#e0e3e6;background:transparent}
-  #staffShell .nav-link:hover{background:#3a434c;color:#fff}
-  #staffShell .nav-link.active{
-    color:#fff;background:#48525c;
-    box-shadow:inset 3px 0 0 #fff, inset 0 0 0 1px #737d86
-  }
-  #staffShell .nav-icon{color:inherit}
-  #staffShell .sidebar-bottom{border-top-color:#48515a;color:#c1c7cc}
-  #staffShell .sidebar-bottom b{color:#fff}
-  #staffShell .topbar{
-    background:#fff;border-bottom:1px solid #cbd1d6;
-    box-shadow:0 1px 4px rgba(0,0,0,.035)
-  }
-  #staffShell .top-search{background:#f7f8f9;border-color:#aeb7be;color:#353d44}
-  #staffShell .top-search input{color:#171c21}
-  #staffShell .top-search input::placeholder{color:#626c74}
-  #staffShell .top-search button,
-  #staffShell .top-right .btn.primary{
-    background:#252d34;border:1px solid #252d34;color:#fff;box-shadow:none
-  }
-  #staffShell .top-search button:hover,
-  #staffShell .top-right .btn.primary:hover{background:#11171c;border-color:#11171c}
-  #staffShell .icon-btn,#staffShell .user-chip{
-    background:#fff;border-color:#aeb7be;color:#20272e
-  }
-  #staffShell .user-chip{background:#f4f5f6}
-  #staffShell .page h1{color:#171c21}
-  #staffShell .eyebrow{color:#414b54}
-  #staffShell .subtitle{color:#58636c}
-  #staffShell .section-label{color:#414b54}
-  #staffShell .section-label span:last-child{color:#626c74}
-  #staffShell .btn{
-    color:#20272e;background:#fff;border:1px solid #aeb7be;
-    box-shadow:none
-  }
-  #staffShell .btn:hover{background:#eef0f1;border-color:#4d5861;transform:none}
-  #staffShell .btn.primary{
-    color:#fff;background:#252d34;border-color:#252d34;box-shadow:none
-  }
-  #staffShell .btn.primary:hover{background:#11171c;border-color:#11171c}
-  #staffShell .btn.ghost-blue{
-    color:#20272e;background:#fff;border-color:#8f9aa3
-  }
-  #staffShell .btn.ghost-blue:hover{background:#eceff1;border-color:#39434b}
-  #staffShell .btn.danger{
-    color:#171c21;background:#f1f2f3;border-color:#555f68
-  }
-  #staffShell .card{
-    background:#fff;border-color:#cbd1d6;
-    box-shadow:0 2px 10px rgba(15,20,25,.045)
-  }
-  #staffShell .card-head{border-bottom-color:#dce0e3}
-  #staffShell .card-title{color:#20272e}
-  #staffShell .card-sub{color:#626c74}
-  #staffShell .metric{
-    background:#fff!important;border-color:#cbd1d6;
-    box-shadow:0 2px 8px rgba(15,20,25,.04)
-  }
-  #staffShell .metric:before,
-  #staffShell .metric:nth-child(2):before,
-  #staffShell .metric:nth-child(3):before,
-  #staffShell .metric:nth-child(4):before{background:#343d46}
-  #staffShell .metric-icon,
-  #staffShell .metric:nth-child(2) .metric-icon,
-  #staffShell .metric:nth-child(3) .metric-icon,
-  #staffShell .metric:nth-child(4) .metric-icon{
-    background:#e8ebed!important;color:#20272e!important;border:1px solid #cbd1d6
-  }
-  #staffShell .metric-label{color:#414b54}
-  #staffShell .metric-value{color:#171c21}
-  #staffShell .metric-note{color:#626c74}
-  #staffShell .dashboard-module-rail{background:#fff;border-color:#cbd1d6}
-  #staffShell .module-rail-intro span,
-  #staffShell .module-rail-intro small{color:#626c74}
-  #staffShell .module-rail-intro strong{color:#20272e}
-  #staffShell .dashboard-module{background:#fff;border-left-color:#cbd1d6;color:#20272e}
-  #staffShell .dashboard-module:hover{background:#f0f2f3}
-  #staffShell .module-number{background:#e7eaec;color:#20272e;border:1px solid #cbd1d6}
-  #staffShell .dashboard-module b{color:#20272e}
-  #staffShell .dashboard-module small{color:#626c74}
-  #staffShell .dashboard-module i{color:#343d46}
-  #staffShell .dashboard-spotlight{background:#fff;border-color:#cbd1d6}
-  #staffShell .dashboard-spotlight-head{border-bottom-color:#dce0e3}
-  #staffShell .spotlight-kicker,
-  #staffShell .dashboard-spotlight-head p{color:#626c74}
-  #staffShell .dashboard-spotlight-head h2{color:#20272e}
-  #staffShell .spotlight-container-mark{background:#e7eaec;color:#20272e;border:1px solid #cbd1d6}
-  #staffShell .spotlight-container strong,
-  #staffShell .spotlight-route{color:#20272e}
-  #staffShell .spotlight-meta div{border-left-color:#cbd1d6}
-  #staffShell .spotlight-meta small,
-  #staffShell .spotlight-meta b{color:#414b54}
-  #staffShell .spotlight-status-side{background:#f6f7f8;border-color:#cbd1d6}
-  #staffShell .spotlight-status-head span:first-child,
-  #staffShell .spotlight-next{color:#626c74}
-  #staffShell .spotlight-status-head b,
-  #staffShell .spotlight-next strong{color:#20272e}
-  #staffShell .spotlight-progress .spotlight-step:before{background:#cbd1d6}
-  #staffShell .spotlight-progress .spotlight-step.done:before{background:#343d46}
-  #staffShell .spotlight-progress .spotlight-step.done:after{
-    background:#343d46;border-color:#343d46;box-shadow:0 0 0 2px #d0d4d7
-  }
-  #staffShell .spotlight-progress .spotlight-step.current:after{
-    border-color:#20272e;box-shadow:0 0 0 2px #d0d4d7
-  }
-  #staffShell .spotlight-step b{color:#414b54}
-  #staffShell .spotlight-step small{color:#626c74}
-  #staffShell .toolbar{border-bottom-color:#dce0e3}
-  #staffShell .toolbar-search{background:#fff;border-color:#aeb7be;color:#414b54}
-  #staffShell .toolbar-search input{color:#171c21}
-  #staffShell .toolbar-search input::placeholder{color:#626c74}
-  #staffShell .segmented{background:#eceff1;border-color:#aeb7be}
-  #staffShell .segmented button{color:#414b54}
-  #staffShell .segmented button.active{background:#fff;color:#171c21;box-shadow:0 1px 4px rgba(0,0,0,.12)}
-  #staffShell .filter-chip{background:#fff;border-color:#aeb7be;color:#303840}
-  #staffShell .filter-chip.active{background:#e5e8ea;color:#11171c;border-color:#343d46}
-  #staffShell .shipment-card{background:#fff;border-color:#cbd1d6;border-left-color:#343d46;box-shadow:none}
-  #staffShell .shipment-card h3,
-  #staffShell .cell-primary{color:#171c21}
-  #staffShell .shipment-card .mbl{color:#58636c}
-  #staffShell .ship-info,
-  #staffShell .ship-milestones{background:#f5f6f7;border-color:#cbd1d6;color:#303840}
-  #staffShell .ship-milestones label{color:#414b54}
-  #staffShell .ship-milestones strong{color:#20272e}
-  #staffShell .pipe-col{background:#f4f5f6;border-color:#cbd1d6}
-  #staffShell .pipe-col h3{color:#20272e}
-  #staffShell .pipe-item{background:#fff;border-color:#aeb7be;color:#20272e}
-  #staffShell table th{background:#e9ecee;color:#20272e;border-bottom-color:#cbd1d6}
-  #staffShell table td{color:#20272e;border-top-color:#dce0e3}
-  #staffShell table tbody tr:hover{background:#f0f2f3}
-  #staffShell .status-pill{
-    display:inline-flex;align-items:center;gap:5px;
-    border:1px solid #7e8991;border-radius:5px;
-    background:#f1f3f4;color:#171c21;font-weight:800
-  }
-  #staffShell .status-pill::before{
-    display:inline-grid;place-items:center;min-width:12px;
-    font-size:11px;line-height:1;font-weight:900
-  }
-  #staffShell .status-pill.red{background:#20272e;color:#fff;border-color:#20272e}
-  #staffShell .status-pill.red::before{content:"!"}
-  #staffShell .status-pill.blue{background:#e1e5e8;color:#171c21;border-color:#69747d}
-  #staffShell .status-pill.blue::before{content:"→"}
-  #staffShell .status-pill.amber{background:#f0f1f2;color:#171c21;border:1px dashed #555f68}
-  #staffShell .status-pill.amber::before{content:"◷"}
-  #staffShell .status-pill.gray{background:#fff;color:#303840;border:1px solid #929ca4}
-  #staffShell .status-pill.gray::before{content:"○"}
-  #staffShell .status-pill:not(.red):not(.blue):not(.amber):not(.gray){
-    background:#dfe3e6;color:#171c21;border-color:#626d75
-  }
-  #staffShell .status-pill:not(.red):not(.blue):not(.amber):not(.gray)::before{content:"✓"}
-  #staffShell .eta-window{
-    border:1px solid #8e989f!important;border-radius:5px!important;
-    background:#f2f4f5!important;color:#20272e!important
-  }
-  #staffShell .eta-window::before{
-    display:inline-block;margin-right:4px;font-weight:900
-  }
-  #staffShell .eta-window.normal::before{content:"ETA"}
-  #staffShell .eta-window.soon{background:#e5e8ea!important;border-style:dashed!important}
-  #staffShell .eta-window.soon::before{content:"◷"}
-  #staffShell .eta-window.late{background:#20272e!important;color:#fff!important;border-color:#20272e!important}
-  #staffShell .eta-window.late::before{content:"!"}
-  #staffShell .eta-window.done{background:#d9dee1!important;color:#171c21!important;border:2px solid #343d46!important}
-  #staffShell .eta-window.done::before{content:"✓"}
-  #staffShell .eta-window.gray{background:#f7f8f9!important;color:#414b54!important}
-  #staffShell .eta-window.gray::before{content:"—"}
-  #staffShell .table-eta-window,
-  #staffShell .table-eta-window.late,
-  #staffShell .table-eta-window.soon,
-  #staffShell .table-eta-window.done{color:#343d46}
-  #staffShell .donut{border:1px solid #6f7981}
-  #staffShell .swatch,
-  #staffShell .swatch.blue,
-  #staffShell .swatch.yellow,
-  #staffShell .swatch.red{background:#343d46;border:1px solid #171c21}
-  #staffShell .trend-bar{background:#59636e;box-shadow:none}
-  #staffShell .trend-count{color:#303840}
-  #staffShell .lane-track{background:#e5e8ea}
-  #staffShell .lane-fill{background:#59636e}
-  #staffShell .lane,
-  #staffShell .lane b{color:#303840}
-  #staffShell .exception-bar{background:#343d46}
-  #staffShell .exception-row h4{color:#20272e}
-  #staffShell .exception-row p{color:#58636c}
-  #staffShell .exception-footer{background:#f7f8f9;border-top-color:#dce0e3;color:#626c74}
-  #staffShell .map-legend,#staffShell .map-note{color:#414b54}
-  #staffShell .map-overview-label{background:#fff;border-color:#8e989f;color:#20272e}
-  #staffShell .map-overview-pulse{background:#343d46;box-shadow:0 0 0 3px #d9dee1}
-  #staffShell .map-overview-label small{color:#414b54;border-left-color:#aeb7be}
-  #staffShell .map-overview-help{background:#20272e;color:#fff}
-  #staffShell .field label{color:#303840}
-  #staffShell .field input,
-  #staffShell .field select,
-  #staffShell .field textarea{background:#fff;border-color:#9da8b0;color:#171c21}
-  #staffShell .field input::placeholder,
-  #staffShell .field textarea::placeholder{color:#626c74}
-  #staffShell .field input:focus-visible,
-  #staffShell .field select:focus-visible,
-  #staffShell .field textarea:focus-visible,
-  #staffShell button:focus-visible,
-  #staffShell a:focus-visible,
-  #staffShell input:focus-visible,
-  #staffShell select:focus-visible{
-    outline:3px solid #171c21!important;outline-offset:2px!important;
-    box-shadow:0 0 0 2px #fff!important
-  }
-  #staffShell .modal-backdrop{background:rgba(10,14,18,.68)}
-  #staffShell .modal{background:#fff;border-color:#aeb7be}
-  #staffShell .modal-head{background:#fff;border-bottom-color:#dce0e3}
-  #staffShell .modal-head h2{color:#171c21}
-  #staffShell .close-btn{background:#e9ecee;color:#171c21;border:1px solid #9da8b0}
-  #staffShell .detail-cell{background:#f3f5f6;border-color:#cbd1d6}
-  #staffShell .detail-cell small{color:#414b54}
-  #staffShell .detail-cell b{color:#171c21}
-  #staffShell .cloud-state,
-  #staffShell .cloud-state[data-state="connected"],
-  #staffShell .cloud-state[data-state="error"],
-  #staffShell .cloud-state[data-state="loading"]{
-    background:#f0f2f3;color:#20272e;border:1px solid #858f97
-  }
-  #staffShell .cloud-state .dot{background:#20272e;box-shadow:none}
-  #staffShell .toast,
-  #staffShell .toast.error,
-  #staffShell .toast.success{background:#20272e;color:#fff;border:1px solid #fff}
-  #staffShell .empty-row,
-  #staffShell .spotlight-empty{color:#414b54}
-  @media(prefers-reduced-motion:reduce){
-    #staffShell *,#staffShell *::before,#staffShell *::after{
-      animation-duration:.01ms!important;animation-iteration-count:1!important;
-      scroll-behavior:auto!important;transition-duration:.01ms!important
-    }
-  }
-</style>
+
 
 
 <style id="native-system-ui-refresh">
   /*
     Native System UI refresh for the staff workspace.
-    Uses operating-system fonts and a grayscale visual language.
-    Status remains understandable through words and symbols, not colour.
+    Uses operating-system fonts with the full-colour operations palette.
+    Status uses colour together with clear words and symbols.
   */
   #staffShell,
   #staffShell *,
@@ -1750,6 +1492,59 @@
 @media(max-width:600px){
   #staffShell .dashboard-module{border-top-color:#dce8f4}
 }
+
+
+/* Final cascade guard: remove all grayscale colour remnants from the staff workspace. */
+#staffShell{--navy:#12315b!important;--navy2:#1d4b80!important;--blue:#2869df!important;--cyan:#0b9fb0!important;--ink:#203b59!important;--muted:#617b96!important;--line:#d7e4f0!important;--bg:#edf4fb!important;--green:#11845f!important;--amber:#a9690a!important;--red:#bf3e49!important}
+#staffShell .sidebar{background:linear-gradient(165deg,#102c53 0%,#164c80 63%,#087e91 130%)!important;color:#eff7ff!important}
+#staffShell .sidebar .brand-icon{background:linear-gradient(145deg,#22c4cc,#2875e6)!important;color:#fff!important}
+#staffShell .nav-caption{color:#9ec3e3!important}
+#staffShell .nav-link{color:#dcecff!important}
+#staffShell .nav-link.active{background:linear-gradient(100deg,#2873e8,#078fa8)!important;color:#fff!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 5px 13px rgba(2,27,58,.2)!important}
+#staffShell .main{background:linear-gradient(180deg,#f3f8fd 0%,#edf4fb 100%)!important}
+#staffShell .topbar{background:#fff!important;border-bottom-color:#d8e5f1!important}
+#staffShell .page h1{color:#15375e!important}
+#staffShell .eyebrow{color:#2476a7!important}
+#staffShell .section-label{color:#2c6b9b!important}
+#staffShell .btn.primary,#staffShell .top-search button{background:linear-gradient(110deg,#286fe3,#087fba)!important;color:#fff!important;border-color:#286fe3!important}
+#staffShell .metric,#staffShell .metrics .metric{background:#fff!important;border-color:#d8e5f1!important;box-shadow:0 6px 18px rgba(31,72,116,.06)!important}
+#staffShell .metrics .metric:nth-child(1){background:linear-gradient(135deg,#e5f0ff,#fff 82%)!important;border-color:#cbdcf6!important}
+#staffShell .metrics .metric:nth-child(2){background:linear-gradient(135deg,#e0f7ef,#fff 82%)!important;border-color:#c6e9db!important}
+#staffShell .metrics .metric:nth-child(3){background:linear-gradient(135deg,#fff3d9,#fff 82%)!important;border-color:#f0dfb8!important}
+#staffShell .metrics .metric:nth-child(4){background:linear-gradient(135deg,#ffe9e9,#fff 82%)!important;border-color:#f0d0d0!important}
+#staffShell .metric-icon{background:#cfe2ff!important;color:#2165c7!important;border-color:#bfd5f5!important}
+#staffShell .metrics .metric:nth-child(2) .metric-icon{background:#bcebd8!important;color:#087d59!important;border-color:#a9dfca!important}
+#staffShell .metrics .metric:nth-child(3) .metric-icon{background:#ffe4a7!important;color:#9a5e00!important;border-color:#f1d48a!important}
+#staffShell .metrics .metric:nth-child(4) .metric-icon{background:#ffd0d1!important;color:#b52d3c!important;border-color:#f2b8bb!important}
+#staffShell .metric-value{color:#173b66!important}
+#staffShell .card{background:#fff!important;border-color:#d9e5f0!important}
+#staffShell .card-head{background:linear-gradient(90deg,#f4f8ff,#fff)!important;border-bottom-color:#e2ebf5!important}
+#staffShell .card-title{color:#1d456e!important}
+#staffShell .status-pill{background:#e5f6ee!important;color:#08754f!important;border-color:#c4e7d6!important}
+#staffShell .status-pill.red{background:#ffebeb!important;color:#b42e3c!important;border-color:#f0c3c7!important}
+#staffShell .status-pill.blue{background:#e8f1ff!important;color:#205fb7!important;border-color:#c7daf8!important}
+#staffShell .status-pill.amber{background:#fff4dc!important;color:#96600b!important;border-color:#efd7a4!important}
+#staffShell .status-pill.gray{background:#eef2f6!important;color:#536b82!important;border-color:#d4dee7!important}
+#staffShell .eta-window{background:#eaf3ff!important;color:#1d5da8!important;border-color:#ccdef4!important}
+#staffShell .eta-window.soon{background:#fff4dd!important;color:#98600a!important;border-color:#f0d99e!important}
+#staffShell .eta-window.late{background:#ffeded!important;color:#b52f3d!important;border-color:#efc2c6!important}
+#staffShell .eta-window.done{background:#e6f7ed!important;color:#08764f!important;border-color:#bfe7d0!important}
+#staffShell .donut{background:conic-gradient(#12a878 0 34%,#347be5 34% 89%,#efad32 89% 95%,#dc5962 95% 100%)!important;border-color:#d9e5f0!important}
+#staffShell .donut:before{background:#fff!important}
+#staffShell .swatch{background:#12a878!important}
+#staffShell .swatch.blue{background:#347be5!important}
+#staffShell .swatch.yellow{background:#efad32!important}
+#staffShell .swatch.red{background:#dc5962!important}
+#staffShell .trend-bar{background:linear-gradient(180deg,#36b9c5,#246bd9)!important}
+#staffShell .lane-fill{background:linear-gradient(90deg,#23b5bd,#2b71df)!important}
+#staffShell table th{background:#eaf2fc!important;color:#486a8b!important}
+#staffShell table td{color:#365775!important}
+#staffShell .cell-primary{color:#176bc4!important}
+#staffShell .shipment-card{border-left-color:#2d78df!important}
+#staffShell .shipment-card h3{color:#1b68bd!important}
+#staffShell .exception-bar{background:linear-gradient(180deg,#e76c72,#bd3949)!important}
+#staffShell .field input:focus,#staffShell .field select:focus,#staffShell .field textarea:focus{border-color:#367fe0!important;box-shadow:0 0 0 3px rgba(54,127,224,.10)!important}
+#staffShell button:focus-visible,#staffShell a:focus-visible,#staffShell input:focus-visible,#staffShell select:focus-visible,#staffShell textarea:focus-visible{outline:3px solid #2869df!important;outline-offset:2px!important;box-shadow:0 0 0 2px #fff!important}
 
 </style>
 </head>
