@@ -109,6 +109,56 @@ function safeShipment(row: Record<string, unknown>) {
     ],
   };
 }
+function safeForwardingJob(
+  job: Record<string, unknown>,
+  containerNo: string,
+  events: Record<string, unknown>[],
+) {
+  const statusLabels: Record<string, string> = {
+    draft: "Job created", booked: "Booking confirmed", origin_handling: "Origin handling",
+    departed: "In transit", transshipment: "At transshipment", arrived: "Arrived at destination",
+    customs: "Customs clearance", destination_handling: "Destination handling",
+    out_for_delivery: "Out for delivery", delivered: "Delivered to consignee",
+    closed: "Completed", on_hold: "On hold", cancelled: "Cancelled",
+  };
+  const milestones = events
+    .filter(event => event.status !== "skipped")
+    .map(event => ({
+      label: field(event, ["milestone_name"]) || String(event.milestone_code || "Shipment update").replace(/_/g, " "),
+      date: field(event, ["actual_at"]) || field(event, ["planned_at"]),
+      estimate: !field(event, ["actual_at"]) && !!field(event, ["planned_at"]),
+    }));
+  const generated = [
+    ["Vessel departed", field(job, ["actual_departure_at"])],
+    ["Vessel arrived destination", field(job, ["actual_arrival_at"])],
+    ["Delivered to consignee", field(job, ["delivered_at"])],
+  ].filter((event): event is [string, string] => !!event[1])
+    .map(([label, date]) => ({ label, date, estimate: false }));
+  milestones.push(...generated);
+  milestones.sort((a, b) => {
+    const av = Date.parse(a.date || "");
+    const bv = Date.parse(b.date || "");
+    return (Number.isFinite(av) ? av : 0) - (Number.isFinite(bv) ? bv : 0);
+  });
+  return {
+    jobNo: field(job, ["job_no"]),
+    hblNo: field(job, ["hbl_no"]),
+    mblNo: field(job, ["mbl_no"]),
+    container: containerNo,
+    type: field(job, ["service_type"]) || "Shipment",
+    status: statusLabels[String(job.status || "")] || "Shipment in progress",
+    vessel: [field(job, ["vessel_name"]), field(job, ["voyage_no"])].filter(Boolean).join(" / "),
+    shippingLine: field(job, ["carrier"]),
+    origin: field(job, ["pol"]),
+    transshipmentPort: field(job, ["transshipment_port"]),
+    gateway: field(job, ["pod"]),
+    etd: field(job, ["etd"]),
+    eta: field(job, ["eta"]),
+    warnings: [] as string[],
+    photos: [] as Array<Record<string, string>>,
+    milestones,
+  };
+}
 function clientAddress(req: Request): string {
   const direct = req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip");
   if (direct) return direct.trim().slice(0, 100);
@@ -137,8 +187,8 @@ Deno.serve(async (req: Request) => {
   }
   const rawReference = typeof payload.reference === "string" ? payload.reference.trim() : "";
   const reference = normalize(rawReference);
-  if (reference.length < 5 || reference.length > 32 || !/^[A-Z0-9]+$/.test(reference)) {
-    return reply(400, { error: "Enter a valid container or bill of lading number." }, origin);
+  if (reference.length < 5 || reference.length > 40 || !/^[A-Z0-9]+$/.test(reference)) {
+    return reply(400, { error: "Enter a valid container, HBL, MBL or job number." }, origin);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -176,7 +226,68 @@ Deno.serve(async (req: Request) => {
     return container === reference || billOfLading === reference;
   }) as Record<string, unknown>[];
 
-  const results = matches.slice(0, 12).map(safeShipment);
+  const { data: visibleJobs, error: jobsError } = await admin.from("forwarding_jobs")
+    .select("*").eq("customer_visible", true).order("updated_at", { ascending: false }).limit(2500);
+  if (jobsError || !Array.isArray(visibleJobs)) {
+    return reply(503, { error: "Tracking service is temporarily unavailable." }, origin);
+  }
+  const visibleJobIds = visibleJobs.map((job: Record<string, unknown>) => String(job.id || "")).filter(Boolean);
+  let jobLinks: Record<string, unknown>[] = [];
+  let jobEvents: Record<string, unknown>[] = [];
+  // Batch ID filters to keep the PostgREST URL comfortably below gateway limits.
+  for (let offset = 0; offset < visibleJobIds.length; offset += 200) {
+    const idBatch = visibleJobIds.slice(offset, offset + 200);
+    const [linksResult, eventsResult] = await Promise.all([
+      admin.from("job_container_links").select("job_id,container_no").in("job_id", idBatch).limit(10000),
+      admin.from("shipment_milestones")
+        .select("job_id,container_no,milestone_code,milestone_name,planned_at,actual_at,status,customer_visible,created_at")
+        .in("job_id", idBatch).eq("customer_visible", true)
+        .order("created_at", { ascending: true }).limit(10000),
+    ]);
+    if (linksResult.error || eventsResult.error || !Array.isArray(linksResult.data) || !Array.isArray(eventsResult.data)) {
+      return reply(503, { error: "Tracking service is temporarily unavailable." }, origin);
+    }
+    jobLinks.push(...linksResult.data as Record<string, unknown>[]);
+    jobEvents.push(...eventsResult.data as Record<string, unknown>[]);
+  }
+
+  const linksByJob = new Map<string, Record<string, unknown>[]>();
+  const eventsByJob = new Map<string, Record<string, unknown>[]>();
+  for (const link of jobLinks) {
+    const key = String(link.job_id || "");
+    const group = linksByJob.get(key) || [];
+    group.push(link);
+    linksByJob.set(key, group);
+  }
+  for (const event of jobEvents) {
+    const key = String(event.job_id || "");
+    const group = eventsByJob.get(key) || [];
+    group.push(event);
+    eventsByJob.set(key, group);
+  }
+  const matchedJobs = (visibleJobs as Record<string, unknown>[]).filter(job => {
+    const jobMatches = [job.job_no, job.hbl_no, job.mbl_no].some(value => normalize(value) === reference);
+    const containerMatches = (linksByJob.get(String(job.id)) || []).some(link => normalize(link.container_no) === reference);
+    return jobMatches || containerMatches;
+  });
+  const jobResults: ReturnType<typeof safeForwardingJob>[] = [];
+  for (const job of matchedJobs) {
+    const links = linksByJob.get(String(job.id)) || [];
+    const matchedByContainer = links.some(link => normalize(link.container_no) === reference);
+    const targetContainers = matchedByContainer
+      ? links.filter(link => normalize(link.container_no) === reference).map(link => String(link.container_no || ""))
+      : links.map(link => String(link.container_no || ""));
+    const containers = targetContainers.length ? Array.from(new Set(targetContainers)) : [""];
+    for (const containerNo of containers) {
+      const events = (eventsByJob.get(String(job.id)) || []).filter(event =>
+        (!String(event.container_no || "").trim() || !containerNo || normalize(event.container_no) === normalize(containerNo))
+      );
+      jobResults.push(safeForwardingJob(job, containerNo, events));
+    }
+  }
+
+  const totalMatches = matches.length + jobResults.length;
+  const results = [...jobResults, ...matches.map(safeShipment)].slice(0, 12);
   if (results.length) {
     const containerNumbers = Array.from(new Set(results.map(item => normalize(item.container)).filter(Boolean)));
     if (containerNumbers.length) {
@@ -200,9 +311,16 @@ Deno.serve(async (req: Request) => {
           });
           grouped.set(key, bucket);
         }));
-        for (const item of results) item.photos = grouped.get(normalize(item.container)) || [];
+        for (const item of results) {
+          if (item.container) item.photos = grouped.get(normalize(item.container)) || [];
+        }
       }
     }
   }
-  return reply(200, { results, truncated: matches.length > results.length, sourceUpdatedAt: source.updated_at || null }, origin);
+  const updateCandidates = [source.updated_at, ...matchedJobs.map(job => job.updated_at)]
+    .filter(value => typeof value === "string" && Number.isFinite(Date.parse(value as string)));
+  const sourceUpdatedAt = updateCandidates.length
+    ? updateCandidates.sort((a, b) => Date.parse(String(b)) - Date.parse(String(a)))[0]
+    : null;
+  return reply(200, { results, truncated: totalMatches > results.length, sourceUpdatedAt }, origin);
 });
