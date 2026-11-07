@@ -312,6 +312,110 @@
   }
 </style>
 
+<style id="full-colour-theme">
+
+/* Customer tracking colour theme — consistent with the staff operations workspace. */
+:root{
+  --navy:#12315b;--navy2:#1d4b80;--blue:#2869df;--cyan:#0b9fb0;
+  --ink:#203b59;--muted:#617b96;--line:#d7e4f0;--bg:#edf4fb;
+  --green:#11845f;--amber:#a9690a;--red:#bf3e49;
+  --shadow:0 10px 28px rgba(27,66,112,.09)
+}
+body{background:linear-gradient(180deg,#edf4fb 0%,#f6f9fd 100%);color:#203b59}
+.topbar{background:linear-gradient(105deg,#102d55,#174e83 70%,#087f91);border:0;box-shadow:0 4px 16px rgba(12,42,78,.14)}
+.brand{color:#fff}
+.brand-icon{background:linear-gradient(145deg,#21c2c8,#2872e1);box-shadow:0 6px 18px rgba(4,29,65,.26)}
+.brand-subtitle{color:#b9d8f0}
+.staff-link{color:#fff;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.09);border-radius:8px}
+.staff-link:hover{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.45)}
+.wrap{max-width:1280px}
+.hero{
+  background:linear-gradient(120deg,#12315b 0%,#245fb4 56%,#078d9b 100%);
+  border:1px solid rgba(255,255,255,.12);border-radius:16px;
+  box-shadow:0 16px 38px rgba(20,72,133,.18);color:#fff
+}
+.hero:before{background:linear-gradient(180deg,#27ced0,#79e0c0)}
+.hero .eyebrow{color:#c8e9ff}
+.hero h1{color:#fff}
+.hero-copy{color:#e0efff}
+.search-panel{background:#fff;border:1px solid rgba(219,234,249,.9);border-radius:12px;box-shadow:0 10px 24px rgba(9,35,77,.17)}
+.search-panel label{color:#355a7e}
+.search-row input{background:#f8fbff;border-color:#cddded;color:#183f68}
+.search-row input:focus{border-color:#4087e5;box-shadow:0 0 0 3px rgba(40,105,223,.14)}
+.search-row input::placeholder{color:#8297ad}
+.search-row button{background:linear-gradient(110deg,#286fe3,#078eaa);box-shadow:0 5px 13px rgba(33,112,220,.2)}
+.search-row button:hover{background:linear-gradient(110deg,#1d61cc,#087b96)}
+.search-hint{color:#7189a2}
+.status-note.success{color:#08764f}
+.status-note.error{color:#b52f3d}
+.features{border:1px solid #d8e5f1;border-radius:13px;background:#fff;box-shadow:0 7px 20px rgba(27,66,112,.055)}
+.feature{background:#fff}
+.feature:before{height:3px;width:30px;border-radius:3px}
+.feature:nth-child(1){background:linear-gradient(145deg,#eef5ff,#fff 72%)}
+.feature:nth-child(1):before{background:#3479df}
+.feature:nth-child(2){background:linear-gradient(145deg,#e8f8f4,#fff 72%)}
+.feature:nth-child(2):before{background:#0b9d86}
+.feature:nth-child(3){background:linear-gradient(145deg,#f3efff,#fff 72%)}
+.feature:nth-child(3):before{background:#8063d8}
+.feature strong{color:#234c70}
+.feature span{color:#7189a1}
+.results-head h2{color:#153b67}
+.results-head p{color:#7189a2}
+.print-report{border-color:#c8d9eb;color:#245a8c;background:#fff}
+.print-report:hover{background:#eff6ff;border-color:#7eaceb;color:#145fbe}
+.freshness-note{background:#edf7ff;border-color:#c8dff3;color:#3f698d}
+.result-card{border-color:#d5e3f1;border-left:4px solid #3479df;box-shadow:0 8px 22px rgba(27,66,112,.07)}
+.result-card:nth-child(3n+2){border-left-color:#0e9a88}
+.result-card:nth-child(3n){border-left-color:#8767d7}
+.result-top{background:linear-gradient(90deg,#edf5ff,#f9fbff);border-bottom-color:#dce8f5}
+.result-top h3{color:#1f68c4}
+.result-top p{color:#718ba4}
+.badge{background:#eaf2ff;border-color:#cbdcf8;color:#225fae}
+.badge.done{background:#e5f7ed;border-color:#bfe7d0;color:#08764f}
+.result-grid{background:#fff}
+.result-cell{background:#f0f6ff;border-color:#d9e7f7;border-left-color:#4d86de}
+.result-cell small{color:#6885a0}
+.result-cell b{color:#234b70}
+.eta-countdown{background:#eaf3ff;border-color:#ccdef4}
+.eta-countdown span,.eta-countdown small{color:#6d86a0}
+.eta-countdown b{color:#1d5da8}
+.eta-countdown.soon{background:#fff4dd;border-color:#f0d99e}
+.eta-countdown.soon b{color:#98600a}
+.eta-countdown.late{background:#ffeded;border-color:#efc2c6}
+.eta-countdown.late b{color:#b52f3d}
+.eta-countdown.done{background:#e6f7ed;border-color:#bfe7d0}
+.eta-countdown.done b{color:#08764f}
+.eta-countdown.gray{background:#eef2f6;border-color:#d7e0e9}
+.eta-countdown.gray b{color:#526a80}
+.timeline{border-color:#d3e2ef}
+.mile{border-color:#d8e5f1}
+.mile.done{border-color:#13a276}
+.mile.done b{color:#08764f}
+.mile.estimate{border-color:#e4a333}
+.mile.estimate b{color:#9c650f}
+.mile b{color:#345a7c}
+.mile span{color:#7189a0}
+.eta-warning{background:#fff3e7;border-color:#f0d0a6;color:#92550d}
+.customer-photo-gallery{border-top-color:#dce8f4}
+.customer-photo-gallery h4{color:#305778}
+.customer-photo{border-color:#d7e4f0;background:#f7faff}
+.result-card-actions button{border-color:#cbdced;color:#285b8c;background:#fff}
+.result-card-actions button:hover{border-color:#77a9e8;background:#eff6ff}
+.map-panel{border-color:#d6e4f1;box-shadow:0 8px 22px rgba(27,66,112,.07)}
+.map-panel-head{background:linear-gradient(90deg,#eff6ff,#fff);border-bottom:1px solid #dce8f4}
+.map-panel-head h3{color:#1a4b7b}
+.map-panel-head p{color:#7189a0}
+.map-controls button{background:linear-gradient(110deg,#286fe3,#078eaa)}
+.map-status{background:#f1f7fd;color:#56738f;border-top:1px solid #dfebf5}
+.map-status.error{background:#fff0ef;color:#ad333d}
+.map-legend{color:#69849e}
+.empty-state{background:linear-gradient(100deg,#f1f7ff,#fff);border-color:#d7e5f2;color:#5d7893}
+.empty-state strong{color:#1b4b7b}
+.footer{border-top-color:#dce7f1;color:#728ba2}
+.footer a{color:#176bc5}
+@media(max-width:900px){.hero{background:linear-gradient(145deg,#12315b,#245fb4 65%,#078d9b)}}
+
+</style>
 </head>
 <body>
   <header class="topbar">
