@@ -47,14 +47,14 @@
     <div class="hero-copy">
       <div class="eyebrow"><span class="eyebrow-dot"></span> SHIPMENT VISIBILITY / CUSTOMER PORTAL</div>
       <h1>Your shipment.<br>Every key milestone.</h1>
-      <p>Follow your container movement from vessel departure through destination arrival, CFS handling, destuffing and empty return. Search with your container number or Master Bill of Lading.</p>
+      <p>Follow your container movement from vessel departure through destination arrival, CFS handling, destuffing and empty return. Search with your container number, House Bill of Lading, Master Bill of Lading or forwarding job number.</p>
       <div class="hero-points"><span><i>✓</i> Milestone history</span><span><i>✓</i> ETA visibility</span><span><i>✓</i> Vessel position when available</span></div>
     </div>
     <form class="search-panel" id="trackForm">
       <div class="search-panel-head"><strong>Track your shipment</strong><span>Enter the reference shown on your shipping documents.</span></div>
-      <label for="reference">Container number / Master B/L</label>
-      <div class="search-row"><input id="reference" name="reference" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ABCD1234567 or MBL number" maxlength="40" required><button type="submit" id="searchButton">Track shipment →</button></div>
-      <p class="search-hint">Use the complete container number or Master Bill of Lading reference. Search availability is protected by rate limits.</p>
+      <label for="reference">Container / HBL / MBL / Job number</label>
+      <div class="search-row"><input id="reference" name="reference" type="text" autocomplete="off" spellcheck="false" placeholder="Enter container, HBL, MBL or job number" maxlength="40" required><button type="submit" id="searchButton">Track shipment →</button></div>
+      <p class="search-hint">Use the complete container, House Bill of Lading, Master Bill of Lading or job number. Search availability is protected by rate limits.</p>
       <div class="status-note" id="searchMessage" role="status" aria-live="polite"></div>
     </form>
   </section>
