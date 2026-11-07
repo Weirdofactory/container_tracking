@@ -117,7 +117,9 @@
     }
     function customerEtaCountdown(item){
       const milestones=Array.isArray(item.milestones)?item.milestones:[];
-      const arrival=milestones.some(m=>!m.estimate&&/arrival|released|cfs received|destuff|returned/i.test(String(m.label||"")));
+      const deliveryComplete=/delivered|completed/i.test(String(item.status||""));
+      const arrival=milestones.some(m=>!m.estimate&&/arrival|released|cfs received|destuff|returned|delivered/i.test(String(m.label||"")));
+      if(deliveryComplete)return{text:"Final delivery milestone recorded",tone:"done"};
       if(arrival)return{text:"Arrival milestone recorded",tone:"done"};
       const raw=String(item.eta||"").trim();if(!raw)return{text:"ETA not recorded",tone:"gray"};
       let eta=null,m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
