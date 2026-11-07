@@ -28,6 +28,15 @@ const date = (v: unknown) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(+parsed) || parsed.toISOString().slice(0, 10) !== value) throw new Error("Enter a valid date.");
   return value;
 };
+const timestamp = (v: unknown) => {
+  if (v === null || v === undefined || String(v).trim() === "") return null;
+  const value = String(v).trim();
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) throw new Error("Enter a valid date and time.");
+  return new Date(parsed).toISOString();
+};
+const optionalNumber = (v: unknown, label: string, min = 0) =>
+  v === null || v === undefined || String(v).trim() === "" ? null : number(v, label, min);
 const uuid = (v: unknown) => {
   const value = String(v ?? "");
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) throw new Error("Invalid record ID.");
@@ -38,6 +47,8 @@ async function sha256Hex(value: string) {
   return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
 }
 const allowed = {
+  job: new Set(["Admin", "Editor"]),
+  jobOps: new Set(["Admin", "Editor", "Operator"]),
   sailing: new Set(["Admin", "Editor", "Operator"]),
   consolidation: new Set(["Admin", "Editor", "Operator"]),
   filing: new Set(["Admin", "Editor", "Operator"]),
@@ -124,6 +135,9 @@ Deno.serve(async (req: Request) => {
 
     if (action === "read") {
       const tables = [
+        ["jobs", "forwarding_jobs", "created_at"],
+        ["jobContainers", "job_container_links", "created_at"],
+        ["milestones", "shipment_milestones", "created_at"],
         ["sailings", "logistics_sailings", "created_at"],
         ["sailingShipments", "sailing_schedule_shipments", "created_at"],
         ["consolidations", "lcl_consolidations", "created_at"],
@@ -139,6 +153,111 @@ Deno.serve(async (req: Request) => {
         return [key, data ?? []] as const;
       }));
       return reply(200, { ...Object.fromEntries(results), profile: { displayName: profile.display_name, role: profile.role } }, origin);
+    }
+
+
+    if (action === "upsertForwardingJob") {
+      roleCheck(profile.role, "job");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const before = id ? (await admin.from("forwarding_jobs").select("*").eq("id", id).maybeSingle()).data : null;
+      const jobNo = text(d.job_no, 80);
+      if (!jobNo) throw new Error("Job number is required.");
+      const packageCount = optionalNumber(d.package_count, "Package count", 1);
+      if (packageCount !== null && !Number.isInteger(packageCount)) throw new Error("Package count must be a whole number.");
+      const row = {
+        ...(id ? { id } : {}),
+        job_no: jobNo,
+        customer_reference: text(d.customer_reference, 100),
+        service_type: val(d.service_type || "FCL", ["FCL","LCL","AIR","OTHER"], "service type"),
+        direction: val(d.direction || "import", ["import","export","cross_trade","transshipment"], "shipment direction"),
+        status: val(d.status || "draft", ["draft","booked","origin_handling","departed","transshipment","arrived","customs","destination_handling","out_for_delivery","delivered","closed","on_hold","cancelled"], "job status"),
+        hbl_no: text(d.hbl_no, 120), mbl_no: text(d.mbl_no, 120), booking_no: text(d.booking_no, 120),
+        customer_name: text(d.customer_name, 180), shipper: text(d.shipper, 180),
+        consignee: text(d.consignee, 180), notify_party: text(d.notify_party, 180),
+        origin_agent: text(d.origin_agent, 180), destination_agent: text(d.destination_agent, 180),
+        carrier: text(d.carrier, 120), vessel_name: text(d.vessel_name, 160), voyage_no: text(d.voyage_no, 80),
+        pol: text(d.pol, 120), transshipment_port: text(d.transshipment_port, 120),
+        pod: text(d.pod, 120), final_delivery_place: text(d.final_delivery_place, 160),
+        incoterm: text(d.incoterm, 20).toUpperCase(), commodity: text(d.commodity, 240),
+        package_count: packageCount, package_type: text(d.package_type, 80),
+        gross_weight_kg: optionalNumber(d.gross_weight_kg, "Gross weight"),
+        volume_cbm: optionalNumber(d.volume_cbm, "Volume"),
+        cargo_ready_date: date(d.cargo_ready_date), etd: date(d.etd), eta: date(d.eta),
+        actual_departure_at: timestamp(d.actual_departure_at), actual_arrival_at: timestamp(d.actual_arrival_at),
+        delivered_at: timestamp(d.delivered_at), branch: text(d.branch, 80),
+        sales_owner: text(d.sales_owner, 120), operations_owner: text(d.operations_owner, 120),
+        customer_visible: d.customer_visible === true || d.customer_visible === "true",
+        notes: text(d.notes, 3000), updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!id ? { created_by: actorId } : {}),
+      };
+      const { data, error } = await admin.from("forwarding_jobs").upsert(row).select("*").single();
+      if (error?.code === "23505") throw new Error("That job number is already in use.");
+      if (error) throw new Error(error.message);
+      await recordAudit(id ? "update" : "create", "forwarding_job", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "linkJobContainer") {
+      roleCheck(profile.role, "jobOps");
+      const d = payload.data ?? {};
+      const jobId = uuid(d.job_id);
+      const containerNo = await assertContainer(d.container_no);
+      const { data: job, error: jobError } = await admin.from("forwarding_jobs").select("id").eq("id", jobId).maybeSingle();
+      if (jobError || !job) throw new Error("Forwarding job not found.");
+      const before = (await admin.from("job_container_links").select("*").eq("job_id", jobId).eq("container_no", containerNo).maybeSingle()).data;
+      const packageCount = optionalNumber(d.package_count, "Allocated package count", 1);
+      if (packageCount !== null && !Number.isInteger(packageCount)) throw new Error("Allocated package count must be a whole number.");
+      const row = {
+        job_id: jobId, container_no: containerNo,
+        allocation_role: val(d.allocation_role || "primary", ["primary","split","shared"], "container allocation"),
+        package_count: packageCount,
+        gross_weight_kg: optionalNumber(d.gross_weight_kg, "Allocated gross weight"),
+        volume_cbm: optionalNumber(d.volume_cbm, "Allocated volume"),
+        notes: text(d.notes, 1200), created_by: before?.created_by || actorId,
+      };
+      const { data, error } = await admin.from("job_container_links")
+        .upsert(row, { onConflict: "job_id,container_no" }).select("*").single();
+      if (error) throw new Error(error.message);
+      await recordAudit(before ? "update" : "link_container", "job_container_link", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "upsertShipmentMilestone") {
+      roleCheck(profile.role, "jobOps");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const jobId = uuid(d.job_id);
+      const before = id ? (await admin.from("shipment_milestones").select("*").eq("id", id).maybeSingle()).data : null;
+      if (id && (!before || before.job_id !== jobId)) throw new Error("Milestone does not belong to this forwarding job.");
+      const containerNo = text(d.container_no, 40) ? await assertContainer(d.container_no) : "";
+      if (containerNo) {
+        const { data: link, error: linkError } = await admin.from("job_container_links").select("id")
+          .eq("job_id", jobId).eq("container_no", containerNo).maybeSingle();
+        if (linkError || !link) throw new Error("Link this container to the job before recording a container-level milestone.");
+      }
+      const milestoneCode = val(d.milestone_code,
+        ["booking_confirmed","cargo_received_origin","export_customs_cleared","gate_in_origin","vessel_departed","transshipment_arrived","transshipment_departed","vessel_arrived_destination","port_discharged","import_customs_cleared","port_released","cfs_received","destuffed","out_for_delivery","delivered_to_consignee","empty_returned","other"],
+        "milestone");
+      const status = val(d.status || "planned", ["planned","completed","skipped","delayed"], "milestone status");
+      const plannedAt = timestamp(d.planned_at);
+      const actualAt = timestamp(d.actual_at);
+      if (status === "completed" && !actualAt) throw new Error("Enter the actual date and time for a completed milestone.");
+      const customerVisible = d.customer_visible === true || d.customer_visible === "true";
+      if (customerVisible && profile.role === "Operator") throw new Error("Only Admin or Editor roles can publish a customer-visible milestone.");
+      const row = {
+        ...(id ? { id } : {}), job_id: jobId, container_no: containerNo,
+        milestone_code: milestoneCode,
+        milestone_name: text(d.milestone_name, 120) || milestoneCode.replace(/_/g, " "),
+        location: text(d.location, 160), planned_at: plannedAt, actual_at: actualAt,
+        status, customer_visible: customerVisible, source: text(d.source || "manual", 40),
+        notes: text(d.notes, 2000), updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!id ? { created_by: actorId } : {}),
+      };
+      const { data, error } = await admin.from("shipment_milestones").upsert(row).select("*").single();
+      if (error) throw new Error(error.message);
+      await recordAudit(id ? "update" : "create", "shipment_milestone", data.id, before, data);
+      return reply(200, { record: data }, origin);
     }
 
     if (action === "upsertSailing") {
