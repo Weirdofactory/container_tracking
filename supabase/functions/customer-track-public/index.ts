@@ -187,8 +187,8 @@ Deno.serve(async (req: Request) => {
   }
   const rawReference = typeof payload.reference === "string" ? payload.reference.trim() : "";
   const reference = normalize(rawReference);
-  if (reference.length < 5 || reference.length > 32 || !/^[A-Z0-9]+$/.test(reference)) {
-    return reply(400, { error: "Enter a valid container or bill of lading number." }, origin);
+  if (reference.length < 5 || reference.length > 40 || !/^[A-Z0-9]+$/.test(reference)) {
+    return reply(400, { error: "Enter a valid container, HBL, MBL or job number." }, origin);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
