@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0b2b50">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Container Tracking Suite</title>
+  <title>Freight Operations Workspace</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1869,11 +1869,76 @@
   #page-containers .container-control-footer{padding:11px 16px;background:#f8fafc;border-top:1px solid #e8eef3;color:#8093a4;font-size:10px}
   @media(max-width:850px){#page-containers .container-control-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#page-containers .container-control-toolbar{align-items:stretch;flex-direction:column}#page-containers .container-control-search{min-width:0;width:100%}}
 </style>
+
+<style id="freight-operations-enterprise-rebuild">
+  :root{--navy:#102f4b;--navy2:#17496c;--blue:#087eb8;--cyan:#0b9bb4;--ink:#1d3a50;--muted:#708596;--line:#d5e0e8;--bg:#edf2f6;--white:#fff;--green:#16845f;--amber:#bd7a17;--red:#c64c49;--shadow:0 2px 8px rgba(19,48,70,.07);--radius:8px}
+  html,body{background:var(--bg);color:var(--ink);font-family:Arial,"Segoe UI",sans-serif;font-size:13px}
+  .shell{background:var(--bg)}
+  .sidebar{width:252px;padding:0 0 12px;background:#102f4b;color:#e8f1f7;border-right:1px solid #0a263d;box-shadow:2px 0 8px #102f4b18}
+  .sidebar .brand{min-height:67px;padding:12px 17px;border:0;border-bottom:1px solid #ffffff20;background:#0b263d;gap:11px}
+  .sidebar .brand-icon{width:38px;height:38px;border-radius:7px;background:linear-gradient(145deg,#16a7c3,#0875b8);font-size:19px;box-shadow:none}
+  .sidebar .brand-name{font:700 15px Arial,"Segoe UI",sans-serif;color:#fff;letter-spacing:.1px}
+  .sidebar .brand-sub{font-size:8px;letter-spacing:1.1px;color:#9eb8ca;margin-top:4px}
+  .nav-caption{padding:18px 17px 7px;color:#83a2b8;font-size:9px;letter-spacing:1.25px}
+  .nav-list{gap:2px;padding:0 8px}
+  .nav-link{min-height:36px;padding:8px 10px;border-radius:5px;color:#d0e0eb;font-size:12px;font-weight:600;gap:10px}
+  .nav-link:hover{background:#ffffff12;color:#fff}
+  .nav-link.active{background:#087eb8;color:#fff;box-shadow:inset 3px 0 #5ed0e3;font-weight:700}
+  .nav-icon{width:19px;font-size:14px}
+  .sidebar-bottom{margin:16px 12px 0;padding:12px 8px 3px;border-top:1px solid #ffffff20;color:#9bb2c2;font-size:10px}
+  .sidebar-bottom b{color:#eaf4f9;font-size:9px;letter-spacing:.9px}
+  .main{margin-left:252px;background:var(--bg)}
+  .topbar{height:62px;padding:0 22px;gap:12px;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 1px 3px #18364f0b}
+  .top-search{height:36px;max-width:540px;border-radius:5px;background:#f6f9fb;border-color:#d5e0e8;padding:0 10px}
+  .top-search input{font-size:12px}
+  .top-search button{border-radius:4px;padding:7px 13px;background:#087eb8;font-size:11px}
+  .top-right{gap:7px}
+  .cloud-state,.icon-btn,.user-chip{height:35px;border-radius:5px;font-size:11px}
+  .btn{border-radius:5px;padding:8px 12px;font-size:11px}
+  .btn.primary{background:#087eb8;box-shadow:none}
+  .page{max-width:1900px;padding:20px 22px 36px}
+  .page-head{align-items:center;margin-bottom:16px;padding-bottom:13px;border-bottom:1px solid #d9e2e9}
+  .eyebrow{font-size:9px;letter-spacing:1.1px;color:#53768e}
+  .page h1{font:700 24px Arial,"Segoe UI",sans-serif;letter-spacing:-.4px;color:#153b58;margin:6px 0 3px}
+  .subtitle{font-size:12px;color:#728899}
+  .section-label{margin:16px 1px 8px;color:#476981;font-size:10px;letter-spacing:1px}
+  .metrics{gap:9px}
+  .metric{min-height:82px;padding:12px;border:1px solid #dce5eb;border-radius:6px;box-shadow:var(--shadow);gap:11px}
+  .metric:nth-child(n){background:#fff}
+  .metric-icon{width:39px;height:39px;border-radius:6px;font-size:18px}
+  .metric-value{font:700 25px Arial,"Segoe UI",sans-serif;color:#143c59}
+  .metric-label{font-size:10px;color:#617d91}
+  .metric-note{font-size:9px}
+  .grid-main{gap:10px;margin-top:10px}
+  .card{border:1px solid #d8e2e9;border-radius:6px;box-shadow:var(--shadow)}
+  .card-head{padding:11px 14px;border-bottom:1px solid #e3eaf0}
+  .card-title{font:700 14px Arial,"Segoe UI",sans-serif;color:#173f5d}
+  .card-sub{font-size:10px}
+  .arrival-list{padding:4px 13px 8px}
+  .arrival{padding:9px 2px}
+  .status-pill{border-radius:4px;padding:4px 7px;font-size:9px}
+  .insight-grid{gap:10px;margin-top:10px}
+  .insight-card{min-height:185px}
+  .page-section{min-width:0}
+  .page-section .card,.page-section .table-wrap,.page-section .panel{border-radius:6px}
+  table{border-collapse:collapse}
+  th{background:#eaf0f4;color:#45677e;font-size:10px;text-transform:uppercase;letter-spacing:.45px}
+  td{font-size:11px;color:#294b63}
+  th,td{padding:9px 10px;border-bottom:1px solid #e5ebf0}
+  tr:hover td{background:#f5f9fb}
+  input,select,textarea{border-radius:5px}
+  .btn:hover{transform:none;filter:brightness(.97)}
+  .map-wrap{border-radius:0}
+  @media(max-width:1050px){.sidebar{width:220px}.main{margin-left:220px}.page{padding:17px 15px 30px}.topbar{padding:0 14px}}
+  @media(max-width:760px){.sidebar{width:252px;transform:translateX(-100%)}body.menu-open .sidebar{transform:translateX(0)}.main{margin-left:0}.topbar{height:58px;padding:0 11px}.page{padding:14px 11px 25px}.page h1{font-size:21px}.top-right .cloud-state{display:none}}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+</style>
+
 </head>
 <body>
   <div class="shell" id="staffShell" hidden>
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><div class="brand-icon">⚓</div><div><div class="brand-name">Container</div><div class="brand-sub">TRACKING SUITE</div></div></div>
+      <div class="brand"><div class="brand-icon">⚓</div><div><div class="brand-name">Freight Operations</div><div class="brand-sub">LOGISTICS MANAGEMENT</div></div></div>
       <div class="nav-caption">WORKSPACE</div>
       <nav class="nav-list">
         <button class="nav-link active" data-page="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
