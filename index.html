@@ -1846,6 +1846,29 @@
 }
 
 </style>
+<style id="container-management-workspace">
+  #page-containers .container-control-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 15px}
+  #page-containers .container-kpi{background:#fff;border:1px solid #dce7ef;border-radius:13px;padding:15px 17px;box-shadow:0 5px 18px #173b600a}
+  #page-containers .container-kpi span{display:block;color:#71879b;font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+  #page-containers .container-kpi b{display:block;color:#123b60;font-size:27px;line-height:1.2;margin-top:6px}
+  #page-containers .container-control-card{overflow:hidden}
+  #page-containers .container-control-toolbar{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px 17px;border-bottom:1px solid #e8eef3}
+  #page-containers .container-control-toolbar>div b{display:block;color:#173d5d;font-size:14px}
+  #page-containers .container-control-toolbar small{display:block;color:#8498a9;font-size:11px;margin-top:4px}
+  #page-containers .container-control-search{height:39px;min-width:min(340px,48%);display:flex;align-items:center;gap:8px;padding:0 11px;border:1px solid #dce6ee;border-radius:8px;background:#f8fafc;color:#7890a4}
+  #page-containers .container-control-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#193b58}
+  #page-containers .container-control-table{min-width:980px}
+  #page-containers .container-control-table td{vertical-align:middle}
+  #page-containers .container-primary{display:block;color:#087bc3;font-weight:800}
+  #page-containers .container-secondary{display:block;color:#8497a8;font-size:10px;margin-top:4px}
+  #page-containers .container-route{font-weight:700;color:#345873}
+  #page-containers .container-stage{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;background:#e8f3ff;color:#1269a8;font-size:10px;font-weight:800;white-space:nowrap}
+  #page-containers .container-stage.done{background:#e7f7ef;color:#087a51}
+  #page-containers .container-stage.warn{background:#fff3dc;color:#96600c}
+  #page-containers .container-open{border:1px solid #cfe0eb;border-radius:7px;background:#fff;color:#176f9f;padding:6px 9px;font-size:10px;font-weight:800;white-space:nowrap}
+  #page-containers .container-control-footer{padding:11px 16px;background:#f8fafc;border-top:1px solid #e8eef3;color:#8093a4;font-size:10px}
+  @media(max-width:850px){#page-containers .container-control-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#page-containers .container-control-toolbar{align-items:stretch;flex-direction:column}#page-containers .container-control-search{min-width:0;width:100%}}
+</style>
 </head>
 <body>
   <div class="shell" id="staffShell" hidden>
@@ -1855,6 +1878,7 @@
       <nav class="nav-list">
         <button class="nav-link active" data-page="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
         <button class="nav-link" data-page="shipments"><span class="nav-icon">▤</span>Shipments</button>
+        <button class="nav-link" data-page="containers"><span class="nav-icon">▣</span>Container management</button>
         <button class="nav-link" data-page="tracking"><span class="nav-icon">⌕</span>Track &amp; Trace</button>
       </nav>
       <div class="nav-caption">OPERATIONS</div>
@@ -1941,6 +1965,15 @@
         <section class="page-section" id="page-documents"><div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> OPERATIONS / DOCUMENTS</div><h1>Documents &amp; exports</h1><p class="subtitle">Download the current register or import a spreadsheet into the shipment workspace.</p></div></div><article class="card"><div class="card-head"><div><div class="card-title">Shipment register</div><div class="card-sub">Exports reflect records currently loaded from Supabase.</div></div></div><div class="toolbar"><button class="btn primary" id="documentsExport">⇩ Export Excel</button><button class="btn" id="documentsCsv">⇩ Download CSV</button><button class="btn" id="documentsImport">⇧ Import spreadsheet</button></div><div class="exception-footer">Imports are previewed before they are saved. The original shipment rows remain in the register until you confirm.</div></article></section>
         <section class="page-section" id="page-reports"><div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> OPERATIONS / REPORTS</div><h1>Reports</h1><p class="subtitle">Status, arrival and lane summaries calculated from loaded records.</p></div><div class="head-actions"><button class="btn" id="reportPhotoBtn">📷 Download status photo</button><button class="btn primary" id="reportExportBtn">⇩ Export records</button></div></div><div id="reportMetrics" class="metrics"></div><div class="insight-grid"><article class="card insight-card"><div class="card-head"><div class="card-title">Status distribution</div></div><div class="donut-area"><div class="donut" id="reportDonut"></div><div class="legend-list" id="reportLegend"></div></div></article><article class="card insight-card"><div class="card-head"><div class="card-title">Monthly arrivals</div></div><div class="trend-bars" id="reportTrend"></div></article><article class="card insight-card"><div class="card-head"><div class="card-title">Top trading lanes</div></div><div class="lane-list" id="reportLanes"></div></article></div><article class="card coverage-card"><div class="card-head"><div><div class="card-title">Milestone data coverage</div><div class="card-sub">Recorded handoffs across the loaded shipment register. Select a row to review missing dates.</div></div><span class="status-pill blue">DATA QUALITY</span></div><div class="coverage-list" id="reportCoverage"></div><div class="exception-footer">A missing date indicates a blank shipment record; it does not confirm a carrier delay.</div></article></section>
 
+        <section class="page-section" id="page-containers">
+          <div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> OPERATIONS / EQUIPMENT CONTROL</div><h1>Container management</h1><p class="subtitle">Track every container from allocation and vessel movement through destination release and empty return.</p></div><div class="head-actions"><button class="btn" id="containerRefresh">↻ Refresh records</button><button class="btn primary" id="containerNewShipment">＋ Add container record</button></div></div>
+          <div class="container-control-kpis" id="containerControlKpis"></div>
+          <article class="card container-control-card">
+            <div class="container-control-toolbar"><div><b>Container register</b><small>Live records from your existing shipment database</small></div><label class="container-control-search">⌕ <input id="containerControlSearch" type="search" placeholder="Search container, MBL, vessel, truck…"></label></div>
+            <div class="table-scroll"><table class="container-control-table"><thead><tr><th>Container / Type</th><th>MBL / Shipping line</th><th>Route</th><th>Vessel / Voyage</th><th>ETD</th><th>ETA</th><th>Current stage</th><th>Empty return</th><th></th></tr></thead><tbody id="containerControlRows"><tr><td colspan="9" class="empty-row">Sign in to load container records.</td></tr></tbody></table></div>
+            <div class="container-control-footer" id="containerControlFooter">Container records are shared with the existing shipment register. No records have been duplicated.</div>
+          </article>
+        </section>
         <section class="page-section" id="page-logistics">
           <div class="page-head"><div><div class="eyebrow"><i class="live-dot"></i> OPERATIONS / PLANNING &amp; CONTROL</div><h1>Logistics workspace</h1><p class="subtitle">Coordinate sailings, LCL loads, shipment economics, filings and last free day actions.</p></div><div class="head-actions"><button class="btn" id="opsRefreshBtn">↻ Refresh modules</button></div></div>
           <div class="ops-kpis" id="opsKpis"></div>
@@ -2189,7 +2222,7 @@
   async function signOut(){try{await db?.auth.signOut()}catch(_){}state.profile=null;state.rows=[];state.selected.clear();state.ops={loaded:false,tab:"sailings",alertFilter:"open",sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]};setAccess(null);toast("Signed out")}
   function canEdit(){return ["admin","editor","operator"].includes(String(state.profile?.role||"").toLowerCase())}
   function canDelete(){return String(state.profile?.role||"").toLowerCase()==="admin"}
-  function page(name){state.page=name;document.querySelectorAll(".nav-link[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===name));document.querySelectorAll(".page-section").forEach(section=>section.classList.toggle("active",section.id==="page-"+name));document.body.classList.remove("menu-open");if(name==="shipments")renderShipments();if(name==="exceptions")renderExceptions();if(name==="reports")renderReports();if(name==="logistics"){renderLogistics();if(!state.ops.loaded)loadOps()}if(name==="dashboard")setTimeout(()=>state.map?.invalidateSize(),70);window.scrollTo({top:0,behavior:"smooth"})}
+  function page(name){state.page=name;document.querySelectorAll(".nav-link[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===name));document.querySelectorAll(".page-section").forEach(section=>section.classList.toggle("active",section.id==="page-"+name));document.body.classList.remove("menu-open");if(name==="shipments")renderShipments();if(name==="containers")renderContainers();if(name==="exceptions")renderExceptions();if(name==="reports")renderReports();if(name==="logistics"){renderLogistics();if(!state.ops.loaded)loadOps()}if(name==="dashboard")setTimeout(()=>state.map?.invalidateSize(),70);window.scrollTo({top:0,behavior:"smooth"})}
 
   function localDayKey(value){const d=value instanceof Date?value:parseDate(value);return d&&!Number.isNaN(+d)?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:""}
   function filteredRows(){
@@ -3102,6 +3135,10 @@ async function confirmImport(){
 
   function bind(){
     document.querySelectorAll(".nav-link[data-page]").forEach(b=>b.onclick=()=>page(b.dataset.page));
+    $("containerControlSearch").oninput=renderContainers;
+    $("containerControlRows").onclick=e=>{const b=e.target.closest("[data-container-open]");if(b)showDetails(Number(b.dataset.containerOpen))};
+    $("containerRefresh").onclick=()=>loadRecords();
+    $("containerNewShipment").onclick=()=>openShipment();
     $("mobileMenu").onclick=()=>document.body.classList.toggle("menu-open");$("publicLoginBtn").onclick=()=>modal("loginModal");$("loginForm").onsubmit=signIn;
     $("refreshBtn").onclick=()=>loadRecords();$("refreshMapBtn").onclick=()=>{renderMap();toast("Map refreshed")};$("spotlightShipment").onchange=e=>{state.spotlightIndex=Number(e.target.value);renderSpotlight()};$("spotlightMapBtn").onclick=()=>state.spotlightIndex!=null&&showRoute(state.spotlightIndex);$("spotlightDetailBtn").onclick=()=>state.spotlightIndex!=null&&showDetails(state.spotlightIndex);$("dashboardModules").onclick=e=>{const b=e.target.closest("[data-ops-shortcut]");if(!b)return;state.ops.tab=b.dataset.opsShortcut;page("logistics")};$("showMapBtn").onclick=()=>showRoute(null);$("refreshAisBtn").onclick=()=>state.fullMap?._refreshAIS?.()||setAisMapStatus("Choose a shipment map to refresh AIS.");$("aisLookupBtn").onclick=lookupMapVessel;$("mapFitBtn").onclick=()=>state.fullMap?._fitRoute?.();$("mapAisToggleBtn").onclick=()=>state.fullMap?._toggleAis?.();$("signOutBtn").onclick=signOut;$("settingsSignOut").onclick=signOut;
     $("newShipmentTop").onclick=$("newShipmentBtn").onclick=()=>openShipment();$("viewShipmentsBtn").onclick=$("recentAllBtn").onclick=()=>page("shipments");$("arrivalsAllBtn").onclick=()=>{state.filter="active";document.querySelectorAll("#quickFilters [data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="active"));page("shipments")};
@@ -3275,6 +3312,23 @@ async function confirmImport(){
       return '<div class="ops-alert-row '+(a.level==="overdue"?"overdue":a.level==="soon"?"soon":"")+'"><div><div class="ops-alert-title">'+esc(a.title)+' · '+esc(a.container)+'</div><div class="ops-alert-detail">'+esc(desc)+" · Due "+esc(opsDateLabel(a.due))+'</div></div><div>'+opsBadge(action)+(a.action?.note?'<div class="ops-alert-detail">'+esc(a.action.note)+'</div>':"")+'</div><div class="ops-actions">'+(opsRoleCan("alert")&&action!=="resolved"?'<button class="ops-action" data-op="ack-alert" data-key="'+esc(a.key)+'">Acknowledge</button><button class="ops-action primary" data-op="resolve-alert" data-key="'+esc(a.key)+'">Resolve</button>':"")+'</div></div>';
     }).join("")+'</div>';
   }
+  function renderContainers(){
+    const host=$("containerControlRows");if(!host)return;
+    const q=String($("containerControlSearch")?.value||"").trim().toLowerCase();
+    const records=state.rows.map((row,index)=>({row,index})).filter(({row})=>{
+      const values=[container(row),field(row,["TYPE","CONTAINER TYPE"]),field(row,["MBL NO"]),field(row,["LINER"]),field(row,["POL","PORT OF LOADING"]),field(row,["GATEWAY PORT","POD"]),field(row,["VESSEL & VOY"]),field(row,["TRUCK NO."])].join(" ").toLowerCase();
+      return !q||values.includes(q);
+    });
+    const total=state.rows.length,returned=state.rows.filter(r=>!!field(r,["CONTAINER RETURN DATE"])).length,atPort=state.rows.filter(r=>!!field(r,["PORT IN"])&&!field(r,["PORT OUT"])).length,active=state.rows.filter(r=>!field(r,["CONTAINER RETURN DATE"])).length;
+    $("containerControlKpis").innerHTML=[["Total containers",total],["Active equipment",active],["At destination port",atPort],["Empty returned",returned]].map(([label,value])=>'<article class="container-kpi"><span>'+label+'</span><b>'+(state.loaded?Number(value).toLocaleString():"—")+'</b></article>').join("");
+    if(!state.loaded){host.innerHTML='<tr><td colspan="9" class="empty-row">Sign in to load protected container records.</td></tr>'}
+    else if(!records.length){host.innerHTML='<tr><td colspan="9" class="empty-row">No containers match this search.</td></tr>'}
+    else host.innerHTML=records.map(({row,index})=>{
+      const no=container(row),type=field(row,["TYPE","CONTAINER TYPE"])||"Type not set",mbl=field(row,["MBL NO"])||"—",liner=field(row,["LINER"])||"Shipping line pending",pol=field(row,["POL","PORT OF LOADING"])||"Origin pending",pod=field(row,["GATEWAY PORT","POD","DESTINATION"])||"Destination pending",vessel=field(row,["VESSEL & VOY"])||"Vessel pending",etd=field(row,["ETD"]),eta=field(row,["ETA"]),returned=field(row,["CONTAINER RETURN DATE"]),status=statusOf(row),stageClass=returned?"done":isDelayed(row)?"warn":"";
+      return '<tr><td><span class="container-primary">'+esc(no)+'</span><span class="container-secondary">'+esc(type)+'</span></td><td><span class="container-primary">'+esc(mbl)+'</span><span class="container-secondary">'+esc(liner)+'</span></td><td><span class="container-route">'+esc(pol)+' → '+esc(pod)+'</span></td><td>'+esc(vessel)+'</td><td>'+esc(etd?fmtDate(etd):"—")+'</td><td>'+esc(eta?fmtDate(eta):"—")+'</td><td><span class="container-stage '+stageClass+'">'+esc(returned?"EMPTY RETURNED":status.toUpperCase())+'</span></td><td>'+esc(returned?fmtDate(returned):(field(row,["EMPTY RETURN VALIDITY"])||"Pending"))+'</td><td><button class="container-open" type="button" data-container-open="'+index+'">Open record →</button></td></tr>';
+    }).join("");
+    $("containerControlFooter").textContent=state.loaded?("Showing "+records.length+" of "+total+" container records · Changes continue to use your existing shipment record and audit workflow."):"Container records will appear after staff sign-in.";
+  }
   function renderLogistics(){
     if(!$("opsContent"))return;
     renderOpsKpis();
@@ -3440,7 +3494,7 @@ async function confirmImport(){
     document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("opsModal").hidden)opsCloseForm()});
   }
 
-  function renderAll(){renderDashboard();renderShipments();if(state.page==="exceptions")renderExceptions();if(state.page==="reports")renderReports();if(state.page==="logistics")renderLogistics();$("settingsEmail").textContent=state.profile?.email||state.profile?.displayName||"—";$("settingsRole").textContent=state.profile?.role||"—"}
+  function renderAll(){renderDashboard();renderShipments();if(state.page==="containers")renderContainers();if(state.page==="exceptions")renderExceptions();if(state.page==="reports")renderReports();if(state.page==="logistics")renderLogistics();$("settingsEmail").textContent=state.profile?.email||state.profile?.displayName||"—";$("settingsRole").textContent=state.profile?.role||"—"}
   function initialize(){bind();if(location.protocol!=="https:")$("httpsWarning").classList.remove("hidden");$("publicLanding").hidden=false;if(!db){setCloud("error","Supabase client unavailable");return}db.auth.getSession().then(({data,error})=>{if(error)throw error;return setAccess(data.session)}).catch(e=>{setCloud("error",`Sign-in service unavailable · ${errText(e)}`)});}
   document.addEventListener("DOMContentLoaded",initialize);
   </script>
