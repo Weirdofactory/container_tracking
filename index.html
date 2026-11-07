@@ -175,4 +175,91 @@ async function approveCharge(chargeId){if(state.profile?.role!=="Admin")return n
 function openContainer(index){if(!access(["Admin","Editor","Operator"])){notify("Your staff role is read-only.","error");return}const row=index>=0?state.rows[index]:{};const allowed=state.profile?.role==="Operator"?["SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"]:COLUMNS;const defs=allowed.map(k=>({name:k,label:k,type:["ETD","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE"].includes(k)?"date":"text",value:val(row,[k]),span:k==="REMARKS",required:k==="CONTAINER NO."}));openForm(index>=0?"Update container record":"Add container record",defs,async fd=>{const next=state.rows.slice(),updated={...row};allowed.forEach(k=>updated[k]=fd.get(k)||"");if(!updated["CONTAINER NO."])throw new Error("Container number is required.");if(index<0)next.push(updated);else next[index]=updated;if(!state.updatedAt)throw new Error("Refresh the register before saving.");const out=await call("operations-data",{action:"write",data:next,expectedUpdatedAt:state.updatedAt});if(!out.saved)throw new Error("Save was not confirmed.");state.rows=next;state.updatedAt=out.updatedAt;await loadJobs();closeForm();render();notify("Container record saved","success")})}
 async function submitForm(e){e.preventDefault();if(!state.modalSave)return;const b=$("saveBtn");b.disabled=true;b.textContent="Saving…";$("formError").textContent="";try{await state.modalSave(new FormData($("recordForm")));if(!$("modal").hidden)closeForm()}catch(err){$("formError").textContent=err.message||"Could not save record."}finally{b.disabled=false;b.textContent="Save record"}}
 function exportJobs(){const cols=["job_no","customer_reference","service_type","direction","status","hbl_no","mbl_no","booking_no","customer_name","shipper","consignee","carrier","vessel_name","voyage_no","pol","transshipment_port","pod","final_delivery_place","etd","eta","package_count","gross_weight_kg","volume_cbm"];const rows=state.ops.jobs;if(!rows.length)return notify("No jobs to export.");const csv=[cols.join(","),...rows.map(r=>cols.map(c=>'"'+String(r[c]??"").replace(/"/g,'""')+'"').join(","))].join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="forwarding-jobs.csv";a.click();URL.revokeObjectURL(a.href)}
-function bindPage(){document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>navigate(b.dataset.nav));document.querySelectorAll("[data-create]").forEach(b=>b.onclick=()=>{const t=b.dataset.create;if(t==="job")newJob();if(t==="container")openContainer(-1);if(t==="sailing")newSailing();if(t==="consol")newConsol();if(t==="milestone"){const j=state.ops.jobs[0];if(j)addMilestone(j.id);else notify("Create a forwarding job first.","error")}if(t==="filing")newFiling();if(t==="charge")newCharge()});document.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>{const id=b.dataset.id,act=b.dataset.action;if(act==="edit-job")newJob(id);if(act==="link-job")linkContainer(id);if(act==="event-job")addMilestone(id);if(act==="job-detail"){state.selectedJob=id;state.page="jobdetail";render()}if(act==="edit-container")openContainer(Number(b.dataset.index));if(act==="link-container-job")linkContainer("",b.dataset.containerNo);if(act==="create-job-from-container")newJobFromContainer(Number(b.dataset.index));if(act==="edit-sailing")newSailing(id);if(act==="link-sailing-container")linkSailingShipment(id);if(act==="open-consol"){state.selectedConsolidation=id;state.page="consoldetail";render()}if(act==="edit-consol")newConsol(id);if(act==="add-consol-item")newConsolItem(id);if(act==="edit-consol-item")newConsolItem(b.dataset.consolidationId,id);if(act==="edit-milestone")addMilestone(b.dataset.jobId,id);if(act==="edit-filing")newFiling(id);if(act==="upload-filing-document")uploadFilingDocument(id);if(act==="open-document")openDocument(id);if(act==="edit-charge")newCharge(id);if(act==="approve-charge")approveCharge(id);if(act==="ack-container-alert"||act==="resolve-container-alert"){const a={no:b.dataset.containerNo,due:b.dataset.dueDate,key:norm(b.dataset.containerNo)+"|empty_return|"+b.dataset.dueDate};saveContainerAlert(a,act==="resolve-container-alert"?"resolved":"acknowledged")}});document.querySelectorAll("[data-edit-job]").forEach(b=>b.onclick=()=>newJob(b.dataset.editJob));document.querySelectorAll("[data-link-job]").forEach(b=>b.onclick=()=>linkContainer(b.dataset.linkJob));document.querySelectorAll("[data-event-job]").forEach(b=>b.onclick=()=>addMilestone(b.dataset.eventJob));document.querySelectorAll("[data-edit-jobdetail]").forEach(b=>b.onclick=()=>newJob(b.dataset.editJobdetail));document.querySelectorAll("[data-jobrow]").forEach(b=>b.onclick=e=>{if(e.target.closest("button"))return;state.selectedJob=b.dataset.jobrow;state.page="jobdetail";render()});document.querySelectorAll("[data-edit-container]").forEach(b=>b.onclick=()=>openContainer(Number(b.dataset.editContainer)));document.querySelectorAll("[data-export]").forEach(b=>b.onclick=exportJobs);const ps=$("pageSearch");if(ps)ps.oninput=()=>{state.query=ps.value;const pos=ps.selectionStart;render();const n=$("pageSearch");if(n){n.focus();n.setSelectionRange(pos,pos)}};const sf=$("serviceFilter"),st=$("statusFilter");const applyJobFilters=()=>{document.querySelectorAll("tbody tr[data-jobrow]").forEach(row=>{const j=state.ops.jobs.find(x=>x.id===row.dataset.jobrow),q=(state.query||"").toLowerCase();const matchesService=!state.jobFilters.service||j?.service_type===state.jobFilters.service,matchesStatus=!state.jobFilters.status||j?.status===state.jobFilters.status,matchesQuery=!q||[j?.job_no,j?.hbl_no,j?.mbl_no,j?.booking_no,j?.customer_name,j?.shipper,j?.consignee,j?.pol,j?.pod,j?.vessel_name].join(" ").toLowerCase().includes(q);row.hidden=!(matchesService&&matchesStatus&&matchesQuery)})};if(sf){sf.value=state.jobFilters.service;sf.onchange=()=>{state.jobFilters.service=sf.value;applyJobFilters()}}if(st){st.value=state.jobFilters.status;st.onchange=()=>{state.jobFilters.status=st.value;applyJobFilters()}}applyJobFilters();const refresh=$("refreshOps");if(refresh)refresh.onclick=refreshAll}
+function bindPage(){
+  document.querySelectorAll("[data-nav]").forEach(button=>{button.onclick=()=>navigate(button.dataset.nav)});
+  document.querySelectorAll("[data-create]").forEach(button=>{
+    button.onclick=()=>{
+      const type=button.dataset.create;
+      if(type==="job")newJob();
+      if(type==="container")openContainer(-1);
+      if(type==="sailing")newSailing();
+      if(type==="consol")newConsol();
+      if(type==="milestone"){
+        const job=state.ops.jobs[0];
+        if(job)addMilestone(job.id);else notify("Create a forwarding job first.","error");
+      }
+      if(type==="filing")newFiling();
+      if(type==="charge")newCharge();
+    };
+  });
+  document.querySelectorAll("[data-action]").forEach(button=>{
+    button.onclick=()=>{
+      const id=button.dataset.id,act=button.dataset.action;
+      if(act==="edit-job")newJob(id);
+      if(act==="link-job")linkContainer(id);
+      if(act==="event-job")addMilestone(id);
+      if(act==="job-detail"){state.selectedJob=id;state.page="jobdetail";render()}
+      if(act==="edit-container")openContainer(Number(button.dataset.index));
+      if(act==="link-container-job")linkContainer("",button.dataset.containerNo);
+      if(act==="create-job-from-container")newJobFromContainer(Number(button.dataset.index));
+      if(act==="edit-sailing")newSailing(id);
+      if(act==="link-sailing-container")linkSailingShipment(id);
+      if(act==="open-consol"){state.selectedConsolidation=id;state.page="consoldetail";render()}
+      if(act==="edit-consol")newConsol(id);
+      if(act==="add-consol-item")newConsolItem(id);
+      if(act==="edit-consol-item")newConsolItem(button.dataset.consolidationId,id);
+      if(act==="edit-milestone")addMilestone(button.dataset.jobId,id);
+      if(act==="edit-filing")newFiling(id);
+      if(act==="upload-filing-document")uploadFilingDocument(id);
+      if(act==="open-document")openDocument(id);
+      if(act==="edit-charge")newCharge(id);
+      if(act==="approve-charge")approveCharge(id);
+      if(act==="ack-container-alert"||act==="resolve-container-alert"){
+        const alert={no:button.dataset.containerNo,due:button.dataset.dueDate,key:norm(button.dataset.containerNo)+"|empty_return|"+button.dataset.dueDate};
+        saveContainerAlert(alert,act==="resolve-container-alert"?"resolved":"acknowledged");
+      }
+    };
+  });
+  document.querySelectorAll("[data-edit-job]").forEach(button=>{button.onclick=()=>newJob(button.dataset.editJob)});
+  document.querySelectorAll("[data-link-job]").forEach(button=>{button.onclick=()=>linkContainer(button.dataset.linkJob)});
+  document.querySelectorAll("[data-event-job]").forEach(button=>{button.onclick=()=>addMilestone(button.dataset.eventJob)});
+  document.querySelectorAll("[data-edit-jobdetail]").forEach(button=>{button.onclick=()=>newJob(button.dataset.editJobdetail)});
+  document.querySelectorAll("[data-jobrow]").forEach(button=>{
+    button.onclick=event=>{
+      if(event.target.closest("button"))return;
+      state.selectedJob=button.dataset.jobrow;state.page="jobdetail";render();
+    };
+  });
+  document.querySelectorAll("[data-edit-container]").forEach(button=>{button.onclick=()=>openContainer(Number(button.dataset.editContainer))});
+  document.querySelectorAll("[data-export]").forEach(button=>{button.onclick=exportJobs});
+  const pageSearch=$("pageSearch");
+  if(pageSearch)pageSearch.oninput=()=>{
+    state.query=pageSearch.value;
+    const position=pageSearch.selectionStart;
+    render();
+    const nextSearch=$("pageSearch");
+    if(nextSearch){nextSearch.focus();nextSearch.setSelectionRange(position,position)}
+  };
+  const serviceFilter=$("serviceFilter"),statusFilter=$("statusFilter");
+  const applyJobFilters=()=>{
+    document.querySelectorAll("tbody tr[data-jobrow]").forEach(row=>{
+      const job=state.ops.jobs.find(item=>item.id===row.dataset.jobrow);
+      const query=(state.query||"").toLowerCase();
+      const matchesService=!state.jobFilters.service||job?.service_type===state.jobFilters.service;
+      const matchesStatus=!state.jobFilters.status||job?.status===state.jobFilters.status;
+      const matchesQuery=!query||[job?.job_no,job?.hbl_no,job?.mbl_no,job?.booking_no,job?.customer_name,job?.shipper,job?.consignee,job?.pol,job?.pod,job?.vessel_name].join(" ").toLowerCase().includes(query);
+      row.hidden=!(matchesService&&matchesStatus&&matchesQuery);
+    });
+  };
+  if(serviceFilter){
+    serviceFilter.value=state.jobFilters.service;
+    serviceFilter.onchange=()=>{state.jobFilters.service=serviceFilter.value;applyJobFilters()};
+  }
+  if(statusFilter){
+    statusFilter.value=state.jobFilters.status;
+    statusFilter.onchange=()=>{state.jobFilters.status=statusFilter.value;applyJobFilters()};
+  }
+  applyJobFilters();
+  const refresh=$("refreshOps");
+  if(refresh)refresh.onclick=refreshAll;
+}
