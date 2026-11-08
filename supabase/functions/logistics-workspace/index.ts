@@ -335,6 +335,17 @@ Deno.serve(async (req: Request) => {
       return reply(200, { deleted: true, recoverable: true }, origin);
     }
 
+    if (action === "deleteJobContainer") {
+      if (profile.role !== "Admin") throw new Error("Only Admin can remove a container from a forwarding job.");
+      const linkId = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("job_container_links").select("*").eq("id", linkId).maybeSingle();
+      if (readError || !before) throw new Error("Forwarding job container link not found.");
+      const { error } = await admin.from("job_container_links").delete().eq("id", linkId);
+      if (error) throw new Error(error.message);
+      await recordAudit("unlink_container", "job_container_link", linkId, before, null);
+      return reply(200, { deleted: true, container_retained: true }, origin);
+    }
+
     if (action === "linkJobContainer") {
       roleCheck(profile.role, "jobOps");
       const d = payload.data ?? {};
