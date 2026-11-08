@@ -279,6 +279,24 @@ async function deleteContainerFromRegister(index){
     await loadEquipment();await loadJobs();render();notify("Container archived and removed from active register","success");
   }catch(e){notify(e.message||"Could not delete container","error")}
 }
+async function deleteSelectedContainers(){
+  if(state.profile?.role!=="Admin")return notify("Only Admin can delete containers from the register.","error");
+  const selected=[...document.querySelectorAll(".container-select:checked")].map(x=>x.value).filter(Boolean);
+  if(!selected.length)return notify("Select at least one container to delete.","error");
+  if(!confirm("Delete "+selected.length+" selected container(s) from the active equipment register? Each complete record will be archived for audit/recovery. Existing job links and operational history will be retained."))return;
+  let version=state.updatedAt,deleted=0,failure="";
+  for(const no of selected){
+    try{
+      const out=await call("operations-data",{action:"deleteContainer",container_no:no,expectedUpdatedAt:version});
+      if(!out.saved||!out.updatedAt)throw new Error("Deletion was not confirmed for "+no+".");
+      version=out.updatedAt;deleted++;
+    }catch(e){failure=(no+": "+(e.message||"deletion failed"));break;}
+  }
+  state.updatedAt=version;
+  await loadEquipment();await loadJobs();render();
+  if(failure)notify(deleted+" container(s) archived. Stopped at "+failure,"error");
+  else notify(deleted+" container(s) archived and removed from active register","success");
+}
 async function removeContainerFromJob(linkId,jobId,containerNo){
   if(state.profile?.role!=="Admin")return notify("Only Admin can remove a container from a job.","error");
   if(!confirm("Remove container "+containerNo+" from this forwarding job? The container will remain in the main equipment register."))return;
@@ -297,7 +315,7 @@ async function deleteForwardingJob(jobId){
     await loadJobs();state.selectedJob=null;state.page="jobs";render();notify("Job deleted from active registers; history retained","success");
   }catch(e){notify(e.message||"Could not delete forwarding job","error")}
 }
-function renderContainers(){const q=state.query.toLowerCase(),items=state.rows.map((r,i)=>({r,i})).filter(x=>!q||Object.values(x.r).join(" ").toLowerCase().includes(q));const rows=items.map(x=>{const no=container(x.r),links=state.ops.jobContainers.filter(z=>norm(z.container_no)===norm(no)),jobNames=links.map(z=>state.ops.jobs.find(j=>j.id===z.job_id)).filter(Boolean);return '<tr><td><b>'+esc(no)+'</b><span class="cell-sub">'+esc(val(x.r,["TYPE"])||"—")+'</span></td><td>'+esc(val(x.r,["MBL NO"])||"—")+'</td><td>'+esc(val(x.r,["LINER"])||"—")+'</td><td>'+esc(val(x.r,["VESSEL & VOY"])||"—")+'</td><td>'+esc(val(x.r,["POL"])||"—")+' → '+esc(val(x.r,["GATEWAY PORT"])||"—")+'</td><td>'+fmt(val(x.r,["ETD"]))+'</td><td>'+fmt(val(x.r,["ETA"]))+'</td><td>'+fmt(val(x.r,["PORT IN"]))+'</td><td>'+fmt(val(x.r,["CFS IN"]))+'</td><td>'+fmt(val(x.r,["EMPTY RETURN VALIDITY"]))+'</td><td>'+(jobNames.length?jobNames.map(j=>'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>').join(" "):'<span class="pill amber">Unlinked</span>')+'</td><td>'+pill(stage(x.r))+'</td><td>'+actionBtn("edit-container","Open",'data-index="'+x.i+'"')+actionBtn("link-container-job","Link job",'data-container-no="'+esc(no)+'"')+(state.profile?.role==="Admin"?actionBtn("delete-container","Delete",'data-index="'+x.i+'"'):"")+(!jobNames.length?actionBtn("create-job-from-container","Create job",'data-index="'+x.i+'"'):"")+'</td></tr>'});return pageHead("containers",'<button class="btn primary" data-create="container">＋ Add container</button>')+'<div class="stats">'+stat("Equipment records",items.length,"Current equipment register")+stat("At port",state.rows.filter(r=>val(r,["PORT IN"])).length,"Port-in date recorded")+stat("At CFS",state.rows.filter(r=>val(r,["CFS IN"])).length,"CFS-in date recorded")+stat("Destuffed",state.rows.filter(r=>val(r,["DESTUFFING DATE"])).length,"Destuffing date recorded")+stat("Empty returned",state.rows.filter(r=>val(r,["CONTAINER RETURN DATE"])).length,"Equipment returned")+'</div><div class="filters"><input id="pageSearch" class="filter search" placeholder="Search container, MBL, liner, vessel or route…" value="'+esc(state.query)+'"><span class="pane-sub">'+items.length+' equipment records · '+state.ops.jobContainers.length+' job links</span></div>'+pane("CONTAINER MOVEMENT REGISTER",table(["CONTAINER","TYPE","MBL","LINER","VESSEL","ROUTE","ETD","ETA","PORT IN","CFS IN","EMPTY LFD","LINKED JOB","STAGE","ACTIONS"],rows,"No equipment records found."))}
+function renderContainers(){const q=state.query.toLowerCase(),items=state.rows.map((r,i)=>({r,i})).filter(x=>!q||Object.values(x.r).join(" ").toLowerCase().includes(q));const rows=items.map(x=>{const no=container(x.r),links=state.ops.jobContainers.filter(z=>norm(z.container_no)===norm(no)),jobNames=links.map(z=>state.ops.jobs.find(j=>j.id===z.job_id)).filter(Boolean);return '<tr>'+(state.profile?.role==="Admin"?'<td><input type="checkbox" class="container-select" value="'+esc(no)+'" aria-label="Select '+esc(no)+'"></td>':"")+'<td><b>'+esc(no)+'</b><span class="cell-sub">'+esc(val(x.r,["TYPE"])||"—")+'</span></td><td>'+esc(val(x.r,["MBL NO"])||"—")+'</td><td>'+esc(val(x.r,["LINER"])||"—")+'</td><td>'+esc(val(x.r,["VESSEL & VOY"])||"—")+'</td><td>'+esc(val(x.r,["POL"])||"—")+' → '+esc(val(x.r,["GATEWAY PORT"])||"—")+'</td><td>'+fmt(val(x.r,["ETD"]))+'</td><td>'+fmt(val(x.r,["ETA"]))+'</td><td>'+fmt(val(x.r,["PORT IN"]))+'</td><td>'+fmt(val(x.r,["CFS IN"]))+'</td><td>'+fmt(val(x.r,["EMPTY RETURN VALIDITY"]))+'</td><td>'+(jobNames.length?jobNames.map(j=>'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>').join(" "):'<span class="pill amber">Unlinked</span>')+'</td><td>'+pill(stage(x.r))+'</td><td>'+actionBtn("edit-container","Open",'data-index="'+x.i+'"')+actionBtn("link-container-job","Link job",'data-container-no="'+esc(no)+'"')+(state.profile?.role==="Admin"?actionBtn("delete-container","Delete",'data-index="'+x.i+'"'):"")+(!jobNames.length?actionBtn("create-job-from-container","Create job",'data-index="'+x.i+'"'):"")+'</td></tr>'});return pageHead("containers",'<button class="btn primary" data-create="container">＋ Add container</button>')+'<div class="stats">'+stat("Equipment records",items.length,"Current equipment register")+stat("At port",state.rows.filter(r=>val(r,["PORT IN"])).length,"Port-in date recorded")+stat("At CFS",state.rows.filter(r=>val(r,["CFS IN"])).length,"CFS-in date recorded")+stat("Destuffed",state.rows.filter(r=>val(r,["DESTUFFING DATE"])).length,"Destuffing date recorded")+stat("Empty returned",state.rows.filter(r=>val(r,["CONTAINER RETURN DATE"])).length,"Equipment returned")+'</div><div class="filters"><input id="pageSearch" class="filter search" placeholder="Search container, MBL, liner, vessel or route…" value="'+esc(state.query)+'"><span class="pane-sub">'+items.length+' equipment records · '+state.ops.jobContainers.length+' job links</span></div>'+pane("CONTAINER MOVEMENT REGISTER",table([...(state.profile?.role==="Admin"?['<input type="checkbox" id="selectAllContainers" aria-label="Select all visible containers">'] : []),"CONTAINER","TYPE","MBL","LINER","VESSEL","ROUTE","ETD","ETA","PORT IN","CFS IN","EMPTY LFD","LINKED JOB","STAGE","ACTIONS"],rows,"No equipment records found."))+(state.profile?.role==="Admin"?'<div class="filters" style="justify-content:flex-end"><span class="pane-sub" id="bulkDeleteCount">0 selected</span>'+actionBtn("bulk-delete-containers","Delete selected", 'id="bulkDeleteContainers" disabled')+'</div>':"")}
 function renderSailings(){
   const q=state.query.toLowerCase();
   const items=state.ops.sailings.filter(x=>!q||[x.vessel_name,x.voyage_no,x.carrier,x.pol,x.pod].join(" ").toLowerCase().includes(q));
@@ -575,6 +593,7 @@ function bindPage(){
       if(act==="job-detail"){state.selectedJob=id;state.page="jobdetail";render()}
       if(act==="edit-container")openContainer(Number(button.dataset.index));
       if(act==="delete-container")deleteContainerFromRegister(Number(button.dataset.index));
+      if(act==="bulk-delete-containers")deleteSelectedContainers();
       if(act==="unlink-job-container")removeContainerFromJob(id,button.dataset.jobId||"",button.dataset.containerNo||"");
       if(act==="link-container-job")linkContainer("",button.dataset.containerNo);
       if(act==="create-job-from-container")newJobFromContainer(Number(button.dataset.index));
@@ -596,6 +615,17 @@ function bindPage(){
       }
     };
   });
+  const updateBulkSelection=()=>{
+    const checked=document.querySelectorAll(".container-select:checked").length;
+    const total=document.querySelectorAll(".container-select").length;
+    const count=$("bulkDeleteCount"),button=$("bulkDeleteContainers"),all=$("selectAllContainers");
+    if(count)count.textContent=checked+" selected";
+    if(button)button.disabled=checked===0;
+    if(all){all.checked=total>0&&checked===total;all.indeterminate=checked>0&&checked<total;}
+  };
+  document.querySelectorAll(".container-select").forEach(box=>box.addEventListener("change",updateBulkSelection));
+  const selectAll=$("selectAllContainers");
+  if(selectAll)selectAll.addEventListener("change",()=>{document.querySelectorAll(".container-select").forEach(box=>box.checked=selectAll.checked);updateBulkSelection();});
   document.querySelectorAll("[data-edit-job]").forEach(button=>{button.onclick=()=>newJob(button.dataset.editJob)});
   document.querySelectorAll("[data-link-job]").forEach(button=>{button.onclick=()=>linkContainer(button.dataset.linkJob)});
   document.querySelectorAll("[data-event-job]").forEach(button=>{button.onclick=()=>addMilestone(button.dataset.eventJob)});
