@@ -169,6 +169,27 @@ Deno.serve(async (req: Request) => {
       return reply(200, { users }, origin);
     }
 
+    if (action === "deleteStaffUser") {
+      roleCheck(profile.role, "staffAdmin");
+      const targetId = uuid(payload.data?.user_id);
+      if (targetId === actorId) throw new Error("You cannot delete your own signed-in account.");
+      const { data: target, error: targetError } = await admin.from("staff_profiles")
+        .select("user_id,display_name,role,is_active").eq("user_id", targetId).maybeSingle();
+      if (targetError || !target) throw new Error("Staff account not found.");
+      if (target.is_active && target.role === "Admin") {
+        const { count, error: countError } = await admin.from("staff_profiles")
+          .select("user_id", { count: "exact", head: true }).eq("role", "Admin").eq("is_active", true);
+        if (countError) throw new Error("Could not verify active administrator count.");
+        if ((count ?? 0) <= 1) throw new Error("The last active Admin account cannot be deleted.");
+      }
+      const { error: deleteAuthError } = await admin.auth.admin.deleteUser(targetId);
+      if (deleteAuthError) throw new Error(deleteAuthError.message || "Could not delete authentication login.");
+      const { error: deleteProfileError } = await admin.from("staff_profiles").delete().eq("user_id", targetId);
+      if (deleteProfileError) throw new Error("Login was deleted, but the staff profile could not be removed. Contact system support.");
+      await recordAudit("delete", "staff_profile", targetId, target, null);
+      return reply(200, { deleted: true }, origin);
+    }
+
     if (action === "createStaffUser") {
       roleCheck(profile.role, "staffAdmin");
       const d = payload.data ?? {};
