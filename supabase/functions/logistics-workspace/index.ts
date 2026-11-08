@@ -54,6 +54,7 @@ const allowed = {
   filing: new Set(["Admin", "Editor", "Operator"]),
   alert: new Set(["Admin", "Editor", "Operator"]),
   finance: new Set(["Admin", "Editor"]),
+  staffAdmin: new Set(["Admin"]),
 };
 function roleCheck(role: string, group: keyof typeof allowed) {
   if (!allowed[group].has(role)) throw new Error("Your staff role cannot make this change.");
@@ -155,6 +156,43 @@ Deno.serve(async (req: Request) => {
         .eq("job_id", jobId).eq("container_no", containerNo).maybeSingle();
       if (error || !data) throw new Error("Link this container to the selected forwarding job first.");
     };
+
+    if (action === "listStaffUsers") {
+      roleCheck(profile.role, "staffAdmin");
+      const [{ data: profiles, error: profilesError }, { data: authUsers, error: authError }] = await Promise.all([
+        admin.from("staff_profiles").select("user_id,display_name,role,is_active,created_at").order("created_at", { ascending: false }).limit(500),
+        admin.auth.admin.listUsers({ page: 1, perPage: 500 }),
+      ]);
+      if (profilesError || authError) throw new Error("Could not load staff accounts.");
+      const emailById = new Map((authUsers?.users || []).map((u: any) => [u.id, u.email || ""]));
+      const users = (profiles || []).map((p: any) => ({ ...p, email: emailById.get(p.user_id) || "" }));
+      return reply(200, { users }, origin);
+    }
+
+    if (action === "createStaffUser") {
+      roleCheck(profile.role, "staffAdmin");
+      const d = payload.data ?? {};
+      const email = String(d.email ?? "").trim().toLowerCase();
+      const displayName = text(d.display_name, 120);
+      const password = String(d.password ?? "");
+      const role = val(d.role || "Operator", ["Admin", "Editor", "Operator", "Viewer"], "staff role");
+      if (!displayName) throw new Error("Full name is required.");
+      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || email.length > 254) throw new Error("Enter a valid email address.");
+      if (password.length < 8 || password.length > 128) throw new Error("Password must be between 8 and 128 characters.");
+      const { data: created, error: createError } = await admin.auth.admin.createUser({
+        email, password, email_confirm: true, user_metadata: { display_name: displayName },
+      });
+      if (createError || !created.user) throw new Error(createError?.message || "Could not create login.");
+      const { data: staff, error: profileCreateError } = await admin.from("staff_profiles").insert({
+        user_id: created.user.id, display_name: displayName, role, is_active: true,
+      }).select("user_id,display_name,role,is_active,created_at").single();
+      if (profileCreateError || !staff) {
+        await admin.auth.admin.deleteUser(created.user.id);
+        throw new Error(profileCreateError?.message || "Could not create staff profile. Login creation was rolled back.");
+      }
+      await recordAudit("create", "staff_profile", created.user.id, null, { ...staff, email });
+      return reply(200, { user: { ...staff, email } }, origin);
+    }
 
     if (action === "read") {
       const tables = [
