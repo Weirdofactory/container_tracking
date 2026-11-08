@@ -1,15 +1,28 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const allowedOrigin = () => Deno.env.get("CUSTOMER_TRACKING_ALLOWED_ORIGIN") ?? "https://weirdofactory.github.io";
+const normalizeOrigin = (value: string | null) => {
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.origin : null;
+  } catch {
+    return null;
+  }
+};
+const allowedOrigins = () => {
+  const configured = normalizeOrigin(Deno.env.get("CUSTOMER_TRACKING_ALLOWED_ORIGIN"));
+  return new Set(["https://weirdofactory.github.io", ...(configured ? [configured] : [])]);
+};
+const isAllowedOrigin = (origin: string | null) => !!origin && allowedOrigins().has(origin);
 const replyHeaders = (origin: string | null) => {
   const h: Record<string, string> = {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store, private",
     "Vary": "Origin",
-    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-supabase-api-version",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
-  if (origin && origin === allowedOrigin()) h["Access-Control-Allow-Origin"] = allowedOrigin();
+  if (isAllowedOrigin(origin)) h["Access-Control-Allow-Origin"] = origin!;
   return h;
 };
 const reply = (status: number, body: Record<string, unknown>, origin: string | null) =>
@@ -69,11 +82,11 @@ function errorMessage(e: unknown) { return String((e as { message?: string })?.m
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (req.method === "OPTIONS") {
-    if (origin && origin !== allowedOrigin()) return new Response(null, { status: 403, headers: replyHeaders(null) });
+    if (origin && !isAllowedOrigin(origin)) return new Response(null, { status: 403, headers: replyHeaders(null) });
     return new Response(null, { status: 204, headers: replyHeaders(origin) });
   }
   if (req.method !== "POST") return reply(405, { error: "Method not allowed" }, origin);
-  if (origin && origin !== allowedOrigin()) return reply(403, { error: "Forbidden" }, null);
+  if (origin && !isAllowedOrigin(origin)) return reply(403, { error: "Forbidden" }, null);
   const authorization = req.headers.get("authorization") ?? "";
   if (!authorization.startsWith("Bearer ")) return reply(401, { error: "Authentication required" }, origin);
   const url = Deno.env.get("SUPABASE_URL");
