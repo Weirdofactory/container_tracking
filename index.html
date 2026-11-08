@@ -352,11 +352,9 @@ function newConsol(consolidationId){if(!access(["Admin","Editor","Operator"]))re
 function newConsolItem(consolidationId,itemId){
   if(!access(["Admin","Editor","Operator"]))return notify("Your role cannot edit consolidation cargo.","error");
   const x=itemId?state.ops.consolidationItems.find(i=>i.id===itemId)||{}:{};
-  const found=state.ops.jobs.filter(j=>norm(j.hbl_no)===norm(x.hbl_no));
-  const inferred=found.length===1?found[0].id:"";
+  const existing=resolveHbl(x.hbl_id,x.hbl_no,x.job_id);
   const defs=[
-    {name:"hbl_no",label:"House bill of lading",value:x.hbl_no,required:true},
-    {name:"job_id",label:"Forwarding job / HBL",options:jobOptions(),value:x.job_id||inferred},
+    {name:"hbl_id",label:"Forwarding job / HBL",options:hblOptionsAll(),value:x.hbl_id||existing?.id||"",required:true},
     {name:"shipper",label:"Shipper",value:x.shipper},
     {name:"consignee",label:"Consignee",value:x.consignee},
     {name:"package_count",label:"Package count",type:"number",step:"1",value:x.package_count||1},
@@ -365,11 +363,11 @@ function newConsolItem(consolidationId,itemId){
     {name:"volume_cbm",label:"Volume CBM",type:"number",step:"0.001",value:x.volume_cbm},
     {name:"notes",label:"Cargo notes",type:"textarea",value:x.notes,span2:true}
   ];
-  openForm(itemId?"Edit HBL cargo line / job mapping":"Add HBL cargo line",defs,async fd=>{
+  openForm(itemId?"Edit LCL cargo / HBL mapping":"Add LCL HBL cargo line",defs,async fd=>{
     const d=Object.fromEntries(fd.entries());d.consolidation_id=consolidationId;if(itemId)d.id=itemId;
     await call("logistics-workspace",{action:"upsertConsolidationItem",data:d});
     await loadJobs();closeForm();state.selectedConsolidation=consolidationId;state.page="consoldetail";render();
-    notify(itemId?"HBL line mapping updated":"HBL cargo line added","success");
+    notify(itemId?"LCL HBL mapping updated":"LCL HBL cargo line added","success");
   });
 }
 function renderConsolDetail(){
@@ -425,7 +423,8 @@ function newCharge(chargeId,presetJobId){
   const inferred=resolveJob(x.job_id,x.container_no);
   const jobId=x.job_id||inferred?.id||presetJobId||"";
   const defs=[
-    {name:"job_id",label:"Forwarding job / HBL",options:jobOptions(),value:jobId},
+    {name:"job_id",label:"Forwarding job",options:jobOptions(),value:jobId},
+    {name:"hbl_id",label:"Specific HBL (optional)",options:hblOptionsForJob(jobId,x.hbl_id),value:x.hbl_id||""},
     {name:"container_no",label:"Container (optional with a job)",options:containerOptions(),value:x.container_no||""},
     {name:"direction",label:"Direction",options:[["cost","Cost"],["revenue","Revenue"]],value:x.direction||"cost"},
     {name:"charge_code",label:"Charge code",value:x.charge_code,required:true},
@@ -439,7 +438,7 @@ function newCharge(chargeId,presetJobId){
     {name:"due_date",label:"Due date",type:"date",value:x.due_date},
     {name:"notes",label:"Notes",type:"textarea",value:x.notes,span2:true}
   ];
-  openForm(chargeId?"Edit shipment charge / job mapping":"New shipment charge",defs,async fd=>{
+  openForm(chargeId?"Edit shipment charge / HBL mapping":"New shipment charge",defs,async fd=>{
     const d=Object.fromEntries(fd.entries());if(chargeId)d.id=chargeId;
     await call("logistics-workspace",{action:"upsertCharge",data:d});
     await loadJobs();closeForm();render();notify(chargeId?"Charge updated":"Charge saved","success");
