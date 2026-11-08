@@ -165,6 +165,51 @@ function renderJobDetail(jobId){
   pane("COSTS & REVENUE",table(["HBL","CONTAINER","DIRECTION","CHARGE","AMOUNT","APPROVAL","ACTION"],chargeRows,"No charge lines linked."),'',charges.length+" lines")+
   '</div><div class="stack">'+pane("JOB STATUS",'<div class="pane-body">'+pill(j.status)+'<p>Customer visibility: '+(j.customer_visible?"Enabled":"Disabled")+'</p><p>Job HBLs: '+hbls.length+'</p></div>')+pane("RELATED RECORD COUNTS",'<div class="pane-body">HBLs '+hbls.length+'<br>Containers '+links.length+'<br>Schedules '+sailings.length+'<br>LCL lines '+items.length+'<br>Milestones '+events.length+'<br>Filings '+filings.length+'<br>Documents '+docs.length+'<br>Charge lines '+charges.length+'</div>')+'</div></div>';
 }
+async function saveJobHbl(fd,jobId,hblId){
+  const data=Object.fromEntries(fd.entries());data.job_id=jobId;if(hblId)data.id=hblId;
+  await call("logistics-workspace",{action:"upsertJobHbl",data});
+  await loadJobs();closeForm();state.selectedJob=jobId;state.page="jobdetail";render();
+  notify(hblId?"HBL details updated":"HBL added to forwarding job","success");
+}
+function newJobHbl(jobId,hblId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can add or edit HBL records.","error");
+  const job=state.ops.jobs.find(j=>j.id===jobId);if(!job)return notify("Forwarding job not found.","error");
+  const h=hblId?state.ops.jobHbls.find(x=>x.id===hblId)||{}:{};
+  const defs=[
+    {name:"hbl_no",label:"House bill of lading number",value:h.hbl_no,required:true},
+    {name:"customer_reference",label:"Customer reference",value:h.customer_reference||job.customer_reference},
+    {name:"shipper",label:"Shipper",value:h.shipper||job.shipper},
+    {name:"consignee",label:"Consignee",value:h.consignee||job.consignee},
+    {name:"notify_party",label:"Notify party",value:h.notify_party||job.notify_party},
+    {name:"package_count",label:"Package count",type:"number",step:"1",value:h.package_count??""},
+    {name:"package_type",label:"Package type",value:h.package_type||""},
+    {name:"gross_weight_kg",label:"Gross weight KG",type:"number",step:"0.01",value:h.gross_weight_kg??""},
+    {name:"volume_cbm",label:"Volume CBM",type:"number",step:"0.001",value:h.volume_cbm??""},
+    {name:"commodity",label:"Commodity",value:h.commodity||job.commodity},
+    {name:"customer_visible",label:"HBL tracking visibility",options:[["false","Internal only"],["true","Customer visible"]],value:h.customer_visible?"true":"false"},
+    {name:"notes",label:"HBL notes",type:"textarea",value:h.notes,span2:true}
+  ];
+  openForm(hblId?"Edit house bill of lading":"Add house bill of lading",defs,fd=>saveJobHbl(fd,jobId,hblId));
+}
+async function deleteJobHbl(hblId,jobId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can delete an HBL record.","error");
+  const h=state.ops.jobHbls.find(x=>x.id===hblId);if(!h)return notify("HBL record not found.","error");
+  if(!confirm("Delete HBL "+h.hbl_no+"? HBLs already used by filings, LCL lines or charges cannot be deleted."))return;
+  try{
+    await call("logistics-workspace",{action:"deleteJobHbl",id:hblId});
+    await loadJobs();state.selectedJob=jobId;state.page="jobdetail";render();notify("HBL deleted","success");
+  }catch(e){notify(e.message||"Could not delete HBL","error")}
+}
+async function deleteForwardingJob(jobId){
+  if(state.profile?.role!=="Admin")return notify("Only Admin can delete a forwarding job.","error");
+  const job=state.ops.jobs.find(x=>x.id===jobId);if(!job)return notify("Forwarding job not found.","error");
+  const count=hblsForJob(jobId).length;
+  if(!confirm("Delete forwarding job "+job.job_no+" with "+count+" HBL(s)? It will be removed from active registers, but its HBLs, containers, milestones, customs, documents and charges will be retained for audit/recovery."))return;
+  try{
+    await call("logistics-workspace",{action:"deleteForwardingJob",id:jobId});
+    await loadJobs();state.selectedJob=null;state.page="jobs";render();notify("Job deleted from active registers; history retained","success");
+  }catch(e){notify(e.message||"Could not delete forwarding job","error")}
+}
 function renderContainers(){const q=state.query.toLowerCase(),items=state.rows.map((r,i)=>({r,i})).filter(x=>!q||Object.values(x.r).join(" ").toLowerCase().includes(q));const rows=items.map(x=>{const no=container(x.r),links=state.ops.jobContainers.filter(z=>norm(z.container_no)===norm(no)),jobNames=links.map(z=>state.ops.jobs.find(j=>j.id===z.job_id)).filter(Boolean);return '<tr><td><b>'+esc(no)+'</b><span class="cell-sub">'+esc(val(x.r,["TYPE"])||"—")+'</span></td><td>'+esc(val(x.r,["MBL NO"])||"—")+'</td><td>'+esc(val(x.r,["LINER"])||"—")+'</td><td>'+esc(val(x.r,["VESSEL & VOY"])||"—")+'</td><td>'+esc(val(x.r,["POL"])||"—")+' → '+esc(val(x.r,["GATEWAY PORT"])||"—")+'</td><td>'+fmt(val(x.r,["ETD"]))+'</td><td>'+fmt(val(x.r,["ETA"]))+'</td><td>'+fmt(val(x.r,["PORT IN"]))+'</td><td>'+fmt(val(x.r,["CFS IN"]))+'</td><td>'+fmt(val(x.r,["EMPTY RETURN VALIDITY"]))+'</td><td>'+(jobNames.length?jobNames.map(j=>'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>').join(" "):'<span class="pill amber">Unlinked</span>')+'</td><td>'+pill(stage(x.r))+'</td><td>'+actionBtn("edit-container","Open",'data-index="'+x.i+'"')+actionBtn("link-container-job","Link job",'data-container-no="'+esc(no)+'"')+(!jobNames.length?actionBtn("create-job-from-container","Create job",'data-index="'+x.i+'"'):"")+'</td></tr>'});return pageHead("containers",'<button class="btn primary" data-create="container">＋ Add container</button>')+'<div class="stats">'+stat("Equipment records",items.length,"Current equipment register")+stat("At port",state.rows.filter(r=>val(r,["PORT IN"])).length,"Port-in date recorded")+stat("At CFS",state.rows.filter(r=>val(r,["CFS IN"])).length,"CFS-in date recorded")+stat("Destuffed",state.rows.filter(r=>val(r,["DESTUFFING DATE"])).length,"Destuffing date recorded")+stat("Empty returned",state.rows.filter(r=>val(r,["CONTAINER RETURN DATE"])).length,"Equipment returned")+'</div><div class="filters"><input id="pageSearch" class="filter search" placeholder="Search container, MBL, liner, vessel or route…" value="'+esc(state.query)+'"><span class="pane-sub">'+items.length+' equipment records · '+state.ops.jobContainers.length+' job links</span></div>'+pane("CONTAINER MOVEMENT REGISTER",table(["CONTAINER","TYPE","MBL","LINER","VESSEL","ROUTE","ETD","ETA","PORT IN","CFS IN","EMPTY LFD","LINKED JOB","STAGE","ACTIONS"],rows,"No equipment records found."))}
 function renderSailings(){
   const q=state.query.toLowerCase();
@@ -346,11 +391,12 @@ function newFiling(filingId,presetJobId){
   const inferred=resolveJob(x.job_id,x.container_no,x.hbl_no);
   const jobId=x.job_id||inferred?.id||presetJobId||"";
   const job=state.ops.jobs.find(j=>j.id===jobId);
+  const hbl=resolveHbl(x.hbl_id,x.hbl_no,jobId);
   const defs=[
-    {name:"job_id",label:"Forwarding job / HBL",options:jobOptions(),value:jobId},
+    {name:"job_id",label:"Forwarding job",options:jobOptions(),value:jobId},
+    {name:"hbl_id",label:"Specific HBL (optional)",options:hblOptionsForJob(jobId,x.hbl_id),value:x.hbl_id||hbl?.id||""},
     {name:"container_no",label:"Container (optional with a job)",options:containerOptions(),value:x.container_no||""},
     {name:"filing_type",label:"Filing type",options:["HBL","MBL","CSN","IGM","SI","VGM","OTHER"].map(v=>[v,v]),value:x.filing_type||"HBL"},
-    {name:"hbl_no",label:"HBL",value:x.hbl_no||job?.hbl_no||""},
     {name:"mbl_no",label:"MBL",value:x.mbl_no||job?.mbl_no||""},
     {name:"filing_reference",label:"Filing reference",value:x.filing_reference},
     {name:"status",label:"Status",options:["draft","ready","submitted","accepted","rejected","not_required"].map(v=>[v,v]),value:x.status||"draft"},
@@ -359,12 +405,12 @@ function newFiling(filingId,presetJobId){
     {name:"acknowledged_at",label:"Acknowledged date",type:"date",value:x.acknowledged_at?String(x.acknowledged_at).slice(0,10):""},
     {name:"notes",label:"Notes",type:"textarea",value:x.notes,span2:true}
   ];
-  openForm(filingId?"Edit customs filing / job mapping":"New customs filing",defs,async fd=>{
+  openForm(filingId?"Edit customs filing / HBL mapping":"New customs filing",defs,async fd=>{
     const d=Object.fromEntries(fd.entries());
     for(const k of ["filed_at","acknowledged_at"])if(d[k])d[k]=new Date(d[k]+"T12:00:00").toISOString();
     if(filingId)d.id=filingId;
     await call("logistics-workspace",{action:"upsertFiling",data:d});
-    await loadJobs();closeForm();render();notify(filingId?"Filing mapping updated":"Filing saved","success");
+    await loadJobs();closeForm();render();notify(filingId?"Filing mapping updated":"Filing saved against selected HBL","success");
   });
 }
 function uploadFilingDocument(filingId){if(!access(["Admin","Editor","Operator"]))return notify("Your role cannot upload filing documents.","error");openForm("Upload document to filing",[{name:"file",label:"PDF, JPG, PNG, DOC or DOCX (max 8 MB)",type:"file",accept:".pdf,.jpg,.jpeg,.png,.doc,.docx",required:true}],async fd=>{const file=fd.get("file");if(!file||!file.size)throw new Error("Choose a document to upload.");if(file.size>8388608)throw new Error("Document exceeds the 8 MB limit.");const allowed=["application/pdf","image/jpeg","image/png","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document"];if(!allowed.includes(file.type))throw new Error("Only PDF, JPG, PNG, DOC or DOCX files are allowed.");const bytes=new Uint8Array(await file.arrayBuffer());let binary="";for(let i=0;i<bytes.length;i++)binary+=String.fromCharCode(bytes[i]);await call("logistics-workspace",{action:"uploadFilingDocument",filing_id:filingId,filename:file.name,content_type:file.type,base64:btoa(binary)});await loadJobs();closeForm();render();notify("Document uploaded to filing","success")})}
