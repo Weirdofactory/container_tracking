@@ -340,7 +340,8 @@ function renderFilings(){
   pane("CUSTOMS & COMPLIANCE REGISTER",table(["JOB / HBL","CONTAINER","TYPE","HBL","MBL","DUE DATE","FILED","ACKNOWLEDGED","STATUS","DOCS","ACTIONS"],rows,"No filing entries."));
 }function renderFinance(){
   const rows=state.ops.charges.map(x=>{
-    const j=resolveJob(x.job_id,x.container_no);
+    const linkedHbl=x.hbl_id?state.ops.jobHbls.find(h=>h.id===x.hbl_id):null;
+    const j=resolveJob(x.job_id,x.container_no,linkedHbl?.hbl_no||x.hbl_no, x.hbl_id);
     const job=j?'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>':'<span class="pill amber">Unmapped</span>';
     return '<tr><td>'+job+'<span class="cell-sub">'+esc(j?.hbl_no||"")+'</span></td><td>'+esc(x.container_no||"Job level")+'</td><td>'+esc(x.direction)+'</td><td>'+esc(x.charge_code)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.counterparty)+'</td><td>'+esc(x.currency)+' '+num(x.amount)+'<span class="cell-sub">'+(x.amount_inr!=null?"INR "+num(x.amount_inr):"")+'</span></td><td>'+pill(x.approval_status)+'</td><td>'+fmt(x.due_date)+'</td><td>'+actionBtn("edit-charge","Edit",'data-id="'+esc(x.id)+'"')+actionBtn("print-charge","Print",'data-id="'+esc(x.id)+'"')+(x.approval_status!=="approved"&&state.profile?.role==="Admin"?actionBtn("approve-charge","Approve",'data-id="'+esc(x.id)+'"'):"")+(state.profile?.role==="Admin"?actionBtn("delete-charge","Delete",'data-id="'+esc(x.id)+'"'):"")+'</td></tr>';
   });
@@ -425,13 +426,21 @@ function jobsForContainer(containerNo){
   const ids=new Set(state.ops.jobContainers.filter(x=>norm(x.container_no)===norm(containerNo)).map(x=>x.job_id));
   return state.ops.jobs.filter(j=>ids.has(j.id));
 }
-function resolveJob(jobId,containerNo,hblNo){
+function resolveJob(jobId,containerNo,hblNo,hblId){
   if(jobId){const found=state.ops.jobs.find(j=>j.id===jobId);if(found)return found}
+  if(hblId){
+    const linkedHbl=state.ops.jobHbls.find(h=>h.id===hblId);
+    if(linkedHbl){const found=state.ops.jobs.find(j=>j.id===linkedHbl.job_id);if(found)return found}
+  }
+  if(hblNo){
+    const hblMatches=state.ops.jobHbls.filter(h=>norm(h.hbl_no)===norm(hblNo));
+    const hblJobIds=[...new Set(hblMatches.map(h=>h.job_id))];
+    if(hblJobIds.length===1){const found=state.ops.jobs.find(j=>j.id===hblJobIds[0]);if(found)return found}
+    const legacyMatches=state.ops.jobs.filter(j=>norm(j.hbl_no)===norm(hblNo));
+    if(legacyMatches.length===1)return legacyMatches[0];
+  }
   const byContainer=containerNo?jobsForContainer(containerNo):[];
-  if(byContainer.length===1)return byContainer[0];
-  const byHbl=hblNo?state.ops.jobs.filter(j=>norm(j.hbl_no)===norm(hblNo)):[];
-  const matches=byHbl.length?byHbl:byContainer;
-  return matches.length===1?matches[0]:null;
+  return byContainer.length===1?byContainer[0]:null;
 }
 function hblsForJob(jobId){return state.ops.jobHbls.filter(h=>h.job_id===jobId)}
 function hblOptionsForJob(jobId,selectedId){
