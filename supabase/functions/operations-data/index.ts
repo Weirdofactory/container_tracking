@@ -149,7 +149,7 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  let payload: { action?: unknown; data?: unknown; expectedUpdatedAt?: unknown };
+  let payload: { action?: unknown; data?: unknown; expectedUpdatedAt?: unknown; container_no?: unknown };
   try {
     const parsed = await req.json();
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return reply(400, { error: "Invalid request" }, origin);
