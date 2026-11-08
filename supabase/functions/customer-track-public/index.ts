@@ -113,6 +113,7 @@ function safeForwardingJob(
   job: Record<string, unknown>,
   containerNo: string,
   events: Record<string, unknown>[],
+  hblNoOverride: string | null = null,
 ) {
   const statusLabels: Record<string, string> = {
     draft: "Job created", booked: "Booking confirmed", origin_handling: "Origin handling",
@@ -142,7 +143,7 @@ function safeForwardingJob(
   });
   return {
     jobNo: field(job, ["job_no"]),
-    hblNo: field(job, ["hbl_no"]),
+    hblNo: hblNoOverride === null ? "" : hblNoOverride || field(job, ["hbl_no"]),
     mblNo: field(job, ["mbl_no"]),
     container: containerNo,
     type: field(job, ["service_type"]) || "Shipment",
@@ -227,26 +228,29 @@ Deno.serve(async (req: Request) => {
   }) as Record<string, unknown>[];
 
   const { data: visibleJobs, error: jobsError } = await admin.from("forwarding_jobs")
-    .select("*").eq("customer_visible", true).order("updated_at", { ascending: false }).limit(2500);
+    .select("*").eq("customer_visible", true).is("deleted_at", null).order("updated_at", { ascending: false }).limit(2500);
   if (jobsError || !Array.isArray(visibleJobs)) {
     return reply(503, { error: "Tracking service is temporarily unavailable." }, origin);
   }
   const visibleJobIds = visibleJobs.map((job: Record<string, unknown>) => String(job.id || "")).filter(Boolean);
+  let visibleHbls: Record<string, unknown>[] = [];
   let jobLinks: Record<string, unknown>[] = [];
   let jobEvents: Record<string, unknown>[] = [];
   // Batch ID filters to keep the PostgREST URL comfortably below gateway limits.
   for (let offset = 0; offset < visibleJobIds.length; offset += 200) {
     const idBatch = visibleJobIds.slice(offset, offset + 200);
-    const [linksResult, eventsResult] = await Promise.all([
+    const [hblResult, linksResult, eventsResult] = await Promise.all([
+      admin.from("forwarding_job_hbls").select("job_id,hbl_no").in("job_id", idBatch).eq("customer_visible", true).limit(10000),
       admin.from("job_container_links").select("job_id,container_no").in("job_id", idBatch).limit(10000),
       admin.from("shipment_milestones")
         .select("job_id,container_no,milestone_code,milestone_name,planned_at,actual_at,status,customer_visible,created_at")
         .in("job_id", idBatch).eq("customer_visible", true)
         .order("created_at", { ascending: true }).limit(10000),
     ]);
-    if (linksResult.error || eventsResult.error || !Array.isArray(linksResult.data) || !Array.isArray(eventsResult.data)) {
+    if (hblResult.error || linksResult.error || eventsResult.error || !Array.isArray(hblResult.data) || !Array.isArray(linksResult.data) || !Array.isArray(eventsResult.data)) {
       return reply(503, { error: "Tracking service is temporarily unavailable." }, origin);
     }
+    visibleHbls.push(...hblResult.data as Record<string, unknown>[]);
     jobLinks.push(...linksResult.data as Record<string, unknown>[]);
     jobEvents.push(...eventsResult.data as Record<string, unknown>[]);
   }
@@ -266,12 +270,16 @@ Deno.serve(async (req: Request) => {
     eventsByJob.set(key, group);
   }
   const matchedJobs = (visibleJobs as Record<string, unknown>[]).filter(job => {
-    const jobMatches = [job.job_no, job.hbl_no, job.mbl_no].some(value => normalize(value) === reference);
+    const jobMatches = [job.job_no, job.mbl_no].some(value => normalize(value) === reference);
+    const hblMatches = visibleHbls.some(h => String(h.job_id) === String(job.id) && normalize(h.hbl_no) === reference);
     const containerMatches = (linksByJob.get(String(job.id)) || []).some(link => normalize(link.container_no) === reference);
-    return jobMatches || containerMatches;
+    return jobMatches || hblMatches || containerMatches;
   });
   const jobResults: ReturnType<typeof safeForwardingJob>[] = [];
   for (const job of matchedJobs) {
+    const visibleJobHbls = visibleHbls.filter(h => String(h.job_id) === String(job.id));
+    const exactHbl = visibleJobHbls.find(h => normalize(h.hbl_no) === reference);
+    const displayHbl = exactHbl ? String(exactHbl.hbl_no) : (visibleJobHbls[0] ? String(visibleJobHbls[0].hbl_no) : null);
     const links = linksByJob.get(String(job.id)) || [];
     const matchedByContainer = links.some(link => normalize(link.container_no) === reference);
     const targetContainers = matchedByContainer
@@ -282,7 +290,7 @@ Deno.serve(async (req: Request) => {
       const events = (eventsByJob.get(String(job.id)) || []).filter(event =>
         (!String(event.container_no || "").trim() || !containerNo || normalize(event.container_no) === normalize(containerNo))
       );
-      jobResults.push(safeForwardingJob(job, containerNo, events));
+      jobResults.push(safeForwardingJob(job, containerNo, events, displayHbl));
     }
   }
 
