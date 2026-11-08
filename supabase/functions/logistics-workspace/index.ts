@@ -133,9 +133,31 @@ Deno.serve(async (req: Request) => {
       return text(value, 40).toUpperCase();
     };
 
+    const assertJob = async (value: unknown) => {
+      if (!value) return null;
+      const id = uuid(value);
+      const { data, error } = await admin.from("forwarding_jobs").select("id,job_no,hbl_no,mbl_no").eq("id", id).is("deleted_at", null).maybeSingle();
+      if (error || !data) throw new Error("Forwarding job not found or it has been deleted.");
+      return data;
+    };
+    const assertJobHbl = async (value: unknown, expectedJobId?: string) => {
+      if (!value) return null;
+      const id = uuid(value);
+      const { data, error } = await admin.from("forwarding_job_hbls").select("*").eq("id", id).maybeSingle();
+      if (error || !data) throw new Error("House bill of lading record not found.");
+      if (expectedJobId && data.job_id !== expectedJobId) throw new Error("Selected HBL does not belong to this forwarding job.");
+      const { data: parent, error: parentError } = await admin.from("forwarding_jobs").select("id").eq("id", data.job_id).is("deleted_at", null).maybeSingle();
+      if (parentError || !parent) throw new Error("The forwarding job for this HBL is not active.");
+      return data;
+    };
+    const assertJobContainer = async (jobId: string, containerNo: string) => {
+      const { data, error } = await admin.from("job_container_links").select("id")
+        .eq("job_id", jobId).eq("container_no", containerNo).maybeSingle();
+      if (error || !data) throw new Error("Link this container to the selected forwarding job first.");
+    };
+
     if (action === "read") {
       const tables = [
-        ["jobs", "forwarding_jobs", "created_at"],
         ["jobContainers", "job_container_links", "created_at"],
         ["milestones", "shipment_milestones", "created_at"],
         ["sailings", "logistics_sailings", "created_at"],
@@ -147,12 +169,24 @@ Deno.serve(async (req: Request) => {
         ["documents", "filing_documents", "created_at"],
         ["alertActions", "logistics_alert_actions", "updated_at"],
       ] as const;
-      const results = await Promise.all(tables.map(async ([key, table, orderColumn]) => {
-        const { data, error } = await admin.from(table).select("*").order(orderColumn, { ascending: false }).limit(2500);
-        if (error) throw new Error("Could not load " + key + ".");
-        return [key, data ?? []] as const;
-      }));
-      return reply(200, { ...Object.fromEntries(results), profile: { displayName: profile.display_name, role: profile.role } }, origin);
+      const [results, jobsResult] = await Promise.all([
+        Promise.all(tables.map(async ([key, table, orderColumn]) => {
+          const { data, error } = await admin.from(table).select("*").order(orderColumn, { ascending: false }).limit(2500);
+          if (error) throw new Error("Could not load " + key + ".");
+          return [key, data ?? []] as const;
+        })),
+        admin.from("forwarding_jobs").select("*").is("deleted_at", null).order("created_at", { ascending: false }).limit(2500),
+      ]);
+      if (jobsResult.error) throw new Error("Could not load forwarding jobs.");
+      const jobs = jobsResult.data ?? [];
+      const jobIds = jobs.map((job: Record<string, unknown>) => String(job.id));
+      let jobHbls: Record<string, unknown>[] = [];
+      if (jobIds.length) {
+        const { data, error } = await admin.from("forwarding_job_hbls").select("*").in("job_id", jobIds).order("created_at", { ascending: true }).limit(10000);
+        if (error) throw new Error("Could not load house bills of lading.");
+        jobHbls = data ?? [];
+      }
+      return reply(200, { ...Object.fromEntries(results), jobs, jobHbls, profile: { displayName: profile.display_name, role: profile.role } }, origin);
     }
 
 
@@ -194,8 +228,111 @@ Deno.serve(async (req: Request) => {
       const { data, error } = await admin.from("forwarding_jobs").upsert(row).select("*").single();
       if (error?.code === "23505") throw new Error("That job number is already in use.");
       if (error) throw new Error(error.message);
+      const primaryHbl = text(data.hbl_no, 120).toUpperCase();
+      if (primaryHbl) {
+        const { data: existingHbl, error: existingHblError } = await admin.from("forwarding_job_hbls")
+          .select("id").eq("job_id", data.id).eq("hbl_no", primaryHbl).maybeSingle();
+        if (existingHblError) throw new Error("Could not verify the primary HBL record.");
+        if (!existingHbl) {
+          const { error: hblInsertError } = await admin.from("forwarding_job_hbls").insert({
+            job_id: data.id, hbl_no: primaryHbl, customer_reference: data.customer_reference,
+            shipper: data.shipper, consignee: data.consignee, notify_party: data.notify_party,
+            package_count: data.package_count, package_type: data.package_type,
+            gross_weight_kg: data.gross_weight_kg, volume_cbm: data.volume_cbm,
+            commodity: data.commodity, customer_visible: data.customer_visible,
+            notes: data.notes, created_by: actorId, updated_by: actorId,
+          });
+          if (hblInsertError) throw new Error("Job saved, but the primary HBL record could not be created: " + hblInsertError.message);
+        }
+      }
       await recordAudit(id ? "update" : "create", "forwarding_job", data.id, before, data);
       return reply(200, { record: data }, origin);
+    }
+
+    if (action === "upsertJobHbl") {
+      roleCheck(profile.role, "job");
+      const d = payload.data ?? {};
+      const jobId = uuid(d.job_id);
+      const job = await assertJob(jobId);
+      const hblId = d.id ? uuid(d.id) : undefined;
+      const before = hblId ? (await admin.from("forwarding_job_hbls").select("*").eq("id", hblId).maybeSingle()).data : null;
+      if (hblId && (!before || before.job_id !== jobId)) throw new Error("HBL record does not belong to this forwarding job.");
+      const hblNo = text(d.hbl_no, 120).toUpperCase();
+      if (!hblNo) throw new Error("HBL number is required.");
+      const packageCount = optionalNumber(d.package_count, "HBL package count", 1);
+      if (packageCount !== null && !Number.isInteger(packageCount)) throw new Error("HBL package count must be a whole number.");
+      const row = {
+        ...(hblId ? { id: hblId } : {}), job_id: jobId, hbl_no: hblNo,
+        customer_reference: text(d.customer_reference, 100),
+        shipper: text(d.shipper, 180), consignee: text(d.consignee, 180), notify_party: text(d.notify_party, 180),
+        package_count: packageCount, package_type: text(d.package_type, 80),
+        gross_weight_kg: optionalNumber(d.gross_weight_kg, "HBL gross weight"),
+        volume_cbm: optionalNumber(d.volume_cbm, "HBL volume"),
+        commodity: text(d.commodity, 240),
+        customer_visible: d.customer_visible === true || d.customer_visible === "true",
+        notes: text(d.notes, 2000), updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!hblId ? { created_by: actorId } : {}),
+      };
+      const { data, error } = await admin.from("forwarding_job_hbls").upsert(row).select("*").single();
+      if (error?.code === "23505") throw new Error("This HBL number is already entered under this forwarding job.");
+      if (error) throw new Error(error.message);
+      if ((before && before.hbl_no === job.hbl_no) || !job.hbl_no) {
+        await admin.from("forwarding_jobs").update({
+          hbl_no: data.hbl_no, shipper: data.shipper, consignee: data.consignee, notify_party: data.notify_party,
+          package_count: data.package_count, package_type: data.package_type,
+          gross_weight_kg: data.gross_weight_kg, volume_cbm: data.volume_cbm, commodity: data.commodity,
+          updated_by: actorId, updated_at: new Date().toISOString(),
+        }).eq("id", jobId);
+      }
+      await recordAudit(hblId ? "update" : "create", "forwarding_job_hbl", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "deleteJobHbl") {
+      roleCheck(profile.role, "job");
+      const hblId = uuid(payload.id);
+      const { data: hbl, error: hblError } = await admin.from("forwarding_job_hbls").select("*").eq("id", hblId).maybeSingle();
+      if (hblError || !hbl) throw new Error("HBL record not found.");
+      const refs = await Promise.all([
+        admin.from("lcl_consolidation_items").select("id", { count: "exact", head: true }).eq("hbl_id", hblId),
+        admin.from("shipment_filings").select("id", { count: "exact", head: true }).eq("hbl_id", hblId),
+        admin.from("shipment_charges").select("id", { count: "exact", head: true }).eq("hbl_id", hblId),
+      ]);
+      if (refs.some(x => x.error)) throw new Error("Could not verify whether this HBL is used by other shipment records.");
+      if (refs.some(x => (x.count ?? 0) > 0)) throw new Error("This HBL is already used by LCL, customs or charge records. Keep it and edit the details instead.");
+      const { error } = await admin.from("forwarding_job_hbls").delete().eq("id", hblId);
+      if (error) throw new Error(error.message);
+      const { data: parentJob, error: parentError } = await admin.from("forwarding_jobs")
+        .select("hbl_no").eq("id", hbl.job_id).maybeSingle();
+      if (parentError) throw new Error("HBL was deleted but the job's primary HBL could not be refreshed.");
+      if (String(hbl.hbl_no) === String(parentJob?.hbl_no)) {
+        const { data: nextHbl, error: nextError } = await admin.from("forwarding_job_hbls")
+          .select("*").eq("job_id", hbl.job_id).order("created_at", { ascending: true }).limit(1).maybeSingle();
+        if (nextError) throw new Error("HBL was deleted but the next primary HBL could not be selected.");
+        const { error: syncError } = await admin.from("forwarding_jobs").update({
+          hbl_no: nextHbl?.hbl_no || "", shipper: nextHbl?.shipper || "", consignee: nextHbl?.consignee || "",
+          notify_party: nextHbl?.notify_party || "", package_count: nextHbl?.package_count ?? null,
+          package_type: nextHbl?.package_type || "", gross_weight_kg: nextHbl?.gross_weight_kg ?? null,
+          volume_cbm: nextHbl?.volume_cbm ?? null, commodity: nextHbl?.commodity || "",
+          updated_by: actorId, updated_at: new Date().toISOString(),
+        }).eq("id", hbl.job_id);
+        if (syncError) throw new Error("HBL was deleted but the job's primary HBL could not be refreshed.");
+      }
+      await recordAudit("delete", "forwarding_job_hbl", hblId, hbl, null);
+      return reply(200, { deleted: true }, origin);
+    }
+
+    if (action === "deleteForwardingJob") {
+      if (profile.role !== "Admin") throw new Error("Only Admin can delete a forwarding job.");
+      const jobId = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("forwarding_jobs").select("*").eq("id", jobId).is("deleted_at", null).maybeSingle();
+      if (readError || !before) throw new Error("Active forwarding job not found.");
+      const now = new Date().toISOString();
+      const { data, error } = await admin.from("forwarding_jobs").update({ deleted_at: now, deleted_by: actorId, updated_by: actorId, updated_at: now })
+        .eq("id", jobId).is("deleted_at", null).select("*").single();
+      if (error) throw new Error(error.message);
+      await recordAudit("soft_delete", "forwarding_job", jobId, before, data);
+      return reply(200, { deleted: true, recoverable: true }, origin);
     }
 
     if (action === "linkJobContainer") {
@@ -337,6 +474,13 @@ Deno.serve(async (req: Request) => {
       if (["closed","cancelled"].includes(group.status)) throw new Error("Cargo cannot be changed in a closed or cancelled consolidation.");
       const before = itemId ? (await admin.from("lcl_consolidation_items").select("*").eq("id", itemId).maybeSingle()).data : null;
       if (itemId && (!before || before.consolidation_id !== consolidationId)) throw new Error("Cargo can only be edited within its existing consolidation.");
+      const linkedJob = d.job_id ? await assertJob(d.job_id) : null;
+      const linkedHbl = d.hbl_id ? await assertJobHbl(d.hbl_id, linkedJob?.id) : null;
+      const linkedJobId = linkedHbl?.job_id ?? linkedJob?.id ?? null;
+      const hblNo = text(linkedHbl?.hbl_no || d.hbl_no, 100);
+      if (linkedJob && !linkedHbl && norm(linkedJob.hbl_no) !== norm(hblNo)) {
+        throw new Error("Select an HBL belonging to the forwarding job.");
+      }
       const packageCount = number(d.package_count || 1, "Package count", 1);
       if (!Number.isInteger(packageCount)) throw new Error("Package count must be a whole number.");
       const grossWeight = number(d.gross_weight_kg || 0, "Gross weight");
@@ -351,8 +495,8 @@ Deno.serve(async (req: Request) => {
       if (group.capacity_cbm && totals.cbm + volume > Number(group.capacity_cbm) + 0.0005) throw new Error("This cargo would exceed the entered CBM capacity.");
       if (group.capacity_weight_kg && totals.kg + grossWeight > Number(group.capacity_weight_kg) + 0.01) throw new Error("This cargo would exceed the entered weight capacity.");
       const row = {
-        ...(itemId ? { id: itemId } : {}), consolidation_id: consolidationId,
-        hbl_no: text(d.hbl_no, 100), shipper: text(d.shipper, 160), consignee: text(d.consignee, 160),
+        ...(itemId ? { id: itemId } : {}), consolidation_id: consolidationId, job_id: linkedJobId, hbl_id: linkedHbl?.id ?? null,
+        hbl_no: hblNo, shipper: text(d.shipper || linkedHbl?.shipper, 160), consignee: text(d.consignee || linkedHbl?.consignee, 160),
         package_count: packageCount, package_type: text(d.package_type, 80), gross_weight_kg: grossWeight,
         volume_cbm: volume, notes: text(d.notes, 1500), updated_by: actorId, updated_at: new Date().toISOString(),
         ...(!itemId ? { created_by: actorId } : {}),
@@ -370,12 +514,18 @@ Deno.serve(async (req: Request) => {
       const d = payload.data ?? {};
       const id = d.id ? uuid(d.id) : undefined;
       const before = id ? (await admin.from("shipment_charges").select("*").eq("id", id).maybeSingle()).data : null;
-      const containerNo = await assertContainer(d.container_no);
+      let linkedJob = d.job_id ? await assertJob(d.job_id) : null;
+      const linkedHbl = d.hbl_id ? await assertJobHbl(d.hbl_id, linkedJob?.id) : null;
+      if (linkedHbl && !linkedJob) linkedJob = await assertJob(linkedHbl.job_id);
+      const jobId = linkedHbl?.job_id ?? linkedJob?.id ?? null;
+      const containerNo = text(d.container_no, 40) ? await assertContainer(d.container_no) : null;
+      if (!jobId && !containerNo) throw new Error("Select a forwarding job or a container for this charge.");
+      if (jobId && containerNo) await assertJobContainer(jobId, containerNo);
       const currency = text(d.currency || "INR", 3).toUpperCase();
       if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
       const fx = currency === "INR" ? 1 : number(d.exchange_rate_to_inr, "INR exchange rate", 0.000001);
       const row = {
-        ...(id ? { id } : {}), container_no: containerNo,
+        ...(id ? { id } : {}), job_id: jobId, hbl_id: linkedHbl?.id ?? null, container_no: containerNo,
         direction: val(d.direction, ["cost","revenue"], "charge direction"),
         charge_code: text(d.charge_code, 100), description: text(d.description, 240),
         counterparty: text(d.counterparty, 160), amount: number(d.amount, "Amount", 0.01),
@@ -410,7 +560,16 @@ Deno.serve(async (req: Request) => {
       const d = payload.data ?? {};
       const id = d.id ? uuid(d.id) : undefined;
       const before = id ? (await admin.from("shipment_filings").select("*").eq("id", id).maybeSingle()).data : null;
-      const containerNo = await assertContainer(d.container_no);
+      let linkedJob = d.job_id ? await assertJob(d.job_id) : null;
+      const linkedHbl = d.hbl_id ? await assertJobHbl(d.hbl_id, linkedJob?.id) : null;
+      if (linkedHbl && !linkedJob) linkedJob = await assertJob(linkedHbl.job_id);
+      const jobId = linkedHbl?.job_id ?? linkedJob?.id ?? null;
+      const containerNo = text(d.container_no, 40) ? await assertContainer(d.container_no) : null;
+      if (!jobId && !containerNo) throw new Error("Select a forwarding job or a container for this filing.");
+      if (jobId && containerNo) await assertJobContainer(jobId, containerNo);
+      const hblNo = text(linkedHbl?.hbl_no || d.hbl_no, 100) || text(linkedJob?.hbl_no, 100);
+      const mblNo = text(d.mbl_no, 100) || text(linkedJob?.mbl_no, 100);
+      if (linkedJob?.mbl_no && d.mbl_no && norm(linkedJob.mbl_no) !== norm(d.mbl_no)) throw new Error("The MBL does not match the selected forwarding job.");
       const filingStatus = val(d.status || "draft", ["draft","ready","submitted","accepted","rejected","not_required"], "filing status");
       if (d.filed_at && Number.isNaN(Date.parse(String(d.filed_at)))) throw new Error("Enter a valid filing date.");
       if (d.acknowledged_at && Number.isNaN(Date.parse(String(d.acknowledged_at)))) throw new Error("Enter a valid acknowledgment date.");
@@ -419,7 +578,7 @@ Deno.serve(async (req: Request) => {
       if (["submitted","accepted","rejected"].includes(filingStatus) && !filedAt) throw new Error("Enter the actual filing date for a submitted filing.");
       if (filingStatus === "accepted" && !acknowledgedAt) throw new Error("Enter the acknowledgment date for an accepted filing.");
       const row = {
-        ...(id ? { id } : {}), container_no: containerNo, hbl_no: text(d.hbl_no, 100), mbl_no: text(d.mbl_no, 100),
+        ...(id ? { id } : {}), job_id: jobId, hbl_id: linkedHbl?.id ?? null, container_no: containerNo, hbl_no: hblNo, mbl_no: mblNo,
         filing_type: val(d.filing_type, ["HBL","MBL","CSN","IGM","SI","VGM","OTHER"], "filing type"),
         filing_reference: text(d.filing_reference, 140), status: filingStatus, due_date: date(d.due_date),
         filed_at: filedAt, acknowledged_at: acknowledgedAt, notes: text(d.notes, 2000), updated_by: actorId, updated_at: new Date().toISOString(),
@@ -436,7 +595,7 @@ Deno.serve(async (req: Request) => {
       const filingId = uuid(payload.filing_id);
       const { data: filing, error: filingError } = await admin.from("shipment_filings").select("id,container_no").eq("id", filingId).maybeSingle();
       if (filingError || !filing) throw new Error("Filing record not found.");
-      const containerNo = await assertContainer(filing.container_no);
+      const containerNo = filing.container_no ? await assertContainer(filing.container_no) : null;
       const filename = text(payload.filename, 180).replace(/[\\/\0]/g, "_");
       const contentType = text(payload.content_type, 120).toLowerCase();
       const permitted = ["application/pdf","image/jpeg","image/png","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
