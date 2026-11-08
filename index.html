@@ -7,6 +7,7 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Freight Operations | Enterprise Workspace</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--violet:#362bb4;--violet-dark:#282184;--violet-light:#eeeefe;--blue:#176da8;--cyan:#078ca5;--green:#18815d;--amber:#b67817;--red:#b94343;--ink:#24394b;--muted:#708292;--line:#d3dce3;--surface:#fff;--work:#e9edf1;--soft:#f5f7f9;--shadow:0 1px 3px #21394e12}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--work);color:var(--ink);font:12px/1.4 "Segoe UI",Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:wait}[hidden]{display:none!important}
@@ -168,7 +169,7 @@ function renderJobDetail(jobId){
   return pageHead("jobs",'<button class="btn" data-nav="jobs">Back to jobs</button><button class="btn" data-edit-job="'+esc(j.id)+'">Edit job</button><button class="btn" data-link-job="'+esc(j.id)+'">Link container</button><button class="btn" data-create="filing" data-job-id="'+esc(j.id)+'">New filing</button><button class="btn" data-create="charge" data-job-id="'+esc(j.id)+'">New charge</button><button class="btn primary" data-event-job="'+esc(j.id)+'">Add milestone</button>'+deleteButton)+
   '<div class="stats">'+stat("Job number",j.job_no,"Forwarding reference")+stat("House bills",hbls.length,"HBL records under this job")+stat("MBL",j.mbl_no||"—","Master bill")+stat("Status",j.status,"Job lifecycle")+'</div>'+
   '<div class="columns"><div class="stack">'+
-  pane("HOUSE BILLS OF LADING",'<div class="pane-body"><div class="pane-toolbar"><span class="pane-sub">One forwarding job can contain multiple HBLs. Maintain cargo parties and measurements separately for each HBL.</span><button class="btn primary" data-create="job-hbl" data-job-id="'+esc(jobId)+'">＋ Add HBL</button></div>'+table(["HBL NUMBER","SHIPPER","CONSIGNEE","PACKAGES","GROSS WEIGHT","VOLUME","VISIBILITY","ACTIONS"],hblRows,"No HBL records yet. Add the first HBL here.")+'</div>','',hbls.length+" HBLs")+
+  pane("HOUSE BILLS OF LADING",'<div class="pane-body"><div class="pane-toolbar"><span class="pane-sub">One forwarding job can contain multiple HBLs. Import a manifest Excel to create HBLs automatically.</span><button class="btn" data-import-hbls="'+esc(jobId)+'">↑ Import Excel</button><input hidden type="file" accept=".xls,.xlsx,.xlsm" id="hblManifest-'+esc(jobId)+'"><button class="btn primary" data-create="job-hbl" data-job-id="'+esc(jobId)+'">＋ Add HBL</button></div>'+table(["HBL NUMBER","SHIPPER","CONSIGNEE","PACKAGES","GROSS WEIGHT","VOLUME","VISIBILITY","ACTIONS"],hblRows,"No HBL records yet. Add the first HBL here.")+'</div>','',hbls.length+" HBLs")+
   pane("JOB DETAILS",'<div class="pane-body"><div class="formgrid">'+[["Customer",j.customer_name],["Booking",j.booking_no],["Incoterm",j.incoterm],["Carrier",j.carrier],["Vessel / voyage",(j.vessel_name||"")+" "+(j.voyage_no||"")],["Route",(j.pol||"")+" to "+(j.transshipment_port||"")+" to "+(j.pod||"")],["Final delivery",j.final_delivery_place],["Commodity",j.commodity],["Total packages",j.package_count+" "+(j.package_type||"")],["Weight",j.gross_weight_kg+" KG"],["Volume",j.volume_cbm+" CBM"],["ETD / ETA",fmt(j.etd)+" / "+fmt(j.eta)]].map(([k,v])=>'<div class="field"><label>'+k.toUpperCase()+'</label><div>'+esc(v||"—")+'</div></div>').join("")+'</div></div>')+
   pane("CONTAINERS",table(["CONTAINER","ALLOCATION","PACKAGES","CBM"],containerRows,"No containers linked."),'',links.length+" linked")+
   pane("VESSEL SCHEDULES",table(["VESSEL","VOYAGE","CARRIER","ROUTE","ETD","ETA"],sailingRows,"No sailing linked."),'',sailings.length+" linked")+
@@ -178,6 +179,59 @@ function renderJobDetail(jobId){
   pane("DOCUMENTS",table(["FILE","TYPE","UPLOADED","ACTION"],docRows,"No documents linked."),'',docs.length+" docs")+
   pane("COSTS & REVENUE",table(["HBL","CONTAINER","DIRECTION","CHARGE","AMOUNT","APPROVAL","ACTION"],chargeRows,"No charge lines linked."),'',charges.length+" lines")+
   '</div><div class="stack">'+pane("JOB STATUS",'<div class="pane-body">'+pill(j.status)+'<p>Customer visibility: '+(j.customer_visible?"Enabled":"Disabled")+'</p><p>Job HBLs: '+hbls.length+'</p></div>')+pane("RELATED RECORD COUNTS",'<div class="pane-body">HBLs '+hbls.length+'<br>Containers '+links.length+'<br>Schedules '+sailings.length+'<br>LCL lines '+items.length+'<br>Milestones '+events.length+'<br>Filings '+filings.length+'<br>Documents '+docs.length+'<br>Charge lines '+charges.length+'</div>')+'</div></div>';
+}
+async function importJobHblManifest(file,jobId){
+  if(!access(["Admin","Editor"]))throw new Error("Only Admin / Editor can import HBL records.");
+  if(!window.XLSX)throw new Error("Excel reader did not load. Refresh and try again.");
+  if(!file||file.size>15728640)throw new Error("Choose an Excel file up to 15 MB.");
+  const job=state.ops.jobs.find(j=>j.id===jobId);if(!job)throw new Error("Forwarding job not found.");
+  const workbook=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});
+  const records=[];
+  const clean=v=>String(v??"").trim();
+  const key=v=>clean(v).toLowerCase().replace(/[^a-z0-9]/g,"");
+  for(const sheetName of workbook.SheetNames){
+    const rows=XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{header:1,defval:"",raw:false});
+    let header=null,idx={};
+    for(const row of rows){
+      const cells=row.map(clean),keys=cells.map(key);
+      if(keys.includes("houseblno")&&keys.includes("blno")&&keys.includes("totalpackage")){
+        header=cells;idx={};keys.forEach((k,i)=>idx[k]=i);continue;
+      }
+      if(!header)continue;
+      const get=name=>clean(row[idx[name]]);
+      const hbl=get("houseblno");
+      if(!hbl||["n.a.","na","-"].includes(hbl.toLowerCase())||key(hbl)==="houseblno")continue;
+      records.push({hbl_no:hbl.toUpperCase(),package_count:get("totalpackage"),package_type:get("packagecode"),gross_weight_kg:get("grossweight"),notes:[
+        get("housedate")?"HBL Date: "+get("housedate"):"",
+        get("blno")?"Master BL: "+get("blno"):"",
+        get("cinno")?"CIN: "+get("cinno"):"",
+        get("acceptport")?"Accept Port: "+get("acceptport"):"",
+        get("receiptport")?"Receipt Port: "+get("receiptport"):"",
+        get("destinationport")?"Destination Port: "+get("destinationport"):"",
+        get("containerdetails")?"Container: "+get("containerdetails"):"",
+        get("rotationnumber")?"Rotation: "+get("rotationnumber"):""
+      ].filter(Boolean).join(" | ")});
+    }
+  }
+  const unique=new Map();records.forEach(r=>unique.set(key(r.hbl_no),r));
+  const list=[...unique.values()];
+  if(!list.length)throw new Error("No House BL rows found. The Excel must contain a 'House BL No' column.");
+  let created=0,updated=0;
+  for(const item of list){
+    const existing=hblsForJob(jobId).find(h=>key(h.hbl_no)===key(item.hbl_no));
+    const data={...(existing||{}),...item,job_id:jobId,
+      package_count:item.package_count?Number(item.package_count.replace(/,/g,"")):existing?.package_count??null,
+      gross_weight_kg:item.gross_weight_kg?Number(item.gross_weight_kg.replace(/,/g,"")):existing?.gross_weight_kg??null,
+      package_type:item.package_type||existing?.package_type||"",
+      shipper:existing?.shipper||job.shipper||"",consignee:existing?.consignee||job.consignee||"",
+      notify_party:existing?.notify_party||job.notify_party||"",commodity:existing?.commodity||job.commodity||"",
+      volume_cbm:existing?.volume_cbm??null,customer_visible:existing?existing.customer_visible:job.customer_visible===true,
+      notes:[existing?.notes,item.notes].filter(Boolean).join(" | ").slice(0,2000)};
+    await call("logistics-workspace",{action:"upsertJobHbl",data});
+    if(existing)updated++;else created++;
+  }
+  await loadJobs();state.selectedJob=jobId;state.page="jobdetail";render();
+  notify("Excel import complete: "+created+" HBL(s) added, "+updated+" updated.","success");
 }
 async function saveJobHbl(fd,jobId,hblId){
   const data=Object.fromEntries(fd.entries());data.job_id=jobId;if(hblId)data.id=hblId;
@@ -483,6 +537,12 @@ function bindPage(){
       if(type==="filing")newFiling("",button.dataset.jobId||"");
       if(type==="charge")newCharge("",button.dataset.jobId||"");
     };
+  });
+  document.querySelectorAll("[data-import-hbls]").forEach(button=>{
+    button.onclick=()=>{const input=$("hblManifest-"+button.dataset.importHbls);if(input){input.value="";input.click();}};
+  });
+  document.querySelectorAll('input[id^="hblManifest-"]').forEach(input=>{
+    input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{await importJobHblManifest(file,input.id.slice("hblManifest-".length));}catch(e){notify(e.message||"Excel import failed","error");}};
   });
   document.querySelectorAll("[data-action]").forEach(button=>{
     button.onclick=()=>{
