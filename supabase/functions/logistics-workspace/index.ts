@@ -653,6 +653,34 @@ Deno.serve(async (req: Request) => {
       return reply(200, { record: data }, origin);
     }
 
+    if (action === "uploadMilestonePhoto") {
+      roleCheck(profile.role,"jobOps");
+      const milestoneId=uuid(payload.milestone_id);
+      const {data:milestone,error:milestoneError}=await admin.from("shipment_milestones").select("id,job_id").eq("id",milestoneId).maybeSingle();
+      if(milestoneError||!milestone)throw new Error("Shipment milestone not found.");
+      const filename=text(payload.filename,180).replace(/[\\/\0]/g,"_"),contentType=text(payload.content_type,80).toLowerCase();
+      if(!filename||!["image/jpeg","image/png"].includes(contentType))throw new Error("Only JPG and PNG status photos are allowed.");
+      const encoded=String(payload.base64??"").replace(/^data:[^,]*;base64,/,"");
+      if(!encoded||encoded.length>11200000)throw new Error("Photo exceeds the 8 MB upload limit.");
+      const binary=atob(encoded),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+      if(!bytes.length||bytes.length>8388608)throw new Error("Photo exceeds the 8 MB upload limit.");
+      const objectPath="milestones/"+milestoneId+"/"+crypto.randomUUID()+"."+(contentType==="image/png"?"png":"jpg");
+      const {error:storageError}=await admin.storage.from("logistics-documents").upload(objectPath,bytes,{contentType,cacheControl:"60",upsert:false});
+      if(storageError)throw new Error("Photo upload failed: "+storageError.message);
+      const {data,error}=await admin.from("shipment_milestones").update({photo_path:objectPath,updated_by:actorId,updated_at:new Date().toISOString()}).eq("id",milestoneId).select("*").single();
+      if(error){await admin.storage.from("logistics-documents").remove([objectPath]);throw new Error("Photo metadata could not be saved: "+error.message);}
+      await recordAudit("upload_photo","shipment_milestone",milestoneId,milestone,{photo_path:objectPath});
+      return reply(200,{record:data},origin);
+    }
+    if (action === "signedMilestonePhotoUrl") {
+      const milestoneId=uuid(payload.milestone_id);
+      const {data:milestone,error}=await admin.from("shipment_milestones").select("photo_path").eq("id",milestoneId).maybeSingle();
+      if(error||!milestone?.photo_path)throw new Error("No photo is attached to this status update.");
+      const {data:signed,error:signError}=await admin.storage.from("logistics-documents").createSignedUrl(milestone.photo_path,300);
+      if(signError||!signed?.signedUrl)throw new Error("Could not create a secure photo link.");
+      return reply(200,{url:signed.signedUrl},origin);
+    }
+
     if (action === "signedDocumentUrl") {
       const id = uuid(payload.id);
       const { data: doc, error } = await admin.from("filing_documents").select("object_path").eq("id", id).maybeSingle();
