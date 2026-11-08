@@ -400,8 +400,8 @@ function bindPage(){
         const job=state.ops.jobs[0];
         if(job)addMilestone(job.id);else notify("Create a forwarding job first.","error");
       }
-      if(type==="filing")newFiling();
-      if(type==="charge")newCharge();
+      if(type==="filing")newFiling("",button.dataset.jobId||"");
+      if(type==="charge")newCharge("",button.dataset.jobId||"");
     };
   });
   document.querySelectorAll("[data-action]").forEach(button=>{
@@ -423,7 +423,7 @@ function bindPage(){
       if(act==="edit-milestone")addMilestone(button.dataset.jobId,id);
       if(act==="edit-filing")newFiling(id);
       if(act==="upload-filing-document")uploadFilingDocument(id);
-      if(act==="open-document")openDocument(id);
+      if(act==="open-document")openDocument(id);if(act==="toggle-job-visibility")toggleJobVisibility(id);
       if(act==="edit-charge")newCharge(id);
       if(act==="approve-charge")approveCharge(id);
       if(act==="ack-container-alert"||act==="resolve-container-alert"){
@@ -482,4 +482,4 @@ document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>navigate(b.datas
 if(db){db.auth.getSession().then(({data,error})=>{if(error)throw error;auth(data.session)}).catch(e=>$("loginError").textContent=e.message);db.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"&&state.session)auth(null);if(event==="TOKEN_REFRESHED"&&session)state.session=session})}else $("loginError").textContent="Supabase did not load. Refresh this page.";
 </script>
 </body>
-</html>
+</html>>
