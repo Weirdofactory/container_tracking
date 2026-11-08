@@ -173,6 +173,36 @@ Deno.serve(async (req: Request) => {
   }
 
 
+  if (payload.action === "deleteContainer") {
+    if (profile.role !== "Admin") return reply(403, { error: "Only Admin can delete a container from the register" }, origin);
+    const containerNo = String(payload.container_no ?? "").trim();
+    const key = containerNo.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!key) return reply(400, { error: "Container number is required" }, origin);
+    const expectedUpdatedAt = typeof payload.expectedUpdatedAt === "string" ? payload.expectedUpdatedAt : "";
+    if (!expectedUpdatedAt || !Number.isFinite(Date.parse(expectedUpdatedAt))) return reply(400, { error: "Dataset version missing. Reload shipment data before deleting." }, origin);
+    const { data: current, error: readError } = await admin.from("containers").select("data, updated_at").eq("id", "gml_tracking_records").maybeSingle();
+    if (readError || !current || !Array.isArray(current.data) || !current.updated_at) return reply(503, { error: "Shipment dataset unavailable" }, origin);
+    if (current.updated_at !== expectedUpdatedAt) return reply(409, { error: "Shipment data changed since you loaded it. Reload and try again." }, origin);
+    const rows = current.data as Record<string, unknown>[];
+    const index = rows.findIndex(row => shipmentContainerKey(row) === key);
+    if (index < 0) return reply(404, { error: "Container not found in the active register" }, origin);
+    const before = rows[index];
+    const actualNo = String(rowValueByKey(before, "containerno") ?? containerNo).trim().toUpperCase();
+    const { data: archived, error: archiveError } = await admin.from("deleted_container_records").insert({
+      container_no: actualNo, row_data: before, deleted_by: userData.user.id,
+    }).select("id").single();
+    if (archiveError || !archived) return reply(503, { error: "Could not archive the container record; nothing was deleted" }, origin);
+    const next = rows.filter((_, rowIndex) => rowIndex !== index);
+    const updatedAt = new Date(Math.max(Date.now(), Date.parse(expectedUpdatedAt) + 1)).toISOString();
+    const { data: saved, error: writeError } = await admin.from("containers").update({ data: next, updated_at: updatedAt })
+      .eq("id", "gml_tracking_records").eq("updated_at", expectedUpdatedAt).select("updated_at").maybeSingle();
+    if (writeError || !saved) {
+      await admin.from("deleted_container_records").delete().eq("id", archived.id);
+      return reply(409, { error: "Container register changed during deletion. Reload and try again; no container was deleted." }, origin);
+    }
+    return reply(200, { saved: true, deleted: true, archived: true, updatedAt: saved.updated_at, count: next.length }, origin);
+  }
+
   if (payload.action === "write") {
     if (!["Admin", "Editor", "Operator"].includes(profile.role)) return reply(403, { error: "Read-only staff role" }, origin);
     if (!Array.isArray(payload.data) || payload.data.length > 20000) return reply(400, { error: "Invalid shipment dataset" }, origin);
