@@ -236,7 +236,19 @@ function newConsolItem(consolidationId,itemId){
     notify(itemId?"HBL line mapping updated":"HBL cargo line added","success");
   });
 }
-function renderConsolDetail(){const c=state.ops.consolidations.find(x=>x.id===state.selectedConsolidation);if(!c)return renderConsol();const items=state.ops.consolidationItems.filter(x=>x.consolidation_id===c.id),cbm=items.reduce((n,x)=>n+Number(x.volume_cbm||0),0),kg=items.reduce((n,x)=>n+Number(x.gross_weight_kg||0),0),pkgs=items.reduce((n,x)=>n+Number(x.package_count||0),0);const rows=items.map(x=>{const j=state.ops.jobs.find(z=>norm(z.hbl_no)===norm(x.hbl_no));return '<tr><td><b>'+esc(x.hbl_no)+'</b></td><td>'+esc(x.shipper||"—")+'</td><td>'+esc(x.consignee||"—")+'</td><td>'+num(x.package_count)+' '+esc(x.package_type||"")+'</td><td>'+num(x.gross_weight_kg)+'</td><td>'+Number(x.volume_cbm||0).toFixed(3)+'</td><td>'+(j?'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>':'<span class="pill amber">No job match</span>')+'</td><td>'+actionBtn("edit-consol-item","Edit",'data-id="'+esc(x.id)+'" data-consolidation-id="'+esc(c.id)+'"')+'</td></tr>'});return pageHead("consol",'<button class="btn" data-nav="consol">← Consolidations</button><button class="btn" data-action="edit-consol" data-id="'+esc(c.id)+'">Edit consol</button><button class="btn primary" data-action="add-consol-item" data-id="'+esc(c.id)+'">＋ Add HBL line</button>')+'<div class="stats">'+stat("HBL lines",items.length,"House bills in this consol")+stat("Packages",pkgs,"Total packages")+stat("Gross weight",kg.toFixed(2)+" KG","Allocated cargo weight")+stat("Volume",cbm.toFixed(3)+" CBM","Loaded / "+(c.capacity_cbm??"—")+" CBM")+stat("Status",c.status,"Consolidation state")+'</div>'+pane("HBL CARGO LINES",table(["HBL","SHIPPER","CONSIGNEE","PACKAGES","WEIGHT KG","CBM","JOB MAPPING","ACTION"],rows,"No HBL cargo lines. Add the HBLs loaded into this consolidation."))}
+function renderConsolDetail(){
+  const c=state.ops.consolidations.find(x=>x.id===state.selectedConsolidation);if(!c)return renderConsol();
+  const items=state.ops.consolidationItems.filter(x=>x.consolidation_id===c.id);
+  const cbm=items.reduce((n,x)=>n+Number(x.volume_cbm||0),0),kg=items.reduce((n,x)=>n+Number(x.gross_weight_kg||0),0),pkgs=items.reduce((n,x)=>n+Number(x.package_count||0),0);
+  const rows=items.map(x=>{
+    const j=resolveJob(x.job_id,null,x.hbl_no);
+    const link=j?'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>':'<span class="pill amber">Not linked</span>';
+    return '<tr><td><b>'+esc(x.hbl_no)+'</b></td><td>'+esc(x.shipper||"—")+'</td><td>'+esc(x.consignee||"—")+'</td><td>'+num(x.package_count)+' '+esc(x.package_type||"")+'</td><td>'+num(x.gross_weight_kg)+'</td><td>'+Number(x.volume_cbm||0).toFixed(3)+'</td><td>'+link+'</td><td>'+actionBtn("edit-consol-item",j?"Edit mapping":"Map / edit",'data-id="'+esc(x.id)+'" data-consolidation-id="'+esc(c.id)+'"')+'</td></tr>';
+  });
+  return pageHead("consol",'<button class="btn" data-nav="consol">Back to consolidations</button><button class="btn" data-action="edit-consol" data-id="'+esc(c.id)+'">Edit consol</button><button class="btn primary" data-action="add-consol-item" data-id="'+esc(c.id)+'">Add HBL line</button>')+
+  '<div class="stats">'+stat("HBL lines",items.length,"House bills in this consol")+stat("Packages",pkgs,"Total packages")+stat("Gross weight",kg.toFixed(2)+" KG","Allocated cargo weight")+stat("Volume",cbm.toFixed(3)+" CBM","Loaded / "+(c.capacity_cbm??"—")+" CBM")+stat("Status",c.status,"Consolidation state")+'</div>'+
+  pane("HBL CARGO LINES",table(["HBL","SHIPPER","CONSIGNEE","PACKAGES","WEIGHT KG","CBM","FORWARDING JOB","ACTION"],rows,"No HBL cargo lines. Add the HBLs loaded into this consolidation."));
+}
 function newFiling(filingId,presetJobId){
   if(!access(["Admin","Editor","Operator"]))return notify("Your role cannot create filings.","error");
   const x=filingId?state.ops.filings.find(f=>f.id===filingId)||{}:{};
