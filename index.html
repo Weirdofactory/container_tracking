@@ -483,3 +483,11 @@ if(db){db.auth.getSession().then(({data,error})=>{if(error)throw error;auth(data
 </script>
 </body>
 </html>>
+$("loginForm").onsubmit=async e=>{e.preventDefault();$("loginError").textContent="";const b=$("signIn");b.disabled=true;b.textContent="Signing in…";try{const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)throw error;if(!data.session)throw new Error("No staff session returned.");await auth(data.session)}catch(err){$("loginError").textContent=err.message||"Sign in failed"}finally{b.disabled=false;b.textContent="Sign in"}};
+$("recordForm").onsubmit=submitForm;$("modalClose").onclick=closeForm;$("cancel").onclick=closeForm;$("modal").onclick=e=>{if(e.target===$("modal"))closeForm()};
+$("signOut").onclick=async()=>{await db.auth.signOut();await auth(null)};$("refresh").onclick=refreshAll;$("quickNew").onclick=()=>newJob();$("hamb").onclick=()=>$("app").classList.toggle("menu-open");$("globalSearch").oninput=()=>{state.query=$("globalSearch").value;if(!["jobs","containers","milestones"].includes(state.page))state.page="jobs";render()};
+document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>navigate(b.dataset.page));document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>navigate(b.dataset.tab));
+if(db){db.auth.getSession().then(({data,error})=>{if(error)throw error;auth(data.session)}).catch(e=>$("loginError").textContent=e.message);db.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"&&state.session)auth(null);if(event==="TOKEN_REFRESHED"&&session)state.session=session})}else $("loginError").textContent="Supabase did not load. Refresh this page.";
+</script>
+</body>
+</html>
