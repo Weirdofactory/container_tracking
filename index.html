@@ -342,7 +342,7 @@ function renderFilings(){
   const rows=state.ops.charges.map(x=>{
     const j=resolveJob(x.job_id,x.container_no);
     const job=j?'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>':'<span class="pill amber">Unmapped</span>';
-    return '<tr><td>'+job+'<span class="cell-sub">'+esc(j?.hbl_no||"")+'</span></td><td>'+esc(x.container_no||"Job level")+'</td><td>'+esc(x.direction)+'</td><td>'+esc(x.charge_code)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.counterparty)+'</td><td>'+esc(x.currency)+' '+num(x.amount)+'<span class="cell-sub">'+(x.amount_inr!=null?"INR "+num(x.amount_inr):"")+'</span></td><td>'+pill(x.approval_status)+'</td><td>'+fmt(x.due_date)+'</td><td>'+actionBtn("edit-charge","Edit",'data-id="'+esc(x.id)+'"')+(x.approval_status!=="approved"&&state.profile?.role==="Admin"?actionBtn("approve-charge","Approve",'data-id="'+esc(x.id)+'"'):"")+'</td></tr>';
+    return '<tr><td>'+job+'<span class="cell-sub">'+esc(j?.hbl_no||"")+'</span></td><td>'+esc(x.container_no||"Job level")+'</td><td>'+esc(x.direction)+'</td><td>'+esc(x.charge_code)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.counterparty)+'</td><td>'+esc(x.currency)+' '+num(x.amount)+'<span class="cell-sub">'+(x.amount_inr!=null?"INR "+num(x.amount_inr):"")+'</span></td><td>'+pill(x.approval_status)+'</td><td>'+fmt(x.due_date)+'</td><td>'+actionBtn("edit-charge","Edit",'data-id="'+esc(x.id)+'"')+actionBtn("print-charge","Print",'data-id="'+esc(x.id)+'"')+(x.approval_status!=="approved"&&state.profile?.role==="Admin"?actionBtn("approve-charge","Approve",'data-id="'+esc(x.id)+'"'):"")+(state.profile?.role==="Admin"?actionBtn("delete-charge","Delete",'data-id="'+esc(x.id)+'"'):"")+'</td></tr>';
   });
   const approved=state.ops.charges.filter(x=>x.approval_status==="approved");
   const cost=approved.filter(x=>x.direction==="cost").reduce((n,x)=>n+Number(x.amount_inr??x.amount??0),0);
@@ -551,6 +551,21 @@ function newCharge(chargeId,presetJobId){
     await loadJobs();closeForm();render();notify(chargeId?"Charge updated":"Charge saved","success");
   });
 }
+function printChargeInvoice(chargeId){
+  const x=state.ops.charges.find(c=>c.id===chargeId);if(!x)return notify("Charge record not found.","error");
+  const j=resolveJob(x.job_id,x.container_no),money=(x.currency||"INR")+" "+Number(x.amount||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const invoiceNo=x.invoice_reference||("CHG-"+String(x.id).slice(0,8).toUpperCase());
+  const safe=v=>esc(v||"—");
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>Charge invoice '+safe(invoiceNo)+'</title><style>body{font:14px Arial,sans-serif;color:#172033;margin:36px}h1{font-size:24px;margin:0 0 6px}.muted{color:#64748b}.top{display:flex;justify-content:space-between;border-bottom:2px solid #172033;padding-bottom:18px}table{width:100%;border-collapse:collapse;margin-top:30px}th,td{border:1px solid #cbd5e1;padding:12px;text-align:left}th{background:#f1f5f9}.total{text-align:right;font-size:20px;font-weight:bold;margin-top:22px}.notice{margin-top:28px;padding:12px;background:#f8fafc;border:1px solid #cbd5e1;font-size:12px}@media print{button{display:none}body{margin:18mm}}</style></head><body><div class="top"><div><h1>CHARGE INVOICE / STATEMENT</h1><div class="muted">Freight Operations · Seller billing details to be configured</div></div><div><b>Reference:</b> '+safe(invoiceNo)+'<br><b>Invoice date:</b> '+safe(x.invoice_date||x.created_at?.slice(0,10))+'<br><b>Due date:</b> '+safe(x.due_date)+'</div></div><p><b>Bill to / Counterparty:</b> '+safe(x.counterparty)+'<br><b>Forwarding job:</b> '+safe(j?.job_no)+'<br><b>HBL:</b> '+safe(j?.hbl_no)+'<br><b>Container:</b> '+safe(x.container_no)+'</p><table><thead><tr><th>Charge code</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead><tbody><tr><td>'+safe(x.charge_code)+'</td><td>'+safe(x.description)+'</td><td>'+safe(x.direction)+'</td><td>'+money+'</td></tr></tbody></table><div class="total">Total: '+money+'</div><div class="notice">This is a printable charge statement generated from the operations register. It is not a GST tax invoice. Configure registered seller name, address, GSTIN, tax breakup and statutory invoice fields before using it as a tax invoice.</div><p class="muted">Approval status: '+safe(x.approval_status)+'</p><button onclick="window.print()">Print / Save as PDF</button></body></html>';
+  const win=window.open("","_blank");if(!win)return notify("Allow pop-ups to print this charge statement.","error");win.document.open();win.document.write(html);win.document.close();win.focus();
+}
+async function deleteCharge(chargeId){
+  if(state.profile?.role!=="Admin")return notify("Only Admin can delete a charge record.","error");
+  const x=state.ops.charges.find(c=>c.id===chargeId);if(!x)return notify("Charge record not found.","error");
+  if(!confirm("Archive this "+x.direction+" charge "+x.charge_code+" for "+x.currency+" "+x.amount+"? It will be removed from the active register but retained for audit/recovery."))return;
+  try{await call("logistics-workspace",{action:"deleteCharge",id:chargeId});await loadJobs();render();notify("Charge archived and removed from active register","success")}
+  catch(e){notify(e.message||"Could not archive charge","error")}
+}
 async function approveCharge(chargeId){if(state.profile?.role!=="Admin")return notify("Only Admin can approve a charge.","error");try{await call("logistics-workspace",{action:"approveCharge",id:chargeId});await loadJobs();render();notify("Charge approved","success")}catch(e){notify(e.message||"Could not approve charge","error")}}
 async function approveCharge(chargeId){if(state.profile?.role!=="Admin")return notify("Only Admin can approve a charge.","error");try{await call("logistics-workspace",{action:"approveCharge",id:chargeId});await loadJobs();render();notify("Charge approved","success")}catch(e){notify(e.message||"Could not approve charge","error")}}
 async function approveCharge(chargeId){if(state.profile?.role!=="Admin")return notify("Only Admin can approve a charge.","error");try{await call("logistics-workspace",{action:"approveCharge",id:chargeId});await loadJobs();render();notify("Charge approved","success")}catch(e){notify(e.message||"Could not approve charge","error")}}
@@ -608,6 +623,8 @@ function bindPage(){
       if(act==="upload-filing-document")uploadFilingDocument(id);
       if(act==="open-document")openDocument(id);if(act==="toggle-job-visibility")toggleJobVisibility(id);
       if(act==="edit-charge")newCharge(id);
+      if(act==="print-charge")printChargeInvoice(id);
+      if(act==="delete-charge")deleteCharge(id);
       if(act==="approve-charge")approveCharge(id);
       if(act==="ack-container-alert"||act==="resolve-container-alert"){
         const alert={no:button.dataset.containerNo,due:button.dataset.dueDate,key:norm(button.dataset.containerNo)+"|empty_return|"+button.dataset.dueDate};
