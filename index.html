@@ -456,6 +456,7 @@ function bindPage(){
     button.onclick=()=>{
       const type=button.dataset.create;
       if(type==="job")newJob();
+      if(type==="job-hbl")newJobHbl(button.dataset.jobId||"");
       if(type==="container")openContainer(-1);
       if(type==="sailing")newSailing();
       if(type==="consol")newConsol();
@@ -471,6 +472,9 @@ function bindPage(){
     button.onclick=()=>{
       const id=button.dataset.id,act=button.dataset.action;
       if(act==="edit-job")newJob(id);
+      if(act==="edit-job-hbl")newJobHbl(button.dataset.jobId||"",id);
+      if(act==="delete-job-hbl")deleteJobHbl(id,button.dataset.jobId||"");
+      if(act==="delete-job")deleteForwardingJob(id);
       if(act==="link-job")linkContainer(id);
       if(act==="event-job")addMilestone(id);
       if(act==="job-detail"){state.selectedJob=id;state.page="jobdetail";render()}
