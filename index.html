@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#3026a7">
+<meta name="theme-color" content="#163f59">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Freight Operations | Enterprise Workspace</title>
+<title>Freight Operations | Shipment Control Tower</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -28,30 +28,159 @@
 @media(max-width:1100px){.app{grid-template-columns:205px minmax(0,1fr)}.rail{width:205px}.columns{grid-template-columns:1fr}.quickgrid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.app{display:block}.rail{transform:translateX(-100%);transition:transform .2s;width:245px}.app.menu-open .rail{transform:translateX(0)}.main{margin:0}.hamb{display:block}.toolbar{padding:0 8px}.connect{display:none}.work{padding:9px 7px 22px}.stats{grid-template-columns:repeat(2,1fr)}.stat{border-bottom:1px solid #e1e6eb}.stat:last-child{border-right:1px solid #e1e6eb}.pagebar{align-items:flex-start;flex-direction:column}.actions{width:100%}.formgrid{grid-template-columns:1fr}.field.span2{grid-column:auto}}
 @media(max-width:460px){.user{display:none}.search{max-width:none}.quickgrid{gap:5px}.quick{height:60px;padding:6px}.quick b{font-size:9px}.quick small{font-size:7px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat strong{font-size:16px}}
+
+:root{--violet:#163f59;--violet-dark:#0d334a;--violet-light:#e8f1f5;--blue:#0878a6;--cyan:#118995;--green:#18815d;--amber:#a86a13;--red:#ae4141;--ink:#203b4d;--muted:#6c8190;--line:#cbd6dd;--surface:#fff;--work:#edf2f5;--soft:#f6f8f9;--shadow:0 1px 3px rgba(21,52,73,.09)}
+html,body{font:13px/1.45 "Segoe UI",Arial,sans-serif}
+.login{grid-template-columns:minmax(0,1fr) minmax(360px,460px);background:#edf2f5}
+.login-left{padding:clamp(34px,7vw,100px);background:linear-gradient(140deg,#123b56,#176385);position:relative;overflow:hidden}
+.login-left:after{content:"";position:absolute;width:520px;height:520px;right:-240px;bottom:-330px;border:1px solid #ffffff20;border-radius:50%;box-shadow:0 0 0 44px #ffffff09,0 0 0 90px #ffffff06;pointer-events:none}
+.login-mark{border-radius:4px;background:#fff;color:#123b56}
+.login-left h1{font-size:clamp(32px,3.5vw,44px);letter-spacing:-.8px}
+.login-left p{font-size:14px}
+.login-points span{border-radius:3px}
+.login-right{background:#edf2f5}
+.login-card{border-radius:4px;border-top:3px solid #0d7da3;box-shadow:0 8px 24px rgba(17,48,73,.12)}
+.login-card h2{color:#173e57}
+.rail{background:#153e58;color:#eef5f8;box-shadow:2px 0 7px #0e263526}
+.rail-head{background:#10354d}
+.rail-logo{border-radius:3px;color:#155273}
+.rail-sub{color:#a9c8d6}
+.branch{color:#c8dae3}
+.branch strong{color:#fff}
+.nav-label{color:#a4c2d0}
+.nav-item{color:#e0ebf0;border-radius:2px}
+.nav-item:hover{background:#ffffff12}
+.nav-item.active{background:#e9f2f6;color:#143e58;box-shadow:none;position:relative}
+.nav-item.active:before{content:"";position:absolute;left:0;top:3px;bottom:3px;width:3px;background:#df8a3a}
+.nav-count{background:#ffffff20}
+.nav-item.active .nav-count{background:#dcebf1;color:#143e58}
+.rail-bottom{color:#adc5d1}
+.toolbar{height:52px;box-shadow:0 1px 2px rgba(17,48,73,.06)}
+.search{border-radius:3px}
+.connect{border-radius:3px}
+.btn{height:30px;border-radius:3px}
+.btn.primary{background:#0878a6;border-color:#0878a6}
+.btn.primary:hover{background:#06658e}
+.btn.teal{background:#0a858b;border-color:#0a858b}
+.tabs{height:38px;background:#e9eff2}
+.tab{font-size:11px;color:#536d7d}
+.tab.active{color:#12506d;border-bottom-color:#dc8638}
+.tab:hover{color:#12506d}
+.work{padding:15px 16px 30px}
+.crumb{font-size:10px;color:#718694}
+.title{font-size:20px;color:#173c53}
+.desc{font-size:11px;color:#738795}
+.pane{border-radius:3px}
+.pane-head{height:37px;background:#f2f5f7}
+.pane-title{font-size:11px;color:#26485c}
+.stats{grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);gap:0}
+.stat{padding:10px 12px;border-top:2px solid #187a9e}
+.stat label{font-size:9px}
+.stat strong{font-size:21px}
+.filters{background:#f3f6f7}
+.filter{height:29px;border-radius:2px;font-size:10px}
+thead th{height:32px;background:#e8eef1;font-size:9px}
+tbody td{height:35px;font-size:11px}
+.cell-sub{font-size:9px}
+.pill{border-radius:2px;font-size:9px}
+.quick{border-radius:3px;border-left:3px solid #147c9f;height:68px}
+.quick:hover{border-color:#147c9f}
+.quick-icon{border-radius:3px;background:#e9f2f6;color:#176585}
+.dashboard-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.85fr);gap:11px;align-items:start}
+.dashboard-main,.dashboard-side{display:grid;gap:11px;min-width:0}
+.workbench-intro{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border:1px solid #ccd8df;background:#f8fafb;margin-bottom:9px}
+.workbench-intro strong{display:block;font-size:13px;color:#1e465d}
+.workbench-intro small{display:block;font-size:10px;color:#748894;margin-top:2px}
+.workbench-kicker{display:block;font-size:8px;font-weight:800;letter-spacing:.75px;color:#1c7190;text-transform:uppercase;margin-bottom:3px}
+.workbench-meta{font-size:10px;color:#6f8593;text-align:right}
+.record-link{border:0;background:transparent;color:#0878a6;padding:0;font-weight:800;text-align:left}
+.record-link:hover{text-decoration:underline}
+@media(max-width:1050px){.dashboard-layout{grid-template-columns:1fr}}
+@media(max-width:760px){.login{grid-template-columns:1fr}.login-left{padding:30px 24px}.login-left h1{font-size:32px;margin:18px 0 9px}.login-points{margin-top:14px}.login-right{padding:18px 12px}.work{padding:10px 8px 24px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.quickgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:460px){.workbench-intro{align-items:flex-start}.stat{padding:8px}.stat strong{font-size:18px}}
+
+
+:root{--violet:#4b3b8d;--violet-dark:#2a2158;--violet-light:#efedfa;--blue:#147bb5;--cyan:#188f9a;--green:#16815d;--amber:#b67817;--red:#b94343;--ink:#27394c;--muted:#718092;--line:#cbd2dc;--surface:#fff;--work:#f0f1f5;--soft:#f7f8fa;--shadow:0 1px 2px rgba(31,34,57,.09)}
+.login{min-height:100vh;display:grid;place-items:center;padding:22px;background:#f0f1f5}
+.login-shell{width:min(420px,100%)}
+.login-brand{display:flex;align-items:center;gap:10px;margin:0 0 18px 2px;color:#30265f}
+.login-mark{width:35px;height:35px;border-radius:3px;background:#382c74;color:#fff;display:grid;place-items:center;font-size:18px;font-weight:800}
+.login-brand strong{display:block;font-size:12px;letter-spacing:.55px}.login-brand small{display:block;color:#788394;font-size:9px;letter-spacing:1px;margin-top:2px}
+.login-caption{margin-bottom:12px}.login-caption span{font-size:9px;letter-spacing:1px;font-weight:800;color:#766bb0}
+.login-caption h1{font-size:22px;color:#29384b;line-height:1.2;margin:4px 0}.login-caption p{font-size:11px;color:#718092;margin:0}
+.login-card{width:100%;background:#fff;border:1px solid #cbd2dc;border-top:3px solid #4b3b8d;padding:22px;border-radius:3px;box-shadow:0 5px 18px rgba(39,37,68,.10)}
+.login-card h2{font-size:15px;color:#30265f}.login-card p{font-size:10px}.login-foot{font-size:9px;color:#8791a0;text-align:center;margin-top:13px}
+.field input,.field select,.field textarea{height:32px;border-radius:2px}
+.btn{height:29px;border-radius:2px}.btn.primary{background:#4b3b8d;border-color:#4b3b8d}.btn.primary:hover{background:#3e3178}
+.rail{background:linear-gradient(180deg,#30265f,#241c4b);color:#f2f0fb}.rail-head{background:#282053}.rail-logo{border-radius:3px;color:#3c2f7d}
+.rail-sub{color:#c2bce4}.branch{color:#c4bfdc}.nav-label{color:#b0a9d3}.nav-item{height:32px;color:#e7e4f5;border-radius:2px}
+.nav-item:hover{background:#ffffff16}.nav-item.active{position:relative;background:#fff;color:#30265f;box-shadow:none}
+.nav-item.active:before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:3px;background:#4b3b8d}
+.nav-count{background:#ffffff20}.nav-item.active .nav-count{background:#eeeafb;color:#392e79}.rail-bottom{color:#c2bddf}
+.toolbar{height:47px;padding:0 12px;box-shadow:0 1px 2px rgba(31,34,57,.06)}.search{max-width:510px;height:28px;border-radius:2px}
+.connect{border-radius:2px}.tabs{height:33px;background:#e9e8f0;padding:0 10px}.tab{font-size:10px;padding:0 12px;color:#606b7c}
+.tab.active{background:#fff;color:#382d78;border-bottom-color:#4b3b8d}.tab:hover{color:#382d78}
+.work{padding:12px 13px 26px;max-width:none}.crumb{font-size:9px;color:#818899}.title{font-size:16px;color:#2d3550}.desc{font-size:10px;color:#788294}
+.pane{border-radius:2px;box-shadow:none}.pane-head{height:32px;background:#f1f2f6}.pane-title{font-size:9px;letter-spacing:.25px;color:#39435a}
+.stats{grid-template-columns:repeat(auto-fit,minmax(135px,1fr));border:1px solid var(--line);gap:0}.stat{padding:8px 10px;border-right:1px solid #e0e3e9;border-top:2px solid #51418d}
+.stat label{font-size:8px}.stat strong{font-size:18px}.filters{padding:6px 8px;background:#f3f4f7}.filter{height:26px;border-radius:2px;font-size:9px}
+thead th{height:27px;background:#e8eaf0;font-size:8px}tbody td{height:30px;font-size:9px}.cell-sub{font-size:8px}.pill{border-radius:2px;font-size:8px}
+.cw-dashboard-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:1px 0 10px}
+.cw-dashboard-head h2{font-size:16px;line-height:1.2;margin:3px 0;color:#30364d}.cw-dashboard-head p{font-size:10px;color:#7c8798;margin:0}
+.cw-crumb{font-size:8px;color:#796fa6;font-weight:800;letter-spacing:.8px;text-transform:uppercase}
+.cw-live{display:flex;align-items:center;gap:6px;color:#18815d;font-size:9px;font-weight:700;white-space:nowrap}.cw-live i{width:7px;height:7px;border-radius:50%;background:#25a779;display:inline-block;box-shadow:0 0 0 3px #e1f2eb}
+.cw-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:9px}
+.cw-kpi{min-width:0;padding:9px 10px;background:#fff;border:1px solid #cbd2dc;border-top:2px solid #4b3b8d}
+.cw-kpi:nth-child(2){border-top-color:#1980b4}.cw-kpi:nth-child(3){border-top-color:#14939d}.cw-kpi:nth-child(4){border-top-color:#d58439}
+.cw-kpi label{display:block;color:#748093;font-size:8px;font-weight:800;letter-spacing:.45px;text-transform:uppercase}
+.cw-kpi strong{display:block;color:#29394c;font-size:19px;line-height:1.25;margin-top:2px}.cw-kpi small{font-size:8px;color:#8a93a1}
+.cw-layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(240px,.72fr);gap:9px;margin-bottom:9px}
+.cw-panel{background:#fff;border:1px solid #cbd2dc;min-width:0}.cw-panel-head{height:31px;padding:0 9px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #d9dde5;background:#f2f3f7}
+.cw-panel-head strong{font-size:9px;letter-spacing:.3px;color:#3c465c}.cw-panel-head span{font-size:8px;color:#8590a0}
+.cw-map-tools{height:31px;display:flex;align-items:center;gap:5px;padding:0 8px;border-bottom:1px solid #eceef2}
+.cw-map-tools button,.cw-filter{height:22px;padding:0 8px;border:1px solid #d5d9e2;background:#fff;color:#627086;font-size:8px;border-radius:2px;white-space:nowrap}
+.cw-map-tools button.active,.cw-filter.active{background:#e9e6f6;border-color:#c9c1e9;color:#42347f;font-weight:800}.cw-map-tools .map-meta{margin-left:auto;font-size:8px;color:#8490a0}
+.cw-map{position:relative;min-height:245px;height:clamp(245px,31vw,360px);background:#f0f1f6;overflow:hidden}.cw-map svg{display:block;width:100%;height:100%;min-height:245px}
+.cw-map .graticule{stroke:#dfe2e9;stroke-width:1;fill:none}.cw-map .land{fill:#d9d8e5;stroke:#c5c4d4;stroke-width:1}
+.cw-map .route-line{fill:none;stroke:#5e4caa;stroke-width:2;stroke-dasharray:5 4;opacity:.9}
+.cw-map .port-dot{fill:#fff;stroke:#4b3b8d;stroke-width:3}.cw-map .port-dot.dest{fill:#1a9aa3;stroke:#fff;stroke-width:2}
+.cw-map-note{position:absolute;left:9px;bottom:8px;background:#ffffffdf;border:1px solid #d6dae3;padding:4px 6px;color:#718092;font-size:8px}
+.cw-map-legend{display:flex;gap:12px;align-items:center;height:27px;padding:0 9px;border-top:1px solid #e1e4ea;color:#748093;font-size:8px}
+.cw-map-legend i{width:7px;height:7px;border-radius:50%;display:inline-block;background:#4b3b8d;margin-right:4px}.cw-map-legend .dest-dot{background:#1a9aa3}
+.cw-analytics{display:grid;grid-template-rows:auto auto;gap:9px;align-content:start}.cw-chart-body{padding:10px}.cw-chart-title{font-size:9px;color:#748093;margin-bottom:9px}
+.cw-bar-row{display:grid;grid-template-columns:55px 1fr 22px;gap:7px;align-items:center;margin:8px 0;color:#59687d;font-size:8px}
+.cw-bar-track{height:7px;background:#eceef3;border:1px solid #e5e7ed}.cw-bar-fill{height:100%;background:#594899}
+.cw-bar-row:nth-child(3) .cw-bar-fill{background:#168ba0}.cw-bar-row:nth-child(4) .cw-bar-fill{background:#de8a42}
+.cw-analytics-foot{border-top:1px solid #e2e5eb;padding:7px 9px;color:#8690a0;font-size:8px}
+.cw-shipments{background:#fff;border:1px solid #cbd2dc}.cw-shipments-head{height:35px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 9px;border-bottom:1px solid #d9dde5;background:#f2f3f7}
+.cw-shipments-head strong{font-size:9px;letter-spacing:.3px;color:#3c465c}.cw-filter-row{display:flex;align-items:center;gap:5px;padding:6px 8px;border-bottom:1px solid #e1e4ea;overflow:auto}
+.cw-record{border:0;background:transparent;padding:0;text-align:left;color:#4b3b8d;font-size:9px;font-weight:800}.cw-record:hover{text-decoration:underline}
+.cw-help{font-size:8px;color:#8993a2;padding:7px 9px;border-top:1px solid #eceef2}
+@media(max-width:1050px){.cw-layout{grid-template-columns:1fr}.cw-analytics{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}}
+@media(max-width:760px){.login{padding:13px}.login-card{padding:18px}.cw-dashboard-head{align-items:flex-start;flex-direction:column}.cw-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.cw-layout{grid-template-columns:1fr}.cw-analytics{grid-template-columns:1fr}.cw-map{height:250px}.cw-shipments-head{height:auto;min-height:35px}}
+
 </style>
 </head>
 <body>
 <section class="login" id="login">
-  <div class="login-left">
-    <div class="login-mark">F</div>
-    <h1>Freight operations.<br>Fully connected.</h1>
-    <p>An integrated forwarding workspace for bookings, HBL jobs, equipment, vessel schedules, customs, document control, transport and accounting.</p>
-    <div class="login-points"><span>Freight forwarding</span><span>Container management</span><span>Customs & compliance</span><span>Financial control</span></div>
+  <div class="login-shell">
+    <div class="login-brand"><div class="login-mark">F</div><div><strong>FREIGHT OPERATIONS</strong><small>ENTERPRISE WORKSPACE</small></div></div>
+    <div class="login-caption"><span>STAFF ACCESS</span><h1>Operations workspace</h1><p>Sign in to manage bookings, shipments, containers and customs activity.</p></div>
+    <form class="login-card" id="loginForm">
+      <h2>Sign in</h2><p>Use your authorized staff credentials.</p>
+      <div class="field"><label for="email">STAFF EMAIL</label><input id="email" type="email" autocomplete="username" required></div>
+      <div class="field"><label for="password">PASSWORD</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <button class="btn primary" id="signIn" style="width:100%;height:34px;margin-top:8px">Sign in</button><div class="login-error" id="loginError"></div>
+    </form><div class="login-foot">Protected staff access · Secure operational data</div>
   </div>
-  <div class="login-right"><form class="login-card" id="loginForm">
-    <h2>Operations sign in</h2><p>Enter your authorized staff credentials.</p>
-    <div class="field"><label for="email">STAFF EMAIL</label><input id="email" type="email" autocomplete="username" required></div>
-    <div class="field"><label for="password">PASSWORD</label><input id="password" type="password" autocomplete="current-password" required></div>
-    <button class="btn primary" id="signIn" style="width:100%;height:36px;margin-top:8px">Sign in</button><div class="login-error" id="loginError"></div>
-    <p style="margin:17px 0 0;font-size:9px">Protected staff access · Secure operational data</p>
-  </form></div>
 </section>
 <div class="app" id="app" hidden>
   <aside class="rail">
     <div class="rail-head"><div class="rail-logo">F</div><div><div class="rail-name">FREIGHT OPERATIONS</div><div class="rail-sub">ENTERPRISE LOGISTICS SYSTEM</div></div></div>
     <div class="branch"><span>BRANCH</span><strong>CHENNAI</strong><span>● LIVE</span></div>
     <div class="nav-group"><div class="nav-label">OPERATIONS</div>
-      <button class="nav-item active" data-page="dashboard"><span class="nav-ico">⌂</span>Home / Workbench</button>
+      <button class="nav-item active" data-page="dashboard"><span class="nav-ico">⌂</span>Dashboard</button>
+      <button class="nav-item" data-page="jobs"><span class="nav-ico">▦</span>Forwarding jobs</button>
       <button class="nav-item" data-page="containers"><span class="nav-ico">▣</span>Containers & equipment</button>
       <button class="nav-item" data-page="sailings"><span class="nav-ico">◉</span>Vessel schedules</button>
       <button class="nav-item" data-page="milestones"><span class="nav-ico">⌁</span>Tracking & events</button>
@@ -77,11 +206,12 @@
   <main class="main">
     <header class="toolbar">
       <button class="hamb" id="hamb">☰</button>
-      <div class="search">⌕ <input id="globalSearch" placeholder="Find container, MBL, vessel, liner or customer…"></div>
-      <div class="top-right"><span class="connect" id="connection">Connecting</span><button class="btn" id="refresh">↻ Refresh</button><button class="btn primary" id="quickNew">＋ Add container</button><span class="user" id="userName">Staff</span><button class="btn" id="signOut">Sign out</button></div>
+      <div class="search">⌕ <input id="globalSearch" placeholder="Find shipment, job, HBL, container or vessel…"></div>
+      <div class="top-right"><span class="connect" id="connection">Connecting</span><button class="btn" id="refresh">↻ Refresh</button><button class="btn primary" id="quickNew">＋ New booking</button><span class="user" id="userName">Staff</span><button class="btn" id="signOut">Sign out</button></div>
     </header>
     <nav class="tabs" id="workspaceTabs">
       <button class="tab active" data-tab="dashboard">Workbench <span class="x">×</span></button>
+      <button class="tab" data-tab="jobs">Forwarding jobs <span class="x">×</span></button>
       <button class="tab" data-tab="containers">Containers <span class="x">×</span></button>
       <button class="tab" data-tab="milestones">Tracking events <span class="x">×</span></button>
     </nav>
@@ -99,7 +229,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",jobFilters:{service:"",status:""},selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",dashboardFilter:"all",jobFilters:{service:"",status:""},selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -118,7 +248,7 @@ function identity(){const p=state.profile||{},who=p.displayName||state.session?.
 async function refreshAll(){connection("Loading","loading");try{await Promise.all([loadJobs(),loadEquipment()]);identity();connection(state.ops.jobs.length+" jobs · "+state.rows.length+" equipment");render()}catch(e){connection("Data unavailable","error");notify(e.message,"error")}}
 async function auth(session){state.session=session;if(!session){state.profile=null;state.ops.loaded=false;state.rows=[];$("app").hidden=true;$("login").hidden=false;connection("Signed out");return}$("login").hidden=true;$("app").hidden=false;state.profile={displayName:session.user?.email||"Staff",role:"Staff"};identity();await refreshAll()}
 function access(roles){return roles.includes(state.profile?.role)}
-function pageTitle(p){return({dashboard:["Workbench","Daily operations overview and priority work queues"],jobs:["Forwarding jobs","HBL-level job control, routing, equipment allocation and lifecycle"],containers:["Containers & equipment","Manage equipment movements from origin gate-in through empty return"],sailings:["Vessel schedules","Voyages, cutoffs and planned vessel movements"],consol:["LCL consolidation","Consolidation references, linked HBLs and capacity"],milestones:["Tracking & events","Planned and actual events across the shipment lifecycle"],filings:["Customs & compliance","HBL, MBL, CSN, IGM, SI and VGM filing control"],documents:["Document manager","Shipment document references and filing attachments"],transport:["Transport & delivery","Destination trucking, delivery and empty-return activity"],exceptions:["Operations monitor","Overdue, delayed and unresolved operational work"],finance:["Accounting & charges","Shipment cost, revenue and approval register"],reports:["Reports & analytics","Forwarding workload, shipment progress and finance indicators"],customer:["Customer portal","Publish customer-safe milestone visibility"],settings:["Administration","Staff identity and connected services"]})[p]||["Workbench","Operations overview"]}
+function pageTitle(p){return({dashboard:["Dashboard","Shipment visibility and operational control"],jobs:["Forwarding jobs","HBL-level job control, routing, equipment allocation and lifecycle"],containers:["Containers & equipment","Manage equipment movements from origin gate-in through empty return"],sailings:["Vessel schedules","Voyages, cutoffs and planned vessel movements"],consol:["LCL consolidation","Consolidation references, linked HBLs and capacity"],milestones:["Tracking & events","Planned and actual events across the shipment lifecycle"],filings:["Customs & compliance","HBL, MBL, CSN, IGM, SI and VGM filing control"],documents:["Document manager","Shipment document references and filing attachments"],transport:["Transport & delivery","Destination trucking, delivery and empty-return activity"],exceptions:["Operations monitor","Overdue, delayed and unresolved operational work"],finance:["Accounting & charges","Shipment cost, revenue and approval register"],reports:["Reports & analytics","Forwarding workload, shipment progress and finance indicators"],customer:["Customer portal","Publish customer-safe milestone visibility"],settings:["Administration","Staff identity and connected services"]})[p]||["Workbench","Operations overview"]}
 function pageHead(p,actions){const x=pageTitle(p);return'<div class="pagebar"><div><div class="crumb">Freight Operations / '+esc(x[0])+'</div><div class="title">'+esc(x[0])+'</div><div class="desc">'+esc(x[1])+'</div></div><div class="actions">'+(actions||"")+'</div></div>'}
 function pane(title,body,extra,sub){return'<section class="pane"><div class="pane-head"><span class="pane-title">'+title+'</span><span class="pane-sub">'+(sub||"")+'</span>'+(extra||"")+'</div>'+body+'</section>'}
 function stat(label,value,note){return'<div class="stat"><label>'+label+'</label><strong>'+num(value)+'</strong><small>'+note+'</small></div>'}
@@ -126,8 +256,48 @@ function table(headers,rows,empty){return'<div class="gridwrap"><table><thead><t
 function actionBtn(action,label,extra){return'<button class="btn small" data-action="'+action+'" '+(extra||"")+'>'+label+'</button>'}
 function linkCount(job){return state.ops.jobContainers.filter(x=>x.job_id===job.id).length}
 function visibleQueue(){return state.ops.milestones.filter(m=>m.status==="delayed"||(m.status==="planned"&&m.planned_at&&Date.parse(m.planned_at)<Date.now()))}
-function renderDashboard(){return renderContainers();}
-function renderJobs(){
+function renderDashboard(){
+  const jobs=state.ops.jobs||[],sailings=state.ops.sailings||[];
+  const active=jobs.filter(j=>!["delivered","closed","cancelled"].includes(String(j.status||"").toLowerCase()));
+  const milestones=visibleQueue(),returns=containerReturnExceptions();
+  const issueJobs=new Set(milestones.map(m=>m.job_id)),issueContainers=new Set(returns.map(a=>norm(a.no)));
+  const status=j=>String(j.status||"").toLowerCase();
+  const counts={departing:active.filter(j=>["draft","booked","origin_handling"].includes(status(j))).length,transit:active.filter(j=>["departed","transshipment","in_transit","sailing"].includes(status(j))).length,arriving:active.filter(j=>["arrived","customs","destination_handling","out_for_delivery"].includes(status(j))).length};
+  const filter=state.dashboardFilter||"all",query=String(state.query||"").toLowerCase().trim();
+  const visible=active.filter(j=>{
+    const data=[j.job_no,j.hbl_no,j.mbl_no,j.booking_no,j.customer_name,j.shipper,j.consignee,j.pol,j.pod,j.vessel_name].join(" ").toLowerCase();
+    const cntr=(state.ops.jobContainers||[]).some(c=>c.job_id===j.id&&String(c.container_no||"").toLowerCase().includes(query));
+    const hbl=hblsForJob(j.id).some(h=>String(h.hbl_no||"").toLowerCase().includes(query));
+    if(query&&!data.includes(query)&&!cntr&&!hbl)return false;
+    if(filter==="departing")return["draft","booked","origin_handling"].includes(status(j));
+    if(filter==="in_transit")return["departed","transshipment","in_transit","sailing"].includes(status(j));
+    if(filter==="arriving")return["arrived","customs","destination_handling","out_for_delivery"].includes(status(j));
+    if(filter==="exceptions")return issueJobs.has(j.id)||["delayed","on_hold","exception"].includes(status(j))||(state.ops.jobContainers||[]).some(c=>c.job_id===j.id&&issueContainers.has(norm(c.container_no)));
+    return true;
+  });
+  const ports=[{keys:["CHENNAI","INMAA","MAA"],xy:[80.27,13.08]},{keys:["MUMBAI","INBOM","BOM"],xy:[72.88,19.08]},{keys:["NHAVA SHEVA","INNSA","JNPT"],xy:[72.95,18.95]},{keys:["SINGAPORE","SGSIN"],xy:[103.82,1.26]},{keys:["ROTTERDAM","NLRTM"],xy:[4.48,51.92]},{keys:["SHANGHAI","CNSHA"],xy:[121.47,31.23]},{keys:["NINGBO","CNNGB"],xy:[121.55,29.87]},{keys:["SHENZHEN","CNSZX","YANTIAN","CNYTN"],xy:[114.27,22.56]},{keys:["HONG KONG","HKHKG"],xy:[114.17,22.31]},{keys:["LOS ANGELES","USLAX"],xy:[-118.24,33.73]},{keys:["NEW YORK","USNYC"],xy:[-74.01,40.71]},{keys:["DUBAI","AEDXB","JEBEL ALI"],xy:[55.06,24.99]},{keys:["COLOMBO","LKCMB"],xy:[79.84,6.95]},{keys:["BUSAN","KRPUS"],xy:[129.04,35.1]},{keys:["FELIXSTOWE","GBFXT"],xy:[1.35,51.95]},{keys:["SYDNEY","AUSYD"],xy:[151.21,-33.87]},{keys:["HAMBURG","DEHAM"],xy:[9.99,53.55]},{keys:["PORT KLANG","MYPKG"],xy:[101.39,3]}];
+  const portFor=value=>{const v=String(value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");return ports.find(p=>p.keys.some(k=>v.includes(k.replace(/[^A-Z0-9]/g,""))))};
+  const project=p=>[+(24+(p[0]+180)/360*912).toFixed(1),+(12+(90-p[1])/180*436).toFixed(1)];
+  const shapes=[[[-168,70],[-145,68],[-132,57],[-123,49],[-116,34],[-106,29],[-98,20],[-83,9],[-79,24],[-88,33],[-81,43],[-70,48],[-63,55],[-72,62],[-95,72],[-130,73]],[[-81,12],[-69,10],[-61,-1],[-49,-5],[-36,-9],[-43,-23],[-54,-36],[-68,-55],[-76,-34],[-79,-13]],[[-10,72],[22,72],[40,63],[60,62],[80,72],[112,65],[145,58],[160,50],[147,42],[134,43],[128,34],[117,28],[111,20],[104,9],[94,5],[85,11],[74,19],[64,22],[56,14],[49,7],[42,-4],[35,-17],[28,-34],[17,-35],[11,-24],[14,-5],[24,5],[32,11],[37,29],[27,39],[15,46],[8,55],[-2,59],[-10,63]],[[-17,35],[4,37],[29,32],[43,12],[36,-6],[29,-31],[18,-35],[7,-22],[-2,-3],[-12,14]],[[113,-11],[130,-10],[153,-24],[145,-40],[131,-44],[115,-35]],[[-53,82],[-26,77],[-20,64],[-39,58],[-51,65]],[[47,-13],[51,-16],[50,-25],[46,-24]]];
+  const land=shapes.map(points=>'<path class="land" d="M'+points.map(p=>project(p).join(" ")).join(" L")+' Z"/>').join("");
+  const grid=Array.from({length:7},(_,i)=>'<line x1="'+(i*160)+'" y1="0" x2="'+(i*160)+'" y2="460"/>').join("")+Array.from({length:5},(_,i)=>'<line x1="0" y1="'+(i*115)+'" x2="960" y2="'+(i*115)+'"/>').join("");
+  const routes=visible.slice(0,12).map(j=>{const a=portFor(j.pol),b=portFor(j.pod);if(!a||!b)return"";const p1=project(a.xy),p2=project(b.xy),cx=(p1[0]+p2[0])/2,cy=Math.min(p1[1],p2[1])-Math.min(62,Math.abs(p2[0]-p1[0])*.12);return'<g><title>'+esc(j.job_no||"Shipment")+': '+esc(j.pol||"")+" to "+esc(j.pod||"")+'</title><path class="route-line" d="M'+p1[0]+' '+p1[1]+' Q'+cx+' '+cy+' '+p2[0]+' '+p2[1]+'"/><circle class="port-dot" cx="'+p1[0]+'" cy="'+p1[1]+'" r="4"/><circle class="port-dot dest" cx="'+p2[0]+'" cy="'+p2[1]+'" r="4"/></g>'}).join("");
+  const mapCount=(routes.match(/route-line/g)||[]).length;
+  const svg='<svg viewBox="0 0 960 460" preserveAspectRatio="xMidYMid meet" role="img" aria-label="World shipment route overview"><rect width="960" height="460" fill="#f0f1f6"/><g class="graticule">'+grid+'</g><g>'+land+'</g><g>'+routes+'</g></svg>';
+  const total=Math.max(1,active.length);
+  const mix=[["Sea FCL",active.filter(j=>String(j.service_type||"").toUpperCase()==="FCL").length],["Sea LCL",active.filter(j=>String(j.service_type||"").toUpperCase()==="LCL").length],["Air",active.filter(j=>String(j.service_type||"").toUpperCase()==="AIR").length]];
+  const bars=mix.map(x=>'<div class="cw-bar-row"><span>'+x[0]+'</span><div class="cw-bar-track"><div class="cw-bar-fill" style="width:'+Math.round(x[1]/total*100)+'%"></div></div><b>'+x[1]+'</b></div>').join("");
+  const arrivalBars=["arrived","customs","destination_handling","out_for_delivery"].map(k=>'<div class="cw-bar-row"><span>'+k.replace(/_/g," ")+'</span><div class="cw-bar-track"><div class="cw-bar-fill" style="width:'+Math.round(active.filter(j=>status(j)===k).length/Math.max(1,counts.arriving)*100)+'%"></div></div><b>'+active.filter(j=>status(j)===k).length+'</b></div>').join("");
+  const rows=visible.slice(0,12).map(j=>{const bills=hblsForJob(j.id).map(h=>h.hbl_no).filter(Boolean).slice(0,2).join(", ")||j.hbl_no||"—";const linked=(state.ops.jobContainers||[]).filter(c=>c.job_id===j.id).map(c=>c.container_no).filter(Boolean).join(", ")||"—";return'<tr><td><button class="cw-record" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no||"—")+'</button><span class="cell-sub">'+esc(bills)+'</span></td><td>'+esc(j.customer_name||j.shipper||"—")+'</td><td>'+esc(j.pol||"—")+' → '+esc(j.pod||"—")+'</td><td>'+esc(j.vessel_name||j.carrier||"—")+'<span class="cell-sub">'+esc(j.voyage_no||"")+'</span></td><td>'+fmt(j.etd)+'</td><td>'+fmt(j.eta)+'</td><td>'+pill(j.status||"draft")+'</td><td>'+esc(linked)+'</td></tr>'});
+  const filterButtons=[["all","All shipments"],["departing","Departing"],["in_transit","In transit"],["arriving","Arriving"],["exceptions","Exceptions"]].map(x=>'<button class="cw-filter '+(filter===x[0]?"active":"")+'" data-dashboard-filter="'+x[0]+'" aria-pressed="'+(filter===x[0]?"true":"false")+'">'+x[1]+'</button>').join("");
+  const priority=milestones.length+returns.length;
+  return pageHead("dashboard",'<a class="btn" href="./track.html" target="_blank" rel="noopener">Customer portal</a><button class="btn primary" data-create="job">＋ New booking</button>')+
+    '<div class="cw-dashboard-head"><div><span class="cw-crumb">GLOBAL OPERATIONS / FORWARDING</span><h2>Shipment control tower</h2><p>Track active movements, exceptions and upcoming delivery activity.</p></div><div class="cw-live"><i></i> OPERATIONS VIEW</div></div>'+
+    '<div class="cw-kpis"><div class="cw-kpi"><label>Open shipments</label><strong>'+active.length+'</strong><small>Active forwarding jobs</small></div><div class="cw-kpi"><label>Departing</label><strong>'+counts.departing+'</strong><small>Booked or at origin</small></div><div class="cw-kpi"><label>In transit</label><strong>'+counts.transit+'</strong><small>Departed or transshipping</small></div><div class="cw-kpi"><label>Exceptions</label><strong>'+priority+'</strong><small>Requires operations review</small></div></div>'+
+    '<div class="cw-layout"><section class="cw-panel"><div class="cw-panel-head"><strong>GLOBAL SHIPMENT OVERVIEW</strong><span>'+mapCount+' mapped routes · '+active.length+' open shipments</span></div><div class="cw-map-tools"><button class="'+(filter==="all"?"active":"")+'" data-dashboard-filter="all">All movements</button><button class="'+(filter==="departing"?"active":"")+'" data-dashboard-filter="departing">Departing</button><button class="'+(filter==="arriving"?"active":"")+'" data-dashboard-filter="arriving">Arriving</button><span class="map-meta">Port references from shipment records</span></div><div class="cw-map">'+svg+'<div class="cw-map-note">'+(mapCount?mapCount+" routes mapped from shipment ports":"Routes appear when job ports match a mapped location")+'</div></div><div class="cw-map-legend"><span><i></i>Origin</span><span><i class="dest-dot"></i>Destination</span><span>Route endpoints only · live positions shown when available</span></div></section>'+
+    '<aside class="cw-analytics"><section class="cw-panel"><div class="cw-panel-head"><strong>SHIPMENT MIX</strong><span>Active jobs</span></div><div class="cw-chart-body"><div class="cw-chart-title">Forwarding jobs by service type</div>'+bars+'</div><div class="cw-analytics-foot">Counts from the shipment register.</div></section><section class="cw-panel"><div class="cw-panel-head"><strong>ARRIVING SHIPMENTS</strong><span>'+counts.arriving+' jobs</span></div><div class="cw-chart-body"><div class="cw-chart-title">Destination-side handling</div>'+arrivalBars+'</div><div class="cw-analytics-foot"><button class="btn small" data-dashboard-filter="arriving">View arrivals</button></div></section></aside></div>'+
+    '<section class="cw-shipments"><div class="cw-shipments-head"><strong>SHIPMENT TRACKING</strong><button class="btn small" data-nav="jobs">Open shipment register</button></div><div class="cw-filter-row">'+filterButtons+'<span class="pane-sub" style="margin-left:auto">'+visible.length+' of '+active.length+' active jobs</span></div>'+table(["SHIPMENT / HBL","CUSTOMER","ORIGIN → DESTINATION","VESSEL / CARRIER","ETD","ETA","STATUS","CONTAINERS"],rows,"No active shipments match this view.")+'<div class="cw-help">Map lines show port endpoints from shipment records; they are not live vessel positions.</div></section>';
+}function renderJobs(){
   const q=state.query.toLowerCase().trim();
   const items=state.ops.jobs.filter(j=>{
     const hblText=hblsForJob(j.id).map(h=>h.hbl_no).join(" ");
@@ -436,7 +606,7 @@ function renderCustomer(){
 async function loadStaffUsers(){const target=$("staffUsers");if(!target)return;target.innerHTML='<span class="desc">Loading staff accounts…</span>';try{const d=await call("logistics-workspace",{action:"listStaffUsers"});const rows=(d.users||[]).map(u=>'<tr><td>'+esc(u.display_name)+'</td><td>'+esc(u.email)+'</td><td>'+pill(u.role)+'</td><td>'+pill(u.is_active?"Active":"Disabled")+'</td><td>'+esc(u.created_at?fmt(u.created_at):"—")+'</td><td><button class="btn small red" data-action="delete-staff-user" data-id="'+esc(u.user_id)+'" data-email="'+esc(u.email)+'">Delete</button></td></tr>');target.innerHTML=table(["NAME","EMAIL","ROLE","STATUS","CREATED","ACTIONS"],rows,"No staff accounts found.")}catch(e){target.innerHTML='<div class="form-error">'+esc(e.message||"Could not load staff accounts.")+'</div>'}}
 function renderSettings(){return pageHead("settings")+(state.profile?.role==="Admin"?'<div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">CREATE STAFF LOGIN</span><span class="pane-sub">Admin only · managed inside this website</span></div><div class="pane-body"><form id="staffCreateForm"><div class="formgrid"><div class="field"><label>FULL NAME *</label><input name="display_name" required maxlength="120"></div><div class="field"><label>EMAIL ADDRESS *</label><input name="email" type="email" required maxlength="254"></div><div class="field"><label>TEMPORARY PASSWORD *</label><input name="password" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>ACCESS ROLE *</label><select name="role"><option>Operator</option><option>Editor</option><option>Viewer</option><option>Admin</option></select></div></div><button class="btn primary" type="submit">＋ Create staff user</button><div class="form-error" id="staffFormError"></div></form></div></div><div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">STAFF ACCOUNTS</span><button class="btn small" id="reloadStaff">↻ Refresh users</button></div><div class="pane-body" id="staffUsers"><span class="desc">Loading staff accounts…</span></div></div>':'<div class="pane"><div class="pane-body">Staff account administration is restricted to Admin users.</div></div>')+'<div class="columns">'+pane("STAFF SESSION",'<div class="pane-body">User: '+esc(state.session?.user?.email||"—")+'<br>Role: '+esc(state.profile?.role||"—")+'<br>Equipment records: '+state.rows.length+'</div>')+pane("CONNECTED SERVICES",'<div class="pane-body">Supabase authentication '+pill("Connected")+'<br>Protected operations API '+pill("Connected")+'<br>Customer tracking API '+pill("Active")+'</div>')+'</div>'}
 function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(state.page==="finance")html=renderFinance();else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage()}
-function navigate(p){if(p==="jobs"||p==="jobdetail"||p==="consol")p="containers";state.page=p;state.query="";$("globalSearch").value="";$("app").classList.remove("menu-open");render()}
+function navigate(p){if(p==="jobdetail"||p==="consol")p="containers";state.page=p;state.query="";$("globalSearch").value="";$("app").classList.remove("menu-open");render()}
 function field(f){const value=f.value??"";let input;if(f.options)input='<select name="'+esc(f.name)+'" '+(f.required?"required":"")+'>'+f.options.map(o=>'<option value="'+esc(o[0])+'" '+(String(o[0])===String(value)?"selected":"")+'>'+esc(o[1])+'</option>').join("")+'</select>';else if(f.type==="textarea")input='<textarea name="'+esc(f.name)+'">'+esc(value)+'</textarea>';else{let v=value;if(f.type==="date"&&v)v=String(v).slice(0,10);if(f.type==="datetime-local"&&v)v=new Date(v).toISOString().slice(0,16);input='<input name="'+esc(f.name)+'" type="'+(f.type||"text")+'" value="'+esc(v)+'" '+(f.accept?'accept="'+esc(f.accept)+'"':"") +' '+(f.required?"required":"")+' '+(f.step?'step="'+esc(f.step)+'"':"")+'>'}return'<div class="field '+(f.span2?"span2":"")+'"><label>'+esc(f.label.toUpperCase())+(f.required?" *":"")+'</label>'+input+'</div>'}
 function openForm(title,defs,save){$("modalTitle").textContent=title;$("fields").innerHTML=defs.map(field).join("");$("formError").textContent="";state.modalSave=save;$("modal").hidden=false}
 function closeForm(){$("modal").hidden=true;state.modalSave=null}
@@ -628,7 +798,7 @@ async function approveCharge(chargeId){if(state.profile?.role!=="Admin")return n
 function openContainer(index){if(!access(["Admin","Editor","Operator"])){notify("Your staff role is read-only.","error");return}const row=index>=0?state.rows[index]:{};const allowed=state.profile?.role==="Operator"?["SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"]:COLUMNS;const defs=allowed.map(k=>({name:k,label:k,type:["ETD","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE"].includes(k)?"date":"text",value:val(row,[k]),span:k==="REMARKS",required:k==="CONTAINER NO."}));openForm(index>=0?"Update container record":"Add container record",defs,async fd=>{const next=state.rows.slice(),updated={...row};allowed.forEach(k=>updated[k]=fd.get(k)||"");if(!updated["CONTAINER NO."])throw new Error("Container number is required.");if(index<0)next.push(updated);else next[index]=updated;if(!state.updatedAt)throw new Error("Refresh the register before saving.");const out=await call("operations-data",{action:"write",data:next,expectedUpdatedAt:state.updatedAt});if(!out.saved)throw new Error("Save was not confirmed.");state.rows=next;state.updatedAt=out.updatedAt;await loadJobs();closeForm();render();notify("Container record saved","success")})}
 async function submitForm(e){e.preventDefault();if(!state.modalSave)return;const b=$("saveBtn");b.disabled=true;b.textContent="Saving…";$("formError").textContent="";try{await state.modalSave(new FormData($("recordForm")));if(!$("modal").hidden)closeForm()}catch(err){$("formError").textContent=err.message||"Could not save record."}finally{b.disabled=false;b.textContent="Save record"}}
 function exportJobs(){const cols=["job_no","customer_reference","service_type","direction","status","hbl_no","mbl_no","booking_no","customer_name","shipper","consignee","carrier","vessel_name","voyage_no","pol","transshipment_port","pod","final_delivery_place","etd","eta","package_count","gross_weight_kg","volume_cbm"];const rows=state.ops.jobs;if(!rows.length)return notify("No jobs to export.");const csv=[cols.join(","),...rows.map(r=>cols.map(c=>'"'+String(r[c]??"").replace(/"/g,'""')+'"').join(","))].join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="forwarding-jobs.csv";a.click();URL.revokeObjectURL(a.href)}
-function bindPage(){
+function bindPage(){document.querySelectorAll("[data-dashboard-filter]").forEach(button=>{button.onclick=()=>{state.dashboardFilter=button.dataset.dashboardFilter||"all";render()}});
   if(state.page==="settings"&&state.profile?.role==="Admin"){
     loadStaffUsers();
     const form=$("staffCreateForm");
@@ -753,7 +923,7 @@ function bindPage(){
 }
 $("loginForm").onsubmit=async e=>{e.preventDefault();$("loginError").textContent="";const b=$("signIn");b.disabled=true;b.textContent="Signing in…";try{const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)throw error;if(!data.session)throw new Error("No staff session returned.");await auth(data.session)}catch(err){$("loginError").textContent=err.message||"Sign in failed"}finally{b.disabled=false;b.textContent="Sign in"}};
 $("recordForm").onsubmit=submitForm;$("modalClose").onclick=closeForm;$("cancel").onclick=closeForm;$("modal").onclick=e=>{if(e.target===$("modal"))closeForm()};
-$("signOut").onclick=async()=>{await db.auth.signOut();await auth(null)};$("refresh").onclick=refreshAll;$("quickNew").onclick=()=>navigate("containers");$("hamb").onclick=()=>$("app").classList.toggle("menu-open");$("globalSearch").oninput=()=>{state.query=$("globalSearch").value;if(!["containers","milestones"].includes(state.page))state.page="containers";render()};
+$("signOut").onclick=async()=>{await db.auth.signOut();await auth(null)};$("refresh").onclick=refreshAll;$("quickNew").onclick=()=>newJob();$("hamb").onclick=()=>$("app").classList.toggle("menu-open");$("globalSearch").oninput=()=>{state.query=$("globalSearch").value;if(!["dashboard","jobs","containers","milestones"].includes(state.page))state.page="containers";render()};
 document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>navigate(b.dataset.page));document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>navigate(b.dataset.tab));
 if(db){db.auth.getSession().then(({data,error})=>{if(error)throw error;auth(data.session)}).catch(e=>$("loginError").textContent=e.message);db.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"&&state.session)auth(null);if(event==="TOKEN_REFRESHED"&&session)state.session=session})}else $("loginError").textContent="Supabase did not load. Refresh this page.";
 </script>
