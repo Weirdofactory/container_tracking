@@ -437,7 +437,7 @@ function updateControlTowerMap(){
   if(features.length){const bounds=new ml.LngLatBounds();features.forEach(f=>f.geometry.coordinates.forEach(point=>bounds.extend(point)));map.fitBounds(bounds,{padding:38,maxZoom:4,duration:0});setControlMapStatus(containerView?"Container lanes · port route only · no live GPS position":"Port-to-port route view · no live vessel position");}
   else setControlMapStatus(containerView?"No mapped port routes in the equipment register":"No mapped port routes in this shipment filter");
 }
-async function renderControlTowerMap(){async function renderControlTowerMap(){
+async function renderControlTowerMap(){
   const element=$("controlTowerMap");if(!element)return;
   if(controlMapInstance&&controlMapElement===element){updateControlTowerMap();return}
   if(controlMapInstance){try{controlMapInstance.remove()}catch(_){}controlMapInstance=null;controlMapMarkers=[]}
