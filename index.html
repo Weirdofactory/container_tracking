@@ -8,6 +8,7 @@
 <title>Freight Operations | Shipment Control Tower</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.15.0/dist/maplibre-gl.css">
 <style>
 :root{--violet:#362bb4;--violet-dark:#282184;--violet-light:#eeeefe;--blue:#176da8;--cyan:#078ca5;--green:#18815d;--amber:#b67817;--red:#b94343;--ink:#24394b;--muted:#708292;--line:#d3dce3;--surface:#fff;--work:#e9edf1;--soft:#f5f7f9;--shadow:0 1px 3px #21394e12}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--work);color:var(--ink);font:12px/1.4 "Segoe UI",Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:wait}[hidden]{display:none!important}
@@ -159,6 +160,82 @@ thead th{height:27px;background:#e8eaf0;font-size:8px}tbody td{height:30px;font-
 @media(max-width:1050px){.cw-layout{grid-template-columns:1fr}.cw-analytics{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}}
 @media(max-width:760px){.login{padding:13px}.login-card{padding:18px}.cw-dashboard-head{align-items:flex-start;flex-direction:column}.cw-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.cw-layout{grid-template-columns:1fr}.cw-analytics{grid-template-columns:1fr}.cw-map{height:250px}.cw-shipments-head{height:auto;min-height:35px}}
 
+
+.cw-dashboard-head{margin:0 0 8px;align-items:center}
+.cw-dashboard-head h2{font-size:18px;margin:2px 0;color:#2d3042}
+.cw-dashboard-head p{font-size:11px}
+.cw-head-actions{display:flex;align-items:center;gap:7px}
+.cw-head-note{font-size:9px;color:#7b8494}
+.cw-kpis{gap:6px;margin-bottom:8px}
+.cw-kpi{padding:8px 10px}
+.cw-kpi label{font-size:9px}
+.cw-kpi strong{font-size:20px}
+.cw-kpi small{font-size:9px}
+.cw-layout{gap:8px;margin-bottom:8px}
+.cw-panel-head{height:32px}
+.cw-panel-head strong,.cw-shipments-head strong{font-size:10px}
+.cw-map-tools{height:32px}
+.cw-map-tools button,.cw-filter{height:24px;font-size:9px;padding:0 9px}
+.cw-map-wrap{position:relative}
+.cw-map{height:clamp(250px,23vw,290px);min-height:250px;background:#eef0f5}
+.cw-map svg{display:none}
+.cw-map-status{position:absolute;left:8px;bottom:8px;z-index:3;padding:4px 7px;border:1px solid #d7dbe4;background:#ffffffea;color:#697589;font-size:9px;pointer-events:none}
+.cw-map .maplibregl-ctrl-group{border:1px solid #c8cdd8;box-shadow:0 1px 3px #25234320}
+.cw-map .maplibregl-ctrl-attrib{font-size:8px}
+.cw-map-marker{width:13px;height:13px;border:3px solid #fff;border-radius:50%;box-shadow:0 1px 5px #1a1a3050}
+.cw-map-marker.origin{background:#594899}
+.cw-map-marker.destination{background:#169aa3}
+.cw-map-legend{height:28px;font-size:9px}
+.cw-chart-body{padding:9px 10px}
+.cw-chart-title{font-size:10px}
+.cw-bar-row{font-size:9px;margin:7px 0;grid-template-columns:65px 1fr 20px}
+.cw-analytics-foot{font-size:9px}
+.cw-shipments-head{height:34px}
+.cw-filter-row{gap:5px;padding:5px 7px}
+.cw-record{font-size:10px}
+thead th{height:29px;font-size:9px}
+tbody td{height:33px;font-size:10px}
+.cell-sub{font-size:9px}
+.cw-help{font-size:9px}
+@media(max-width:1050px){.cw-map{height:280px}}
+@media(max-width:760px){.cw-dashboard-head{align-items:flex-start}.cw-head-actions{width:100%;justify-content:space-between}.cw-map{height:235px;min-height:235px}}
+
+
+/* Dashboard readability and CargoWise-style control-tower hierarchy */
+.cw-dashboard-head{margin-bottom:12px}
+.cw-dashboard-head h2{font-size:23px;letter-spacing:-.35px}
+.cw-dashboard-head p{font-size:13px}
+.cw-crumb{font-size:10px;letter-spacing:1px}
+.cw-head-note{font-size:11px}
+.cw-kpis{gap:10px;margin-bottom:12px}
+.cw-kpi{padding:12px 14px}
+.cw-kpi label{font-size:11px}
+.cw-kpi strong{font-size:25px}
+.cw-kpi small{font-size:11px}
+.cw-layout{grid-template-columns:minmax(0,1.9fr) minmax(270px,.78fr);gap:12px;margin-bottom:12px}
+.cw-analytics{gap:12px}
+.cw-panel-head{height:40px;padding-inline:12px}
+.cw-panel-head strong,.cw-shipments-head strong{font-size:12px;letter-spacing:.35px}
+.cw-panel-head span{font-size:11px}
+.cw-map-tools{height:40px;padding-inline:10px}
+.cw-map-tools button,.cw-filter{height:29px;font-size:11px;padding:0 11px}
+.cw-map{height:clamp(320px,29vw,380px);min-height:320px}
+.cw-map-status{font-size:10px;padding:5px 8px}
+.cw-map .maplibregl-ctrl-attrib{font-size:10px}
+.cw-map-legend{height:34px;font-size:10px}
+.cw-chart-body{padding:13px 14px}
+.cw-chart-title{font-size:12px;margin-bottom:12px}
+.cw-bar-row{font-size:11px;grid-template-columns:90px 1fr 24px;margin:10px 0}
+.cw-analytics-foot{font-size:10px;padding:9px 12px}
+.cw-shipments-head{height:42px;padding-inline:12px}
+.cw-filter-row{gap:7px;padding:8px 10px}
+.cw-record{font-size:11px}
+thead th{height:35px;font-size:10px}
+tbody td{height:40px;font-size:11px}
+.cell-sub{font-size:10px}
+.cw-help{font-size:10px;padding:9px 11px}
+@media(max-width:1050px){.cw-layout{grid-template-columns:1fr}.cw-analytics{grid-template-columns:repeat(2,minmax(0,1fr))}.cw-map{height:340px}}
+@media(max-width:760px){.cw-dashboard-head h2{font-size:21px}.cw-dashboard-head p{font-size:12px}.cw-head-actions{gap:8px}.cw-head-note{display:none}.cw-kpi{padding:10px}.cw-kpi strong{font-size:22px}.cw-layout{gap:10px}.cw-analytics{grid-template-columns:1fr}.cw-map{height:270px;min-height:270px}.cw-map-legend{height:auto;min-height:34px;gap:8px;flex-wrap:wrap;padding:7px}.cw-shipments{overflow-x:auto}.cw-filter-row{flex-wrap:wrap}.cw-filter-row .pane-sub{margin-left:0!important}}
 </style>
 </head>
 <body>
@@ -229,7 +306,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",dashboardFilter:"all",jobFilters:{service:"",status:""},selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",dashboardFilter:"all",jobFilters:{service:"",status:""},selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -256,15 +333,25 @@ function table(headers,rows,empty){return'<div class="gridwrap"><table><thead><t
 function actionBtn(action,label,extra){return'<button class="btn small" data-action="'+action+'" '+(extra||"")+'>'+label+'</button>'}
 function linkCount(job){return state.ops.jobContainers.filter(x=>x.job_id===job.id).length}
 function visibleQueue(){return state.ops.milestones.filter(m=>m.status==="delayed"||(m.status==="planned"&&m.planned_at&&Date.parse(m.planned_at)<Date.now()))}
-function renderDashboard(){
-  const jobs=state.ops.jobs||[],sailings=state.ops.sailings||[];
-  const active=jobs.filter(j=>!["delivered","closed","cancelled"].includes(String(j.status||"").toLowerCase()));
-  const milestones=visibleQueue(),returns=containerReturnExceptions();
-  const issueJobs=new Set(milestones.map(m=>m.job_id)),issueContainers=new Set(returns.map(a=>norm(a.no)));
-  const status=j=>String(j.status||"").toLowerCase();
-  const counts={departing:active.filter(j=>["draft","booked","origin_handling"].includes(status(j))).length,transit:active.filter(j=>["departed","transshipment","in_transit","sailing"].includes(status(j))).length,arriving:active.filter(j=>["arrived","customs","destination_handling","out_for_delivery"].includes(status(j))).length};
-  const filter=state.dashboardFilter||"all",query=String(state.query||"").toLowerCase().trim();
-  const visible=active.filter(j=>{
+const controlMapPorts=[
+  ["NINGBO",[121.544,29.868]],["SHANGHAI",[121.474,31.230]],["QINGDAO",[120.382,36.067]],["TIANJIN",[117.735,38.982]],["XINGANG",[117.735,38.982]],
+  ["YANTIAN",[114.269,22.563]],["SHENZHEN",[114.057,22.543]],["HONG KONG",[114.170,22.319]],["SINGAPORE",[103.822,1.264]],
+  ["LAEM CHABANG",[100.883,13.085]],["BANGKOK",[100.501,13.756]],["COLOMBO",[79.861,6.927]],["PORT KLANG",[101.399,3.000]],["KLANG",[101.399,3.000]],
+  ["CITPL",[80.300,13.100]],["CCTPL",[80.300,13.100]],["KATTUPALLI",[80.348,13.305]],["ENNORE",[80.322,13.246]],["CHENNAI",[80.270,13.083]],
+  ["TUTICORIN",[78.135,8.764]],["THOOTHUKUDI",[78.135,8.764]],["COCHIN",[76.267,9.931]],["KOCHI",[76.267,9.931]],["NHAVA SHEVA",[72.950,18.950]],
+  ["JNPT",[72.950,18.950]],["MUMBAI",[72.835,18.940]],["MUNDRA",[69.720,22.740]],["KOLKATA",[88.310,22.540]],
+  ["VISAKHAPATNAM",[83.218,17.687]],["KRISHNAPATNAM",[80.121,14.253]],["PIPAVAV",[71.500,20.900]],["ROTTERDAM",[4.48,51.92]],
+  ["FELIXSTOWE",[1.35,51.95]],["HAMBURG",[9.99,53.55]],["DUBAI",[55.06,24.99]],["LOS ANGELES",[-118.24,33.73]],
+  ["NEW YORK",[-74.01,40.71]],["SYDNEY",[151.21,-33.87]],["BUSAN",[129.04,35.10]]
+];
+let controlMapModule=null,controlMapInstance=null,controlMapElement=null,controlMapMarkers=[];
+function controlPortPoint(value){const v=String(value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");for(const p of controlMapPorts)if(v.includes(p[0].replace(/[^A-Z0-9]/g,"")))return p[1];return null}
+function dashboardJobs(){
+  const jobs=(state.ops.jobs||[]).filter(j=>!["delivered","closed","cancelled"].includes(String(j.status||"").toLowerCase()));
+  const issueJobs=new Set(visibleQueue().map(m=>m.job_id));
+  const issueContainers=new Set(containerReturnExceptions().map(a=>norm(a.no)));
+  const status=j=>String(j.status||"").toLowerCase(),filter=state.dashboardFilter||"all",query=String(state.query||"").toLowerCase().trim();
+  return jobs.filter(j=>{
     const data=[j.job_no,j.hbl_no,j.mbl_no,j.booking_no,j.customer_name,j.shipper,j.consignee,j.pol,j.pod,j.vessel_name].join(" ").toLowerCase();
     const cntr=(state.ops.jobContainers||[]).some(c=>c.job_id===j.id&&String(c.container_no||"").toLowerCase().includes(query));
     const hbl=hblsForJob(j.id).some(h=>String(h.hbl_no||"").toLowerCase().includes(query));
@@ -275,28 +362,65 @@ function renderDashboard(){
     if(filter==="exceptions")return issueJobs.has(j.id)||["delayed","on_hold","exception"].includes(status(j))||(state.ops.jobContainers||[]).some(c=>c.job_id===j.id&&issueContainers.has(norm(c.container_no)));
     return true;
   });
-  const ports=[{keys:["CHENNAI","INMAA","MAA"],xy:[80.27,13.08]},{keys:["MUMBAI","INBOM","BOM"],xy:[72.88,19.08]},{keys:["NHAVA SHEVA","INNSA","JNPT"],xy:[72.95,18.95]},{keys:["SINGAPORE","SGSIN"],xy:[103.82,1.26]},{keys:["ROTTERDAM","NLRTM"],xy:[4.48,51.92]},{keys:["SHANGHAI","CNSHA"],xy:[121.47,31.23]},{keys:["NINGBO","CNNGB"],xy:[121.55,29.87]},{keys:["SHENZHEN","CNSZX","YANTIAN","CNYTN"],xy:[114.27,22.56]},{keys:["HONG KONG","HKHKG"],xy:[114.17,22.31]},{keys:["LOS ANGELES","USLAX"],xy:[-118.24,33.73]},{keys:["NEW YORK","USNYC"],xy:[-74.01,40.71]},{keys:["DUBAI","AEDXB","JEBEL ALI"],xy:[55.06,24.99]},{keys:["COLOMBO","LKCMB"],xy:[79.84,6.95]},{keys:["BUSAN","KRPUS"],xy:[129.04,35.1]},{keys:["FELIXSTOWE","GBFXT"],xy:[1.35,51.95]},{keys:["SYDNEY","AUSYD"],xy:[151.21,-33.87]},{keys:["HAMBURG","DEHAM"],xy:[9.99,53.55]},{keys:["PORT KLANG","MYPKG"],xy:[101.39,3]}];
-  const portFor=value=>{const v=String(value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");return ports.find(p=>p.keys.some(k=>v.includes(k.replace(/[^A-Z0-9]/g,""))))};
-  const project=p=>[+(24+(p[0]+180)/360*912).toFixed(1),+(12+(90-p[1])/180*436).toFixed(1)];
-  const shapes=[[[-168,70],[-145,68],[-132,57],[-123,49],[-116,34],[-106,29],[-98,20],[-83,9],[-79,24],[-88,33],[-81,43],[-70,48],[-63,55],[-72,62],[-95,72],[-130,73]],[[-81,12],[-69,10],[-61,-1],[-49,-5],[-36,-9],[-43,-23],[-54,-36],[-68,-55],[-76,-34],[-79,-13]],[[-10,72],[22,72],[40,63],[60,62],[80,72],[112,65],[145,58],[160,50],[147,42],[134,43],[128,34],[117,28],[111,20],[104,9],[94,5],[85,11],[74,19],[64,22],[56,14],[49,7],[42,-4],[35,-17],[28,-34],[17,-35],[11,-24],[14,-5],[24,5],[32,11],[37,29],[27,39],[15,46],[8,55],[-2,59],[-10,63]],[[-17,35],[4,37],[29,32],[43,12],[36,-6],[29,-31],[18,-35],[7,-22],[-2,-3],[-12,14]],[[113,-11],[130,-10],[153,-24],[145,-40],[131,-44],[115,-35]],[[-53,82],[-26,77],[-20,64],[-39,58],[-51,65]],[[47,-13],[51,-16],[50,-25],[46,-24]]];
-  const land=shapes.map(points=>'<path class="land" d="M'+points.map(p=>project(p).join(" ")).join(" L")+' Z"/>').join("");
-  const grid=Array.from({length:7},(_,i)=>'<line x1="'+(i*160)+'" y1="0" x2="'+(i*160)+'" y2="460"/>').join("")+Array.from({length:5},(_,i)=>'<line x1="0" y1="'+(i*115)+'" x2="960" y2="'+(i*115)+'"/>').join("");
-  const routes=visible.slice(0,12).map(j=>{const a=portFor(j.pol),b=portFor(j.pod);if(!a||!b)return"";const p1=project(a.xy),p2=project(b.xy),cx=(p1[0]+p2[0])/2,cy=Math.min(p1[1],p2[1])-Math.min(62,Math.abs(p2[0]-p1[0])*.12);return'<g><title>'+esc(j.job_no||"Shipment")+': '+esc(j.pol||"")+" to "+esc(j.pod||"")+'</title><path class="route-line" d="M'+p1[0]+' '+p1[1]+' Q'+cx+' '+cy+' '+p2[0]+' '+p2[1]+'"/><circle class="port-dot" cx="'+p1[0]+'" cy="'+p1[1]+'" r="4"/><circle class="port-dot dest" cx="'+p2[0]+'" cy="'+p2[1]+'" r="4"/></g>'}).join("");
-  const mapCount=(routes.match(/route-line/g)||[]).length;
-  const svg='<svg viewBox="0 0 960 460" preserveAspectRatio="xMidYMid meet" role="img" aria-label="World shipment route overview"><rect width="960" height="460" fill="#f0f1f6"/><g class="graticule">'+grid+'</g><g>'+land+'</g><g>'+routes+'</g></svg>';
-  const total=Math.max(1,active.length);
+}
+function setControlMapStatus(message){const el=$("controlMapStatus");if(el)el.textContent=message}
+function updateControlTowerMap(){
+  const map=controlMapInstance,ml=controlMapModule;if(!map||!ml||!map.isStyleLoaded())return;
+  const features=[],ports=new Map();
+  dashboardJobs().forEach(j=>{
+    const origin=controlPortPoint(j.pol),destination=controlPortPoint(j.pod);if(!origin||!destination)return;
+    features.push({type:"Feature",properties:{jobNo:j.job_no||"",origin:j.pol||"",destination:j.pod||""},geometry:{type:"LineString",coordinates:[origin,destination]}});
+    const originKey=origin.join(","),destKey=destination.join(",");
+    if(!ports.has(originKey))ports.set(originKey,{point:origin,label:j.pol||"Origin",kind:"origin"});
+    if(!ports.has(destKey))ports.set(destKey,{point:destination,label:j.pod||"Destination",kind:"destination"});
+  });
+  const data={type:"FeatureCollection",features};
+  let source=map.getSource("control-tower-routes");
+  if(source)source.setData(data);
+  else{map.addSource("control-tower-routes",{type:"geojson",data});map.addLayer({id:"control-tower-routes",type:"line",source:"control-tower-routes",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#5c4a9b","line-width":2.5,"line-opacity":.86}})}
+  controlMapMarkers.forEach(marker=>marker.remove());controlMapMarkers=[];
+  ports.forEach(item=>{
+    const el=document.createElement("span");el.className="cw-map-marker "+item.kind;el.setAttribute("aria-label",item.label);
+    const popup=new ml.Popup({offset:10}).setText(item.label);
+    controlMapMarkers.push(new ml.Marker({element:el}).setLngLat(item.point).setPopup(popup).addTo(map));
+  });
+  const meta=$("controlMapMeta");if(meta)meta.textContent=features.length+" mapped routes · "+dashboardJobs().length+" shipments";
+  if(features.length){const bounds=new ml.LngLatBounds();features.forEach(f=>f.geometry.coordinates.forEach(point=>bounds.extend(point)));map.fitBounds(bounds,{padding:38,maxZoom:4,duration:0});setControlMapStatus("Port-to-port route view · no live vessel position");}
+  else setControlMapStatus("No mapped port routes in this shipment filter");
+}
+async function renderControlTowerMap(){
+  const element=$("controlTowerMap");if(!element)return;
+  if(controlMapInstance&&controlMapElement===element){updateControlTowerMap();return}
+  if(controlMapInstance){try{controlMapInstance.remove()}catch(_){}controlMapInstance=null;controlMapMarkers=[]}
+  try{
+    if(!controlMapModule)controlMapModule=import("https://unpkg.com/maplibre-gl@6.15.0/dist/maplibre-gl.mjs");
+    const ml=await controlMapModule;if($("controlTowerMap")!==element)return;
+    controlMapModule=ml;controlMapElement=element;
+    const map=new ml.Map({container:element,style:"https://tiles.openfreemap.org/styles/liberty",center:[30,20],zoom:1.5,attributionControl:true,renderWorldCopies:false});
+    controlMapInstance=map;map.addControl(new ml.NavigationControl({showCompass:false}),"top-right");
+    map.once("load",()=>{if(controlMapInstance!==map)return;map.resize();updateControlTowerMap()});
+    map.on("error",()=>{if(controlMapInstance===map&&!map.isStyleLoaded())setControlMapStatus("Map tiles are unavailable; shipment register remains current")});
+  }catch(error){controlMapModule=null;controlMapElement=null;setControlMapStatus("Map unavailable; shipment register remains current")}
+}
+function destroyControlTowerMap(){if(controlMapInstance){try{controlMapInstance.remove()}catch(_){}controlMapInstance=null;controlMapElement=null;controlMapMarkers=[]}}
+function renderDashboard(){
+  const jobs=state.ops.jobs||[],active=jobs.filter(j=>!["delivered","closed","cancelled"].includes(String(j.status||"").toLowerCase()));
+  const visible=dashboardJobs(),milestones=visibleQueue(),returns=containerReturnExceptions();
+  const status=j=>String(j.status||"").toLowerCase();
+  const counts={departing:active.filter(j=>["draft","booked","origin_handling"].includes(status(j))).length,transit:active.filter(j=>["departed","transshipment","in_transit","sailing"].includes(status(j))).length,arriving:active.filter(j=>["arrived","customs","destination_handling","out_for_delivery"].includes(status(j))).length};
+  const mapped=visible.filter(j=>controlPortPoint(j.pol)&&controlPortPoint(j.pod)).length;
+  const filter=state.dashboardFilter||"all",denom=Math.max(1,active.length);
   const mix=[["Sea FCL",active.filter(j=>String(j.service_type||"").toUpperCase()==="FCL").length],["Sea LCL",active.filter(j=>String(j.service_type||"").toUpperCase()==="LCL").length],["Air",active.filter(j=>String(j.service_type||"").toUpperCase()==="AIR").length]];
-  const bars=mix.map(x=>'<div class="cw-bar-row"><span>'+x[0]+'</span><div class="cw-bar-track"><div class="cw-bar-fill" style="width:'+Math.round(x[1]/total*100)+'%"></div></div><b>'+x[1]+'</b></div>').join("");
+  const bars=mix.map(x=>'<div class="cw-bar-row"><span>'+x[0]+'</span><div class="cw-bar-track"><div class="cw-bar-fill" style="width:'+Math.round(x[1]/denom*100)+'%"></div></div><b>'+x[1]+'</b></div>').join("");
   const arrivalBars=["arrived","customs","destination_handling","out_for_delivery"].map(k=>'<div class="cw-bar-row"><span>'+k.replace(/_/g," ")+'</span><div class="cw-bar-track"><div class="cw-bar-fill" style="width:'+Math.round(active.filter(j=>status(j)===k).length/Math.max(1,counts.arriving)*100)+'%"></div></div><b>'+active.filter(j=>status(j)===k).length+'</b></div>').join("");
   const rows=visible.slice(0,12).map(j=>{const bills=hblsForJob(j.id).map(h=>h.hbl_no).filter(Boolean).slice(0,2).join(", ")||j.hbl_no||"—";const linked=(state.ops.jobContainers||[]).filter(c=>c.job_id===j.id).map(c=>c.container_no).filter(Boolean).join(", ")||"—";return'<tr><td><button class="cw-record" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no||"—")+'</button><span class="cell-sub">'+esc(bills)+'</span></td><td>'+esc(j.customer_name||j.shipper||"—")+'</td><td>'+esc(j.pol||"—")+' → '+esc(j.pod||"—")+'</td><td>'+esc(j.vessel_name||j.carrier||"—")+'<span class="cell-sub">'+esc(j.voyage_no||"")+'</span></td><td>'+fmt(j.etd)+'</td><td>'+fmt(j.eta)+'</td><td>'+pill(j.status||"draft")+'</td><td>'+esc(linked)+'</td></tr>'});
   const filterButtons=[["all","All shipments"],["departing","Departing"],["in_transit","In transit"],["arriving","Arriving"],["exceptions","Exceptions"]].map(x=>'<button class="cw-filter '+(filter===x[0]?"active":"")+'" data-dashboard-filter="'+x[0]+'" aria-pressed="'+(filter===x[0]?"true":"false")+'">'+x[1]+'</button>').join("");
   const priority=milestones.length+returns.length;
-  return pageHead("dashboard",'<a class="btn" href="./track.html" target="_blank" rel="noopener">Customer portal</a><button class="btn primary" data-create="job">＋ New booking</button>')+
-    '<div class="cw-dashboard-head"><div><span class="cw-crumb">GLOBAL OPERATIONS / FORWARDING</span><h2>Shipment control tower</h2><p>Track active movements, exceptions and upcoming delivery activity.</p></div><div class="cw-live"><i></i> OPERATIONS VIEW</div></div>'+
+  return '<div class="cw-dashboard-head"><div><span class="cw-crumb">OPERATIONS / FORWARDING</span><h2>Shipment overview</h2><p>Movement, status and exception activity across current forwarding jobs.</p></div><div class="cw-head-actions"><span class="cw-head-note">Current operational register</span><a class="btn" href="./track.html" target="_blank" rel="noopener">Customer portal</a></div></div>'+
     '<div class="cw-kpis"><div class="cw-kpi"><label>Open shipments</label><strong>'+active.length+'</strong><small>Active forwarding jobs</small></div><div class="cw-kpi"><label>Departing</label><strong>'+counts.departing+'</strong><small>Booked or at origin</small></div><div class="cw-kpi"><label>In transit</label><strong>'+counts.transit+'</strong><small>Departed or transshipping</small></div><div class="cw-kpi"><label>Exceptions</label><strong>'+priority+'</strong><small>Requires operations review</small></div></div>'+
-    '<div class="cw-layout"><section class="cw-panel"><div class="cw-panel-head"><strong>GLOBAL SHIPMENT OVERVIEW</strong><span>'+mapCount+' mapped routes · '+active.length+' open shipments</span></div><div class="cw-map-tools"><button class="'+(filter==="all"?"active":"")+'" data-dashboard-filter="all">All movements</button><button class="'+(filter==="departing"?"active":"")+'" data-dashboard-filter="departing">Departing</button><button class="'+(filter==="arriving"?"active":"")+'" data-dashboard-filter="arriving">Arriving</button><span class="map-meta">Port references from shipment records</span></div><div class="cw-map">'+svg+'<div class="cw-map-note">'+(mapCount?mapCount+" routes mapped from shipment ports":"Routes appear when job ports match a mapped location")+'</div></div><div class="cw-map-legend"><span><i></i>Origin</span><span><i class="dest-dot"></i>Destination</span><span>Route endpoints only · live positions shown when available</span></div></section>'+
+    '<div class="cw-layout"><section class="cw-panel"><div class="cw-panel-head"><strong>GLOBAL SHIPMENT OVERVIEW</strong><span id="controlMapMeta">'+mapped+' mapped routes · '+visible.length+' shipments</span></div><div class="cw-map-tools"><button class="'+(filter==="all"?"active":"")+'" data-dashboard-filter="all">All movements</button><button class="'+(filter==="departing"?"active":"")+'" data-dashboard-filter="departing">Departing</button><button class="'+(filter==="arriving"?"active":"")+'" data-dashboard-filter="arriving">Arriving</button><span class="map-meta">Origin and destination ports</span></div><div class="cw-map-wrap"><div class="cw-map" id="controlTowerMap" role="img" aria-label="Interactive shipment route map"></div><div class="cw-map-status" id="controlMapStatus">Loading map tiles…</div></div><div class="cw-map-legend"><span><i></i>Origin</span><span><i class="dest-dot"></i>Destination</span><span>Port-to-port route lines · no live vessel position</span></div></section>'+
     '<aside class="cw-analytics"><section class="cw-panel"><div class="cw-panel-head"><strong>SHIPMENT MIX</strong><span>Active jobs</span></div><div class="cw-chart-body"><div class="cw-chart-title">Forwarding jobs by service type</div>'+bars+'</div><div class="cw-analytics-foot">Counts from the shipment register.</div></section><section class="cw-panel"><div class="cw-panel-head"><strong>ARRIVING SHIPMENTS</strong><span>'+counts.arriving+' jobs</span></div><div class="cw-chart-body"><div class="cw-chart-title">Destination-side handling</div>'+arrivalBars+'</div><div class="cw-analytics-foot"><button class="btn small" data-dashboard-filter="arriving">View arrivals</button></div></section></aside></div>'+
-    '<section class="cw-shipments"><div class="cw-shipments-head"><strong>SHIPMENT TRACKING</strong><button class="btn small" data-nav="jobs">Open shipment register</button></div><div class="cw-filter-row">'+filterButtons+'<span class="pane-sub" style="margin-left:auto">'+visible.length+' of '+active.length+' active jobs</span></div>'+table(["SHIPMENT / HBL","CUSTOMER","ORIGIN → DESTINATION","VESSEL / CARRIER","ETD","ETA","STATUS","CONTAINERS"],rows,"No active shipments match this view.")+'<div class="cw-help">Map lines show port endpoints from shipment records; they are not live vessel positions.</div></section>';
+    '<section class="cw-shipments"><div class="cw-shipments-head"><strong>SHIPMENT TRACKING</strong><button class="btn small" data-nav="jobs">Open shipment register</button></div><div class="cw-filter-row">'+filterButtons+'<span class="pane-sub" style="margin-left:auto">'+visible.length+' of '+active.length+' active jobs</span></div>'+table(["SHIPMENT / HBL","CUSTOMER","ORIGIN → DESTINATION","VESSEL / CARRIER","ETD","ETA","STATUS","CONTAINERS"],rows,"No active shipments match this view.")+'<div class="cw-help">Use a shipment reference to open its full job file. Map positions use port references only.</div></section>';
 }function renderJobs(){
   const q=state.query.toLowerCase().trim();
   const items=state.ops.jobs.filter(j=>{
@@ -605,7 +729,7 @@ function renderCustomer(){
 
 async function loadStaffUsers(){const target=$("staffUsers");if(!target)return;target.innerHTML='<span class="desc">Loading staff accounts…</span>';try{const d=await call("logistics-workspace",{action:"listStaffUsers"});const rows=(d.users||[]).map(u=>'<tr><td>'+esc(u.display_name)+'</td><td>'+esc(u.email)+'</td><td>'+pill(u.role)+'</td><td>'+pill(u.is_active?"Active":"Disabled")+'</td><td>'+esc(u.created_at?fmt(u.created_at):"—")+'</td><td><button class="btn small red" data-action="delete-staff-user" data-id="'+esc(u.user_id)+'" data-email="'+esc(u.email)+'">Delete</button></td></tr>');target.innerHTML=table(["NAME","EMAIL","ROLE","STATUS","CREATED","ACTIONS"],rows,"No staff accounts found.")}catch(e){target.innerHTML='<div class="form-error">'+esc(e.message||"Could not load staff accounts.")+'</div>'}}
 function renderSettings(){return pageHead("settings")+(state.profile?.role==="Admin"?'<div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">CREATE STAFF LOGIN</span><span class="pane-sub">Admin only · managed inside this website</span></div><div class="pane-body"><form id="staffCreateForm"><div class="formgrid"><div class="field"><label>FULL NAME *</label><input name="display_name" required maxlength="120"></div><div class="field"><label>EMAIL ADDRESS *</label><input name="email" type="email" required maxlength="254"></div><div class="field"><label>TEMPORARY PASSWORD *</label><input name="password" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>ACCESS ROLE *</label><select name="role"><option>Operator</option><option>Editor</option><option>Viewer</option><option>Admin</option></select></div></div><button class="btn primary" type="submit">＋ Create staff user</button><div class="form-error" id="staffFormError"></div></form></div></div><div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">STAFF ACCOUNTS</span><button class="btn small" id="reloadStaff">↻ Refresh users</button></div><div class="pane-body" id="staffUsers"><span class="desc">Loading staff accounts…</span></div></div>':'<div class="pane"><div class="pane-body">Staff account administration is restricted to Admin users.</div></div>')+'<div class="columns">'+pane("STAFF SESSION",'<div class="pane-body">User: '+esc(state.session?.user?.email||"—")+'<br>Role: '+esc(state.profile?.role||"—")+'<br>Equipment records: '+state.rows.length+'</div>')+pane("CONNECTED SERVICES",'<div class="pane-body">Supabase authentication '+pill("Connected")+'<br>Protected operations API '+pill("Connected")+'<br>Customer tracking API '+pill("Active")+'</div>')+'</div>'}
-function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(state.page==="finance")html=renderFinance();else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage()}
+function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(state.page==="finance")html=renderFinance();else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
 function navigate(p){if(p==="jobdetail"||p==="consol")p="containers";state.page=p;state.query="";$("globalSearch").value="";$("app").classList.remove("menu-open");render()}
 function field(f){const value=f.value??"";let input;if(f.options)input='<select name="'+esc(f.name)+'" '+(f.required?"required":"")+'>'+f.options.map(o=>'<option value="'+esc(o[0])+'" '+(String(o[0])===String(value)?"selected":"")+'>'+esc(o[1])+'</option>').join("")+'</select>';else if(f.type==="textarea")input='<textarea name="'+esc(f.name)+'">'+esc(value)+'</textarea>';else{let v=value;if(f.type==="date"&&v)v=String(v).slice(0,10);if(f.type==="datetime-local"&&v)v=new Date(v).toISOString().slice(0,16);input='<input name="'+esc(f.name)+'" type="'+(f.type||"text")+'" value="'+esc(v)+'" '+(f.accept?'accept="'+esc(f.accept)+'"':"") +' '+(f.required?"required":"")+' '+(f.step?'step="'+esc(f.step)+'"':"")+'>'}return'<div class="field '+(f.span2?"span2":"")+'"><label>'+esc(f.label.toUpperCase())+(f.required?" *":"")+'</label>'+input+'</div>'}
 function openForm(title,defs,save){$("modalTitle").textContent=title;$("fields").innerHTML=defs.map(field).join("");$("formError").textContent="";state.modalSave=save;$("modal").hidden=false}
@@ -923,7 +1047,7 @@ function bindPage(){document.querySelectorAll("[data-dashboard-filter]").forEach
 }
 $("loginForm").onsubmit=async e=>{e.preventDefault();$("loginError").textContent="";const b=$("signIn");b.disabled=true;b.textContent="Signing in…";try{const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)throw error;if(!data.session)throw new Error("No staff session returned.");await auth(data.session)}catch(err){$("loginError").textContent=err.message||"Sign in failed"}finally{b.disabled=false;b.textContent="Sign in"}};
 $("recordForm").onsubmit=submitForm;$("modalClose").onclick=closeForm;$("cancel").onclick=closeForm;$("modal").onclick=e=>{if(e.target===$("modal"))closeForm()};
-$("signOut").onclick=async()=>{await db.auth.signOut();await auth(null)};$("refresh").onclick=refreshAll;$("quickNew").onclick=()=>newJob();$("hamb").onclick=()=>$("app").classList.toggle("menu-open");$("globalSearch").oninput=()=>{state.query=$("globalSearch").value;if(!["dashboard","jobs","containers","milestones"].includes(state.page))state.page="containers";render()};
+$("signOut").onclick=async()=>{await db.auth.signOut();await auth(null)};$("refresh").onclick=refreshAll;$("quickNew").onclick=()=>newJob();$("hamb").onclick=()=>$("app").classList.toggle("menu-open");$("globalSearch").oninput=()=>{state.query=$("globalSearch").value;if(!["dashboard","jobs","containers","milestones"].includes(state.page))state.page="containers";clearTimeout(state.searchTimer);state.searchTimer=setTimeout(render,220)};
 document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>navigate(b.dataset.page));document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>navigate(b.dataset.tab));
 if(db){db.auth.getSession().then(({data,error})=>{if(error)throw error;auth(data.session)}).catch(e=>$("loginError").textContent=e.message);db.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"&&state.session)auth(null);if(event==="TOKEN_REFRESHED"&&session)state.session=session})}else $("loginError").textContent="Supabase did not load. Refresh this page.";
 </script>
