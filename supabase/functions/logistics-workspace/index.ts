@@ -553,6 +553,24 @@ Deno.serve(async (req: Request) => {
       return reply(200, { record: data }, origin);
     }
 
+    if (action === "deleteCharge") {
+      if (profile.role !== "Admin") throw new Error("Only an Admin can delete a charge record.");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("shipment_charges").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Charge record not found.");
+      const { error: archiveError } = await admin.from("deleted_shipment_charges").insert({
+        charge_id: before.id, row_data: before, deleted_by: actorId,
+      });
+      if (archiveError) throw new Error("Could not archive this charge; nothing was deleted.");
+      const { data: deleted, error: deleteError } = await admin.from("shipment_charges").delete().eq("id", id).select("id").maybeSingle();
+      if (deleteError || !deleted) {
+        await admin.from("deleted_shipment_charges").delete().eq("charge_id", id);
+        throw new Error("Charge could not be removed from the active register; no deletion was completed.");
+      }
+      await recordAudit("archive", "shipment_charge", id, before, { archived: true });
+      return reply(200, { deleted: true, archived: true }, origin);
+    }
+
     if (action === "approveCharge") {
       if (profile.role !== "Admin") throw new Error("Only an Admin can approve a charge for profitability reporting.");
       const id = uuid(payload.id);
