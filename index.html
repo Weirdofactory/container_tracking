@@ -630,7 +630,7 @@ function renderContainers(){
   const rows=items.map(x=>{
     const no=container(x.r);
     return '<tr>'+(state.profile?.role==="Admin"?'<td><input type="checkbox" class="container-select" value="'+esc(no)+'" aria-label="Select '+esc(no)+'">':"")+
-      '<td><b>'+esc(no)+'</b><span class="cell-sub">'+esc(val(x.r,["TYPE"])||"—")+'</span></td>'+
+      '<td><b>'+esc(no)+'</b></td><td>'+esc(val(x.r,["TYPE"])||"—")+'</td>'+
       '<td>'+esc(val(x.r,["MBL NO"])||"—")+'</td><td>'+esc(val(x.r,["LINER"])||"—")+'</td>'+
       '<td>'+esc(val(x.r,["VESSEL & VOY"])||"—")+'</td><td>'+esc(val(x.r,["POL"])||"—")+' → '+esc(val(x.r,["GATEWAY PORT"])||"—")+'</td>'+
       '<td>'+fmt(val(x.r,["ETD"]))+'</td><td>'+fmt(val(x.r,["ETA"]))+'</td><td>'+fmt(val(x.r,["PORT IN"]))+'</td>'+
