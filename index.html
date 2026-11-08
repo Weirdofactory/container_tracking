@@ -52,10 +52,8 @@
     <div class="branch"><span>BRANCH</span><strong>CHENNAI</strong><span>● LIVE</span></div>
     <div class="nav-group"><div class="nav-label">OPERATIONS</div>
       <button class="nav-item active" data-page="dashboard"><span class="nav-ico">⌂</span>Home / Workbench</button>
-      <button class="nav-item" data-page="jobs"><span class="nav-ico">▤</span>Forwarding jobs</button>
       <button class="nav-item" data-page="containers"><span class="nav-ico">▣</span>Containers & equipment</button>
       <button class="nav-item" data-page="sailings"><span class="nav-ico">◉</span>Vessel schedules</button>
-      <button class="nav-item" data-page="consol"><span class="nav-ico">⇄</span>LCL consolidation</button>
       <button class="nav-item" data-page="milestones"><span class="nav-ico">⌁</span>Tracking & events</button>
     </div>
     <div class="nav-group"><div class="nav-label">CUSTOMS & DOCUMENTS</div>
@@ -79,12 +77,11 @@
   <main class="main">
     <header class="toolbar">
       <button class="hamb" id="hamb">☰</button>
-      <div class="search">⌕ <input id="globalSearch" placeholder="Find job no., HBL, MBL, container, vessel, customer…"></div>
-      <div class="top-right"><span class="connect" id="connection">Connecting</span><button class="btn" id="refresh">↻ Refresh</button><button class="btn primary" id="quickNew">＋ New job</button><span class="user" id="userName">Staff</span><button class="btn" id="signOut">Sign out</button></div>
+      <div class="search">⌕ <input id="globalSearch" placeholder="Find container, MBL, vessel, liner or customer…"></div>
+      <div class="top-right"><span class="connect" id="connection">Connecting</span><button class="btn" id="refresh">↻ Refresh</button><button class="btn primary" id="quickNew">＋ Add container</button><span class="user" id="userName">Staff</span><button class="btn" id="signOut">Sign out</button></div>
     </header>
     <nav class="tabs" id="workspaceTabs">
       <button class="tab active" data-tab="dashboard">Workbench <span class="x">×</span></button>
-      <button class="tab" data-tab="jobs">Forwarding jobs <span class="x">×</span></button>
       <button class="tab" data-tab="containers">Containers <span class="x">×</span></button>
       <button class="tab" data-tab="milestones">Tracking events <span class="x">×</span></button>
     </nav>
@@ -315,7 +312,29 @@ async function deleteForwardingJob(jobId){
     await loadJobs();state.selectedJob=null;state.page="jobs";render();notify("Job deleted from active registers; history retained","success");
   }catch(e){notify(e.message||"Could not delete forwarding job","error")}
 }
-function renderContainers(){const q=state.query.toLowerCase(),items=state.rows.map((r,i)=>({r,i})).filter(x=>!q||Object.values(x.r).join(" ").toLowerCase().includes(q));const rows=items.map(x=>{const no=container(x.r),links=state.ops.jobContainers.filter(z=>norm(z.container_no)===norm(no)),jobNames=links.map(z=>state.ops.jobs.find(j=>j.id===z.job_id)).filter(Boolean);return '<tr>'+(state.profile?.role==="Admin"?'<td><input type="checkbox" class="container-select" value="'+esc(no)+'" aria-label="Select '+esc(no)+'"></td>':"")+'<td><b>'+esc(no)+'</b><span class="cell-sub">'+esc(val(x.r,["TYPE"])||"—")+'</span></td><td>'+esc(val(x.r,["MBL NO"])||"—")+'</td><td>'+esc(val(x.r,["LINER"])||"—")+'</td><td>'+esc(val(x.r,["VESSEL & VOY"])||"—")+'</td><td>'+esc(val(x.r,["POL"])||"—")+' → '+esc(val(x.r,["GATEWAY PORT"])||"—")+'</td><td>'+fmt(val(x.r,["ETD"]))+'</td><td>'+fmt(val(x.r,["ETA"]))+'</td><td>'+fmt(val(x.r,["PORT IN"]))+'</td><td>'+fmt(val(x.r,["CFS IN"]))+'</td><td>'+fmt(val(x.r,["EMPTY RETURN VALIDITY"]))+'</td><td>'+(jobNames.length?jobNames.map(j=>'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>').join(" "):'<span class="pill amber">Unlinked</span>')+'</td><td>'+pill(stage(x.r))+'</td><td>'+actionBtn("edit-container","Open",'data-index="'+x.i+'"')+actionBtn("link-container-job","Link job",'data-container-no="'+esc(no)+'"')+(state.profile?.role==="Admin"?actionBtn("delete-container","Delete",'data-index="'+x.i+'"'):"")+(!jobNames.length?actionBtn("create-job-from-container","Create job",'data-index="'+x.i+'"'):"")+'</td></tr>'});return pageHead("containers",'<button class="btn primary" data-create="container">＋ Add container</button>')+'<div class="stats">'+stat("Equipment records",items.length,"Current equipment register")+stat("At port",state.rows.filter(r=>val(r,["PORT IN"])).length,"Port-in date recorded")+stat("At CFS",state.rows.filter(r=>val(r,["CFS IN"])).length,"CFS-in date recorded")+stat("Destuffed",state.rows.filter(r=>val(r,["DESTUFFING DATE"])).length,"Destuffing date recorded")+stat("Empty returned",state.rows.filter(r=>val(r,["CONTAINER RETURN DATE"])).length,"Equipment returned")+'</div><div class="filters"><input id="pageSearch" class="filter search" placeholder="Search container, MBL, liner, vessel or route…" value="'+esc(state.query)+'"><span class="pane-sub">'+items.length+' equipment records · '+state.ops.jobContainers.length+' job links</span></div>'+pane("CONTAINER MOVEMENT REGISTER",table([...(state.profile?.role==="Admin"?['<input type="checkbox" id="selectAllContainers" aria-label="Select all visible containers">'] : []),"CONTAINER","TYPE","MBL","LINER","VESSEL","ROUTE","ETD","ETA","PORT IN","CFS IN","EMPTY LFD","LINKED JOB","STAGE","ACTIONS"],rows,"No equipment records found."))+(state.profile?.role==="Admin"?'<div class="filters" style="justify-content:flex-end"><span class="pane-sub" id="bulkDeleteCount">0 selected</span>'+actionBtn("bulk-delete-containers","Delete selected", 'id="bulkDeleteContainers" disabled')+'</div>':"")}
+function renderContainers(){
+  const q=state.query.toLowerCase();
+  const items=state.rows.map((r,i)=>({r,i})).filter(x=>!q||Object.values(x.r).join(" ").toLowerCase().includes(q));
+  const rows=items.map(x=>{
+    const no=container(x.r);
+    return '<tr>'+(state.profile?.role==="Admin"?'<td><input type="checkbox" class="container-select" value="'+esc(no)+'" aria-label="Select '+esc(no)+'">':"")+
+      '<td><b>'+esc(no)+'</b><span class="cell-sub">'+esc(val(x.r,["TYPE"])||"—")+'</span></td>'+
+      '<td>'+esc(val(x.r,["MBL NO"])||"—")+'</td><td>'+esc(val(x.r,["LINER"])||"—")+'</td>'+
+      '<td>'+esc(val(x.r,["VESSEL & VOY"])||"—")+'</td><td>'+esc(val(x.r,["POL"])||"—")+' → '+esc(val(x.r,["GATEWAY PORT"])||"—")+'</td>'+
+      '<td>'+fmt(val(x.r,["ETD"]))+'</td><td>'+fmt(val(x.r,["ETA"]))+'</td><td>'+fmt(val(x.r,["PORT IN"]))+'</td>'+
+      '<td>'+fmt(val(x.r,["CFS IN"]))+'</td><td>'+fmt(val(x.r,["EMPTY RETURN VALIDITY"]))+'</td><td>'+pill(stage(x.r))+'</td><td>'+
+      actionBtn("edit-container","Open",'data-index="'+x.i+'"')+(state.profile?.role==="Admin"?actionBtn("delete-container","Delete",'data-index="'+x.i+'"'):"")+'</td></tr>';
+  });
+  return pageHead("containers",'<button class="btn primary" data-create="container">＋ Add container</button>')+
+    '<div class="stats">'+stat("Equipment records",items.length,"Current container register")+
+    stat("At port",state.rows.filter(r=>val(r,["PORT IN"])).length,"Port-in date recorded")+
+    stat("At CFS",state.rows.filter(r=>val(r,["CFS IN"])).length,"CFS-in date recorded")+
+    stat("Destuffed",state.rows.filter(r=>val(r,["DESTUFFING DATE"])).length,"Destuffing date recorded")+
+    stat("Empty returned",state.rows.filter(r=>val(r,["CONTAINER RETURN DATE"])).length,"Equipment returned")+'</div>'+
+    '<div class="filters"><input id="pageSearch" class="filter search" placeholder="Search container, MBL, liner, vessel or route…" value="'+esc(state.query)+'"><span class="pane-sub">'+items.length+' container records</span></div>'+
+    pane("CONTAINER MOVEMENT REGISTER",table([...(state.profile?.role==="Admin"?['<input type="checkbox" id="selectAllContainers" aria-label="Select all visible containers">']:[]),"CONTAINER","TYPE","MBL","LINER","VESSEL","ROUTE","ETD","ETA","PORT IN","CFS IN","EMPTY LFD","STAGE","ACTIONS"],rows,"No container records found."))+
+    (state.profile?.role==="Admin"?'<div class="filters" style="justify-content:flex-end"><span class="pane-sub" id="bulkDeleteCount">0 selected</span>'+actionBtn("bulk-delete-containers","Delete selected",'id="bulkDeleteContainers" disabled')+'</div>':"");
+}
 function renderSailings(){
   const q=state.query.toLowerCase();
   const items=state.ops.sailings.filter(x=>!q||[x.vessel_name,x.voyage_no,x.carrier,x.pol,x.pod].join(" ").toLowerCase().includes(q));
@@ -726,7 +745,7 @@ function bindPage(){
 }
 $("loginForm").onsubmit=async e=>{e.preventDefault();$("loginError").textContent="";const b=$("signIn");b.disabled=true;b.textContent="Signing in…";try{const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)throw error;if(!data.session)throw new Error("No staff session returned.");await auth(data.session)}catch(err){$("loginError").textContent=err.message||"Sign in failed"}finally{b.disabled=false;b.textContent="Sign in"}};
 $("recordForm").onsubmit=submitForm;$("modalClose").onclick=closeForm;$("cancel").onclick=closeForm;$("modal").onclick=e=>{if(e.target===$("modal"))closeForm()};
-$("signOut").onclick=async()=>{await db.auth.signOut();await auth(null)};$("refresh").onclick=refreshAll;$("quickNew").onclick=()=>newJob();$("hamb").onclick=()=>$("app").classList.toggle("menu-open");$("globalSearch").oninput=()=>{state.query=$("globalSearch").value;if(!["jobs","containers","milestones"].includes(state.page))state.page="jobs";render()};
+$("signOut").onclick=async()=>{await db.auth.signOut();await auth(null)};$("refresh").onclick=refreshAll;$("quickNew").onclick=()=>openForm("Add container",containerDefs(),d=>saveContainer(d));$("hamb").onclick=()=>$("app").classList.toggle("menu-open");$("globalSearch").oninput=()=>{state.query=$("globalSearch").value;if(!["containers","milestones"].includes(state.page))state.page="containers";render()};
 document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>navigate(b.dataset.page));document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>navigate(b.dataset.tab));
 if(db){db.auth.getSession().then(({data,error})=>{if(error)throw error;auth(data.session)}).catch(e=>$("loginError").textContent=e.message);db.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"&&state.session)auth(null);if(event==="TOKEN_REFRESHED"&&session)state.session=session})}else $("loginError").textContent="Supabase did not load. Refresh this page.";
 </script>
