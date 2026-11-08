@@ -658,10 +658,10 @@ function bindPage(){
   document.querySelectorAll('input[id^="hblManifest-"]').forEach(input=>{
     input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{await importJobHblManifest(file,input.id.slice("hblManifest-".length));}catch(e){notify(e.message||"Excel import failed","error");}};
   });
-  document.querySelectorAll('[data-action="delete-staff-user"]').forEach(button=>{button.onclick=async()=>{const id=button.dataset.id,email=button.dataset.email||"this account";if(!id)return;if(!confirm("Permanently delete staff login for "+email+"? This cannot be undone. Historical audit entries will be retained."))return;button.disabled=true;try{await call("logistics-workspace",{action:"deleteStaffUser",data:{user_id:id}});notify("Staff account deleted.","success");await loadStaffUsers()}catch(e){notify(e.message||"Could not delete staff account.","error");button.disabled=false}}});
   document.querySelectorAll("[data-action]").forEach(button=>{
-    button.onclick=()=>{
+    button.onclick=async()=>{
       const id=button.dataset.id,act=button.dataset.action;
+      if(act==="delete-staff-user"){const email=button.dataset.email||"this account";if(!id)return;if(!confirm("Permanently delete staff login for "+email+"? This cannot be undone. Historical audit entries will be retained."))return;button.disabled=true;try{await call("logistics-workspace",{action:"deleteStaffUser",data:{user_id:id}});notify("Staff account deleted.","success");await loadStaffUsers()}catch(e){notify(e.message||"Could not delete staff account.","error");button.disabled=false}return;}
       if(act==="edit-job")newJob(id);
       if(act==="edit-job-hbl")newJobHbl(button.dataset.jobId||"",id);
       if(act==="delete-job-hbl")deleteJobHbl(id,button.dataset.jobId||"");
