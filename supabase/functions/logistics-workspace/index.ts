@@ -859,6 +859,7 @@ Deno.serve(async (req: Request) => {
       const { data: invoice, error: readError } = await admin.from("shipment_invoices").select("*").eq("id", id).maybeSingle();
       if (readError || !invoice) throw new Error("Invoice not found.");
       if (invoice.status !== "draft") throw new Error("Only a draft invoice can be issued.");
+      if (!invoice.due_date) throw new Error("Enter a payment due date before issuing.");
       const seller = invoice.seller && typeof invoice.seller === "object" ? invoice.seller : {};
       const buyer = invoice.buyer && typeof invoice.buyer === "object" ? invoice.buyer : {};
       if (!seller.name || !seller.address) throw new Error("Complete the seller legal name and registered address before issuing.");
