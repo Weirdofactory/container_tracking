@@ -331,7 +331,7 @@ tbody td{height:40px;font-size:11px}
       <button class="nav-item" data-page="exceptions"><span class="nav-ico">⚑</span>Operations monitor<span class="nav-count" id="exceptionCount">0</span></button>
     </div>
     <div class="nav-group"><div class="nav-label">FINANCIAL & MANAGEMENT</div>
-      <button class="nav-item" data-page="finance"><span class="nav-ico">₹</span>Accounting & charges</button><button class="nav-item" data-page="receivables"><span class="nav-ico">◎</span>Customers & receivables</button><button class="nav-item" data-page="sales"><span class="nav-ico">⇄</span>Sales enquiries & quotes</button>
+      <button class="nav-item" data-page="finance"><span class="nav-ico">₹</span>Accounting & charges</button><button class="nav-item" data-page="receivables"><span class="nav-ico">◎</span>Customers & receivables</button><button class="nav-item" data-page="sales"><span class="nav-ico">⇄</span>Sales enquiries & quotes</button><button class="nav-item" data-page="payables"><span class="nav-ico">▤</span>Vendors & payables</button>
       <button class="nav-item" data-page="reports"><span class="nav-ico">▥</span>Reports & analytics</button>
       <button class="nav-item" data-page="customer"><span class="nav-ico">↗</span>Customer portal</button>
     </div>
@@ -367,7 +367,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],enquiries:[],quotes:[],quoteLines:[],salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",arCustomerFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],enquiries:[],quotes:[],quoteLines:[],vendors:[],vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",payablesAsOf:"",arCustomerFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -430,13 +430,27 @@ async function loadSales(force=false){
   }catch(e){state.ops.salesLoaded=true;notify(e.message||"Sales data could not be loaded.","error")}
   finally{state.ops.salesLoading=false;if(state.page==="sales")render()}
 }
+async function loadPayables(force=false){
+  if(state.ops.payablesLoading)return;
+  if(state.ops.payablesLoaded&&!force)return;
+  state.ops.payablesLoading=true;
+  try{
+    const d=await call("logistics-workspace",{action:"listPayables"});
+    state.ops.vendors=Array.isArray(d.vendors)?d.vendors:[];
+    state.ops.vendorBills=Array.isArray(d.bills)?d.bills:[];
+    state.ops.vendorBillLines=Array.isArray(d.lines)?d.lines:[];
+    state.ops.vendorBillPayments=Array.isArray(d.payments)?d.payments:[];
+    state.ops.payablesLoaded=true;
+  }catch(e){state.ops.payablesLoaded=true;notify(e.message||"Payable records could not be loaded.","error")}
+  finally{state.ops.payablesLoading=false;if(state.page==="payables")render()}
+}
 async function loadEquipment(){const d=await call("operations-data",{action:"read"});if(!Array.isArray(d.data))throw new Error("The equipment register could not be loaded.");state.rows=d.data;state.updatedAt=d.updatedAt;if(d.profile)state.profile={...(state.profile||{}),...d.profile}}
 function identity(){const p=state.profile||{},who=p.displayName||state.session?.user?.email||"Staff";$("userName").textContent=who;$("railUser").textContent=who;$("railRole").textContent=(p.role||"Staff")+" permissions"}
 function renderWorkspaceLoadError(){const content=$("content");if(!content)return;const localPreview=location.protocol==="file:";content.innerHTML=localPreview?'<section class="cw-load-error" role="alert"><span class="cw-load-error-icon">!</span><div><h2>Use the hosted staff workspace</h2><p>Local file previews cannot connect to protected shipment services. Open the hosted site and sign in to load live records.</p><a class="btn primary" href="https://weirdofactory.github.io/container_tracking/">Open hosted workspace</a></div></section>':'<section class="cw-load-error" role="alert"><span class="cw-load-error-icon">!</span><div><h2>Workspace data did not load</h2><p>The shipment and equipment services could not be reached. Retry the connection in a moment.</p><button class="btn primary" id="retryWorkspace">↻ Retry loading</button></div></section>';const retry=$("retryWorkspace");if(retry)retry.onclick=refreshAll}
 async function refreshAll(){if(location.protocol==="file:"){connection("Hosted site required","error");renderWorkspaceLoadError();return}connection("Loading","loading");try{await Promise.all([loadJobs(),loadEquipment()]);if(access(["Admin","Editor"]))await loadInvoices();identity();connection(state.ops.jobs.length+" jobs · "+state.rows.length+" equipment");render()}catch(e){connection("Data unavailable","error");renderWorkspaceLoadError();notify(e.message,"error")}}
-async function auth(session){state.session=session;if(!session){state.profile=null;state.ops.loaded=false;state.ops.invoices=[];state.ops.invoiceSettings={};state.ops.customers=[];state.ops.creditNotes=[];state.ops.payments=[];state.ops.enquiries=[];state.ops.quotes=[];state.ops.quoteLines=[];state.ops.salesLoaded=false;state.ops.salesLoading=false;state.ops.invoicesLoaded=false;state.ops.invoicesLoading=false;state.ops.invoiceLoadError="";state.rows=[];setNavigationOpen(false);$("app").hidden=true;$("login").hidden=false;connection("Signed out");return}$("login").hidden=true;$("app").hidden=false;state.profile={displayName:session.user?.email||"Staff",role:"Staff"};identity();await refreshAll()}
+async function auth(session){state.session=session;if(!session){state.profile=null;state.ops.loaded=false;state.ops.invoices=[];state.ops.invoiceSettings={};state.ops.customers=[];state.ops.creditNotes=[];state.ops.payments=[];state.ops.enquiries=[];state.ops.quotes=[];state.ops.quoteLines=[];state.ops.vendors=[];state.ops.vendorBills=[];state.ops.vendorBillLines=[];state.ops.vendorBillPayments=[];state.ops.payablesLoaded=false;state.ops.payablesLoading=false;state.ops.salesLoaded=false;state.ops.salesLoading=false;state.ops.invoicesLoaded=false;state.ops.invoicesLoading=false;state.ops.invoiceLoadError="";state.rows=[];setNavigationOpen(false);$("app").hidden=true;$("login").hidden=false;connection("Signed out");return}$("login").hidden=true;$("app").hidden=false;state.profile={displayName:session.user?.email||"Staff",role:"Staff"};identity();await refreshAll()}
 function access(roles){return roles.includes(state.profile?.role)}
-function pageTitle(p){return({sales:["Sales enquiries & quotes","Prospect pipeline, freight quotations and booking conversion"],dashboard:["Dashboard","Shipment visibility and operational control"],receivables:["Customers & receivables","Customer accounts, receipt entry and invoice ageing"],jobs:["Forwarding jobs","HBL-level job control, routing, equipment allocation and lifecycle"],containers:["Containers & equipment","Manage equipment movements from origin gate-in through empty return"],sailings:["Vessel schedules","Voyages, cutoffs and planned vessel movements"],consol:["LCL consolidation","Consolidation references, linked HBLs and capacity"],milestones:["Tracking & events","Planned and actual events across the shipment lifecycle"],filings:["Customs & compliance","HBL, MBL, CSN, IGM, SI and VGM filing control"],documents:["Document manager","Shipment document references and filing attachments"],transport:["Transport & delivery","Destination trucking, delivery and empty-return activity"],exceptions:["Operations monitor","Overdue, delayed and unresolved operational work"],finance:["Accounting & charges","Shipment cost, revenue and approval register"],reports:["Reports & analytics","Forwarding workload, shipment progress and finance indicators"],customer:["Customer portal","Publish customer-safe milestone visibility"],settings:["Administration","Staff identity and connected services"]})[p]||["Workbench","Operations overview"]}
+function pageTitle(p){return({payables:["Vendors & payables","Supplier accounts, bill capture, payments and payable ageing"],sales:["Sales enquiries & quotes","Prospect pipeline, freight quotations and booking conversion"],dashboard:["Dashboard","Shipment visibility and operational control"],receivables:["Customers & receivables","Customer accounts, receipt entry and invoice ageing"],jobs:["Forwarding jobs","HBL-level job control, routing, equipment allocation and lifecycle"],containers:["Containers & equipment","Manage equipment movements from origin gate-in through empty return"],sailings:["Vessel schedules","Voyages, cutoffs and planned vessel movements"],consol:["LCL consolidation","Consolidation references, linked HBLs and capacity"],milestones:["Tracking & events","Planned and actual events across the shipment lifecycle"],filings:["Customs & compliance","HBL, MBL, CSN, IGM, SI and VGM filing control"],documents:["Document manager","Shipment document references and filing attachments"],transport:["Transport & delivery","Destination trucking, delivery and empty-return activity"],exceptions:["Operations monitor","Overdue, delayed and unresolved operational work"],finance:["Accounting & charges","Shipment cost, revenue and approval register"],reports:["Reports & analytics","Forwarding workload, shipment progress and finance indicators"],customer:["Customer portal","Publish customer-safe milestone visibility"],settings:["Administration","Staff identity and connected services"]})[p]||["Workbench","Operations overview"]}
 function pageHead(p,actions){const x=pageTitle(p);return'<div class="pagebar"><div><div class="crumb">Freight Operations / '+esc(x[0])+'</div><div class="title">'+esc(x[0])+'</div><div class="desc">'+esc(x[1])+'</div></div><div class="actions">'+(actions||"")+'</div></div>'}
 function pane(title,body,extra,sub){return'<section class="pane"><div class="pane-head"><span class="pane-title">'+title+'</span><span class="pane-sub">'+(sub||"")+'</span>'+(extra||"")+'</div>'+body+'</section>'}
 function stat(label,value,note){return'<div class="stat"><label>'+label+'</label><strong>'+num(value)+'</strong><small>'+note+'</small></div>'}
@@ -1201,6 +1215,202 @@ function printReceivables(){
   const win=window.open("","_blank","width=1200,height=800");if(!win)return notify("Allow pop-ups to print the ageing report.","error");win.document.write(html);win.document.close();
 }
 function money2(value){return Number(value||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function payableStatus(bill,open,paid,asOf){
+  if(bill.status==="draft")return pill("draft");
+  if(bill.status==="void")return pill("void");
+  if(open<=0.005)return pill("paid");
+  if(paid>0)return pill("part paid");
+  if(bill.due_date&&bill.due_date<asOf)return pill("overdue");
+  return pill("posted");
+}
+function renderPayables(){
+  const asOf=state.payablesAsOf||new Date().toISOString().slice(0,10);
+  const bills=state.ops.vendorBills||[],vendors=state.ops.vendors||[];
+  const balances=bills.map(b=>{
+    const paid=(state.ops.vendorBillPayments||[]).filter(p=>p.bill_id===b.id).reduce((sum,p)=>sum+Number(p.amount||0),0);
+    return{bill:b,paid,open:Math.max(0,Number(b.total_amount||0)-paid),openInr:Math.max(0,Number(b.total_amount||0)-paid)*Number(b.exchange_rate_to_inr||1)};
+  });
+  const posted=balances.filter(x=>x.bill.status==="posted"&&x.open>0.005);
+  const outstandingInr=posted.reduce((n,x)=>n+x.openInr,0);
+  const overdue=posted.filter(x=>x.bill.due_date&&x.bill.due_date<asOf);
+  const overdueInr=overdue.reduce((n,x)=>n+x.openInr,0);
+  const dueSoon=posted.filter(x=>x.bill.due_date>=asOf&&financeDateDifference(asOf,x.bill.due_date)<=7);
+  const vendorAging=vendors.map(v=>{
+    const rows=posted.filter(x=>x.bill.vendor_id===v.id);
+    const total=rows.reduce((n,x)=>n+x.openInr,0),late=rows.filter(x=>x.bill.due_date&&x.bill.due_date<asOf).reduce((n,x)=>n+x.openInr,0);
+    return{vendor:v,total,late,rows:rows.length};
+  }).filter(x=>x.total>0.005).sort((a,b)=>b.total-a.total);
+  const agingRows=vendorAging.map(x=>'<tr><td><b>'+esc(x.vendor.vendor_code)+'</b><div class="cell-sub">'+esc(x.vendor.legal_name)+'</div></td><td>'+x.rows+' open bill(s)</td><td>'+money2(x.late)+' INR</td><td><b>'+money2(x.total)+' INR</b></td></tr>');
+  const billRows=balances.map(x=>{
+    const b=x.bill,v=vendors.find(z=>z.id===b.vendor_id),job=state.ops.jobs.find(z=>z.id===b.job_id);
+    const status=payableStatus(b,x.open,x.paid,asOf),due=b.status==="posted"&&x.open>0.005&&b.due_date<asOf?financeDateDifference(b.due_date,asOf):0;
+    let actions="";
+    if(b.status==="draft")actions=actionBtn("edit-vendor-bill","Edit",'data-id="'+esc(b.id)+'"')+actionBtn("post-vendor-bill","Post",'data-id="'+esc(b.id)+'"')+actionBtn("delete-vendor-bill","Delete",'data-id="'+esc(b.id)+'"');
+    if(b.status==="posted"&&x.open>0.005)actions+=actionBtn("record-vendor-payment","Pay",'data-id="'+esc(b.id)+'"');
+    actions+=actionBtn("print-vendor-bill","Print",'data-id="'+esc(b.id)+'"');
+    return'<tr><td><b>'+esc(b.ap_number||"Draft · "+b.id.slice(0,8).toUpperCase())+'</b><div class="cell-sub">Supplier invoice '+esc(b.supplier_invoice_no)+'</div></td><td>'+esc(v?.legal_name||"Vendor")+'<div class="cell-sub">'+esc(v?.vendor_code||"")+'</div></td><td>'+esc(job?.job_no||"General expense")+'</td><td>'+esc(fmt(b.bill_date))+'<div class="cell-sub">Due '+esc(fmt(b.due_date))+(due?' · '+due+' days late':'')+'</div></td><td>'+esc(b.currency)+' '+money2(b.total_amount)+'<div class="cell-sub">GST '+money2(b.total_tax)+' · INR '+money2(b.total_inr)+'</div></td><td>'+esc(b.currency)+' '+money2(x.paid)+'</td><td><b>'+esc(b.currency)+' '+money2(x.open)+'</b></td><td>'+status+'</td><td>'+actions+'</td></tr>';
+  });
+  const vendorRows=vendors.map(v=>{
+    const count=bills.filter(b=>b.vendor_id===v.id).length;
+    return'<tr><td><b>'+esc(v.vendor_code)+'</b></td><td>'+esc(v.legal_name)+(v.display_name?'<div class="cell-sub">'+esc(v.display_name)+'</div>':'')+'</td><td>'+esc(v.email||"—")+'<div class="cell-sub">'+esc(v.phone||"")+'</div></td><td>'+esc(v.gstin||"—")+'</td><td>'+esc(v.default_currency)+' · '+esc(v.payment_terms)+'</td><td>'+pill(v.is_active?"active":"inactive")+'</td><td>'+count+'</td><td>'+actionBtn("edit-vendor","Edit",'data-id="'+esc(v.id)+'"')+'</td></tr>';
+  });
+  const actions='<input class="filter-input" id="apAsOf" type="date" value="'+esc(asOf)+'" aria-label="Payables as-of date"><button class="btn" data-action="export-ap">Export aging</button><button class="btn" data-action="print-ap">Print aging</button><button class="btn" data-create="vendor">＋ New vendor</button><button class="btn primary" data-create="vendor-bill">＋ Record supplier bill</button>';
+  return pageHead("payables",actions)
+   +'<div class="stats">'+stat("Open payables · INR",outstandingInr,"Open posted supplier bills")+stat("Overdue · INR",overdueInr,"Past due on "+fmt(asOf))+stat("Overdue bills",overdue.length,"Require supplier payment follow-up")+stat("Due in 7 days",dueSoon.length,"Payment planning window")+'</div>'
+   +pane("PAYABLE AGEING BY VENDOR",table(["VENDOR","OPEN BILLS","OVERDUE · INR","OUTSTANDING · INR"],agingRows,"No outstanding payable balances as of this date."),null,"Balances translated at each bill's recorded FX rate")
+   +'<div class="ap-ageing" style="height:8px"></div>'
+   +pane("SUPPLIER BILL REGISTER",table(["AP / SUPPLIER INVOICE","VENDOR","JOB","BILL / DUE DATE","BILL TOTAL","PAID","OPEN BALANCE","STATUS","ACTIONS"],billRows,"No supplier bills recorded."))
+   +'<div style="height:9px"></div>'
+   +pane("SUPPLIER ACCOUNTS",table(["CODE","SUPPLIER","CONTACT","GSTIN","TERMS / CURRENCY","STATUS","BILLS","ACTIONS"],vendorRows,"No suppliers yet."));
+}
+function vendorOptions(selectedId=""){
+  return [["","Select supplier account"],...(state.ops.vendors||[]).filter(v=>v.is_active||v.id===selectedId).map(v=>[v.id,(v.vendor_code?v.vendor_code+" · ":"")+v.legal_name])];
+}
+function parseVendorBillLines(value){
+  const rows=String(value||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  if(!rows.length)throw new Error("Add at least one supplier bill line.");
+  return rows.map((row,index)=>{
+    const p=row.split("|").map(x=>x.trim());
+    if(p.length<6)throw new Error("Bill line "+(index+1)+" needs: Code | Description | Qty | Unit | Unit price | GST % | HSN/SAC (optional).");
+    const line={charge_code:p[0]||"OTHER",description:p[1],quantity:Number(p[2]),unit:p[3]||"service",unit_price:Number(p[4]),gst_rate:Number(p[5]||0),hsn_sac:p[6]||""};
+    if(!line.description||!Number.isFinite(line.quantity)||line.quantity<=0||!Number.isFinite(line.unit_price)||line.unit_price<=0||!Number.isFinite(line.gst_rate)||line.gst_rate<0||line.gst_rate>100)throw new Error("Check description, positive quantity / rate and GST % on bill line "+(index+1)+".");
+    return line;
+  });
+}
+function newVendor(vendorId=""){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can manage supplier accounts.","error");
+  const v=(state.ops.vendors||[]).find(x=>x.id===vendorId)||{};
+  const defs=[
+    {name:"vendor_code",label:"Supplier code",value:v.vendor_code||""},
+    {name:"legal_name",label:"Supplier legal name",value:v.legal_name||"",required:true},
+    {name:"display_name",label:"Display name",value:v.display_name||""},
+    {name:"gstin",label:"GSTIN / tax registration",value:v.gstin||""},
+    {name:"billing_address",label:"Billing address",type:"textarea",value:v.billing_address||"",span2:true},
+    {name:"city",label:"City",value:v.city||""},{name:"state",label:"State / province",value:v.state||""},
+    {name:"state_code",label:"GST state code",value:v.state_code||""},{name:"postal_code",label:"Postal code",value:v.postal_code||""},
+    {name:"country",label:"Country",value:v.country||"India"},
+    {name:"email",label:"Accounts email",type:"email",value:v.email||""},{name:"phone",label:"Phone",value:v.phone||""},
+    {name:"default_currency",label:"Default bill currency",value:v.default_currency||"INR",required:true},
+    {name:"payment_terms",label:"Payment terms",value:v.payment_terms||"Due within 30 days"},
+    {name:"notes",label:"Supplier notes",type:"textarea",value:v.notes||"",span2:true}
+  ];
+  openForm(vendorId?"Edit supplier account":"Create supplier account",defs,async fd=>{
+    const data=Object.fromEntries(fd.entries());if(vendorId)data.id=vendorId;
+    await call("logistics-workspace",{action:"upsertVendorAccount",data});
+    closeForm();await loadPayables(true);render();notify(vendorId?"Supplier account updated":"Supplier account created","success");
+  });
+}
+function vendorBillLinesText(billId){
+  return(state.ops.vendorBillLines||[]).filter(l=>l.bill_id===billId).sort((a,b)=>a.line_no-b.line_no)
+    .map(l=>[l.charge_code||"OTHER",l.description,l.quantity,l.unit||"service",l.unit_price,l.gst_rate||0,l.hsn_sac||""].join(" | ")).join("\n");
+}
+function newVendorBill(billId=""){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can record supplier bills.","error");
+  const bill=(state.ops.vendorBills||[]).find(x=>x.id===billId)||{};
+  if(bill.status&&bill.status!=="draft")return notify("Posted supplier bills are locked.","error");
+  if(!(state.ops.vendors||[]).some(v=>v.is_active))return notify("Create a supplier account before recording its bill.","error");
+  const vendorId=bill.vendor_id||state.ops.vendors.find(v=>v.is_active)?.id||"";
+  const vendor=state.ops.vendors.find(v=>v.id===vendorId)||{};
+  const today=new Date().toISOString().slice(0,10),billDate=bill.bill_date||today;
+  const terms=String(vendor.payment_terms||"Due within 30 days");
+  const dueDays=/due on receipt|immediate/i.test(terms)?0:Number(terms.match(/(\d+)\s*days?/i)?.[1]||30);
+  const defs=[
+    {name:"vendor_id",label:"Supplier account",options:vendorOptions(vendorId),value:vendorId,required:true},
+    {name:"supplier_invoice_no",label:"Supplier invoice number",value:bill.supplier_invoice_no||"",required:true},
+    {name:"job_id",label:"Allocate to forwarding job (optional)",options:[["","General supplier expense"],...jobOptions().filter(x=>x[0])],value:bill.job_id||""},
+    {name:"bill_date",label:"Bill date",type:"date",value:billDate,required:true},
+    {name:"due_date",label:"Due date",type:"date",value:bill.due_date||addDaysToDate(billDate,dueDays),required:true},
+    {name:"currency",label:"Bill currency",value:bill.currency||vendor.default_currency||"INR",required:true},
+    {name:"exchange_rate_to_inr",label:"Reference exchange rate to INR",type:"number",step:"0.00000001",value:bill.exchange_rate_to_inr||"1",required:true},
+    {name:"fx_rate_date",label:"FX rate date",type:"date",value:bill.fx_rate_date||today},
+    {name:"fx_rate_source",label:"FX rate source",value:bill.fx_rate_source||"INR base currency"},
+    {name:"tax_mode",label:"Tax pricing mode",options:[["exclusive","GST added to line rates"],["inclusive","GST included in line rates"]],value:bill.tax_mode||"exclusive"},
+    {name:"supply_type",label:"GST supply type",options:[["intra_state","Intra-state · CGST + SGST"],["inter_state","Inter-state · IGST"],["not_applicable","Exempt / no GST"]],value:bill.supply_type||"intra_state"},
+    {name:"notes",label:"Approval note / internal comments",type:"textarea",value:bill.notes||"",span2:true},
+    {name:"lines_text",label:"Supplier charge lines · Code | Description | Qty | Unit | Unit price | GST % | HSN/SAC",type:"textarea",value:vendorBillLinesText(billId),span2:true}
+  ];
+  openForm(billId?"Edit draft supplier bill":"Record supplier bill",defs,async fd=>{
+    const form=Object.fromEntries(fd.entries()),data={
+      ...(billId?{id:billId}:{}),vendor_id:form.vendor_id,supplier_invoice_no:form.supplier_invoice_no,
+      job_id:form.job_id,bill_date:form.bill_date,due_date:form.due_date,currency:String(form.currency||"INR").trim().toUpperCase(),
+      exchange_rate_to_inr:form.exchange_rate_to_inr,fx_rate_date:form.fx_rate_date,fx_rate_source:form.fx_rate_source,
+      tax_mode:form.tax_mode,supply_type:form.supply_type,notes:form.notes,lines:parseVendorBillLines(form.lines_text)
+    };
+    await call("logistics-workspace",{action:"saveVendorBillDraft",data});
+    closeForm();await loadPayables(true);render();notify(billId?"Supplier bill draft updated":"Supplier bill draft saved","success");
+  });
+  updateQuoteFx(false);
+}
+async function postVendorBill(billId){
+  if(!confirm("Post this supplier bill? It becomes a payable balance and creates linked job costs where a job was selected."))return;
+  try{const result=await call("logistics-workspace",{action:"postVendorBill",id:billId});await loadJobs();await loadPayables(true);render();notify("Supplier bill posted as "+result.record.ap_number,"success")}
+  catch(e){notify(e.message||"Could not post supplier bill","error")}
+}
+async function deleteVendorBillDraft(billId){
+  if(!confirm("Delete this unposted supplier bill draft?"))return;
+  try{await call("logistics-workspace",{action:"deleteVendorBillDraft",id:billId});await loadPayables(true);render();notify("Supplier bill draft deleted","success")}
+  catch(e){notify(e.message||"Could not delete supplier bill","error")}
+}
+function vendorBillBalance(bill){
+  const paid=(state.ops.vendorBillPayments||[]).filter(p=>p.bill_id===bill.id).reduce((n,p)=>n+Number(p.amount||0),0);
+  return{paid,open:Math.max(0,Number(bill.total_amount||0)-paid)};
+}
+async function recordVendorBillPayment(billId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can record supplier payments.","error");
+  const bill=(state.ops.vendorBills||[]).find(x=>x.id===billId);if(!bill||bill.status!=="posted")return;
+  const balance=vendorBillBalance(bill);if(balance.open<=0.005)return notify("This supplier bill is already settled.");
+  const today=new Date().toISOString().slice(0,10);
+  const defs=[
+    {name:"paid_at",label:"Payment date",type:"date",value:today,required:true},
+    {name:"amount",label:"Amount paid · open "+bill.currency+" "+money2(balance.open),type:"number",step:"0.01",value:"",required:true},
+    {name:"currency",label:"Payment currency",value:bill.currency,required:true},
+    {name:"exchange_rate_to_inr",label:"Rate to INR",type:"number",step:"0.00000001",value:bill.exchange_rate_to_inr||"1",required:true},
+    {name:"fx_date",label:"FX rate date",type:"date",value:today},
+    {name:"fx_source",label:"FX rate source",value:bill.currency==="INR"?"INR base currency":"Looking up reference rate"},
+    {name:"payment_method",label:"Payment method",options:[["bank_transfer","Bank transfer"],["upi","UPI"],["cash","Cash"],["cheque","Cheque"],["card","Card"],["other","Other"]],value:"bank_transfer"},
+    {name:"bank_reference",label:"Bank / UTR reference",value:""},
+    {name:"notes",label:"Payment notes",type:"textarea",value:"",span2:true}
+  ];
+  openForm("Pay supplier bill "+(bill.ap_number||bill.supplier_invoice_no),defs,async fd=>{
+    const form=Object.fromEntries(fd.entries()),data={bill_id:billId,...form,fx_rate_date:form.fx_date,fx_rate_source:form.fx_source};
+    await call("logistics-workspace",{action:"recordVendorBillPayment",data});
+    closeForm();await loadPayables(true);render();notify("Supplier payment recorded","success");
+  });
+  const fields=$("fields"),currency=fields.querySelector('[name="currency"]'),rate=fields.querySelector('[name="exchange_rate_to_inr"]'),source=fields.querySelector('[name="fx_source"]');
+  currency.readOnly=true;
+  const dateInput=fields.querySelector('[name="fx_date"]');
+  if(currency&&dateInput)currency.onchange=()=>updatePaymentFx();
+  if(dateInput)dateInput.onchange=()=>updatePaymentFx();
+  if(rate)rate.oninput=()=>{if(bill.currency!=="INR"&&source)source.value="Manual override"};
+  updatePaymentFx();
+}
+function exportPayables(){
+  const asOf=state.payablesAsOf||new Date().toISOString().slice(0,10);
+  const rows=[["AP number","Vendor","Supplier invoice","Bill date","Due date","Currency","Total","Paid","Outstanding","Days overdue","Outstanding INR"]];
+  for(const b of state.ops.vendorBills||[]){
+    if(b.status!=="posted")continue;
+    const balance=vendorBillBalance(b);if(balance.open<=0.005)continue;
+    const v=state.ops.vendors.find(x=>x.id===b.vendor_id)||{};
+    rows.push([b.ap_number||"",v.legal_name||"",b.supplier_invoice_no,b.bill_date,b.due_date,b.currency,b.total_amount,balance.paid,balance.open,b.due_date<asOf?financeDateDifference(b.due_date,asOf):0,balance.open*Number(b.exchange_rate_to_inr||1)]);
+  }
+  const csv=rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="accounts-payable-"+asOf+".csv";a.click();URL.revokeObjectURL(a.href);
+}
+function printPayables(){
+  const paneEl=document.querySelector("#content .pane");if(!paneEl)return;
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>Accounts payable ageing</title><style>body{font:12px Arial;margin:24px;color:#22384a}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cad4dd;padding:6px;text-align:left}th{background:#e9eef2}h1{font-size:20px}</style></head><body><h1>Accounts payable ageing</h1><p>As of '+esc(state.payablesAsOf||new Date().toISOString().slice(0,10))+'</p>'+paneEl.innerHTML+'<script>window.onload=()=>window.print()<\/script></body></html>';
+  const win=window.open("","_blank","width=1200,height=800");if(!win)return notify("Allow pop-ups to print the payables report.","error");win.document.write(html);win.document.close();
+}
+function printVendorBill(billId){
+  const b=(state.ops.vendorBills||[]).find(x=>x.id===billId);if(!b)return;
+  const vendor=state.ops.vendors.find(v=>v.id===b.vendor_id)||{},job=state.ops.jobs.find(j=>j.id===b.job_id);
+  const lines=(state.ops.vendorBillLines||[]).filter(x=>x.bill_id===b.id).sort((a,z)=>a.line_no-z.line_no);
+  const payments=(state.ops.vendorBillPayments||[]).filter(x=>x.bill_id===b.id);
+  const paid=payments.reduce((n,x)=>n+Number(x.amount||0),0),open=Math.max(0,Number(b.total_amount||0)-paid);
+  const lineRows=lines.map(x=>'<tr><td>'+esc(x.line_no)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.hsn_sac||"—")+'</td><td>'+esc(x.quantity)+' '+esc(x.unit)+'</td><td>'+esc(b.currency)+' '+money2(x.unit_price)+'</td><td>'+money2(x.taxable_value)+'</td><td>'+money2(x.tax_amount)+'</td><td>'+money2(x.line_total)+'</td></tr>').join("");
+  const doc='<!doctype html><html><head><meta charset="utf-8"><title>Payable '+esc(b.ap_number||b.supplier_invoice_no)+'</title><style>body{font:12px Arial;margin:28px;color:#203b4d}h1{font-size:22px}table{width:100%;border-collapse:collapse;margin-top:18px}td,th{border:1px solid #cad6dd;padding:7px;text-align:left}th{background:#eef3f6}.sum{margin-left:auto;width:360px}.sum td:last-child{text-align:right}.head{display:flex;justify-content:space-between;border-bottom:3px solid #163f59;padding-bottom:12px}.muted{color:#718596}</style></head><body><div class="head"><div><div class="muted">FREIGHT OPERATIONS · PAYABLE VOUCHER</div><h1>'+esc(b.ap_number||"DRAFT BILL")+'</h1><b>'+esc(vendor.legal_name)+'</b><br>GSTIN '+esc(vendor.gstin||"—")+'<br>'+esc(vendor.billing_address||"")+'</div><div>Supplier invoice: <b>'+esc(b.supplier_invoice_no)+'</b><br>Bill date '+esc(fmt(b.bill_date))+'<br>Due '+esc(fmt(b.due_date))+'<br>Job '+esc(job?.job_no||"General expense")+'</div></div><table><thead><tr><th>#</th><th>Description</th><th>HSN/SAC</th><th>Qty</th><th>Unit rate</th><th>Taxable</th><th>GST</th><th>Total</th></tr></thead><tbody>'+lineRows+'</tbody></table><table class="sum"><tr><td>Taxable value</td><td>'+esc(b.currency)+' '+money2(b.subtotal)+'</td></tr><tr><td>CGST</td><td>'+money2(b.cgst_total)+'</td></tr><tr><td>SGST</td><td>'+money2(b.sgst_total)+'</td></tr><tr><td>IGST</td><td>'+money2(b.igst_total)+'</td></tr><tr><td>Total tax</td><td>'+money2(b.total_tax)+'</td></tr><tr><td>Bill total</td><td>'+esc(b.currency)+' '+money2(b.total_amount)+'</td></tr><tr><td>Paid</td><td>'+esc(b.currency)+' '+money2(paid)+'</td></tr><tr><td>Open balance</td><td>'+esc(b.currency)+' '+money2(open)+'</td></tr></table><p class="muted">INR reference '+money2(b.total_inr)+' · FX 1 '+esc(b.currency)+' = '+esc(b.exchange_rate_to_inr)+' INR, '+esc(b.fx_rate_source||"manual")+'</p><p>'+esc(b.notes||"")+'</p><button onclick="window.print()">Print / Save as PDF</button></body></html>';
+  const win=window.open("","_blank");if(!win)return notify("Allow pop-ups to print this payable voucher.","error");win.document.open();win.document.write(doc);win.document.close();win.focus();
+}
 function renderSales(){
   const enquiries=state.ops.enquiries||[],quotes=state.ops.quotes||[],lines=state.ops.quoteLines||[];
   const today=new Date().toISOString().slice(0,10);
@@ -1337,7 +1547,7 @@ function renderCustomer(){
 
 async function loadStaffUsers(){const target=$("staffUsers");if(!target)return;target.innerHTML='<span class="desc">Loading staff accounts…</span>';try{const d=await call("logistics-workspace",{action:"listStaffUsers"});const rows=(d.users||[]).map(u=>'<tr><td>'+esc(u.display_name)+'</td><td>'+esc(u.email)+'</td><td>'+pill(u.role)+'</td><td>'+pill(u.is_active?"Active":"Disabled")+'</td><td>'+esc(u.created_at?fmt(u.created_at):"—")+'</td><td><button class="btn small red" data-action="delete-staff-user" data-id="'+esc(u.user_id)+'" data-email="'+esc(u.email)+'">Delete</button></td></tr>');target.innerHTML=table(["NAME","EMAIL","ROLE","STATUS","CREATED","ACTIONS"],rows,"No staff accounts found.")}catch(e){target.innerHTML='<div class="form-error">'+esc(e.message||"Could not load staff accounts.")+'</div>'}}
 function renderSettings(){return pageHead("settings")+(state.profile?.role==="Admin"?'<div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">CREATE STAFF LOGIN</span><span class="pane-sub">Admin only · managed inside this website</span></div><div class="pane-body"><form id="staffCreateForm"><div class="formgrid"><div class="field"><label>FULL NAME *</label><input name="display_name" required maxlength="120"></div><div class="field"><label>EMAIL ADDRESS *</label><input name="email" type="email" required maxlength="254"></div><div class="field"><label>TEMPORARY PASSWORD *</label><input name="password" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>ACCESS ROLE *</label><select name="role"><option>Operator</option><option>Editor</option><option>Viewer</option><option>Admin</option></select></div></div><button class="btn primary" type="submit">＋ Create staff user</button><div class="form-error" id="staffFormError"></div></form></div></div><div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">STAFF ACCOUNTS</span><button class="btn small" id="reloadStaff">↻ Refresh users</button></div><div class="pane-body" id="staffUsers"><span class="desc">Loading staff accounts…</span></div></div>':'<div class="pane"><div class="pane-body">Staff account administration is restricted to Admin users.</div></div>')+'<div class="columns">'+pane("STAFF SESSION",'<div class="pane-body">User: '+esc(state.session?.user?.email||"—")+'<br>Role: '+esc(state.profile?.role||"—")+'<br>Equipment records: '+state.rows.length+'</div>')+pane("CONNECTED SERVICES",'<div class="pane-body">Supabase authentication '+pill("Connected")+'<br>Protected operations API '+pill("Connected")+'<br>Customer tracking API '+pill("Active")+'</div>')+'</div>'}
-function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="sales"){if(!state.ops.salesLoaded&&!state.ops.salesLoading)loadSales();html=renderSales()}else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
+function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="sales"){if(!state.ops.salesLoaded&&!state.ops.salesLoading)loadSales();html=renderSales()}else if(state.page==="payables"){if(!state.ops.payablesLoaded&&!state.ops.payablesLoading)loadPayables();html=renderPayables()}else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
 function setNavigationOpen(open){$("app").classList.toggle("menu-open",open);$("hamb").setAttribute("aria-expanded",String(open))}
 function navigate(p){if(p==="jobdetail"||p==="consol")p="containers";state.page=p;state.query="";$("globalSearch").value="";setNavigationOpen(false);render()}
 function field(f){const value=f.value??"";let input;if(f.options)input='<select name="'+esc(f.name)+'" '+(f.required?"required":"")+'>'+f.options.map(o=>'<option value="'+esc(o[0])+'" '+(String(o[0])===String(value)?"selected":"")+'>'+esc(o[1])+'</option>').join("")+'</select>';else if(f.type==="textarea")input='<textarea name="'+esc(f.name)+'">'+esc(value)+'</textarea>';else{let v=value;if(f.type==="date"&&v)v=String(v).slice(0,10);if(f.type==="datetime-local"&&v)v=new Date(v).toISOString().slice(0,16);input='<input name="'+esc(f.name)+'" type="'+(f.type||"text")+'" value="'+esc(v)+'" '+(f.accept?'accept="'+esc(f.accept)+'"':"") +' '+(f.required?"required":"")+' '+(f.step?'step="'+esc(f.step)+'"':"")+'>'}return'<div class="field '+(f.span2?"span2":"")+'"><label>'+esc(f.label.toUpperCase())+(f.required?" *":"")+'</label>'+input+'</div>'}
@@ -1768,6 +1978,7 @@ function exportJobs(){const cols=["job_no","customer_reference","service_type","
 function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(button=>{button.onclick=()=>{const mode=button.dataset.workbenchMode==="containers"?"containers":"forwarding";if(state.workbenchMode===mode)return;state.workbenchMode=mode;state.query="";$("globalSearch").value="";render()}});document.querySelectorAll("[data-dashboard-filter]").forEach(button=>{button.onclick=()=>{state.dashboardFilter=button.dataset.dashboardFilter||"all";render()}});
   const containerStageSelect=$("containerStageFilter");if(containerStageSelect)containerStageSelect.onchange=()=>{state.containerStageFilter=containerStageSelect.value;render()};
   const arAsOf=$("arAsOf");if(arAsOf)arAsOf.onchange=()=>{state.financeAsOf=arAsOf.value;render()};
+  const apAsOf=$("apAsOf");if(apAsOf)apAsOf.onchange=()=>{state.payablesAsOf=apAsOf.value;render()};
   const arCustomer=$("arCustomerFilter");if(arCustomer)arCustomer.onchange=()=>{state.arCustomerFilter=arCustomer.value;render()};
   const customerSearch=$("customerSearch");if(customerSearch)customerSearch.onchange=()=>{state.customerSearch=customerSearch.value;render()};
   const quoteCurrency=document.querySelector('#fields [name="currency"]');if(quoteCurrency)quoteCurrency.onchange=()=>{quoteCurrency.value=quoteCurrency.value.toUpperCase();updateQuoteFx(true)};
@@ -1797,6 +2008,8 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(type==="customer")newCustomer();
       if(type==="enquiry")newSalesEnquiry();
       if(type==="quote")newFreightQuote("",button.dataset.enquiryId||"");
+      if(type==="vendor")newVendor();
+      if(type==="vendor-bill")newVendorBill();
       if(type==="charge")newCharge("",button.dataset.jobId||"");
     };
   });
@@ -1845,6 +2058,14 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="reject-quote")setFreightQuoteOutcome(id,"rejected");
       if(act==="convert-quote")convertFreightQuote(id);
       if(act==="print-quote")printFreightQuote(id);
+      if(act==="edit-vendor")newVendor(id);
+      if(act==="edit-vendor-bill")newVendorBill(id);
+      if(act==="post-vendor-bill")postVendorBill(id);
+      if(act==="delete-vendor-bill")deleteVendorBillDraft(id);
+      if(act==="record-vendor-payment")recordVendorBillPayment(id);
+      if(act==="print-vendor-bill")printVendorBill(id);
+      if(act==="export-ap")exportPayables();
+      if(act==="print-ap")printPayables();
       if(act==="open-converted-job"){state.selectedJob=id;state.page="jobdetail";render()}
       if(act==="edit-invoice")newInvoice(id);
       if(act==="issue-invoice")issueInvoice(id);
