@@ -212,7 +212,7 @@ Deno.serve(async (req: Request) => {
       const password = String(d.password ?? "");
       const role = val(d.role || "Operator", ["Admin", "Editor", "Operator", "Viewer"], "staff role");
       if (!displayName) throw new Error("Full name is required.");
-      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || email.length > 254) throw new Error("Enter a valid email address.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Error("Enter a valid email address.");
       if (password.length < 8 || password.length > 128) throw new Error("Password must be between 8 and 128 characters.");
       const { data: created, error: createError } = await admin.auth.admin.createUser({
         email, password, email_confirm: true, user_metadata: { display_name: displayName },
@@ -1277,6 +1277,111 @@ Deno.serve(async (req: Request) => {
       const record = Array.isArray(data) ? data[0] : data;
       await recordAudit(matchType, "finance_bank_transaction", id, before, record);
       return reply(200, { record }, origin);
+    }
+
+    if (action === "listShipmentDocuments") {
+      roleCheck(profile.role, "filing");
+      let query = admin.from("forwarding_shipment_documents").select("*").order("document_date", { ascending: false }).limit(5000);
+      if (payload.job_id) query = query.eq("job_id", uuid(payload.job_id));
+      const { data, error } = await query;
+      if (error) throw new Error("Shipment documents could not be loaded.");
+      return reply(200, { documents: data ?? [] }, origin);
+    }
+
+    if (action === "upsertShipmentDocument") {
+      roleCheck(profile.role, "filing");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const before = id ? (await admin.from("forwarding_shipment_documents").select("*").eq("id", id).maybeSingle()).data : null;
+      if (id && (!before || before.status !== "draft")) throw new Error("Only a draft shipment document can be edited.");
+      const jobId = uuid(d.job_id ?? before?.job_id);
+      const job = await assertJob(jobId);
+      if (!job) throw new Error("Select an active forwarding job.");
+      const hblId = d.hbl_id ? uuid(d.hbl_id) : null;
+      if (hblId) await assertJobHbl(hblId, jobId);
+      const documentType = val(d.document_type ?? before?.document_type, ["shipping_instructions","pre_alert","arrival_notice","delivery_order"], "shipment document type");
+      const documentDate = date(d.document_date ?? before?.document_date);
+      if (!documentDate) throw new Error("Document date is required.");
+      const recipientName = text(d.recipient_name ?? before?.recipient_name, 160);
+      const recipientEmail = text(d.recipient_email ?? before?.recipient_email, 254).toLowerCase();
+      if (recipientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) throw new Error("Enter a valid recipient email address.");
+      const rawFields = d.fields && typeof d.fields === "object" && !Array.isArray(d.fields) ? d.fields : {};
+      const freightStatus = val(rawFields.freight_status ?? before?.fields?.freight_status ?? "not_stated", ["not_stated","prepaid","collect"], "freight status");
+      const amountDue = optionalNumber(rawFields.amount_due ?? before?.fields?.amount_due, "Amount due", 0);
+      const amountCurrency = text(rawFields.amount_currency ?? before?.fields?.amount_currency ?? "INR", 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(amountCurrency)) throw new Error("Use a three-letter ISO currency code for amount due.");
+      const fields = {
+        cargo_location: text(rawFields.cargo_location ?? before?.fields?.cargo_location, 200),
+        customs_release_reference: text(rawFields.customs_release_reference ?? before?.fields?.customs_release_reference, 120),
+        freight_status: freightStatus,
+        free_time_until: date(rawFields.free_time_until ?? before?.fields?.free_time_until),
+        amount_due: amountDue,
+        amount_currency: amountCurrency,
+        instructions: text(rawFields.instructions ?? before?.fields?.instructions, 3000),
+      };
+      const row = {
+        ...(id ? { id } : {}), job_id: jobId, hbl_id: hblId, document_type: documentType, status: "draft",
+        document_date: documentDate, recipient_name: recipientName, recipient_email: recipientEmail,
+        fields, snapshot: null, issued_at: null, updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!id ? { created_by: actorId } : {}),
+      };
+      const { data: saved, error } = await admin.from("forwarding_shipment_documents").upsert(row).select("*").single();
+      if (error || !saved) throw new Error("Shipment document draft could not be saved.");
+      await recordAudit(id ? "update_draft" : "create_draft", "forwarding_shipment_document", saved.id, before, saved);
+      return reply(200, { record: saved }, origin);
+    }
+
+    if (action === "issueShipmentDocument") {
+      roleCheck(profile.role, "filing");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("forwarding_shipment_documents").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Shipment document not found.");
+      if (before.status !== "draft") throw new Error("This shipment document has already been issued.");
+      const [{ data: job, error: jobError }, hblResult, containerResult] = await Promise.all([
+        admin.from("forwarding_jobs").select("*").eq("id", before.job_id).is("deleted_at", null).maybeSingle(),
+        before.hbl_id ? admin.from("forwarding_job_hbls").select("*").eq("id", before.hbl_id).eq("job_id", before.job_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+        admin.from("job_container_links").select("container_no,allocation_role,package_count,gross_weight_kg,volume_cbm").eq("job_id", before.job_id),
+      ]);
+      if (jobError || !job) throw new Error("The active forwarding job could not be loaded.");
+      if (hblResult.error || containerResult.error) throw new Error("HBL or container details could not be loaded.");
+      let customerSnapshot: Record<string, unknown> | null = null;
+      if (job.customer_id) {
+        const { data: customer, error } = await admin.from("customer_accounts").select("legal_name,display_name,gstin,billing_address,city,state,state_code,postal_code,country,email,phone").eq("id", job.customer_id).maybeSingle();
+        if (error) throw new Error("Customer details could not be added to the document.");
+        if (customer) customerSnapshot = customer;
+      }
+      const jobKeys = ["job_no","customer_reference","service_type","direction","status","hbl_no","mbl_no","booking_no","customer_name","shipper","consignee","notify_party","origin_agent","destination_agent","carrier","vessel_name","voyage_no","pol","transshipment_port","pod","final_delivery_place","incoterm","commodity","package_count","package_type","gross_weight_kg","volume_cbm","cargo_ready_date","etd","eta","actual_departure_at","actual_arrival_at","branch"];
+      const jobSnapshot = Object.fromEntries(jobKeys.map(key => [key, job[key] ?? null]));
+      const hbl = hblResult.data;
+      const hblSnapshot = hbl ? {
+        hbl_no:hbl.hbl_no,customer_reference:hbl.customer_reference,shipper:hbl.shipper,consignee:hbl.consignee,
+        notify_party:hbl.notify_party,package_count:hbl.package_count,package_type:hbl.package_type,
+        gross_weight_kg:hbl.gross_weight_kg,volume_cbm:hbl.volume_cbm,commodity:hbl.commodity,
+      } : null;
+      const snapshot = {
+        document:{document_number:before.document_number,document_type:before.document_type,document_date:before.document_date,
+          recipient_name:before.recipient_name,recipient_email:before.recipient_email,fields:before.fields},
+        job:jobSnapshot,hbl:hblSnapshot,containers:containerResult.data??[],customer:customerSnapshot,
+      };
+      const { data, error } = await admin.rpc("issue_forwarding_shipment_document", {
+        p_document_id:id,p_snapshot:snapshot,p_user_id:actorId,
+      });
+      if (error) throw new Error(error.message);
+      const result = Array.isArray(data) ? data[0] : data;
+      await recordAudit("issue", "forwarding_shipment_document", id, before, result);
+      return reply(200, { record: result }, origin);
+    }
+
+    if (action === "deleteDraftShipmentDocument") {
+      roleCheck(profile.role, "filing");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("forwarding_shipment_documents").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Shipment document not found.");
+      if (before.status !== "draft") throw new Error("Issued shipment documents cannot be deleted.");
+      const { data: deleted, error } = await admin.from("forwarding_shipment_documents").delete().eq("id", id).eq("status", "draft").select("id").maybeSingle();
+      if (error || !deleted) throw new Error("Draft shipment document could not be deleted.");
+      await recordAudit("delete_draft", "forwarding_shipment_document", id, before, null);
+      return reply(200, { deleted:true }, origin);
     }
 
     if (action === "listInvoices") {
