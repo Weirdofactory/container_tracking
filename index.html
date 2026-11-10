@@ -296,6 +296,7 @@ tbody td{height:40px;font-size:11px}
 .cw-attention-foot{padding:6px 9px;border-top:1px solid #edf0f3;color:#788997;font-size:8px}
 @media(max-width:900px){.cw-attention-list{grid-template-columns:1fr}}
 @media(max-width:520px){.cw-attention-item{grid-template-columns:17px minmax(0,1fr) auto;gap:6px}.cw-attention-date{display:none}.cw-attention-item .btn{padding:0 5px}}
+ .bank-reconcile-actions{min-width:250px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}.bank-match-select{max-width:280px;height:28px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:3px 5px}.ar-toolbar input[type=file]{max-width:230px;height:auto;padding:3px}
 </style>
 </head>
 <body>
@@ -367,7 +368,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",payablesAsOf:"",arCustomerFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -426,6 +427,23 @@ async function loadInvoices(force=false){
     state.ops.invoicesLoading=false;
     if(["finance","receivables","reports"].includes(state.page))render();
   }
+}
+async function loadBankReconciliation(force=false){
+  if(state.ops.bankLoading)return;
+  if(state.ops.bankLoaded&&!force)return;
+  state.ops.bankLoading=true;state.ops.bankError="";
+  try{
+    const d=await call("logistics-workspace",{action:"listBankReconciliation"});
+    state.ops.bankAccounts=Array.isArray(d.accounts)?d.accounts:[];
+    state.ops.bankTransactions=Array.isArray(d.transactions)?d.transactions:[];
+    state.ops.bankReceipts=Array.isArray(d.receipts)?d.receipts:[];
+    state.ops.bankInvoices=Array.isArray(d.invoices)?d.invoices:[];
+    state.ops.bankVendorPayments=Array.isArray(d.vendorPayments)?d.vendorPayments:[];
+    state.ops.bankBills=Array.isArray(d.bills)?d.bills:[];
+    state.ops.bankVendors=Array.isArray(d.vendors)?d.vendors:[];
+    state.ops.bankLoaded=true;
+  }catch(e){state.ops.bankError=e.message||"Bank reconciliation records could not be loaded.";notify(state.ops.bankError,"error")}
+  finally{state.ops.bankLoading=false;if(state.page==="finance")render()}
 }
 async function loadSales(force=false){
   if(state.ops.salesLoading)return;
@@ -1700,6 +1718,134 @@ function renderSales(){
    +'<div style="height:9px"></div>'
    +pane("FREIGHT RATE CARD LIBRARY",table(["RATE CARD","SERVICE / LANE","CUSTOMER","CARRIER","CURRENCY / LINES","VALIDITY","STATUS","ACTIONS"],rateRows,"No published or draft rate cards yet."));
 }
+function newBankAccount(accountId=""){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can manage bank accounts.","error");
+  const prior=(state.ops.bankAccounts||[]).find(x=>x.id===accountId)||{};
+  const defs=[
+    {name:"account_label",label:"Account label",value:prior.account_label||"",required:true},
+    {name:"bank_name",label:"Bank name",value:prior.bank_name||""},
+    {name:"account_last4",label:"Last four account digits",value:prior.account_last4||""},
+    {name:"currency",label:"Account currency (ISO)",value:prior.currency||"INR",required:true},
+    {name:"opening_balance",label:"Opening balance",type:"number",step:"0.0001",value:prior.opening_balance||0},
+    {name:"opening_date",label:"Opening balance date",type:"date",value:prior.opening_date||new Date().toISOString().slice(0,10),required:true},
+    {name:"is_active",label:"Account status",options:[["true","Active"],["false","Inactive"]],value:String(prior.is_active!==false)}
+  ];
+  openForm(accountId?"Edit bank account":"Add bank account",defs,async fd=>{
+    const data={...(accountId?{id:accountId}:{}),...Object.fromEntries(fd.entries()),is_active:fd.get("is_active")==="true"};
+    const saved=await call("logistics-workspace",{action:"upsertBankAccount",data});
+    await loadBankReconciliation(true);closeForm();render();notify("Bank account saved","success");
+  });
+}
+function parseBankCsv(raw){
+  const rows=[];let row=[],field="",quoted=false;
+  for(let i=0;i<raw.length;i++){
+    const ch=raw[i];
+    if(quoted){if(ch==='"'&&raw[i+1]==='"'){field+='"';i++}else if(ch==='"')quoted=false;else field+=ch}
+    else if(ch==='"')quoted=true;
+    else if(ch===","){row.push(field);field=""}
+    else if(ch==="\n"||ch==="\r"){if(ch==="\r"&&raw[i+1]==="\n")i++;row.push(field);if(row.some(v=>String(v).trim()))rows.push(row);row=[];field=""}
+    else field+=ch;
+  }
+  row.push(field);if(row.some(v=>String(v).trim()))rows.push(row);
+  if(rows.length<2)throw new Error("The CSV needs a header row and at least one statement row.");
+  const headers=rows.shift().map(v=>String(v).trim().toLowerCase().replace(/[^a-z0-9]+/g,"_"));
+  return rows.map(values=>Object.fromEntries(headers.map((h,i)=>[h,String(values[i]??"").trim()])));
+}
+function bankCsvDate(value){
+  const raw=String(value||"").trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;
+  const m=raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if(m)return m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");
+  throw new Error("Use YYYY-MM-DD or DD/MM/YYYY dates in the bank CSV.");
+}
+function normalizeBankCsvRows(objects,account){
+  return objects.map((r,index)=>{
+    const get=keys=>{for(const k of keys){const v=r[k];if(v!==undefined&&v!=="")return v}return ""};
+    let dateValue=get(["date","transaction_date","value_date","posting_date"]);
+    let amountValue=get(["amount","transaction_amount"]);
+    const debitValue=get(["debit","debit_amount","withdrawal","withdrawals"]);
+    const creditValue=get(["credit","credit_amount","deposit","deposits"]);
+    let direction=String(get(["direction","type","transaction_type"])).trim().toLowerCase();
+    const numeric=s=>Number(String(s||"").replace(/[₹$€£,\s]/g,""));
+    let amount=numeric(amountValue);
+    if(!amount&&debitValue){amount=numeric(debitValue);direction="debit"}
+    if(!amount&&creditValue){amount=numeric(creditValue);direction="credit"}
+    if(!Number.isFinite(amount)||amount===0)throw new Error("Statement row "+(index+2)+" has an invalid amount.");
+    if(amount<0){amount=Math.abs(amount);if(!direction)direction="debit"}
+    if(["cr","deposit","in","money_in"].includes(direction))direction="credit";
+    if(["dr","withdrawal","out","money_out"].includes(direction))direction="debit";
+    if(!direction)throw new Error("Statement row "+(index+2)+" needs a direction (credit/debit).");
+    if(!["credit","debit"].includes(direction))throw new Error("Statement row "+(index+2)+" direction must be credit or debit.");
+    return {transaction_date:bankCsvDate(dateValue),direction,amount:Math.abs(amount),currency:String(get(["currency"])||account.currency).trim().toUpperCase(),bank_reference:get(["reference","bank_reference","transaction_id","utr","cheque_no"]),description:get(["description","narration","details","particulars"])};
+  });
+}
+async function uploadBankStatementCsv(file,accountId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can import bank statements.","error");
+  if(!accountId)return notify("Select a bank account before importing a statement.","error");
+  if(!file)return;
+  if(file.size>5*1024*1024)return notify("Bank statement CSV files must be 5 MB or smaller.","error");
+  try{
+    const account=(state.ops.bankAccounts||[]).find(x=>x.id===accountId);if(!account)throw new Error("Bank account not found.");
+    const parsed=normalizeBankCsvRows(parseBankCsv(await file.text()),account);
+    let inserted=0,duplicates=0;
+    for(let i=0;i<parsed.length;i+=1000){
+      const result=await call("logistics-workspace",{action:"importBankStatement",bank_account_id:accountId,rows:parsed.slice(i,i+1000)});
+      inserted+=Number(result.inserted||0);duplicates+=Number(result.duplicates||0);
+    }
+    await loadBankReconciliation(true);render();
+    notify("Statement imported: "+inserted+" new rows, "+duplicates+" duplicates skipped.","success");
+  }catch(e){notify(e.message||"Could not import the bank statement.","error")}
+}
+function downloadBankCsvTemplate(){
+  const csv="date,direction,amount,currency,reference,description\r\n2026-11-01,credit,12500.00,INR,UTR123,Customer receipt\r\n2026-11-02,debit,8400.00,INR,NEFT456,Vendor payment\r\n";
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="bank-statement-template.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+async function reconcileBankTransaction(transactionId,matchType,paymentId=null){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can reconcile bank transactions.","error");
+  if(matchType==="ignore"&&!confirm("Ignore this bank transaction? Use this for bank fees or internal transfers."))return;
+  try{
+    await call("logistics-workspace",{action:"reconcileBankTransaction",id:transactionId,match_type:matchType,payment_id:paymentId});
+    await loadBankReconciliation(true);render();
+    notify(matchType==="ignore"?"Bank transaction ignored":matchType==="unmatch"?"Bank transaction unmatched":"Bank transaction reconciled","success");
+  }catch(e){notify(e.message||"Could not reconcile the bank transaction.","error")}
+}
+function renderBankReconciliationPane(){
+  const ops=state.ops,accounts=ops.bankAccounts||[],transactions=ops.bankTransactions||[];
+  if(ops.bankLoading)return pane("BANK RECONCILIATION",'<div class="empty">Loading bank accounts and statement lines…</div>');
+  if(ops.bankError)return pane("BANK RECONCILIATION",'<div class="empty">'+esc(ops.bankError)+' '+actionBtn("retry-bank-reconciliation","Retry")+'</div>');
+  const selected=state.bankAccountFilter!==""?state.bankAccountFilter:(accounts.find(x=>x.is_active)?.id||accounts[0]?.id||"");
+  if(!state.bankAccountFilter&&selected)state.bankAccountFilter=selected;
+  const options=[["__all__","All bank accounts"],...accounts.map(a=>[a.id,(a.account_label||"Bank account")+" · "+a.currency+(a.bank_name?" · "+a.bank_name:"")])];
+  const accountSelect=options.map(o=>'<option value="'+esc(o[0])+'" '+(o[0]===selected?"selected":"")+'>'+esc(o[1])+'</option>').join("");
+  const filtered=transactions.filter(t=>!selected||selected==="__all__"||t.bank_account_id===selected);
+  const unmatched=filtered.filter(t=>t.status==="unmatched").length,matched=filtered.filter(t=>t.status==="matched").length,ignored=filtered.filter(t=>t.status==="ignored").length;
+  const accountRows=accounts.map(a=>'<tr><td><b>'+esc(a.account_label)+'</b><span class="cell-sub">'+esc(a.bank_name||"Bank account")+' · '+(a.account_last4?"•••• "+esc(a.account_last4):"last four not set")+'</span></td><td>'+esc(a.currency)+'</td><td>'+esc(a.currency)+' '+num(a.opening_balance)+'<span class="cell-sub">from '+fmt(a.opening_date)+'</span></td><td>'+pill(a.is_active?"Active":"Inactive")+'</td><td>'+actionBtn("edit-bank-account","Edit",'data-id="'+esc(a.id)+'"')+'</td></tr>');
+  const receiptById=new Map((ops.bankReceipts||[]).map(p=>[p.id,p])),invoiceById=new Map((ops.bankInvoices||[]).map(x=>[x.id,x]));
+  const billById=new Map((ops.bankBills||[]).map(b=>[b.id,b])),vendorById=new Map((ops.bankVendors||[]).map(v=>[v.id,v]));
+  const vendorPaymentById=new Map((ops.bankVendorPayments||[]).map(p=>[p.id,p]));
+  const linkedIds=new Set(transactions.filter(t=>t.status==="matched").flatMap(t=>[t.matched_receipt_id,t.matched_vendor_payment_id]).filter(Boolean));
+  const candidateLabel=(p,type)=>{
+    if(type==="receipt"){const inv=invoiceById.get(p.invoice_id);return (p.receipt_number||"Receipt")+" · "+(inv?.invoice_number||"Invoice")+" · "+p.currency+" "+num(p.amount)+" · "+fmt(p.received_at)}
+    const bill=billById.get(p.bill_id),vendor=vendorById.get(bill?.vendor_id);return (p.payment_no||"Supplier payment")+" · "+(bill?.ap_number||"Bill")+" · "+(vendor?.legal_name||"Vendor")+" · "+p.currency+" "+num(p.amount)+" · "+fmt(p.paid_at);
+  };
+  const rows=filtered.map(t=>{
+    const account=accounts.find(a=>a.id===t.bank_account_id);
+    let matchName="";
+    if(t.matched_receipt_id){const p=receiptById.get(t.matched_receipt_id);matchName=p?candidateLabel(p,"receipt"):"Customer receipt"}
+    if(t.matched_vendor_payment_id){const p=vendorPaymentById.get(t.matched_vendor_payment_id);matchName=p?candidateLabel(p,"vendor_payment"):"Supplier payment"}
+    let control="";
+    if(t.status==="unmatched"){
+      const candidates=t.direction==="credit"?(ops.bankReceipts||[]).filter(p=>p.currency===t.currency&&Math.abs(Number(p.amount)-Number(t.amount))<0.0001&&!linkedIds.has(p.id)).map(p=>({type:"receipt",id:p.id,label:candidateLabel(p,"receipt")})):(ops.bankVendorPayments||[]).filter(p=>p.currency===t.currency&&Math.abs(Number(p.amount)-Number(t.amount))<0.0001&&!linkedIds.has(p.id)).map(p=>({type:"vendor_payment",id:p.id,label:candidateLabel(p,"vendor_payment")}));
+      const candidateOptions=candidates.map(c=>'<option value="'+c.type+':'+esc(c.id)+'">'+esc(c.label)+'</option>').join("");
+      control=(candidates.length?'<select class="bank-match-select"><option value="">Select exact payment…</option>'+candidateOptions+'</select><button class="btn small" data-action="reconcile-bank" data-id="'+esc(t.id)+'">Match</button>':'<span class="cell-sub">No exact payment candidate</span>')+'<button class="btn small" data-action="ignore-bank" data-id="'+esc(t.id)+'">Ignore</button>';
+    }else if(t.status==="matched")control=actionBtn("unmatch-bank","Unmatch",'data-id="'+esc(t.id)+'"');
+    else control='<span class="cell-sub">No match · ignored</span>';
+    return '<tr><td><b>'+fmt(t.transaction_date)+'</b><span class="cell-sub">'+esc(account?.account_label||"")+'</span></td><td>'+pill(t.direction==="credit"?"Money in":"Money out")+'</td><td><b>'+esc(t.currency)+' '+num(t.amount)+'</b><span class="cell-sub">'+esc(t.bank_reference||"")+'</span></td><td>'+esc(t.description||"—")+'</td><td>'+pill(t.status)+(matchName?'<span class="cell-sub">'+esc(matchName)+'</span>':"")+'</td><td class="bank-reconcile-actions">'+control+'</td></tr>';
+  });
+  const accountToolbar='<div class="ar-toolbar"><label>Account <select id="bankAccountFilter">'+accountSelect+'</select></label><label>Import statement CSV <input id="bankStatementFile" type="file" accept=".csv,text/csv"></label><button class="btn small" data-action="download-bank-template">Download CSV template</button><span class="desc">'+unmatched+' unmatched · '+matched+' matched · '+ignored+' ignored</span></div>';
+  return pane("BANK ACCOUNTS",'<div class="ar-toolbar"><span class="desc">Store bank name and last four digits only; statement imports are private to finance staff.</span><button class="btn primary small" data-action="new-bank-account">＋ Add bank account</button></div>'+table(["ACCOUNT","CURRENCY","OPENING BALANCE","STATUS","ACTIONS"],accountRows,"No bank accounts configured. Add an account to start importing statements."))+
+    '<div style="height:9px"></div>'+pane("BANK STATEMENT RECONCILIATION",accountToolbar+table(["DATE / ACCOUNT","DIRECTION","AMOUNT / REFERENCE","BANK DESCRIPTION","STATUS / MATCH","ACTIONS"],rows,"No statement transactions for this account. Import a CSV with date, direction, amount, currency, reference, and description."),"","Transactions with an exact currency and amount match can be linked to a customer receipt or supplier payment.");
+}
 function renderFinance(){
   const invoiceRows=(state.ops.invoices||[]).map(inv=>{
     const ledger=invoiceLedger(inv);
@@ -1734,7 +1880,7 @@ function renderFinance(){
   pane("CUSTOMER INVOICE REGISTER",invoiceTable,null,"Issued invoices are locked; use a credit note to reduce or reverse them. Draft invoices can be deleted.")+
   '<div style="height:9px"></div>'+
   '<div class="stats">'+stat("Approved costs","INR "+num(cost),"Converted total")+stat("Approved revenue","INR "+num(revenue),"Approved shipment revenue")+stat("Contribution","INR "+num(revenue-cost),"Revenue less cost")+stat("Unmapped lines",unmapped,"Need job or container mapping")+'</div>'+
-  pane("SHIPMENT CHARGES REGISTER",table(["JOB / HBL","CONTAINER","TYPE","CHARGE CODE","DESCRIPTION","COUNTERPARTY","AMOUNT","APPROVAL","DUE DATE","ACTIONS"],chargeRows,"No shipment charges."));
+  pane("SHIPMENT CHARGES REGISTER",table(["JOB / HBL","CONTAINER","TYPE","CHARGE CODE","DESCRIPTION","COUNTERPARTY","AMOUNT","APPROVAL","DUE DATE","ACTIONS"],chargeRows,"No shipment charges."))+"<div style=\"height:9px\"></div>"+renderBankReconciliationPane();
 }
 function renderDocuments(){
   const rows=state.ops.documents.map(x=>{
@@ -1910,7 +2056,7 @@ function renderCustomer(){
 
 async function loadStaffUsers(){const target=$("staffUsers");if(!target)return;target.innerHTML='<span class="desc">Loading staff accounts…</span>';try{const d=await call("logistics-workspace",{action:"listStaffUsers"});const rows=(d.users||[]).map(u=>'<tr><td>'+esc(u.display_name)+'</td><td>'+esc(u.email)+'</td><td>'+pill(u.role)+'</td><td>'+pill(u.is_active?"Active":"Disabled")+'</td><td>'+esc(u.created_at?fmt(u.created_at):"—")+'</td><td><button class="btn small red" data-action="delete-staff-user" data-id="'+esc(u.user_id)+'" data-email="'+esc(u.email)+'">Delete</button></td></tr>');target.innerHTML=table(["NAME","EMAIL","ROLE","STATUS","CREATED","ACTIONS"],rows,"No staff accounts found.")}catch(e){target.innerHTML='<div class="form-error">'+esc(e.message||"Could not load staff accounts.")+'</div>'}}
 function renderSettings(){return pageHead("settings")+(state.profile?.role==="Admin"?'<div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">CREATE STAFF LOGIN</span><span class="pane-sub">Admin only · managed inside this website</span></div><div class="pane-body"><form id="staffCreateForm"><div class="formgrid"><div class="field"><label>FULL NAME *</label><input name="display_name" required maxlength="120"></div><div class="field"><label>EMAIL ADDRESS *</label><input name="email" type="email" required maxlength="254"></div><div class="field"><label>TEMPORARY PASSWORD *</label><input name="password" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>ACCESS ROLE *</label><select name="role"><option>Operator</option><option>Editor</option><option>Viewer</option><option>Admin</option></select></div></div><button class="btn primary" type="submit">＋ Create staff user</button><div class="form-error" id="staffFormError"></div></form></div></div><div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">STAFF ACCOUNTS</span><button class="btn small" id="reloadStaff">↻ Refresh users</button></div><div class="pane-body" id="staffUsers"><span class="desc">Loading staff accounts…</span></div></div>':'<div class="pane"><div class="pane-body">Staff account administration is restricted to Admin users.</div></div>')+'<div class="columns">'+pane("STAFF SESSION",'<div class="pane-body">User: '+esc(state.session?.user?.email||"—")+'<br>Role: '+esc(state.profile?.role||"—")+'<br>Equipment records: '+state.rows.length+'</div>')+pane("CONNECTED SERVICES",'<div class="pane-body">Supabase authentication '+pill("Connected")+'<br>Protected operations API '+pill("Connected")+'<br>Customer tracking API '+pill("Active")+'</div>')+'</div>'}
-function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length+(state.ops.transportDispatches||[]).filter(d=>d.status==="exception").length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="sales"){if(!state.ops.salesLoaded&&!state.ops.salesLoading)loadSales();html=renderSales()}else if(state.page==="payables"){if(!state.ops.payablesLoaded&&!state.ops.payablesLoading)loadPayables();html=renderPayables()}else if(state.page==="transport"){if(!state.ops.transportVendorsLoaded&&!state.ops.transportVendorsLoading)loadTransportVendors();html=renderTransport()}else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports"){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=renderReports()}else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
+function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length+(state.ops.transportDispatches||[]).filter(d=>d.status==="exception").length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="sales"){if(!state.ops.salesLoaded&&!state.ops.salesLoading)loadSales();html=renderSales()}else if(state.page==="payables"){if(!state.ops.payablesLoaded&&!state.ops.payablesLoading)loadPayables();html=renderPayables()}else if(state.page==="transport"){if(!state.ops.transportVendorsLoaded&&!state.ops.transportVendorsLoading)loadTransportVendors();html=renderTransport()}else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();if(state.page==="finance"&&!state.ops.bankLoaded&&!state.ops.bankLoading)loadBankReconciliation();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports"){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=renderReports()}else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
 function setNavigationOpen(open){$("app").classList.toggle("menu-open",open);$("hamb").setAttribute("aria-expanded",String(open))}
 function navigate(p){if(p==="jobdetail"||p==="consol")p="containers";state.page=p;state.query="";$("globalSearch").value="";setNavigationOpen(false);render()}
 function field(f){const value=f.value??"";let input;if(f.options)input='<select name="'+esc(f.name)+'" '+(f.required?"required":"")+'>'+f.options.map(o=>'<option value="'+esc(o[0])+'" '+(String(o[0])===String(value)?"selected":"")+'>'+esc(o[1])+'</option>').join("")+'</select>';else if(f.type==="textarea")input='<textarea name="'+esc(f.name)+'">'+esc(value)+'</textarea>';else{let v=value;if(f.type==="date"&&v)v=String(v).slice(0,10);if(f.type==="datetime-local"&&v)v=new Date(v).toISOString().slice(0,16);input='<input name="'+esc(f.name)+'" type="'+(f.type||"text")+'" value="'+esc(v)+'" '+(f.accept?'accept="'+esc(f.accept)+'"':"") +' '+(f.required?"required":"")+' '+(f.step?'step="'+esc(f.step)+'"':"")+'>'}return'<div class="field '+(f.span2?"span2":"")+'"><label>'+esc(f.label.toUpperCase())+(f.required?" *":"")+'</label>'+input+'</div>'}
@@ -2363,6 +2509,8 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
   const apAsOf=$("apAsOf");if(apAsOf)apAsOf.onchange=()=>{state.payablesAsOf=apAsOf.value;render()};
   const arCustomer=$("arCustomerFilter");if(arCustomer)arCustomer.onchange=()=>{state.arCustomerFilter=arCustomer.value;render()};
   const customerSearch=$("customerSearch");if(customerSearch)customerSearch.onchange=()=>{state.customerSearch=customerSearch.value;render()};
+  const bankAccountFilter=$("bankAccountFilter");if(bankAccountFilter)bankAccountFilter.onchange=()=>{state.bankAccountFilter=bankAccountFilter.value;render()};
+  const bankStatementFile=$("bankStatementFile");if(bankStatementFile)bankStatementFile.onchange=async()=>{const file=bankStatementFile.files?.[0];if(!file)return;await uploadBankStatementCsv(file,state.bankAccountFilter||bankAccountFilter?.value||"");bankStatementFile.value=""};
   const quoteCurrency=document.querySelector('#fields [name="currency"]');if(quoteCurrency)quoteCurrency.onchange=()=>{quoteCurrency.value=quoteCurrency.value.toUpperCase();updateQuoteFx(true)};
   const quoteRate=document.querySelector('#fields [name="exchange_rate_to_inr"]');if(quoteRate)quoteRate.oninput=()=>{if(quoteCurrency?.value.toUpperCase()!=="INR"){const source=document.querySelector('#fields [name="fx_rate_source"]');if(source)source.value="Manual override"}};
   const quoteFxDate=document.querySelector('#fields [name="fx_rate_date"]');if(quoteFxDate)quoteFxDate.onchange=()=>updateQuoteFx(true);
@@ -2474,6 +2622,18 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="customer-ledger-statement")printCustomerAccountStatement();
       if(act==="export-customer-ledger")exportCustomerAccountStatement();
       if(act==="outstanding-reminder")draftCustomerOutstandingReminder();
+      if(act==="new-bank-account")newBankAccount();
+      if(act==="edit-bank-account")newBankAccount(id);
+      if(act==="retry-bank-reconciliation")loadBankReconciliation(true);
+      if(act==="download-bank-template")downloadBankCsvTemplate();
+      if(act==="reconcile-bank"){
+        const selected=button.closest("tr")?.querySelector(".bank-match-select")?.value||"";
+        const [matchType,paymentId]=selected.split(":");
+        if(!matchType||!paymentId)return notify("Select an exact payment match first.","error");
+        reconcileBankTransaction(id,matchType,paymentId);
+      }
+      if(act==="ignore-bank")reconcileBankTransaction(id,"ignore");
+      if(act==="unmatch-bank")reconcileBankTransaction(id,"unmatch");
       if(act==="edit-charge")newCharge(id);
       if(act==="print-charge")printChargeInvoice(id);
       if(act==="edit-transport-dispatch")newTransportDispatch(id);
