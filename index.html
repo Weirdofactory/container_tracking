@@ -272,6 +272,28 @@ tbody td{height:40px;font-size:11px}
 .cw-container-subhead strong{font-size:8px;letter-spacing:.35px}
 .cw-container-subhead span{font-size:8px}
 @media(max-width:760px){.cw-container-arrival small{max-width:none}}
+
+.cw-kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.cw-kpi:nth-child(5){border-top-color:#8972a3}
+.cw-head-actions{flex-wrap:wrap;justify-content:flex-end}
+.cw-head-actions .btn{white-space:nowrap}
+.cw-attention{margin:0 0 9px}
+.cw-attention-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:4px 9px;gap:0 12px}
+.cw-attention-item{min-width:0;min-height:56px;display:grid;grid-template-columns:17px minmax(0,1fr) auto auto;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid #edf0f3}
+.cw-attention-item.urgent{border-left:3px solid #c15b53;padding-left:6px}
+.cw-attention-mark{width:16px;height:16px;display:grid;place-items:center;border-radius:50%;background:#f3edf4;color:#554589;font-weight:900;font-size:11px}
+.cw-attention-item.urgent .cw-attention-mark{background:#fff0ee;color:#b2443e}
+.cw-attention-copy{min-width:0}
+.cw-attention-copy b{display:block;color:#83718b;font-size:7px;letter-spacing:.45px;text-transform:uppercase}
+.cw-attention-copy strong{display:block;margin-top:1px;color:#30495a;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cw-attention-copy small{display:block;margin-top:1px;color:#83909c;font-size:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cw-attention-date{font-size:8px;color:#6d7f8e;white-space:nowrap}
+.cw-attention-item.urgent .cw-attention-date{color:#ac4741;font-weight:700}
+.cw-attention-empty{display:flex;align-items:center;gap:9px;padding:14px;color:#728391;font-size:9px}
+.cw-attention-empty b{color:#247459}
+.cw-attention-foot{padding:6px 9px;border-top:1px solid #edf0f3;color:#788997;font-size:8px}
+@media(max-width:900px){.cw-attention-list{grid-template-columns:1fr}}
+@media(max-width:520px){.cw-attention-item{grid-template-columns:17px minmax(0,1fr) auto;gap:6px}.cw-attention-date{display:none}.cw-attention-item .btn{padding:0 5px}}
 </style>
 </head>
 <body>
@@ -405,8 +427,9 @@ let controlMapModule=null,controlMapInstance=null,controlMapElement=null,control
 function controlPortPoint(value){const v=String(value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");for(const p of controlMapPorts)if(v.includes(p[0].replace(/[^A-Z0-9]/g,"")))return p[1];return null}
 function dashboardJobs(){
   const jobs=(state.ops.jobs||[]).filter(j=>!["delivered","closed","cancelled"].includes(String(j.status||"").toLowerCase()));
-  const issueJobs=new Set(visibleQueue().map(m=>m.job_id));
-  const issueContainers=new Set(containerReturnExceptions().map(a=>norm(a.no)));
+  const attention=operationsAttention();
+  const issueJobs=new Set(attention.map(item=>item.job_id).filter(Boolean));
+  const issueContainers=new Set(attention.map(item=>norm(item.container_no)).filter(Boolean));
   const status=j=>String(j.status||"").toLowerCase(),filter=state.dashboardFilter||"all",query=String(state.query||"").toLowerCase().trim();
   return jobs.filter(j=>{
     const data=[j.job_no,j.hbl_no,j.mbl_no,j.booking_no,j.customer_name,j.shipper,j.consignee,j.pol,j.pod,j.vessel_name].join(" ").toLowerCase();
@@ -486,6 +509,62 @@ async function renderControlTowerMap(){
   }catch(error){controlMapModule=null;controlMapElement=null;setControlMapStatus("Map unavailable; shipment register remains current")}
 }
 function destroyControlTowerMap(){if(controlMapInstance){try{controlMapInstance.remove()}catch(_){}controlMapInstance=null;controlMapElement=null;controlMapMarkers=[]}}
+
+function operationsAttention(){
+  const items=[],today=new Date();today.setHours(0,0,0,0);
+  const horizon=new Date(today);horizon.setDate(horizon.getDate()+7);
+  const dayValue=value=>{if(!value)return null;const d=new Date(String(value).slice(0,10)+"T00:00:00");return Number.isNaN(d.getTime())?null:d};
+  const jobById=id=>state.ops.jobs.find(j=>j.id===id)||{};
+  for(const m of visibleQueue()){
+    const job=jobById(m.job_id),isDelayed=m.status==="delayed";
+    items.push({rank:0,sortAt:dayValue(m.planned_at)?.getTime()??today.getTime(),tag:isDelayed?"Delayed milestone":"Overdue milestone",
+      title:(m.milestone_name||m.milestone_code||"Shipment event")+" · "+(job.job_no||"No job"),detail:[m.location,job.hbl_no].filter(Boolean).join(" · ")||"Review shipment event",
+      date:m.planned_at,action:"edit-milestone",actionLabel:"Review",extra:'data-id="'+esc(m.id)+'" data-job-id="'+esc(m.job_id)+'"',job_id:m.job_id,container_no:m.container_no||""});
+  }
+  for(const a of containerReturnExceptions()){
+    const index=state.rows.findIndex(r=>norm(container(r))===norm(a.no));
+    items.push({rank:0,sortAt:dayValue(a.due)?.getTime()??today.getTime(),tag:"Empty return overdue",title:a.no,
+      detail:"Return validity expired · update the equipment record",date:a.due,action:"edit-container",actionLabel:"Update",extra:'data-index="'+index+'"',container_no:a.no});
+  }
+  for(const f of state.ops.filings||[]){
+    const status=String(f.status||"draft").toLowerCase(),due=dayValue(f.due_date);
+    if(!due||due>horizon||["submitted","accepted","not_required"].includes(status))continue;
+    const job=resolveJob(f.job_id,f.container_no,f.hbl_no),overdue=due<today;
+    items.push({rank:overdue?0:1,sortAt:due.getTime(),tag:overdue?"Filing overdue":"Filing due soon",
+      title:(f.filing_type||"Customs filing")+" · "+(job?.job_no||f.container_no||"Shipment"),
+      detail:[f.hbl_no||job?.hbl_no,f.status||"draft"].filter(Boolean).join(" · "),date:f.due_date,action:"edit-filing",actionLabel:"Review",
+      extra:'data-id="'+esc(f.id)+'"',job_id:f.job_id||job?.id,container_no:f.container_no||""});
+  }
+  for(const sailing of state.ops.sailings||[]){
+    if(String(sailing.status||"").toLowerCase()==="cancelled")continue;
+    for(const [field,label] of [["si_cutoff","SI cutoff"],["vgm_cutoff","VGM cutoff"],["cy_cutoff","CY cutoff"],["document_cutoff","Document cutoff"]]){
+      const due=dayValue(sailing[field]);if(!due||due>horizon)continue;
+      const overdue=due<today;
+      items.push({rank:overdue?0:1,sortAt:due.getTime(),tag:overdue?"Sailing cutoff overdue":"Sailing cutoff soon",
+        title:label+" · "+(sailing.vessel_name||"Vessel")+" "+(sailing.voyage_no||""),
+        detail:[sailing.pol,sailing.pod].filter(Boolean).join(" → ")||"Open vessel schedule",date:sailing[field],
+        action:"edit-sailing",actionLabel:"Open",extra:'data-id="'+esc(sailing.id)+'"'});
+    }
+  }
+  const linked=new Set((state.ops.jobContainers||[]).filter(link=>state.ops.jobs.some(job=>job.id===link.job_id)).map(link=>norm(link.container_no)));
+  (state.rows||[]).forEach((row,index)=>{
+    const no=container(row);if(!no||linked.has(norm(no)))return;
+    const mbl=val(row,["MBL NO"]),match=state.ops.jobs.find(j=>mbl&&norm(j.mbl_no)===norm(mbl));
+    items.push({rank:2,sortAt:horizon.getTime()+1,tag:"Equipment not linked",title:no,
+      detail:match?"MBL matches "+match.job_no+" · link this container":"Assign this container to a forwarding job",
+      date:"",action:"link-container-job",actionLabel:match?"Link match":"Link job",
+      extra:'data-container-no="'+esc(no)+'"'+(match?' data-job-id="'+esc(match.id)+'"':""),job_id:match?.id,container_no:no});
+  });
+  return items.sort((a,b)=>a.rank-b.rank||a.sortAt-b.sortAt);
+}
+function renderAttentionQueue(items=operationsAttention()){
+  const shown=items.slice(0,6);
+  const body=shown.length?'<div class="cw-attention-list">'+shown.map(item=>'<div class="cw-attention-item '+(item.rank===0?"urgent":"")+'"><span class="cw-attention-mark">'+(item.rank===0?"!":"•")+'</span><div class="cw-attention-copy"><b>'+esc(item.tag)+'</b><strong>'+esc(item.title)+'</strong><small>'+esc(item.detail)+'</small></div><span class="cw-attention-date">'+(item.date?fmt(item.date):"")+'</span>'+actionBtn(item.action,item.actionLabel,item.extra)+'</div>').join("")+'</div>':
+    '<div class="cw-attention-empty"><b>Everything is up to date</b><span>No overdue milestones, filing deadlines, empty returns or unlinked equipment.</span></div>';
+  const more=items.length>shown.length?'<div class="cw-attention-foot">Showing the 6 most urgent of '+items.length+' open actions. Use the relevant register to review the rest.</div>':"";
+  return '<section class="cw-panel cw-attention"><div class="cw-panel-head"><strong>OPERATIONS ACTION QUEUE</strong><span>'+items.length+' open '+(items.length===1?"action":"actions")+'</span></div>'+body+more+'</section>';
+}
+
 function workbenchToggle(){
   const current=state.workbenchMode==="containers"?"containers":"forwarding";
   return '<div class="cw-workbench-switch" role="tablist" aria-label="Workbench workspace"><button type="button" role="tab" class="'+(current==="forwarding"?"active":"")+'" data-workbench-mode="forwarding" aria-selected="'+(current==="forwarding"?"true":"false")+'">Forwarding</button><button type="button" role="tab" class="'+(current==="containers"?"active":"")+'" data-workbench-mode="containers" aria-selected="'+(current==="containers"?"true":"false")+'">Container &amp; equipment</button></div>';
@@ -496,6 +575,7 @@ function renderContainerWorkbench(){
   const stages=["Pre-shipment","In transit / scheduled","At destination port","At CFS","Destuffed","Empty returned"];
   const linkedNumbers=new Set(state.ops.jobContainers.filter(link=>state.ops.jobs.some(job=>job.id===link.job_id)).map(link=>norm(link.container_no)));
   const linkedCount=rows.filter(r=>linkedNumbers.has(norm(container(r)))).length;
+  const unlinkedCount=Math.max(0,rows.length-linkedCount);
   const inTransit=rows.filter(r=>stage(r)==="In transit / scheduled").length;
   const atPort=rows.filter(r=>val(r,["PORT IN"])).length;
   const returnAlerts=containerReturnExceptions();
@@ -509,9 +589,10 @@ function renderContainerWorkbench(){
   const actions=(access(["Admin","Editor"])?'<button class="btn primary" data-create="job">＋ Create forwarding job</button>':"")+(access(["Admin","Editor","Operator"])?'<button class="btn" data-create="container">＋ Add equipment</button>':"");
   return workbenchToggle()+
     '<div class="cw-dashboard-head"><div><span class="cw-crumb">OPERATIONS / CONTAINER MANAGEMENT</span><h2>Equipment overview</h2><p>Container position, upcoming arrivals and empty-return activity across the equipment register.</p></div><div class="cw-head-actions">'+actions+'</div></div>'+
-    '<div class="cw-kpis"><div class="cw-kpi"><label>Equipment records</label><strong>'+rows.length+'</strong><small>Current container register</small></div><div class="cw-kpi"><label>Linked to jobs</label><strong>'+linkedCount+'</strong><small>Allocated to active forwarding jobs</small></div><div class="cw-kpi"><label>In transit</label><strong>'+inTransit+'</strong><small>Equipment scheduled or on voyage</small></div><div class="cw-kpi"><label>At destination port</label><strong>'+atPort+'</strong><small>Port-in date recorded</small></div></div>'+
+    '<div class="cw-kpis"><div class="cw-kpi"><label>Equipment records</label><strong>'+rows.length+'</strong><small>Current container register</small></div><div class="cw-kpi"><label>Linked to jobs</label><strong>'+linkedCount+'</strong><small>Allocated to active forwarding jobs</small></div><div class="cw-kpi"><label>Not linked</label><strong>'+unlinkedCount+'</strong><small>Needs a forwarding-job allocation</small></div><div class="cw-kpi"><label>In transit</label><strong>'+inTransit+'</strong><small>Equipment scheduled or on voyage</small></div><div class="cw-kpi"><label>At destination port</label><strong>'+atPort+'</strong><small>Port-in date recorded</small></div></div>'+
     '<div class="cw-layout"><section class="cw-panel"><div class="cw-panel-head"><strong>GLOBAL EQUIPMENT OVERVIEW</strong><span id="controlMapMeta">'+mapped+' mapped routes · '+rows.length+' equipment records</span></div><div class="cw-map-tools"><span class="map-meta">Indicative port-to-port sea corridors</span></div><div class="cw-map-wrap"><div class="cw-map" id="controlTowerMap" role="img" aria-label="Interactive container route map"></div><div class="cw-map-status" id="controlMapStatus">Loading map tiles…</div></div><div class="cw-map-legend"><span><i></i>Origin</span><span><i class="dest-dot"></i>Destination</span><span>Indicative sea corridors · not live vessel tracking</span></div></section>'+
     '<aside class="cw-analytics"><section class="cw-panel"><div class="cw-panel-head"><strong>EQUIPMENT BY MOVEMENT STAGE</strong><span>'+rows.length+' records</span></div><div class="cw-chart-body">'+stageBars+'</div><div class="cw-analytics-foot">Counts from the equipment register.</div></section><section class="cw-panel"><div class="cw-panel-head"><strong>EXPECTED ARRIVALS</strong><span>'+incoming.length+' shown · '+rows.filter(r=>val(r,["ETA"])&&!val(r,["PORT IN"])).length+' total</span></div><div class="cw-container-list">'+incomingHtml+'</div><div class="cw-container-subhead"><strong>EMPTY RETURN WATCH</strong><span>'+returnAlerts.length+' overdue</span></div><div class="cw-container-list">'+returnsHtml+'</div></section></aside></div>'+
+    renderAttentionQueue()+
     renderContainers({workbench:true});
 }
 function renderDashboard(){
@@ -527,11 +608,13 @@ function renderDashboard(){
   const arrivalBars=["arrived","customs","destination_handling","out_for_delivery"].map(k=>'<div class="cw-bar-row"><span>'+k.replace(/_/g," ")+'</span><div class="cw-bar-track"><div class="cw-bar-fill" style="width:'+Math.round(active.filter(j=>status(j)===k).length/Math.max(1,counts.arriving)*100)+'%"></div></div><b>'+active.filter(j=>status(j)===k).length+'</b></div>').join("");
   const rows=visible.slice(0,12).map(j=>{const bills=hblsForJob(j.id).map(h=>h.hbl_no).filter(Boolean).slice(0,2).join(", ")||j.hbl_no||"—";const linked=(state.ops.jobContainers||[]).filter(c=>c.job_id===j.id).map(c=>c.container_no).filter(Boolean).join(", ")||"—";return'<tr><td><button class="cw-record" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no||"—")+'</button><span class="cell-sub">'+esc(bills)+'</span></td><td>'+esc(j.customer_name||j.shipper||"—")+'</td><td>'+esc(j.pol||"—")+' → '+esc(j.pod||"—")+'</td><td>'+esc(j.vessel_name||j.carrier||"—")+'<span class="cell-sub">'+esc(j.voyage_no||"")+'</span></td><td>'+fmt(j.etd)+'</td><td>'+fmt(j.eta)+'</td><td>'+pill(j.status||"draft")+'</td><td>'+esc(linked)+'</td></tr>'});
   const filterButtons=[["all","All shipments"],["departing","Departing"],["in_transit","In transit"],["arriving","Arriving"],["exceptions","Exceptions"]].map(x=>'<button class="cw-filter '+(filter===x[0]?"active":"")+'" data-dashboard-filter="'+x[0]+'" aria-pressed="'+(filter===x[0]?"true":"false")+'">'+x[1]+'</button>').join("");
-  const priority=milestones.length+returns.length;
-  return workbenchToggle()+'<div class="cw-dashboard-head"><div><span class="cw-crumb">OPERATIONS / FORWARDING</span><h2>Shipment overview</h2><p>Movement, status and exception activity across current forwarding jobs.</p></div><div class="cw-head-actions"><span class="cw-head-note">Current operational register</span><a class="btn" href="./track.html" target="_blank" rel="noopener">Customer portal</a></div></div>'+
-    '<div class="cw-kpis"><div class="cw-kpi"><label>Open shipments</label><strong>'+active.length+'</strong><small>Active forwarding jobs</small></div><div class="cw-kpi"><label>Departing</label><strong>'+counts.departing+'</strong><small>Booked or at origin</small></div><div class="cw-kpi"><label>In transit</label><strong>'+counts.transit+'</strong><small>Departed or transshipping</small></div><div class="cw-kpi"><label>Exceptions</label><strong>'+priority+'</strong><small>Requires operations review</small></div></div>'+
+  const attention=operationsAttention(),priority=attention.length;
+  const headActions=(access(["Admin","Editor"])?'<button class="btn primary" data-create="job">＋ New forwarding job</button><button class="btn" data-create="invoice">Raise invoice</button>':"")+(access(["Admin","Editor","Operator"])?'<button class="btn" data-create="container">＋ Add equipment</button>':"");
+  return workbenchToggle()+'<div class="cw-dashboard-head"><div><span class="cw-crumb">OPERATIONS / FORWARDING</span><h2>Shipment overview</h2><p>Movement, status and exception activity across current forwarding jobs.</p></div><div class="cw-head-actions">'+headActions+'<a class="btn" href="./track.html" target="_blank" rel="noopener">Customer portal</a></div></div>'+
+    '<div class="cw-kpis"><div class="cw-kpi"><label>Open shipments</label><strong>'+active.length+'</strong><small>Active forwarding jobs</small></div><div class="cw-kpi"><label>Departing</label><strong>'+counts.departing+'</strong><small>Booked or at origin</small></div><div class="cw-kpi"><label>In transit</label><strong>'+counts.transit+'</strong><small>Departed or transshipping</small></div><div class="cw-kpi"><label>Open actions</label><strong>'+priority+'</strong><small>Events, deadlines, returns &amp; links</small></div></div>'+
     '<div class="cw-layout"><section class="cw-panel"><div class="cw-panel-head"><strong>GLOBAL SHIPMENT OVERVIEW</strong><span id="controlMapMeta">'+mapped+' mapped routes · '+visible.length+' shipments</span></div><div class="cw-map-tools"><button class="'+(filter==="all"?"active":"")+'" data-dashboard-filter="all">All movements</button><button class="'+(filter==="departing"?"active":"")+'" data-dashboard-filter="departing">Departing</button><button class="'+(filter==="arriving"?"active":"")+'" data-dashboard-filter="arriving">Arriving</button><span class="map-meta">Origin and destination ports</span></div><div class="cw-map-wrap"><div class="cw-map" id="controlTowerMap" role="img" aria-label="Interactive shipment route map"></div><div class="cw-map-status" id="controlMapStatus">Loading map tiles…</div></div><div class="cw-map-legend"><span><i></i>Origin</span><span><i class="dest-dot"></i>Destination</span><span>Port-to-port route lines · no live vessel position</span></div></section>'+
     '<aside class="cw-analytics"><section class="cw-panel"><div class="cw-panel-head"><strong>SHIPMENT MIX</strong><span>Active jobs</span></div><div class="cw-chart-body"><div class="cw-chart-title">Forwarding jobs by service type</div>'+bars+'</div><div class="cw-analytics-foot">Counts from the shipment register.</div></section><section class="cw-panel"><div class="cw-panel-head"><strong>ARRIVING SHIPMENTS</strong><span>'+counts.arriving+' jobs</span></div><div class="cw-chart-body"><div class="cw-chart-title">Destination-side handling</div>'+arrivalBars+'</div><div class="cw-analytics-foot"><button class="btn small" data-dashboard-filter="arriving">View arrivals</button></div></section></aside></div>'+
+    renderAttentionQueue(attention)+
     '<section class="cw-shipments"><div class="cw-shipments-head"><strong>SHIPMENT TRACKING</strong><button class="btn small" data-nav="jobs">Open shipment register</button></div><div class="cw-filter-row">'+filterButtons+'<span class="pane-sub" style="margin-left:auto">'+visible.length+' of '+active.length+' active jobs</span></div>'+table(["SHIPMENT / HBL","CUSTOMER","ORIGIN → DESTINATION","VESSEL / CARRIER","ETD","ETA","STATUS","CONTAINERS"],rows,"No active shipments match this view.")+'<div class="cw-help">Use a shipment reference to open its full job file. Map positions use port references only.</div></section>';
 }function renderJobs(){
   const q=state.query.toLowerCase().trim();
