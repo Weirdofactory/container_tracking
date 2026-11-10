@@ -813,7 +813,7 @@ function printShipmentDocument(documentId){
   const {job,hbl,fields,customer,containers,document}=shipmentDocumentContext(doc);
   const type=shipmentDocumentTypeLabel(doc.document_type),party=(label,value)=>'<div class="box"><small>'+label+'</small><b>'+esc(value||"—")+'</b></div>';
   const route=[job.pol,job.transshipment_port,job.pod].filter(Boolean).join(" → ");
-  const cargo=hbl||job,containerList=containers.map(x=>esc(x.container_no)+" · "+esc(x.allocation_role||"assigned")).join("<br>")||"No container linked";
+  const cargo=hbl||job,containerList=containers.map(x=>String(x.container_no||"")+" · "+String(x.allocation_role||"assigned")).join(", ")||"No container linked",freightStatusLabel=({not_stated:"Not stated",prepaid:"Freight prepaid",collect:"Freight collect"})[fields.freight_status]||fields.freight_status||"Not stated";
   const amount=fields.amount_due===null||fields.amount_due===undefined||fields.amount_due===""?"":'<tr><td>Amount payable</td><td><b>'+esc(fields.amount_currency||"INR")+' '+money2(fields.amount_due)+'</b></td></tr>';
   const details=[
     ["Job number",job.job_no],["Customer reference",job.customer_reference],["Booking",job.booking_no],["Shipper",cargo.shipper||job.shipper],["Consignee",cargo.consignee||job.consignee],["Notify party",cargo.notify_party||job.notify_party],["Origin agent",job.origin_agent],["Destination agent",job.destination_agent],["HBL",hbl?.hbl_no||job.hbl_no],
@@ -822,7 +822,7 @@ function printShipmentDocument(documentId){
     ["ETD / ETA",fmt(job.etd)+" / "+fmt(job.eta)],["Commodity",cargo.commodity||job.commodity],
     ["Packages",num(cargo.package_count??job.package_count)+" "+(cargo.package_type||job.package_type||"")],
     ["Gross weight",num(cargo.gross_weight_kg??job.gross_weight_kg)+" KG"],["Volume",num(cargo.volume_cbm??job.volume_cbm)+" CBM"],
-    ["Freight terms",fields.freight_status||"not stated"],["Free time until",fields.free_time_until?fmt(fields.free_time_until):""],
+    ["Freight terms",freightStatusLabel],["Free time until",fields.free_time_until?fmt(fields.free_time_until):""],
     ["Customs / release reference",fields.customs_release_reference],["Containers",containerList],
   ];
   const detailRows=details.map(([k,v])=>'<tr><th>'+esc(k)+'</th><td>'+esc(v||"—")+'</td></tr>').join("");
