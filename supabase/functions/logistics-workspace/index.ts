@@ -347,6 +347,42 @@ Deno.serve(async (req: Request) => {
       return reply(200, { record: saved }, origin);
     }
 
+    if (action === "uploadTransportPod") {
+      roleCheck(profile.role, "transport");
+      const dispatchId = uuid(payload.dispatch_id);
+      const { data: dispatch, error: dispatchError } = await admin.from("transport_dispatches")
+        .select("id,dispatch_no,pod_object_path,pod_document_name").eq("id", dispatchId).maybeSingle();
+      if (dispatchError || !dispatch) throw new Error("Transport dispatch not found.");
+      const filename = text(payload.filename, 180).replaceAll("/", "_").replaceAll(String.fromCharCode(92), "_");
+      const contentType = text(payload.content_type, 120).toLowerCase();
+      const extension = contentType === "application/pdf" ? "pdf" : contentType === "image/jpeg" ? "jpg" : contentType === "image/png" ? "png" : "";
+      if (!filename || !extension) throw new Error("Upload a PDF, JPG or PNG proof-of-delivery file.");
+      const encoded = String(payload.base64 ?? "").replace(/^data:[^,]*;base64,/, "");
+      if (!encoded || encoded.length > 11_200_000) throw new Error("POD document exceeds the 8 MB upload limit.");
+      const binary = atob(encoded);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      if (!bytes.length || bytes.length > 8_388_608) throw new Error("POD document exceeds the 8 MB upload limit.");
+      const objectPath = "transport/" + dispatchId + "/" + crypto.randomUUID() + "." + extension;
+      const { error: storageError } = await admin.storage.from("logistics-documents").upload(objectPath, bytes, {
+        contentType, cacheControl: "60", upsert: false,
+      });
+      if (storageError) throw new Error("POD upload failed: " + storageError.message);
+      const { data, error } = await admin.from("transport_dispatches").update({
+        pod_object_path: objectPath, pod_document_name: filename, pod_content_type: contentType,
+        pod_file_size: bytes.length, updated_by: actorId, updated_at: new Date().toISOString(),
+      }).eq("id", dispatchId).select("*").single();
+      if (error || !data) {
+        await admin.storage.from("logistics-documents").remove([objectPath]);
+        throw new Error("POD record could not be saved: " + (error?.message || "record not found"));
+      }
+      if (dispatch.pod_object_path) await admin.storage.from("logistics-documents").remove([dispatch.pod_object_path]);
+      await recordAudit("upload_pod", "transport_dispatch", dispatchId, dispatch, {
+        dispatch_no: dispatch.dispatch_no, pod_document_name: filename, pod_file_size: bytes.length,
+      });
+      return reply(200, { record: data }, origin);
+    }
+
     if (action === "upsertForwardingJob") {
       roleCheck(profile.role, "job");
       const d = payload.data ?? {};
@@ -1658,6 +1694,17 @@ Deno.serve(async (req: Request) => {
       const {data:signed,error:signError}=await admin.storage.from("logistics-documents").createSignedUrl(milestone.photo_path,300);
       if(signError||!signed?.signedUrl)throw new Error("Could not create a secure photo link.");
       return reply(200,{url:signed.signedUrl},origin);
+    }
+
+    if (action === "signedTransportPodUrl") {
+      const dispatchId = uuid(payload.dispatch_id);
+      const { data: dispatch, error } = await admin.from("transport_dispatches")
+        .select("pod_object_path").eq("id", dispatchId).maybeSingle();
+      if (error || !dispatch?.pod_object_path) throw new Error("No POD document is attached to this transport dispatch.");
+      const { data: signed, error: signError } = await admin.storage.from("logistics-documents")
+        .createSignedUrl(dispatch.pod_object_path, 300);
+      if (signError || !signed?.signedUrl) throw new Error("Could not create a secure POD link.");
+      return reply(200, { url: signed.signedUrl }, origin);
     }
 
     if (action === "signedDocumentUrl") {
