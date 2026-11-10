@@ -937,6 +937,13 @@ function parseQuoteLines(value){
     return line;
   });
 }
+function bindQuoteFxFields(){
+  const fields=$("fields");if(!fields)return;
+  const currency=fields.querySelector('[name="currency"]'),rate=fields.querySelector('[name="exchange_rate_to_inr"]'),dateInput=fields.querySelector('[name="fx_rate_date"]');
+  if(currency)currency.onchange=()=>{currency.value=currency.value.toUpperCase();updateQuoteFx(true)};
+  if(rate)rate.oninput=()=>{if(currency?.value.toUpperCase()!=="INR"){const source=fields.querySelector('[name="fx_rate_source"]');if(source)source.value="Manual override"}};
+  if(dateInput)dateInput.onchange=()=>updateQuoteFx(true);
+}
 function newFreightQuote(quoteId="",enquiryId=""){
   if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can prepare quotations.","error");
   const q=(state.ops.quotes||[]).find(x=>x.id===quoteId)||{};
@@ -966,6 +973,7 @@ function newFreightQuote(quoteId="",enquiryId=""){
     await call("logistics-workspace",{action:"upsertFreightQuote",data});
     closeForm();await loadSales(true);render();notify(quoteId?"Draft quotation updated":"Draft quotation saved","success");
   });
+  bindQuoteFxFields();
   updateQuoteFx(false);
 }
 async function updateQuoteFx(force=false){
@@ -1339,6 +1347,16 @@ function newVendorBill(billId=""){
     await call("logistics-workspace",{action:"saveVendorBillDraft",data});
     closeForm();await loadPayables(true);render();notify(billId?"Supplier bill draft updated":"Supplier bill draft saved","success");
   });
+  bindQuoteFxFields();
+  const vendorField=$("fields").querySelector('[name="vendor_id"]');
+  if(vendorField)vendorField.onchange=()=>{
+    const selected=state.ops.vendors.find(v=>v.id===vendorField.value);if(!selected)return;
+    $("fields").querySelector('[name="currency"]').value=selected.default_currency||"INR";
+    updateQuoteFx(true);
+    const dateValue=$("fields").querySelector('[name="bill_date"]').value||new Date().toISOString().slice(0,10);
+    const days=/due on receipt|immediate/i.test(selected.payment_terms||"")?0:Number(String(selected.payment_terms||"").match(/(\d+)\s*days?/i)?.[1]||30);
+    $("fields").querySelector('[name="due_date"]').value=addDaysToDate(dateValue,days);
+  };
   updateQuoteFx(false);
 }
 async function postVendorBill(billId){
