@@ -1171,6 +1171,109 @@ Deno.serve(async (req: Request) => {
       return reply(200, data, origin);
     }
 
+    if (action === "listBankReconciliation") {
+      roleCheck(profile.role, "finance");
+      const [accountResult, transactionResult, receiptResult, invoiceResult, vendorPaymentResult, billResult, vendorResult] = await Promise.all([
+        admin.from("finance_bank_accounts").select("*").order("account_label", { ascending: true }).limit(500),
+        admin.from("finance_bank_transactions").select("*").order("transaction_date", { ascending: false }).limit(10000),
+        admin.from("shipment_invoice_payments").select("id,receipt_number,invoice_id,received_at,amount,currency,amount_inr,payment_method,reference").order("received_at", { ascending: false }).limit(5000),
+        admin.from("shipment_invoices").select("id,invoice_number,buyer,customer_id,currency,total").limit(5000),
+        admin.from("vendor_bill_payments").select("id,payment_no,bill_id,paid_at,amount,currency,amount_inr,payment_method,bank_reference").order("paid_at", { ascending: false }).limit(10000),
+        admin.from("vendor_bills").select("id,ap_number,vendor_id,description,currency,total_amount").limit(5000),
+        admin.from("vendor_accounts").select("id,vendor_code,legal_name,display_name").limit(2500),
+      ]);
+      if ([accountResult, transactionResult, receiptResult, invoiceResult, vendorPaymentResult, billResult, vendorResult].some(r => r.error)) {
+        throw new Error("Bank reconciliation data could not be loaded.");
+      }
+      return reply(200, {
+        accounts: accountResult.data ?? [], transactions: transactionResult.data ?? [],
+        receipts: receiptResult.data ?? [], invoices: invoiceResult.data ?? [],
+        vendorPayments: vendorPaymentResult.data ?? [], bills: billResult.data ?? [], vendors: vendorResult.data ?? [],
+      }, origin);
+    }
+
+    if (action === "upsertBankAccount") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const before = id ? (await admin.from("finance_bank_accounts").select("*").eq("id", id).maybeSingle()).data : null;
+      if (id && !before) throw new Error("Bank account not found.");
+      const currency = text(d.currency || before?.currency || "INR", 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
+      const last4 = text(d.account_last4 ?? before?.account_last4, 20);
+      if (last4 && !/^\d{4}$/.test(last4)) throw new Error("Enter only the last four account digits.");
+      const openingBalance = Number(d.opening_balance ?? before?.opening_balance ?? 0);
+      if (!Number.isFinite(openingBalance)) throw new Error("Opening balance must be a valid number.");
+      const row = {
+        ...(id ? { id } : {}),
+        account_label: text(d.account_label ?? before?.account_label, 120),
+        bank_name: text(d.bank_name ?? before?.bank_name, 120),
+        account_last4: last4, currency, opening_balance: openingBalance,
+        opening_date: date(d.opening_date ?? before?.opening_date) || new Date().toISOString().slice(0, 10),
+        is_active: d.is_active === undefined ? (before?.is_active ?? true) : d.is_active === true,
+        updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!id ? { created_by: actorId } : {}),
+      };
+      if (row.account_label.length < 2) throw new Error("Enter an account label.");
+      const { data: saved, error } = await admin.from("finance_bank_accounts").upsert(row).select("*").single();
+      if (error || !saved) throw new Error("Bank account could not be saved.");
+      await recordAudit(id ? "update" : "create", "finance_bank_account", saved.id, before, saved);
+      return reply(200, { record: saved }, origin);
+    }
+
+    if (action === "importBankStatement") {
+      roleCheck(profile.role, "finance");
+      const accountId = uuid(payload.bank_account_id);
+      const { data: account, error: accountError } = await admin.from("finance_bank_accounts").select("*").eq("id", accountId).maybeSingle();
+      if (accountError || !account || !account.is_active) throw new Error("Choose an active bank account.");
+      const inputRows = Array.isArray(payload.rows) ? payload.rows : [];
+      if (!inputRows.length || inputRows.length > 1000) throw new Error("Import between 1 and 1,000 statement rows at a time.");
+      const object = (v: unknown): Record<string, unknown> => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : {};
+      const occurrences = new Map<string, number>();
+      const rows = [];
+      for (const raw of inputRows) {
+        const d = object(raw);
+        const transactionDate = date(d.transaction_date ?? d.date);
+        if (!transactionDate) throw new Error("Every statement row needs a valid transaction date.");
+        const direction = val(String(d.direction || "").toLowerCase(), ["credit", "debit"], "bank transaction direction");
+        const amount = number(d.amount, "Bank transaction amount", 0.0001);
+        const currency = text(d.currency || account.currency, 3).toUpperCase();
+        if (currency !== account.currency) throw new Error("Every imported row must use the selected account currency (" + account.currency + ").");
+        const reference = text(d.bank_reference ?? d.reference, 160);
+        const description = text(d.description, 500);
+        const canonical = [transactionDate, direction, amount.toFixed(4), currency, reference.toUpperCase(), description.toUpperCase()].join("|");
+        const occurrence = occurrences.get(canonical) ?? 0;
+        occurrences.set(canonical, occurrence + 1);
+        rows.push({
+          bank_account_id: accountId, row_fingerprint: await sha256Hex(canonical + "|" + occurrence),
+          transaction_date: transactionDate, direction, amount, currency, bank_reference: reference, description,
+          imported_by: actorId,
+        });
+      }
+      const { data: imported, error } = await admin.from("finance_bank_transactions")
+        .upsert(rows, { onConflict: "bank_account_id,row_fingerprint", ignoreDuplicates: true }).select("id");
+      if (error) throw new Error("Bank statement rows could not be imported.");
+      const inserted = imported?.length ?? 0, duplicates = rows.length - inserted;
+      await recordAudit("import_statement", "finance_bank_account", accountId, null, { rows: rows.length, inserted, duplicates });
+      return reply(200, { inserted, duplicates, total: rows.length }, origin);
+    }
+
+    if (action === "reconcileBankTransaction") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const matchType = val(payload.match_type, ["receipt", "vendor_payment", "ignore", "unmatch"], "reconciliation action");
+      const paymentId = matchType === "receipt" || matchType === "vendor_payment" ? uuid(payload.payment_id) : null;
+      const { data: before, error: readError } = await admin.from("finance_bank_transactions").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Bank statement transaction not found.");
+      const { data, error } = await admin.rpc("reconcile_finance_bank_transaction", {
+        p_transaction_id: id, p_match_type: matchType, p_payment_id: paymentId, p_user_id: actorId,
+      });
+      if (error) throw new Error(error.message);
+      const record = Array.isArray(data) ? data[0] : data;
+      await recordAudit(matchType, "finance_bank_transaction", id, before, record);
+      return reply(200, { record }, origin);
+    }
+
     if (action === "listInvoices") {
       roleCheck(profile.role, "finance");
       const [invoiceResult, settingsResult, customerResult, creditResult, paymentResult, chargeLinkResult] = await Promise.all([
