@@ -367,7 +367,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",payablesAsOf:"",arCustomerFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",payablesAsOf:"",arCustomerFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -380,7 +380,7 @@ const pill=s=>'<span class="pill '+cls(s)+'">'+esc(String(s||"pending").replace(
 function notify(m,type){const t=$("toast");t.textContent=m;t.className="toast "+(type||"");t.hidden=false;clearTimeout(state.toastTimer);state.toastTimer=setTimeout(()=>t.hidden=true,3500)}
 function connection(s,type){$("connection").textContent=s;$("connection").className="connect "+(type||"")}
 async function call(fn,body){const {data,error}=await db.functions.invoke(fn,{body});if(error){let msg="";try{msg=(await error.context.clone().json()).error||""}catch(_){}throw new Error(msg||data?.error||error.message||"Request failed")}if(data?.error)throw new Error(data.error);return data}
-async function loadJobs(){const d=await call("logistics-workspace",{action:"read"});for(const k of ["jobs","jobHbls","jobContainers","milestones","sailings","sailingShipments","consolidations","consolidationItems","charges","filings","documents","alertActions"])state.ops[k]=Array.isArray(d[k])?d[k]:[];state.ops.loaded=true;if(d.profile)state.profile={...(state.profile||{}),...d.profile}}
+async function loadJobs(){const d=await call("logistics-workspace",{action:"read"});for(const k of ["jobs","jobHbls","jobContainers","milestones","transportDispatches","sailings","sailingShipments","consolidations","consolidationItems","charges","filings","documents","alertActions"])state.ops[k]=Array.isArray(d[k])?d[k]:[];state.ops.loaded=true;if(d.profile)state.profile={...(state.profile||{}),...d.profile}}
 
 function customerOptions(selectedId=""){return [["","Select customer account"],...state.ops.customers.filter(c=>c.is_active||c.id===selectedId).map(c=>[c.id,(c.customer_code?c.customer_code+" · ":"")+c.legal_name])]}
 function customerAddress(c){return [c?.billing_address,c?.city].filter(Boolean).join(", ")}
@@ -708,15 +708,18 @@ function renderJobDetail(jobId){
   const sailingRows=sailings.map(x=>'<tr><td>'+esc(x.vessel_name)+'</td><td>'+esc(x.voyage_no)+'</td><td>'+esc(x.carrier)+'</td><td>'+esc(x.pol)+' to '+esc(x.pod)+'</td><td>'+fmt(x.etd)+'</td><td>'+fmt(x.eta)+'</td></tr>');
   const itemRows=items.map(x=>'<tr><td>'+esc(state.ops.consolidations.find(y=>y.id===x.consolidation_id)?.reference||"—")+'</td><td>'+esc(x.hbl_no)+'</td><td>'+num(x.package_count)+'</td><td>'+num(x.volume_cbm)+'</td><td>'+pill("Linked")+'</td></tr>');
   const filingRows=filings.map(x=>{const h=resolveHbl(x.hbl_id,x.hbl_no,jobId);return '<tr><td>'+esc(h?.hbl_no||x.hbl_no||"Job level")+'</td><td>'+esc(x.container_no||"—")+'</td><td>'+esc(x.filing_type)+'</td><td>'+esc(x.filing_reference||"—")+'</td><td>'+pill(x.status)+'</td><td>'+fmt(x.due_date)+'</td><td>'+actionBtn("edit-filing","Edit",'data-id="'+esc(x.id)+'"')+'</td></tr>'});
+  const jobDispatches=(state.ops.transportDispatches||[]).filter(x=>x.job_id===jobId);
+  const dispatchRows=jobDispatches.map(d=>'<tr><td><b>'+esc(d.dispatch_no)+'</b></td><td>'+esc(d.movement_type.replaceAll("_"," "))+'</td><td>'+esc(d.container_no||"Job level")+'</td><td>'+esc(d.pickup_location||"—")+' → '+esc(d.delivery_location||"—")+'</td><td>'+fmt(d.planned_delivery_date)+'</td><td>'+pill(d.status)+'</td><td>'+actionBtn("print-transport-dispatch","Print",'data-id="'+esc(d.id)+'"')+actionBtn("edit-transport-dispatch","Edit",'data-id="'+esc(d.id)+'"')+'</td></tr>');
   const chargeRows=charges.map(x=>{const h=resolveHbl(x.hbl_id,"",jobId);return '<tr><td>'+esc(h?.hbl_no||"Job level")+'</td><td>'+esc(x.container_no||"—")+'</td><td>'+esc(x.direction)+'</td><td>'+esc(x.charge_code)+'</td><td>'+esc(x.currency)+' '+num(x.amount)+'</td><td>'+pill(x.approval_status)+'</td><td>'+actionBtn("edit-charge","Edit",'data-id="'+esc(x.id)+'"')+'</td></tr>'});
   const docRows=docs.map(x=>'<tr><td>'+esc(x.original_name)+'</td><td>'+esc(x.content_type)+'</td><td>'+fmt(x.created_at)+'</td><td>'+actionBtn("open-document","Open",'data-id="'+esc(x.id)+'"')+'</td></tr>');
   const deleteButton=state.profile?.role==="Admin"?actionBtn("delete-job","Delete job",'data-id="'+esc(j.id)+'"'):"";
-  return pageHead("jobs",'<button class="btn" data-nav="jobs">Back to jobs</button><button class="btn" data-edit-job="'+esc(j.id)+'">Edit job</button><button class="btn" data-link-job="'+esc(j.id)+'">Link container</button><button class="btn" data-create="filing" data-job-id="'+esc(j.id)+'">New filing</button><button class="btn" data-create="charge" data-job-id="'+esc(j.id)+'">New charge</button><button class="btn primary" data-event-job="'+esc(j.id)+'">Add milestone</button>'+deleteButton)+
+  return pageHead("jobs",'<button class="btn" data-nav="jobs">Back to jobs</button><button class="btn" data-edit-job="'+esc(j.id)+'">Edit job</button><button class="btn" data-link-job="'+esc(j.id)+'">Link container</button><button class="btn" data-create="filing" data-job-id="'+esc(j.id)+'">New filing</button><button class="btn" data-create="charge" data-job-id="'+esc(j.id)+'">New charge</button><button class="btn" data-create="transport-dispatch" data-job-id="'+esc(j.id)+'">Plan transport</button><button class="btn primary" data-event-job="'+esc(j.id)+'">Add milestone</button>'+deleteButton)+
   '<div class="stats">'+stat("Job number",j.job_no,"Forwarding reference")+stat("House bills",hbls.length,"HBL records under this job")+stat("MBL",j.mbl_no||"—","Master bill")+stat("Status",j.status,"Job lifecycle")+'</div>'+
   '<div class="columns"><div class="stack">'+
   pane("HOUSE BILLS OF LADING",'<div class="pane-body"><div class="pane-toolbar"><span class="pane-sub">One forwarding job can contain multiple HBLs. Import a manifest Excel to create HBLs automatically.</span><button class="btn" data-import-hbls="'+esc(jobId)+'">↑ Import Excel</button><input hidden type="file" accept=".xls,.xlsx,.xlsm" id="hblManifest-'+esc(jobId)+'"><button class="btn primary" data-create="job-hbl" data-job-id="'+esc(jobId)+'">＋ Add HBL</button></div>'+table(["HBL NUMBER","SHIPPER","CONSIGNEE","PACKAGES","GROSS WEIGHT","VOLUME","VISIBILITY","ACTIONS"],hblRows,"No HBL records yet. Add the first HBL here.")+'</div>','',hbls.length+" HBLs")+
   pane("JOB DETAILS",'<div class="pane-body"><div class="formgrid">'+[["Customer",j.customer_name],["Booking",j.booking_no],["Incoterm",j.incoterm],["Carrier",j.carrier],["Vessel / voyage",(j.vessel_name||"")+" "+(j.voyage_no||"")],["Route",(j.pol||"")+" to "+(j.transshipment_port||"")+" to "+(j.pod||"")],["Final delivery",j.final_delivery_place],["Commodity",j.commodity],["Total packages",j.package_count+" "+(j.package_type||"")],["Weight",j.gross_weight_kg+" KG"],["Volume",j.volume_cbm+" CBM"],["ETD / ETA",fmt(j.etd)+" / "+fmt(j.eta)]].map(([k,v])=>'<div class="field"><label>'+k.toUpperCase()+'</label><div>'+esc(v||"—")+'</div></div>').join("")+'</div></div>')+
   pane("CONTAINERS",table(["CONTAINER","ALLOCATION","PACKAGES","CBM","ACTION"],containerRows,"No containers linked."),'',links.length+" linked")+
+  pane("TRANSPORT ORDERS",table(["ORDER","MOVEMENT","CONTAINER","PICKUP → DELIVERY","PLANNED DELIVERY","STATUS","ACTIONS"],dispatchRows,"No transport moves planned."),'',jobDispatches.length+" orders")+
   pane("VESSEL SCHEDULES",table(["VESSEL","VOYAGE","CARRIER","ROUTE","ETD","ETA"],sailingRows,"No sailing linked."),'',sailings.length+" linked")+
   pane("LCL CONSOLIDATION LINES",table(["CONSOLIDATION","HBL","PACKAGES","CBM","MAPPING"],itemRows,"No LCL lines linked."),'',items.length+" lines")+
   pane("MILESTONES",table(["EVENT","CONTAINER","LOCATION","PLANNED","ACTUAL","STATUS","PHOTO"],eventRows,"No milestones recorded."),'',events.length+" events")+
@@ -1660,7 +1663,50 @@ function renderDocuments(){
   });
   return pageHead("documents",'<button class="btn" data-nav="filings">Open customs filings</button>')+
   pane("DOCUMENT MANAGER",table(["FILE NAME","JOB","CONTAINER","HBL","FILING TYPE","TYPE","SIZE BYTES","UPLOADED","ACTION"],rows,"No document metadata found. Upload a document from a customs filing."));
-}function renderTransport(){
+}function newTransportDispatch(dispatchId="",presetJobId=""){
+  if(!access(["Admin","Editor","Operator"]))return notify("Your role cannot manage transport dispatches.","error");
+  const dispatch=dispatchId?(state.ops.transportDispatches||[]).find(x=>x.id===dispatchId):null;
+  if(dispatchId&&!dispatch)return notify("Transport dispatch not found.","error");
+  const jobId=dispatch?.job_id||presetJobId||"";
+  const jobList=state.ops.jobs.map(j=>[j.id,j.job_no+" · "+(j.hbl_no||"No HBL")]);
+  const defs=[
+    {name:"job_id",label:"Forwarding job",options:[["","Select forwarding job"],...jobList],value:jobId,required:true},
+    {name:"container_no",label:"Container (optional)",options:[["","Job level / no container"],...containerOptions().filter(x=>x[0])],value:dispatch?.container_no||""},
+    {name:"movement_type",label:"Movement type",options:[["pickup","Pickup"],["delivery","Final delivery"],["haulage","Haulage"],["empty_return","Empty return"],["customs_transfer","Customs transfer"],["other","Other"]],value:dispatch?.movement_type||"delivery"},
+    {name:"status",label:"Dispatch status",options:[["planned","Planned"],["assigned","Assigned"],["in_transit","In transit"],["completed","Completed"],["exception","Exception"],["cancelled","Cancelled"]],value:dispatch?.status||"planned"},
+    {name:"pickup_location",label:"Pickup location",value:dispatch?.pickup_location||""},
+    {name:"delivery_location",label:"Delivery location",value:dispatch?.delivery_location||""},
+    {name:"planned_pickup_date",label:"Planned pickup",type:"date",value:dispatch?.planned_pickup_date||""},
+    {name:"actual_pickup_date",label:"Actual pickup",type:"date",value:dispatch?.actual_pickup_date||""},
+    {name:"planned_delivery_date",label:"Planned delivery",type:"date",value:dispatch?.planned_delivery_date||""},
+    {name:"actual_delivery_date",label:"Actual completion / delivery",type:"date",value:dispatch?.actual_delivery_date||""},
+    {name:"carrier_name",label:"Carrier / transport vendor",value:dispatch?.carrier_name||""},
+    {name:"vehicle_no",label:"Vehicle number",value:dispatch?.vehicle_no||""},
+    {name:"driver_name",label:"Driver name",value:dispatch?.driver_name||""},
+    {name:"driver_phone",label:"Driver phone",value:dispatch?.driver_phone||""},
+    {name:"pod_reference",label:"POD / delivery reference",value:dispatch?.pod_reference||""},
+    {name:"instructions",label:"Handling instructions",type:"textarea",value:dispatch?.instructions||"",span2:true},
+    {name:"notes",label:"Internal notes",type:"textarea",value:dispatch?.notes||"",span2:true}
+  ];
+  openForm(dispatchId?"Edit transport dispatch":"Plan transport dispatch",defs,async fd=>{
+    const data=Object.fromEntries(fd.entries());if(dispatchId)data.id=dispatchId;
+    await call("logistics-workspace",{action:"upsertTransportDispatch",data});
+    await loadJobs();closeForm();state.page="transport";render();
+    notify(dispatchId?"Transport dispatch updated":"Transport dispatch created","success");
+  });
+}
+function printTransportDispatch(dispatchId){
+  const d=(state.ops.transportDispatches||[]).find(x=>x.id===dispatchId);if(!d)return notify("Transport dispatch not found.","error");
+  const job=state.ops.jobs.find(x=>x.id===d.job_id)||{},containerLink=(state.ops.jobContainers||[]).find(x=>x.job_id===d.job_id&&x.container_no===d.container_no);
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>'+esc(d.dispatch_no)+'</title><style>body{font:12px Arial;margin:28px;color:#24394b}.head{display:flex;justify-content:space-between;border-bottom:3px solid #403696;padding-bottom:12px}h1{font-size:22px;margin:6px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.box{border:1px solid #cbd5dd;padding:12px}.label{color:#728391;font-size:10px;font-weight:bold;text-transform:uppercase}.value{font-size:14px;margin-top:4px;min-height:22px}.section{margin-top:18px}.sig{margin-top:70px;display:grid;grid-template-columns:1fr 1fr;gap:50px}.sig div{border-top:1px solid #788895;padding-top:6px}@media print{.actions{display:none}}</style></head><body><div class="head"><div><div class="label">Freight Operations · Transport order</div><h1>'+esc(d.dispatch_no)+'</h1><b>'+esc(job.job_no||"")+'</b> · '+esc(job.customer_name||job.consignee||"")+'</div><div><b>Status</b><br>'+esc(d.status.replaceAll("_"," "))+'<br><b>Movement</b><br>'+esc(d.movement_type.replaceAll("_"," "))+'</div></div><div class="grid section"><div class="box"><div class="label">Pickup</div><div class="value">'+esc(d.pickup_location||"—")+'</div><div>Planned '+esc(fmt(d.planned_pickup_date))+' · Actual '+esc(fmt(d.actual_pickup_date))+'</div></div><div class="box"><div class="label">Delivery / destination</div><div class="value">'+esc(d.delivery_location||"—")+'</div><div>Planned '+esc(fmt(d.planned_delivery_date))+' · Actual '+esc(fmt(d.actual_delivery_date))+'</div></div></div><div class="grid section"><div class="box"><div class="label">Equipment</div><div class="value">'+esc(d.container_no||"Job level movement")+'</div><div>'+esc(containerLink?.allocation_role||"")+'</div></div><div class="box"><div class="label">Transport provider</div><div class="value">'+esc(d.carrier_name||"—")+'</div><div>'+esc(d.vehicle_no||"")+'</div><div>'+esc(d.driver_name||"")+' · '+esc(d.driver_phone||"")+'</div></div></div><div class="box section"><div class="label">Handling instructions</div><div class="value">'+esc(d.instructions||"—")+'</div><div class="label" style="margin-top:14px">POD / delivery reference</div><div class="value">'+esc(d.pod_reference||"—")+'</div></div><div class="box section"><div class="label">Internal notes</div><div class="value">'+esc(d.notes||"")+'</div></div><div class="sig"><div>Carrier / driver acknowledgement</div><div>Receiver name, signature and date</div></div><div class="actions" style="margin-top:20px"><button onclick="window.print()">Print / Save as PDF</button></div></body></html>';
+  const win=window.open("","_blank","width=1000,height=800");if(!win)return notify("Allow pop-ups to print this transport order.","error");win.document.open();win.document.write(html);win.document.close();win.focus();
+}
+function renderTransport(){
+  const dispatches=(state.ops.transportDispatches||[]).slice().sort((a,b)=>String(a.planned_delivery_date||"9999-12-31").localeCompare(String(b.planned_delivery_date||"9999-12-31")));
+  const dispatchRows=dispatches.map(d=>{
+    const job=state.ops.jobs.find(j=>j.id===d.job_id)||{};
+    return '<tr><td><b>'+esc(d.dispatch_no)+'</b><span class="cell-sub">'+esc(d.movement_type.replaceAll("_"," "))+'</span></td><td><button class="btn small" data-action="job-detail" data-id="'+esc(job.id)+'">'+esc(job.job_no||"—")+'</button></td><td>'+esc(d.container_no||"Job level")+'</td><td>'+esc(d.pickup_location||"—")+' → '+esc(d.delivery_location||"—")+'</td><td>'+esc(d.carrier_name||"—")+'<span class="cell-sub">'+esc(d.vehicle_no||"")+" · "+esc(d.driver_name||"")+'</span></td><td>'+fmt(d.planned_pickup_date)+' → '+fmt(d.planned_delivery_date)+'</td><td>'+fmt(d.actual_delivery_date)+(d.pod_reference?'<span class="cell-sub">POD '+esc(d.pod_reference)+'</span>':"")+'</td><td>'+pill(d.status)+'</td><td>'+actionBtn("print-transport-dispatch","Print order",'data-id="'+esc(d.id)+'"')+actionBtn("edit-transport-dispatch","Edit",'data-id="'+esc(d.id)+'"')+'</td></tr>';
+  });
   const active=state.rows.filter(r=>val(r,["TRUCK NO.","PORT OUT","CONTAINER RETURN DATE","DRIVER CONTACT","CFS IN","DESTUFFING DATE"]));
   const rows=active.map(r=>{
     const no=container(r),jobs=jobsForContainer(no);
@@ -1668,9 +1714,16 @@ function renderDocuments(){
     return '<tr><td><b>'+esc(no)+'</b></td><td>'+jobLinks+'</td><td>'+esc(val(r,["TRUCK NO."])||"—")+'</td><td>'+esc(val(r,["DRIVER CONTACT"])||"—")+'</td><td>'+fmt(val(r,["PORT OUT"]))+'</td><td>'+fmt(val(r,["CFS IN"]))+'</td><td>'+fmt(val(r,["DESTUFFING DATE"]))+'</td><td>'+fmt(val(r,["CONTAINER RETURN DATE"]))+'</td><td>'+fmt(val(r,["EMPTY RETURN VALIDITY"]))+'</td><td>'+actionBtn("edit-container","Update",'data-index="'+state.rows.indexOf(r)+'"')+'</td></tr>';
   });
   const unlinked=active.filter(r=>jobsForContainer(container(r)).length===0).length;
-  return pageHead("transport",'<button class="btn" data-nav="containers">Container register</button>')+
-  '<div class="stats">'+stat("Truck assignments",state.rows.filter(r=>val(r,["TRUCK NO."])).length,"Truck number entered")+stat("Port out",state.rows.filter(r=>val(r,["PORT OUT"])).length,"Port release records")+stat("CFS in",state.rows.filter(r=>val(r,["CFS IN"])).length,"CFS receipts")+stat("Destuffed",state.rows.filter(r=>val(r,["DESTUFFING DATE"])).length,"Destuffing complete")+stat("Unmapped moves",unlinked,"Equipment needs a forwarding job link")+'</div>'+
-  pane("DESTINATION TRANSPORT & DELIVERY",table(["CONTAINER","FORWARDING JOB","TRUCK","DRIVER CONTACT","PORT OUT","CFS IN","DESTUFFED","EMPTY RETURNED","EMPTY VALIDITY","ACTION"],rows,"No destination transport activity."));
+  const inTransit=dispatches.filter(d=>d.status==="in_transit").length;
+  const completed=dispatches.filter(d=>d.status==="completed").length;
+  const exceptions=dispatches.filter(d=>d.status==="exception").length;
+  const createButton=["Admin","Editor","Operator"].includes(state.profile?.role)?'<button class="btn primary" data-create="transport-dispatch">＋ Plan transport</button>':"";
+  return pageHead("transport",'<button class="btn" data-nav="containers">Container register</button>'+createButton)+
+  '<div class="stats">'+stat("Transport orders",dispatches.length,"Job-linked pickup and delivery moves")+stat("In transit",inTransit,"Vehicle departed pickup")+stat("Completed",completed,"Completed dispatches")+stat("Exceptions",exceptions,"Require operations review")+stat("Legacy truck assignments",state.rows.filter(r=>val(r,["TRUCK NO."])).length,"From equipment register")+'</div>'+
+  pane("TRANSPORT DISPATCH & DELIVERY ORDERS",table(["ORDER","FORWARDING JOB","CONTAINER","PICKUP → DELIVERY","CARRIER / VEHICLE / DRIVER","PLANNED PICKUP → DELIVERY","ACTUAL / POD","STATUS","ACTIONS"],dispatchRows,"No dispatch orders yet. Plan a job-linked pickup, haulage, delivery or empty return."))+
+  '<div style="height:9px"></div>'+
+  '<div class="stats">'+stat("Port out",state.rows.filter(r=>val(r,["PORT OUT"])).length,"Port release records")+stat("CFS in",state.rows.filter(r=>val(r,["CFS IN"])).length,"CFS receipts")+stat("Destuffed",state.rows.filter(r=>val(r,["DESTUFFING DATE"])).length,"Destuffing complete")+stat("Unmapped moves",unlinked,"Equipment needs a forwarding job link")+'</div>'+
+  pane("CONTAINER REGISTER TRANSPORT SNAPSHOT",table(["CONTAINER","FORWARDING JOB","TRUCK","DRIVER CONTACT","PORT OUT","CFS IN","DESTUFFED","EMPTY RETURNED","EMPTY VALIDITY","ACTION"],rows,"No destination transport activity."));
 }
 function containerReturnExceptions(){const today=new Date();today.setHours(0,0,0,0);return state.rows.map(r=>{const no=container(r),raw=val(r,["EMPTY RETURN VALIDITY"]),returned=val(r,["CONTAINER RETURN DATE"]);if(!raw||returned)return null;const d=new Date(raw);if(Number.isNaN(d.getTime())||d>=today)return null;const due=d.toISOString().slice(0,10),key=norm(no)+"|empty_return|"+due,action=state.ops.alertActions.find(a=>a.alert_key===key);if(action?.status==="resolved")return null;return{no,due,key,action}}).filter(Boolean)}
 async function saveContainerAlert(a,status){try{await call("logistics-workspace",{action:"saveAlertAction",container_no:a.no,alert_code:"empty_return",due_date:a.due,alert_key:a.key,status,note:""});await loadJobs();render();notify(status==="resolved"?"Empty-return exception resolved":"Exception acknowledged","success")}catch(e){notify(e.message||"Could not update exception","error")}}
@@ -2219,6 +2272,7 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(type==="vendor")newVendor();
       if(type==="vendor-bill")newVendorBill();
       if(type==="charge")newCharge("",button.dataset.jobId||"");
+      if(type==="transport-dispatch")newTransportDispatch("",button.dataset.jobId||"");
     };
   });
   document.querySelectorAll("[data-import-hbls]").forEach(button=>{
@@ -2298,6 +2352,8 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="outstanding-reminder")draftCustomerOutstandingReminder();
       if(act==="edit-charge")newCharge(id);
       if(act==="print-charge")printChargeInvoice(id);
+      if(act==="edit-transport-dispatch")newTransportDispatch(id);
+      if(act==="print-transport-dispatch")printTransportDispatch(id);
       if(act==="delete-charge")deleteCharge(id);
       if(act==="approve-charge")approveCharge(id);
       if(act==="ack-container-alert"||act==="resolve-container-alert"){
