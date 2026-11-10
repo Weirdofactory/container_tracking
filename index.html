@@ -1297,7 +1297,7 @@ function renderReceivables(){
   });
   const options=[["","All customer accounts"],...state.ops.customers.filter(c=>c.is_active).map(c=>[c.id,c.legal_name])];
   const select=options.map(o=>'<option value="'+esc(o[0])+'" '+(o[0]===state.arCustomerFilter?"selected":"")+'>'+esc(o[1])+'</option>').join("");
-  const controls='<div class="ar-toolbar"><label>As of <input id="arAsOf" type="date" value="'+esc(asOf)+'"></label><label>Customer <select id="arCustomerFilter">'+select+'</select></label><span class="desc">'+report.length+' open invoices · INR '+num(filteredOpen)+'</span><button class="btn small" data-action="outstanding-statement" '+(state.arCustomerFilter?'':'disabled')+'>Generate customer statement</button><button class="btn small" data-action="export-ar">Export CSV</button><button class="btn small" data-action="print-ar">Print ageing</button></div>';
+  const controls='<div class="ar-toolbar"><label>As of <input id="arAsOf" type="date" value="'+esc(asOf)+'"></label><label>Customer <select id="arCustomerFilter">'+select+'</select></label><span class="desc">'+report.length+' open invoices · INR '+num(filteredOpen)+'</span><button class="btn small" data-action="outstanding-reminder" '+(state.arCustomerFilter?'':'disabled')+'>Draft reminder email</button><button class="btn small" data-action="outstanding-statement" '+(state.arCustomerFilter?'':'disabled')+'>Generate customer statement</button><button class="btn small" data-action="export-ar">Export CSV</button><button class="btn small" data-action="print-ar">Print ageing</button></div>';
   const reportTable=table(["CUSTOMER","INVOICE / JOB","INVOICE DATE","DUE DATE","AGEING","INVOICE TOTAL","CREDIT NOTES","RECEIPTS","OPEN BALANCE","ACTIONS"],reportRows,"No outstanding invoices match this report.");
   return pageHead("receivables",'<button class="btn" data-nav="finance">Accounting & charges</button><button class="btn primary" data-create="customer">＋ New customer</button>')+
     '<div class="stats">'+stat("Receivables · INR","INR "+num(filteredOpen),"As of "+fmt(asOf))+stat("Not due","INR "+num(kpis["Not due"]),"Within payment terms")+stat("1–30 days","INR "+num(kpis["1–30 days"]),"Past due")+stat("31–60 days","INR "+num(kpis["31–60 days"]),"Past due")+stat("60+ days","INR "+num(kpis["61–90 days"]+kpis["90+ days"]),"Collection follow-up")+'</div>'+
@@ -1320,6 +1320,24 @@ function exportReceivables(){
 function printReceivables(){
   const html='<!doctype html><html><head><meta charset="utf-8"><title>Accounts receivable ageing</title><style>body{font:12px Arial;margin:24px;color:#22384a}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cad4dd;padding:6px;text-align:left}th{background:#e9eef2}h1{font-size:20px}</style></head><body><h1>Accounts receivable ageing</h1><p>As of '+esc(state.financeAsOf||new Date().toISOString().slice(0,10))+'</p>'+document.querySelector(".ar-pane")?.innerHTML+'<script>window.onload=()=>window.print()<\/script></body></html>';
   const win=window.open("","_blank","width=1200,height=800");if(!win)return notify("Allow pop-ups to print the ageing report.","error");win.document.write(html);win.document.close();
+}
+function draftCustomerOutstandingReminder(){
+  const customerId=state.arCustomerFilter;
+  if(!customerId)return notify("Select one customer in the receivables filter before drafting a reminder.","error");
+  const customer=(state.ops.customers||[]).find(c=>c.id===customerId);
+  if(!customer?.email)return notify("Add an email address to this customer account first.","error");
+  const asOf=$("arAsOf")?.value||state.financeAsOf||new Date().toISOString().slice(0,10);
+  const records=(state.ops.invoices||[]).filter(inv=>inv.customer_id===customerId&&inv.status==="issued"&&String(inv.invoice_date||"").slice(0,10)<=asOf)
+    .map(inv=>({inv,ledger:invoiceLedgerAt(inv,asOf)})).filter(x=>x.ledger.balance>0.005)
+    .sort((a,b)=>String(a.inv.due_date||a.inv.invoice_date).localeCompare(String(b.inv.due_date||b.inv.invoice_date)));
+  if(!records.length)return notify("This customer has no outstanding invoices as of the selected date.","error");
+  const totalInr=records.reduce((sum,x)=>sum+x.ledger.balanceInr,0);
+  const invoiceLines=records.slice(0,25).map(({inv,ledger})=>"- "+(inv.invoice_number||"Invoice")+" · due "+fmt(inv.due_date||inv.invoice_date)+" · "+inv.currency+" "+money2(ledger.balance)+" (INR "+money2(ledger.balanceInr)+")");
+  if(records.length>25)invoiceLines.push("- Plus "+(records.length-25)+" additional open invoices; see the attached statement.");
+  const seller=state.ops.invoiceSettings||{};
+  const body=["Dear "+(customer.contact_name||customer.display_name||customer.legal_name)+",","","Our records show the following invoices outstanding as of "+fmt(asOf)+":","",...invoiceLines,"","Total outstanding reference: INR "+money2(totalInr),"","Please arrange payment at your earliest convenience. If payment has already been made, please share the remittance details so we can update our records. A customer statement can be generated from the Receivables page.","","Regards,",seller.name||"Freight Operations",seller.email||""].join("\n");
+  const subject="Outstanding invoice reminder — "+customer.legal_name;
+  location.href="mailto:"+encodeURIComponent(customer.email)+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
 }
 function printCustomerOutstandingStatement(){
   const customerId=state.arCustomerFilter;
@@ -2277,6 +2295,7 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="export-job-profitability")exportJobProfitability();
       if(act==="print-ar")printReceivables();
       if(act==="outstanding-statement")printCustomerOutstandingStatement();
+      if(act==="outstanding-reminder")draftCustomerOutstandingReminder();
       if(act==="edit-charge")newCharge(id);
       if(act==="print-charge")printChargeInvoice(id);
       if(act==="delete-charge")deleteCharge(id);
