@@ -331,7 +331,7 @@ tbody td{height:40px;font-size:11px}
       <button class="nav-item" data-page="exceptions"><span class="nav-ico">⚑</span>Operations monitor<span class="nav-count" id="exceptionCount">0</span></button>
     </div>
     <div class="nav-group"><div class="nav-label">FINANCIAL & MANAGEMENT</div>
-      <button class="nav-item" data-page="finance"><span class="nav-ico">₹</span>Accounting & charges</button><button class="nav-item" data-page="receivables"><span class="nav-ico">◎</span>Customers & receivables</button>
+      <button class="nav-item" data-page="finance"><span class="nav-ico">₹</span>Accounting & charges</button><button class="nav-item" data-page="receivables"><span class="nav-ico">◎</span>Customers & receivables</button><button class="nav-item" data-page="sales"><span class="nav-ico">⇄</span>Sales enquiries & quotes</button>
       <button class="nav-item" data-page="reports"><span class="nav-ico">▥</span>Reports & analytics</button>
       <button class="nav-item" data-page="customer"><span class="nav-ico">↗</span>Customer portal</button>
     </div>
@@ -367,7 +367,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",arCustomerFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],enquiries:[],quotes:[],quoteLines:[],salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",arCustomerFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -416,13 +416,27 @@ async function loadInvoices(force=false){
     if(["finance","receivables"].includes(state.page))render();
   }
 }
+async function loadSales(force=false){
+  if(state.ops.salesLoading)return;
+  if(state.ops.salesLoaded&&!force)return;
+  state.ops.salesLoading=true;
+  try{
+    const d=await call("logistics-workspace",{action:"listSales"});
+    state.ops.enquiries=Array.isArray(d.enquiries)?d.enquiries:[];
+    state.ops.quotes=Array.isArray(d.quotes)?d.quotes:[];
+    state.ops.quoteLines=Array.isArray(d.lines)?d.lines:[];
+    if(Array.isArray(d.customers))state.ops.customers=d.customers;
+    state.ops.salesLoaded=true;
+  }catch(e){state.ops.salesLoaded=true;notify(e.message||"Sales data could not be loaded.","error")}
+  finally{state.ops.salesLoading=false;if(state.page==="sales")render()}
+}
 async function loadEquipment(){const d=await call("operations-data",{action:"read"});if(!Array.isArray(d.data))throw new Error("The equipment register could not be loaded.");state.rows=d.data;state.updatedAt=d.updatedAt;if(d.profile)state.profile={...(state.profile||{}),...d.profile}}
 function identity(){const p=state.profile||{},who=p.displayName||state.session?.user?.email||"Staff";$("userName").textContent=who;$("railUser").textContent=who;$("railRole").textContent=(p.role||"Staff")+" permissions"}
 function renderWorkspaceLoadError(){const content=$("content");if(!content)return;const localPreview=location.protocol==="file:";content.innerHTML=localPreview?'<section class="cw-load-error" role="alert"><span class="cw-load-error-icon">!</span><div><h2>Use the hosted staff workspace</h2><p>Local file previews cannot connect to protected shipment services. Open the hosted site and sign in to load live records.</p><a class="btn primary" href="https://weirdofactory.github.io/container_tracking/">Open hosted workspace</a></div></section>':'<section class="cw-load-error" role="alert"><span class="cw-load-error-icon">!</span><div><h2>Workspace data did not load</h2><p>The shipment and equipment services could not be reached. Retry the connection in a moment.</p><button class="btn primary" id="retryWorkspace">↻ Retry loading</button></div></section>';const retry=$("retryWorkspace");if(retry)retry.onclick=refreshAll}
 async function refreshAll(){if(location.protocol==="file:"){connection("Hosted site required","error");renderWorkspaceLoadError();return}connection("Loading","loading");try{await Promise.all([loadJobs(),loadEquipment()]);if(access(["Admin","Editor"]))await loadInvoices();identity();connection(state.ops.jobs.length+" jobs · "+state.rows.length+" equipment");render()}catch(e){connection("Data unavailable","error");renderWorkspaceLoadError();notify(e.message,"error")}}
-async function auth(session){state.session=session;if(!session){state.profile=null;state.ops.loaded=false;state.ops.invoices=[];state.ops.invoiceSettings={};state.ops.customers=[];state.ops.creditNotes=[];state.ops.payments=[];state.ops.invoicesLoaded=false;state.ops.invoicesLoading=false;state.ops.invoiceLoadError="";state.rows=[];setNavigationOpen(false);$("app").hidden=true;$("login").hidden=false;connection("Signed out");return}$("login").hidden=true;$("app").hidden=false;state.profile={displayName:session.user?.email||"Staff",role:"Staff"};identity();await refreshAll()}
+async function auth(session){state.session=session;if(!session){state.profile=null;state.ops.loaded=false;state.ops.invoices=[];state.ops.invoiceSettings={};state.ops.customers=[];state.ops.creditNotes=[];state.ops.payments=[];state.ops.enquiries=[];state.ops.quotes=[];state.ops.quoteLines=[];state.ops.salesLoaded=false;state.ops.salesLoading=false;state.ops.invoicesLoaded=false;state.ops.invoicesLoading=false;state.ops.invoiceLoadError="";state.rows=[];setNavigationOpen(false);$("app").hidden=true;$("login").hidden=false;connection("Signed out");return}$("login").hidden=true;$("app").hidden=false;state.profile={displayName:session.user?.email||"Staff",role:"Staff"};identity();await refreshAll()}
 function access(roles){return roles.includes(state.profile?.role)}
-function pageTitle(p){return({dashboard:["Dashboard","Shipment visibility and operational control"],receivables:["Customers & receivables","Customer accounts, receipt entry and invoice ageing"],jobs:["Forwarding jobs","HBL-level job control, routing, equipment allocation and lifecycle"],containers:["Containers & equipment","Manage equipment movements from origin gate-in through empty return"],sailings:["Vessel schedules","Voyages, cutoffs and planned vessel movements"],consol:["LCL consolidation","Consolidation references, linked HBLs and capacity"],milestones:["Tracking & events","Planned and actual events across the shipment lifecycle"],filings:["Customs & compliance","HBL, MBL, CSN, IGM, SI and VGM filing control"],documents:["Document manager","Shipment document references and filing attachments"],transport:["Transport & delivery","Destination trucking, delivery and empty-return activity"],exceptions:["Operations monitor","Overdue, delayed and unresolved operational work"],finance:["Accounting & charges","Shipment cost, revenue and approval register"],reports:["Reports & analytics","Forwarding workload, shipment progress and finance indicators"],customer:["Customer portal","Publish customer-safe milestone visibility"],settings:["Administration","Staff identity and connected services"]})[p]||["Workbench","Operations overview"]}
+function pageTitle(p){return({sales:["Sales enquiries & quotes","Prospect pipeline, freight quotations and booking conversion"],dashboard:["Dashboard","Shipment visibility and operational control"],receivables:["Customers & receivables","Customer accounts, receipt entry and invoice ageing"],jobs:["Forwarding jobs","HBL-level job control, routing, equipment allocation and lifecycle"],containers:["Containers & equipment","Manage equipment movements from origin gate-in through empty return"],sailings:["Vessel schedules","Voyages, cutoffs and planned vessel movements"],consol:["LCL consolidation","Consolidation references, linked HBLs and capacity"],milestones:["Tracking & events","Planned and actual events across the shipment lifecycle"],filings:["Customs & compliance","HBL, MBL, CSN, IGM, SI and VGM filing control"],documents:["Document manager","Shipment document references and filing attachments"],transport:["Transport & delivery","Destination trucking, delivery and empty-return activity"],exceptions:["Operations monitor","Overdue, delayed and unresolved operational work"],finance:["Accounting & charges","Shipment cost, revenue and approval register"],reports:["Reports & analytics","Forwarding workload, shipment progress and finance indicators"],customer:["Customer portal","Publish customer-safe milestone visibility"],settings:["Administration","Staff identity and connected services"]})[p]||["Workbench","Operations overview"]}
 function pageHead(p,actions){const x=pageTitle(p);return'<div class="pagebar"><div><div class="crumb">Freight Operations / '+esc(x[0])+'</div><div class="title">'+esc(x[0])+'</div><div class="desc">'+esc(x[1])+'</div></div><div class="actions">'+(actions||"")+'</div></div>'}
 function pane(title,body,extra,sub){return'<section class="pane"><div class="pane-head"><span class="pane-title">'+title+'</span><span class="pane-sub">'+(sub||"")+'</span>'+(extra||"")+'</div>'+body+'</section>'}
 function stat(label,value,note){return'<div class="stat"><label>'+label+'</label><strong>'+num(value)+'</strong><small>'+note+'</small></div>'}
@@ -871,7 +885,127 @@ function renderFilings(){
   });
   return pageHead("filings",'<button class="btn primary" data-create="filing">New filing</button>')+
   pane("CUSTOMS & COMPLIANCE REGISTER",table(["JOB / HBL","CONTAINER","TYPE","HBL","MBL","DUE DATE","FILED","ACKNOWLEDGED","STATUS","DOCS","ACTIONS"],rows,"No filing entries."));
-}function newCustomer(customerId=""){
+}function newSalesEnquiry(enquiryId=""){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can manage sales enquiries.","error");
+  const e=(state.ops.enquiries||[]).find(x=>x.id===enquiryId)||{};
+  const defs=[
+    {name:"customer_id",label:"Customer account (optional for a prospect)",options:customerOptions(e.customer_id||""),value:e.customer_id||""},
+    {name:"company_name",label:"Prospect / company name",value:e.company_name||"",required:true},
+    {name:"contact_name",label:"Contact person",value:e.contact_name||""},
+    {name:"email",label:"Email",type:"email",value:e.email||""},{name:"phone",label:"Phone",value:e.phone||""},
+    {name:"service_type",label:"Freight service",options:[["FCL","Sea freight · FCL"],["LCL","Sea freight · LCL"],["AIR","Air freight"],["OTHER","Other"]],value:e.service_type||"FCL"},
+    {name:"direction",label:"Direction",options:[["import","Import"],["export","Export"],["cross_trade","Cross trade"],["transshipment","Transshipment"]],value:e.direction||"import"},
+    {name:"origin",label:"Origin / POL",value:e.origin||""},{name:"destination",label:"Destination / POD",value:e.destination||""},
+    {name:"commodity",label:"Commodity",value:e.commodity||"",span2:true},
+    {name:"package_count",label:"Packages",type:"number",step:"1",value:e.package_count||""},
+    {name:"gross_weight_kg",label:"Gross weight · kg",type:"number",step:"0.001",value:e.gross_weight_kg||""},
+    {name:"volume_cbm",label:"Volume · CBM",type:"number",step:"0.001",value:e.volume_cbm||""},
+    {name:"cargo_ready_date",label:"Cargo ready date",type:"date",value:e.cargo_ready_date||""},
+    {name:"follow_up_date",label:"Sales follow-up date",type:"date",value:e.follow_up_date||""},
+    {name:"notes",label:"Scope, requirements and enquiry notes",type:"textarea",value:e.notes||"",span2:true}
+  ];
+  openForm(enquiryId?"Edit sales enquiry":"New freight enquiry",defs,async fd=>{
+    const data=Object.fromEntries(fd.entries());if(enquiryId)data.id=enquiryId;
+    await call("logistics-workspace",{action:"upsertSalesEnquiry",data});
+    closeForm();await loadSales(true);render();notify(enquiryId?"Sales enquiry updated":"Sales enquiry created","success");
+  });
+}
+function quoteLinesText(quoteId){
+  return(state.ops.quoteLines||[]).filter(l=>l.quote_id===quoteId).sort((a,b)=>a.line_no-b.line_no)
+    .map(l=>[l.charge_code||"FREIGHT",l.description,l.quantity,l.unit||"shipment",l.unit_price,l.gst_rate||0].join(" | ")).join("\n");
+}
+function parseQuoteLines(value){
+  return String(value||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map((row,index)=>{
+    const p=row.split("|").map(x=>x.trim());
+    if(p.length<6)throw new Error("Quote line "+(index+1)+" needs: Code | Description | Qty | Unit | Unit price | GST %.");
+    const line={charge_code:p[0]||"FREIGHT",description:p[1],quantity:Number(p[2]),unit:p[3]||"shipment",unit_price:Number(p[4]),gst_rate:Number(p[5]||0)};
+    if(!line.description||!Number.isFinite(line.quantity)||line.quantity<=0||!Number.isFinite(line.unit_price)||line.unit_price<=0||!Number.isFinite(line.gst_rate)||line.gst_rate<0||line.gst_rate>100)throw new Error("Check description, positive quantity / rate and GST % on quote line "+(index+1)+".");
+    return line;
+  });
+}
+function newFreightQuote(quoteId="",enquiryId=""){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can prepare quotations.","error");
+  const q=(state.ops.quotes||[]).find(x=>x.id===quoteId)||{};
+  const enq=(state.ops.enquiries||[]).find(x=>x.id===(q.enquiry_id||enquiryId))||{};
+  if(q.status&&q.status!=="draft")return notify("Issued quotations are locked.","error");
+  if(!enq.id)return notify("Create a sales enquiry before preparing a quote.","error");
+  const today=new Date().toISOString().slice(0,10),expiry=new Date();expiry.setDate(expiry.getDate()+7);
+  const defs=[
+    {name:"enquiry_id",label:"Sales enquiry",options:[...state.ops.enquiries.filter(x=>!["converted","lost"].includes(x.status)||x.id===enq.id).map(x=>[x.id,x.enquiry_no+" · "+x.company_name])],value:enq.id,required:true},
+    {name:"customer_id",label:"Bill-to account (optional until booking)",options:[["","Use enquiry account / prospect"],...customerOptions(q.customer_id||enq.customer_id||"").filter(x=>x[0])],value:q.customer_id||enq.customer_id||""},
+    {name:"currency",label:"Quote currency",value:q.currency||state.ops.customers.find(c=>c.id===(enq.customer_id||""))?.default_currency||"INR",required:true},
+    {name:"exchange_rate_to_inr",label:"Reference exchange rate to INR",type:"number",step:"0.00000001",value:q.exchange_rate_to_inr||"1",required:true},
+    {name:"fx_rate_date",label:"FX rate date",type:"date",value:q.fx_rate_date||today},
+    {name:"fx_rate_source",label:"FX rate source",value:q.fx_rate_source||"INR base currency"},
+    {name:"tax_mode",label:"GST pricing mode",options:[["exclusive","GST added to line rates"],["inclusive","GST included in line rates"]],value:q.tax_mode||"exclusive"},
+    {name:"valid_until",label:"Quote valid until",type:"date",value:q.valid_until||expiry.toISOString().slice(0,10),required:true},
+    {name:"terms",label:"Commercial terms / exclusions",type:"textarea",value:q.terms||"",span2:true},
+    {name:"lines_text",label:"Charge lines · Code | Description | Qty | Unit | Unit price | GST %",type:"textarea",value:quoteLinesText(quoteId)||"",span2:true}
+  ];
+  openForm(quoteId?"Edit draft quotation":"Prepare freight quotation",defs,async fd=>{
+    const form=Object.fromEntries(fd.entries()),data={
+      ...(quoteId?{id:quoteId}:{}),enquiry_id:form.enquiry_id,customer_id:form.customer_id||"",
+      currency:String(form.currency||"INR").trim().toUpperCase(),exchange_rate_to_inr:form.exchange_rate_to_inr,
+      fx_rate_date:form.fx_rate_date,fx_rate_source:form.fx_rate_source,tax_mode:form.tax_mode,
+      valid_until:form.valid_until,terms:form.terms,lines:parseQuoteLines(form.lines_text)
+    };
+    await call("logistics-workspace",{action:"upsertFreightQuote",data});
+    closeForm();await loadSales(true);render();notify(quoteId?"Draft quotation updated":"Draft quotation saved","success");
+  });
+  updateQuoteFx(false);
+}
+async function updateQuoteFx(force=false){
+  const fields=$("fields");if(!fields||$("modal").hidden)return;
+  const currency=(fields.querySelector('[name="currency"]')?.value||"INR").trim().toUpperCase();
+  const dateValue=fields.querySelector('[name="fx_rate_date"]')?.value||"";
+  const rate=fields.querySelector('[name="exchange_rate_to_inr"]');
+  const source=fields.querySelector('[name="fx_rate_source"]');
+  const quoteForm=fields.querySelector('[name="lines_text"]');
+  if(!rate||!source||!quoteForm)return;
+  if(currency==="INR"){rate.value="1";source.value="INR base currency";return}
+  if(!/^[A-Z]{3}$/.test(currency)||!dateValue)return;
+  if(!force&&source.value==="Manual override")return;
+  source.value="Looking up reference rate…";rate.value="";
+  try{
+    const end=new Date(dateValue+"T00:00:00Z"),start=new Date(end);start.setUTCDate(start.getUTCDate()-10);
+    const params=new URLSearchParams({from:start.toISOString().slice(0,10),to:dateValue,base:currency,quotes:"INR"});
+    const response=await fetch("https://api.frankfurter.dev/v2/rates?"+params.toString());if(!response.ok)throw new Error("FX service unavailable.");
+    const data=await response.json(),rows=Array.isArray(data)?data.filter(x=>String(x.currency||x.quote||"").toUpperCase()==="INR"&&Number(x.rate)>0):[];
+    if(!rows.length)throw new Error("No reference FX rate returned.");
+    const latest=rows.sort((a,b)=>String(a.date).localeCompare(String(b.date))).at(-1);
+    if($("modal").hidden)return;rate.value=Number(latest.rate).toFixed(8);fields.querySelector('[name="fx_rate_date"]').value=latest.date||dateValue;source.value="Frankfurter reference rate";
+  }catch(e){if(!$("modal").hidden){source.value="Manual override";if(!rate.value||Number(rate.value)<=0)rate.value="";}}
+}
+async function issueFreightQuote(quoteId){
+  if(!confirm("Issue this quote and assign its permanent quotation number?"))return;
+  try{await call("logistics-workspace",{action:"issueFreightQuote",id:quoteId});await loadSales(true);render();notify("Freight quote issued","success")}
+  catch(e){notify(e.message||"Could not issue quote","error")}
+}
+async function setFreightQuoteOutcome(quoteId,outcome){
+  const outcomeLabel=outcome==="accepted"?"accepted":"declined";
+  if(!confirm("Mark this freight quote "+outcomeLabel+"?"))return;
+  try{await call("logistics-workspace",{action:"freightQuoteOutcome",id:quoteId,data:{outcome}});await loadSales(true);render();notify("Quote outcome recorded","success")}
+  catch(e){notify(e.message||"Could not record quote outcome","error")}
+}
+async function convertFreightQuote(quoteId){
+  if(!confirm("Create a booked forwarding job and draft revenue charges from this accepted quote?"))return;
+  try{
+    const result=await call("logistics-workspace",{action:"convertAcceptedQuote",id:quoteId});
+    await loadJobs();await loadSales(true);
+    state.selectedJob=result.job?.id||null;state.page=state.selectedJob?"jobdetail":"sales";render();
+    notify("Accepted quote converted to "+(result.job?.job_no||"forwarding job"),"success");
+  }catch(e){notify(e.message||"Could not convert quote","error")}
+}
+function printFreightQuote(quoteId){
+  const q=(state.ops.quotes||[]).find(x=>x.id===quoteId);if(!q)return;
+  const enq=(state.ops.enquiries||[]).find(x=>x.id===q.enquiry_id)||{};
+  const customer=state.ops.customers.find(c=>c.id===(q.customer_id||enq.customer_id));
+  const items=(state.ops.quoteLines||[]).filter(x=>x.quote_id===q.id).sort((a,b)=>a.line_no-b.line_no);
+  const rows=items.map(x=>'<tr><td>'+esc(x.charge_code)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.quantity)+' '+esc(x.unit)+'</td><td>'+esc(q.currency)+' '+money2(x.unit_price)+'</td><td>'+num(x.gst_rate)+'%</td><td>'+esc(q.currency)+' '+money2(x.total_amount)+'</td></tr>').join("");
+  const doc='<!doctype html><html><head><meta charset="utf-8"><title>Freight quotation '+esc(q.quote_no||"draft")+'</title><style>body{font:13px Arial;margin:35px;color:#203b4d}header{display:flex;justify-content:space-between;border-bottom:3px solid #163f59;padding-bottom:16px}h1{font-size:24px;margin:4px 0}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{border:1px solid #cad6dd;padding:9px;text-align:left}th{background:#eef3f6}aside{margin:22px 0;padding:14px;background:#f5f8fa}.total{font-weight:bold;font-size:18px;text-align:right;margin-top:18px}.muted{color:#708494}@media print{button{display:none}}</style></head><body><header><div><div class="muted">FREIGHT OPERATIONS · QUOTATION</div><h1>'+esc(q.quote_no||"DRAFT QUOTATION")+'</h1><div>'+esc(q.status.toUpperCase())+' · Valid until '+esc(fmt(q.valid_until))+'</div></div><div>Prepared for<br><b>'+esc(customer?.legal_name||enq.company_name||"Prospect")+'</b><br>'+esc(enq.contact_name||"")+'<br>'+esc(enq.email||"")+'</div></header><aside><b>'+esc(enq.service_type)+" · "+esc(enq.direction.replaceAll("_"," "))+'</b><br>'+esc(enq.origin||"—")+' → '+esc(enq.destination||"—")+'<br>'+esc(enq.commodity||"")+'<br><span class="muted">FX: 1 '+esc(q.currency)+' = '+esc(q.exchange_rate_to_inr)+' INR · '+esc(q.fx_rate_source||"manual")+')</span></aside><table><thead><tr><th>Code</th><th>Description</th><th>Quantity</th><th>Unit rate</th><th>GST</th><th>Line total</th></tr></thead><tbody>'+rows+'</tbody></table><div class="total">Subtotal: '+esc(q.currency)+' '+money2(q.subtotal)+'<br>GST: '+esc(q.currency)+' '+money2(q.tax_total)+'<br>Total: '+esc(q.currency)+' '+money2(q.total_amount)+'<br><small>INR reference: '+money2(q.total_inr)+'</small></div><aside><b>Commercial terms</b><br>'+esc(q.terms||"As agreed")+'</aside><p class="muted">Quotation only. Taxes and final charges are subject to applicable laws, shipment details and confirmation.</p><script>window.onload=()=>window.print()<\/script></body></html>';
+  const win=window.open("","_blank","width=1100,height=850");if(!win)return notify("Allow pop-ups to print this quote.","error");win.document.write(doc);win.document.close();
+}
+function newCustomer(customerId=""){
   if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can manage customer accounts.","error");
   const c=state.ops.customers.find(x=>x.id===customerId)||{};
   const defs=[
@@ -1066,6 +1200,44 @@ function printReceivables(){
   const html='<!doctype html><html><head><meta charset="utf-8"><title>Accounts receivable ageing</title><style>body{font:12px Arial;margin:24px;color:#22384a}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cad4dd;padding:6px;text-align:left}th{background:#e9eef2}h1{font-size:20px}</style></head><body><h1>Accounts receivable ageing</h1><p>As of '+esc(state.financeAsOf||new Date().toISOString().slice(0,10))+'</p>'+document.querySelector(".ar-pane")?.innerHTML+'<script>window.onload=()=>window.print()<\/script></body></html>';
   const win=window.open("","_blank","width=1200,height=800");if(!win)return notify("Allow pop-ups to print the ageing report.","error");win.document.write(html);win.document.close();
 }
+function money2(value){return Number(value||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function renderSales(){
+  const enquiries=state.ops.enquiries||[],quotes=state.ops.quotes||[],lines=state.ops.quoteLines||[];
+  const today=new Date().toISOString().slice(0,10);
+  const active=enquiries.filter(x=>!["won","lost","converted"].includes(x.status)).length;
+  const waiting=quotes.filter(x=>x.status==="sent"&&(!x.valid_until||x.valid_until>=today)).length;
+  const accepted=quotes.filter(x=>x.status==="accepted").length;
+  const converted=quotes.filter(x=>x.status==="converted").length;
+  const enquiryRows=enquiries.map(enq=>{
+    const account=state.ops.customers.find(c=>c.id===enq.customer_id);
+    const related=quotes.filter(q=>q.enquiry_id===enq.id);
+    const current=related[0];
+    const quoteSummary=current?(esc(current.quote_no||"Draft quote")+" · "+esc(current.status)+" · "+esc(current.currency||"INR")+" "+money2(current.total_amount)):"No quote yet";
+    const action=actionBtn("new-quote","Create quote",'data-id="'+esc(enq.id)+'"');
+    return'<tr><td><b>'+esc(enq.enquiry_no)+'</b><div class="cell-sub">'+esc(enq.contact_name||enq.email||"")+'</div></td><td>'+esc(account?.legal_name||enq.company_name||"Prospect")+'</td><td>'+esc(enq.origin||"—")+' → '+esc(enq.destination||"—")+'<div class="cell-sub">'+esc(enq.service_type)+" · "+esc(enq.direction.replaceAll("_"," "))+'</div></td><td>'+pill(enq.status||"new")+'</td><td>'+esc(fmt(enq.follow_up_date))+'</td><td>'+quoteSummary+'<div class="cell-sub">'+related.length+' quote(s)</div></td><td>'+actionBtn("edit-enquiry","Edit",'data-id="'+esc(enq.id)+'"')+action+'</td></tr>';
+  });
+  const quoteRows=quotes.map(q=>{
+    const enq=enquiries.find(x=>x.id===q.enquiry_id)||{};
+    const customer=state.ops.customers.find(c=>c.id===(q.customer_id||enq.customer_id));
+    const qLines=lines.filter(x=>x.quote_id===q.id);
+    const expired=q.status==="sent"&&q.valid_until&&q.valid_until<today;
+    const status=expired?"expired":q.status;
+    let actions="";
+    if(q.status==="draft")actions=actionBtn("edit-quote","Edit",'data-id="'+esc(q.id)+'"')+actionBtn("issue-quote","Issue",'data-id="'+esc(q.id)+'"');
+    if(q.status==="sent"&&!expired)actions=actionBtn("accept-quote","Accept",'data-id="'+esc(q.id)+'"')+actionBtn("reject-quote","Decline",'data-id="'+esc(q.id)+'"');
+    if(q.status==="accepted")actions=actionBtn("convert-quote","Create job",'data-id="'+esc(q.id)+'"');
+    if(q.status==="converted"&&q.accepted_job_id){const job=state.ops.jobs.find(j=>j.id===q.accepted_job_id);actions=job?actionBtn("open-converted-job","Open job",'data-id="'+esc(job.id)+'"'):"Job "+esc(job.job_no||"created");}
+    actions+=actionBtn("print-quote","Print",'data-id="'+esc(q.id)+'"');
+    const total=esc(q.currency||"INR")+" "+num(q.total_amount);
+    return'<tr><td><b>'+esc(q.quote_no||"Draft · "+String(q.id).slice(0,8).toUpperCase())+'</b><div class="cell-sub">Valid to '+esc(fmt(q.valid_until))+'</div></td><td>'+esc(customer?.legal_name||enq.company_name||"Prospect")+'<div class="cell-sub">'+esc(enq.enquiry_no||"")+'</div></td><td>'+qLines.length+' charge line(s)<div class="cell-sub">'+esc(q.tax_mode||"exclusive")+" GST · "+esc(q.exchange_rate_to_inr||"1")+" INR / "+esc(q.currency||"INR")+'</div></td><td>'+pill(status)+'</td><td><b>'+total+'</b><div class="cell-sub">GST '+esc(q.currency||"INR")+' '+num(q.tax_total)+' · INR '+num(q.total_inr)+'</div></td><td>'+actions+'</td></tr>';
+  });
+  const controls='<button class="btn" data-action="refresh-sales">↻ Refresh</button><button class="btn primary" data-create="enquiry">＋ New enquiry</button>';
+  return pageHead("sales",controls)
+   +'<div class="stats">'+stat("Active enquiries",active,"Open prospect pipeline")+stat("Quotes awaiting reply",waiting,"Issued and within validity")+stat("Accepted quotes",accepted,"Ready to create bookings")+stat("Converted to jobs",converted,"Linked to forwarding operations")+'</div>'
+   +pane("FREIGHT SALES PIPELINE",table(["ENQUIRY","CUSTOMER / PROSPECT","LANE / SERVICE","STAGE","FOLLOW-UP","LATEST QUOTE","ACTIONS"],enquiryRows,"No enquiries yet. Capture an enquiry to start building your sales pipeline."))
+   +'<div style="height:9px"></div>'
+   +pane("QUOTATIONS",table(["QUOTE","CUSTOMER","PRICING","STATUS","TOTAL / TAX","ACTIONS"],quoteRows,"No freight quotes have been created."));
+}
 function renderFinance(){
   const invoiceRows=(state.ops.invoices||[]).map(inv=>{
     const ledger=invoiceLedger(inv);
@@ -1165,7 +1337,7 @@ function renderCustomer(){
 
 async function loadStaffUsers(){const target=$("staffUsers");if(!target)return;target.innerHTML='<span class="desc">Loading staff accounts…</span>';try{const d=await call("logistics-workspace",{action:"listStaffUsers"});const rows=(d.users||[]).map(u=>'<tr><td>'+esc(u.display_name)+'</td><td>'+esc(u.email)+'</td><td>'+pill(u.role)+'</td><td>'+pill(u.is_active?"Active":"Disabled")+'</td><td>'+esc(u.created_at?fmt(u.created_at):"—")+'</td><td><button class="btn small red" data-action="delete-staff-user" data-id="'+esc(u.user_id)+'" data-email="'+esc(u.email)+'">Delete</button></td></tr>');target.innerHTML=table(["NAME","EMAIL","ROLE","STATUS","CREATED","ACTIONS"],rows,"No staff accounts found.")}catch(e){target.innerHTML='<div class="form-error">'+esc(e.message||"Could not load staff accounts.")+'</div>'}}
 function renderSettings(){return pageHead("settings")+(state.profile?.role==="Admin"?'<div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">CREATE STAFF LOGIN</span><span class="pane-sub">Admin only · managed inside this website</span></div><div class="pane-body"><form id="staffCreateForm"><div class="formgrid"><div class="field"><label>FULL NAME *</label><input name="display_name" required maxlength="120"></div><div class="field"><label>EMAIL ADDRESS *</label><input name="email" type="email" required maxlength="254"></div><div class="field"><label>TEMPORARY PASSWORD *</label><input name="password" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>ACCESS ROLE *</label><select name="role"><option>Operator</option><option>Editor</option><option>Viewer</option><option>Admin</option></select></div></div><button class="btn primary" type="submit">＋ Create staff user</button><div class="form-error" id="staffFormError"></div></form></div></div><div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">STAFF ACCOUNTS</span><button class="btn small" id="reloadStaff">↻ Refresh users</button></div><div class="pane-body" id="staffUsers"><span class="desc">Loading staff accounts…</span></div></div>':'<div class="pane"><div class="pane-body">Staff account administration is restricted to Admin users.</div></div>')+'<div class="columns">'+pane("STAFF SESSION",'<div class="pane-body">User: '+esc(state.session?.user?.email||"—")+'<br>Role: '+esc(state.profile?.role||"—")+'<br>Equipment records: '+state.rows.length+'</div>')+pane("CONNECTED SERVICES",'<div class="pane-body">Supabase authentication '+pill("Connected")+'<br>Protected operations API '+pill("Connected")+'<br>Customer tracking API '+pill("Active")+'</div>')+'</div>'}
-function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
+function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="sales"){if(!state.ops.salesLoaded&&!state.ops.salesLoading)loadSales();html=renderSales()}else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
 function setNavigationOpen(open){$("app").classList.toggle("menu-open",open);$("hamb").setAttribute("aria-expanded",String(open))}
 function navigate(p){if(p==="jobdetail"||p==="consol")p="containers";state.page=p;state.query="";$("globalSearch").value="";setNavigationOpen(false);render()}
 function field(f){const value=f.value??"";let input;if(f.options)input='<select name="'+esc(f.name)+'" '+(f.required?"required":"")+'>'+f.options.map(o=>'<option value="'+esc(o[0])+'" '+(String(o[0])===String(value)?"selected":"")+'>'+esc(o[1])+'</option>').join("")+'</select>';else if(f.type==="textarea")input='<textarea name="'+esc(f.name)+'">'+esc(value)+'</textarea>';else{let v=value;if(f.type==="date"&&v)v=String(v).slice(0,10);if(f.type==="datetime-local"&&v)v=new Date(v).toISOString().slice(0,16);input='<input name="'+esc(f.name)+'" type="'+(f.type||"text")+'" value="'+esc(v)+'" '+(f.accept?'accept="'+esc(f.accept)+'"':"") +' '+(f.required?"required":"")+' '+(f.step?'step="'+esc(f.step)+'"':"")+'>'}return'<div class="field '+(f.span2?"span2":"")+'"><label>'+esc(f.label.toUpperCase())+(f.required?" *":"")+'</label>'+input+'</div>'}
@@ -1598,6 +1770,9 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
   const arAsOf=$("arAsOf");if(arAsOf)arAsOf.onchange=()=>{state.financeAsOf=arAsOf.value;render()};
   const arCustomer=$("arCustomerFilter");if(arCustomer)arCustomer.onchange=()=>{state.arCustomerFilter=arCustomer.value;render()};
   const customerSearch=$("customerSearch");if(customerSearch)customerSearch.onchange=()=>{state.customerSearch=customerSearch.value;render()};
+  const quoteCurrency=document.querySelector('#fields [name="currency"]');if(quoteCurrency)quoteCurrency.onchange=()=>{quoteCurrency.value=quoteCurrency.value.toUpperCase();updateQuoteFx(true)};
+  const quoteRate=document.querySelector('#fields [name="exchange_rate_to_inr"]');if(quoteRate)quoteRate.oninput=()=>{if(quoteCurrency?.value.toUpperCase()!=="INR"){const source=document.querySelector('#fields [name="fx_rate_source"]');if(source)source.value="Manual override"}};
+  const quoteFxDate=document.querySelector('#fields [name="fx_rate_date"]');if(quoteFxDate)quoteFxDate.onchange=()=>updateQuoteFx(true);
   if(state.page==="settings"&&state.profile?.role==="Admin"){
     loadStaffUsers();
     const form=$("staffCreateForm");
@@ -1620,6 +1795,8 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(type==="filing")newFiling("",button.dataset.jobId||"");
       if(type==="invoice")newInvoice("",button.dataset.jobId||"");
       if(type==="customer")newCustomer();
+      if(type==="enquiry")newSalesEnquiry();
+      if(type==="quote")newFreightQuote("",button.dataset.enquiryId||"");
       if(type==="charge")newCharge("",button.dataset.jobId||"");
     };
   });
@@ -1659,6 +1836,16 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="upload-filing-document")uploadFilingDocument(id);
       if(act==="open-document")openDocument(id);if(act==="toggle-job-visibility")toggleJobVisibility(id);
       if(act==="retry-invoices")loadInvoices(true);
+      if(act==="refresh-sales")loadSales(true);
+      if(act==="edit-enquiry")newSalesEnquiry(id);
+      if(act==="new-quote")newFreightQuote("",id);
+      if(act==="edit-quote")newFreightQuote(id);
+      if(act==="issue-quote")issueFreightQuote(id);
+      if(act==="accept-quote")setFreightQuoteOutcome(id,"accepted");
+      if(act==="reject-quote")setFreightQuoteOutcome(id,"rejected");
+      if(act==="convert-quote")convertFreightQuote(id);
+      if(act==="print-quote")printFreightQuote(id);
+      if(act==="open-converted-job"){state.selectedJob=id;state.page="jobdetail";render()}
       if(act==="edit-invoice")newInvoice(id);
       if(act==="issue-invoice")issueInvoice(id);
       if(act==="delete-invoice")deleteInvoiceDraft(id);
