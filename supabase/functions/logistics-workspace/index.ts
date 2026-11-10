@@ -279,7 +279,7 @@ Deno.serve(async (req: Request) => {
         direction: val(d.direction || "import", ["import","export","cross_trade","transshipment"], "shipment direction"),
         status: val(d.status || "draft", ["draft","booked","origin_handling","departed","transshipment","arrived","customs","destination_handling","out_for_delivery","delivered","closed","on_hold","cancelled"], "job status"),
         hbl_no: text(d.hbl_no, 120), mbl_no: text(d.mbl_no, 120), booking_no: text(d.booking_no, 120),
-        customer_name: text(d.customer_name, 180), shipper: text(d.shipper, 180),
+        customer_name: text(d.customer_name, 180), customer_id: d.customer_id ? uuid(d.customer_id) : null, shipper: text(d.shipper, 180),
         consignee: text(d.consignee, 180), notify_party: text(d.notify_party, 180),
         origin_agent: text(d.origin_agent, 180), destination_agent: text(d.destination_agent, 180),
         carrier: text(d.carrier, 120), vessel_name: text(d.vessel_name, 160), voyage_no: text(d.voyage_no, 80),
@@ -297,6 +297,12 @@ Deno.serve(async (req: Request) => {
         notes: text(d.notes, 3000), updated_by: actorId, updated_at: new Date().toISOString(),
         ...(!id ? { created_by: actorId } : {}),
       };
+      if (row.customer_id) {
+        const { data: customer, error: customerError } = await admin.from("customer_accounts").select("id,legal_name,is_active").eq("id", row.customer_id).maybeSingle();
+        if (customerError || !customer) throw new Error("Customer account not found.");
+        if (!customer.is_active && before?.customer_id !== customer.id) throw new Error("Reactivate this customer account before assigning it to a new job.");
+        row.customer_name = customer.legal_name;
+      }
       const { data, error } = await admin.from("forwarding_jobs").upsert(row).select("*").single();
       if (error?.code === "23505") throw new Error("That job number is already in use.");
       if (error) throw new Error(error.message);
@@ -593,14 +599,115 @@ Deno.serve(async (req: Request) => {
     }
 
 
+    if (action === "upsertCustomer") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const before = id ? (await admin.from("customer_accounts").select("*").eq("id", id).maybeSingle()).data : null;
+      if (id && !before) throw new Error("Customer account not found.");
+      const legalName = text(d.legal_name, 180);
+      if (!legalName) throw new Error("Customer legal name is required.");
+      const country = text(d.country || "India", 80);
+      const gstin = text(d.gstin, 20).toUpperCase();
+      if (gstin && /^india$/i.test(country) && !/^[0-9]{2}[A-Z0-9]{13}$/.test(gstin)) throw new Error("Enter a valid 15-character GSTIN or leave the tax ID blank.");
+      const stateCode = text(d.state_code, 2);
+      if (stateCode && !/^\d{2}$/.test(stateCode)) throw new Error("GST state code must contain two digits.");
+      const currency = text(d.default_currency || "INR", 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
+      const row = {
+        ...(id ? { id } : {}),
+        customer_code: text(d.customer_code, 40) || before?.customer_code || "CUST-" + crypto.randomUUID().slice(0, 8).toUpperCase(),
+        legal_name: legalName, display_name: text(d.display_name, 140), gstin,
+        billing_address: text(d.billing_address, 700), city: text(d.city, 120), state: text(d.state, 100),
+        state_code: stateCode, postal_code: text(d.postal_code, 20), country,
+        email: text(d.email, 254).toLowerCase(), phone: text(d.phone, 60), default_currency: currency,
+        payment_terms: text(d.payment_terms || "Due within 30 days", 500),
+        credit_limit_inr: number(d.credit_limit_inr || 0, "Credit limit", 0),
+        is_active: before?.is_active ?? true, notes: text(d.notes, 2000),
+        updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!id ? { created_by: actorId } : {}),
+      };
+      const { data, error } = await admin.from("customer_accounts").upsert(row).select("*").single();
+      if (error?.code === "23505") throw new Error("That customer account code is already in use.");
+      if (error) throw new Error(error.message);
+      await recordAudit(id ? "update" : "create", "customer_account", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "setCustomerStatus") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("customer_accounts").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Customer account not found.");
+      const isActive = payload.is_active === true || payload.is_active === "true";
+      const { data, error } = await admin.from("customer_accounts").update({
+        is_active: isActive, updated_by: actorId, updated_at: new Date().toISOString(),
+      }).eq("id", id).select("*").single();
+      if (error) throw new Error(error.message);
+      await recordAudit(isActive ? "reactivate" : "deactivate", "customer_account", id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "upsertCustomer") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const before = id ? (await admin.from("customer_accounts").select("*").eq("id", id).maybeSingle()).data : null;
+      if (id && !before) throw new Error("Customer account not found.");
+      const legalName = text(d.legal_name, 180);
+      if (!legalName) throw new Error("Customer legal name is required.");
+      const country = text(d.country || "India", 80);
+      const gstin = text(d.gstin, 20).toUpperCase();
+      if (gstin && /^india$/i.test(country) && !/^[0-9]{2}[A-Z0-9]{13}$/.test(gstin)) throw new Error("Enter a valid 15-character GSTIN or leave the tax ID blank.");
+      const stateCode = text(d.state_code, 2);
+      if (stateCode && !/^\d{2}$/.test(stateCode)) throw new Error("GST state code must contain two digits.");
+      const currency = text(d.default_currency || "INR", 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
+      const row = {
+        ...(id ? { id } : {}),
+        customer_code: text(d.customer_code, 40) || before?.customer_code || "CUST-" + crypto.randomUUID().slice(0, 8).toUpperCase(),
+        legal_name: legalName, display_name: text(d.display_name, 140), gstin,
+        billing_address: text(d.billing_address, 700), city: text(d.city, 120), state: text(d.state, 100),
+        state_code: stateCode, postal_code: text(d.postal_code, 20), country,
+        email: text(d.email, 254).toLowerCase(), phone: text(d.phone, 60), default_currency: currency,
+        payment_terms: text(d.payment_terms || "Due within 30 days", 500),
+        credit_limit_inr: number(d.credit_limit_inr || 0, "Credit limit", 0),
+        is_active: before?.is_active ?? true, notes: text(d.notes, 2000),
+        updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!id ? { created_by: actorId } : {}),
+      };
+      const { data, error } = await admin.from("customer_accounts").upsert(row).select("*").single();
+      if (error?.code === "23505") throw new Error("That customer account code is already in use.");
+      if (error) throw new Error(error.message);
+      await recordAudit(id ? "update" : "create", "customer_account", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "setCustomerStatus") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("customer_accounts").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Customer account not found.");
+      const isActive = payload.is_active === true || payload.is_active === "true";
+      const { data, error } = await admin.from("customer_accounts").update({
+        is_active: isActive, updated_by: actorId, updated_at: new Date().toISOString(),
+      }).eq("id", id).select("*").single();
+      if (error) throw new Error(error.message);
+      await recordAudit(isActive ? "reactivate" : "deactivate", "customer_account", id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
     if (action === "listInvoices") {
       roleCheck(profile.role, "finance");
-      const [{ data: invoices, error: invoiceError }, { data: settings, error: settingsError }] = await Promise.all([
-        admin.from("shipment_invoices").select("*").order("updated_at", { ascending: false }).limit(250),
+      const [invoiceResult, settingsResult, customerResult, creditResult, paymentResult] = await Promise.all([
+        admin.from("shipment_invoices").select("*").order("updated_at", { ascending: false }).limit(1000),
         admin.from("shipment_invoice_settings").select("data").eq("id", "default").maybeSingle(),
+        admin.from("customer_accounts").select("*").order("legal_name", { ascending: true }).limit(2500),
+        admin.from("shipment_credit_notes").select("*").order("created_at", { ascending: false }).limit(2500),
+        admin.from("shipment_invoice_payments").select("*").order("received_at", { ascending: false }).limit(5000),
       ]);
-      if (invoiceError || settingsError) throw new Error("Invoice records could not be loaded.");
-      return reply(200, { invoices: invoices ?? [], settings: settings?.data ?? {} }, origin);
+      if (invoiceResult.error || settingsResult.error || customerResult.error || creditResult.error || paymentResult.error) throw new Error("Invoice, customer and receivables records could not be loaded.");
+      return reply(200, { invoices: invoiceResult.data ?? [], settings: settingsResult.data?.data ?? {}, customers: customerResult.data ?? [], creditNotes: creditResult.data ?? [], payments: paymentResult.data ?? [] }, origin);
     }
 
     if (action === "upsertInvoice") {
@@ -619,6 +726,13 @@ Deno.serve(async (req: Request) => {
 
       const obj = (v: unknown): Record<string, unknown> =>
         v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : {};
+      const customerId = d.customer_id ? uuid(d.customer_id) : linkedJob?.customer_id ?? null;
+      let account: Record<string, unknown> | null = null;
+      if (customerId) {
+        const { data, error } = await admin.from("customer_accounts").select("*").eq("id", customerId).maybeSingle();
+        if (error || !data) throw new Error("Customer account not found.");
+        account = data;
+      }
       const s = obj(d.seller), b = obj(d.buyer);
       const seller = {
         name: text(s.name, 180), gstin: text(s.gstin, 20).toUpperCase(), address: text(s.address, 700),
@@ -627,7 +741,12 @@ Deno.serve(async (req: Request) => {
         bank_name: text(s.bank_name, 140), bank_account: text(s.bank_account, 80),
         ifsc: text(s.ifsc, 30).toUpperCase(), upi: text(s.upi, 120),
       };
-      const buyer = {
+      const buyer = account ? {
+        name: text(account.legal_name, 180), gstin: text(account.gstin, 20).toUpperCase(),
+        address: text([account.billing_address, account.city].filter(Boolean).join(", "), 700),
+        state: text(account.state, 100), state_code: text(account.state_code, 2),
+        postal_code: text(account.postal_code, 20), country: text(account.country || "India", 80), email: text(account.email, 180),
+      } : {
         name: text(b.name, 180), gstin: text(b.gstin, 20).toUpperCase(), address: text(b.address, 700),
         state: text(b.state, 100), state_code: text(b.state_code, 2), postal_code: text(b.postal_code, 20),
         country: text(b.country || "India", 80), email: text(b.email, 180),
@@ -637,7 +756,7 @@ Deno.serve(async (req: Request) => {
       const invoiceDate = date(d.invoice_date);
       if (!invoiceDate) throw new Error("Invoice date is required.");
       const dueDate = date(d.due_date);
-      const currency = text(d.currency || "INR", 3).toUpperCase();
+      const currency = text(d.currency || account?.default_currency || "INR", 3).toUpperCase();
       if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
       const fx = currency === "INR" ? 1 : number(d.exchange_rate_to_inr, "INR exchange rate", 0.000001);
       const fxDate = date(d.fx_date);
@@ -688,10 +807,10 @@ Deno.serve(async (req: Request) => {
       const row = {
         ...(id ? { id } : {}), invoice_number: null, status: "draft", invoice_type: invoiceType,
         invoice_date: invoiceDate, due_date: dueDate, job_id: jobId, hbl_id: linkedHbl?.id ?? null,
-        container_no: containerNo, seller, buyer, supply_type: supplyType,
-        place_of_supply: text(d.place_of_supply, 160), place_of_supply_state_code: text(d.place_of_supply_state_code, 2),
+        container_no: containerNo, customer_id: customerId, seller, buyer, supply_type: supplyType,
+        place_of_supply: text(d.place_of_supply || account?.state || account?.city, 160), place_of_supply_state_code: text(d.place_of_supply_state_code || account?.state_code, 2),
         reverse_charge: reverseCharge,
-        po_number: text(d.po_number, 120), payment_terms: text(d.payment_terms, 500),
+        po_number: text(d.po_number, 120), payment_terms: text(d.payment_terms || account?.payment_terms, 500),
         currency, exchange_rate_to_inr: fx, fx_date: fxDate, fx_source: fxSource, lines,
         subtotal, discount_total: discountTotal, taxable_value: taxableValue, cgst_total: cgstTotal,
         sgst_total: sgstTotal, igst_total: igstTotal, total_tax: totalTax, adjustment, total,
@@ -758,6 +877,176 @@ Deno.serve(async (req: Request) => {
       if (issueError) throw new Error(issueError.message);
       const result = Array.isArray(issued) ? issued[0] : issued;
       await recordAudit("issue", "shipment_invoice", id, invoice, result);
+      return reply(200, { record: result }, origin);
+    }
+
+    if (action === "deleteDraftInvoice") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("shipment_invoices").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Invoice not found.");
+      if (before.status !== "draft") throw new Error("Issued invoices cannot be deleted. Create a credit note instead.");
+      const { data: deleted, error } = await admin.from("shipment_invoices").delete().eq("id", id).eq("status", "draft").select("id").maybeSingle();
+      if (error || !deleted) throw new Error("Draft invoice could not be deleted.");
+      await recordAudit("delete_draft", "shipment_invoice", id, before, null);
+      return reply(200, { deleted: true }, origin);
+    }
+
+    if (action === "deleteDraftInvoice") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("shipment_invoices").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Invoice not found.");
+      if (before.status !== "draft") throw new Error("Issued invoices cannot be deleted. Create a credit note instead.");
+      const { data: deleted, error } = await admin.from("shipment_invoices").delete().eq("id", id).eq("status", "draft").select("id").maybeSingle();
+      if (error || !deleted) throw new Error("Draft invoice could not be deleted.");
+      await recordAudit("delete_draft", "shipment_invoice", id, before, null);
+      return reply(200, { deleted: true }, origin);
+    }
+
+    if (action === "upsertCreditNote") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const invoiceId = uuid(d.invoice_id);
+      const { data: invoice, error: invoiceError } = await admin.from("shipment_invoices").select("*").eq("id", invoiceId).maybeSingle();
+      if (invoiceError || !invoice || invoice.status !== "issued") throw new Error("Select an issued invoice for the credit note.");
+      const before = id ? (await admin.from("shipment_credit_notes").select("*").eq("id", id).maybeSingle()).data : null;
+      if (id && (!before || before.status !== "draft" || before.invoice_id !== invoiceId)) throw new Error("Only a draft credit note for this invoice can be edited.");
+      const creditDate = date(d.credit_date);
+      if (!creditDate) throw new Error("Credit-note date is required.");
+      const reason = text(d.reason, 1000);
+      if (!reason) throw new Error("Enter the reason for this credit note.");
+      const obj = (v: unknown): Record<string, unknown> => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : {};
+      const originalLines = Array.isArray(invoice.lines) ? invoice.lines as Record<string, unknown>[] : [];
+      const requested = Array.isArray(d.lines) ? d.lines : [];
+      if (!requested.length || requested.length > originalLines.length) throw new Error("Choose at least one original invoice line to credit.");
+      const { data: priorNotes, error: priorError } = await admin.from("shipment_credit_notes").select("lines").eq("invoice_id", invoiceId).eq("status", "issued");
+      if (priorError) throw new Error("Could not verify earlier credit notes.");
+      const used = new Map<number, number>();
+      for (const note of priorNotes ?? []) for (const line of (Array.isArray(note.lines) ? note.lines : []) as Record<string, unknown>[]) {
+        const index = Number(line.original_line_index);
+        if (Number.isInteger(index)) used.set(index, (used.get(index) ?? 0) + Number(line.quantity || 0));
+      }
+      const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+      const taxApplies = invoice.invoice_type === "tax_invoice" && invoice.supply_type !== "export_lut";
+      const reverseCharge = invoice.reverse_charge === true;
+      const seen = new Set<number>();
+      let subtotal = 0, discountTotal = 0, taxableValue = 0, cgstTotal = 0, sgstTotal = 0, igstTotal = 0;
+      const lines = requested.map((raw: unknown) => {
+        const item = obj(raw), index = Number(item.original_line_index);
+        if (!Number.isInteger(index) || index < 0 || index >= originalLines.length || seen.has(index)) throw new Error("Credit each original invoice line once.");
+        seen.add(index);
+        const source = obj(originalLines[index]);
+        const quantity = number(item.quantity, "Credit quantity", 0.000001);
+        const available = Number(source.quantity || 0) - (used.get(index) ?? 0);
+        if (quantity > available + 0.000001) throw new Error("Credit quantity exceeds the uncredited quantity on line " + (index + 1) + ".");
+        const gross = round2(quantity * Number(source.unit_price || 0));
+        const discountPercent = Number(source.discount_percent || 0);
+        const discount = round2(gross * discountPercent / 100), taxable = round2(gross - discount);
+        const gstRate = taxApplies ? Number(source.gst_rate || 0) : 0;
+        const tax = round2(taxable * gstRate / 100);
+        let cgst = 0, sgst = 0, igst = 0;
+        if (invoice.supply_type === "intra_state") { cgst = round2(tax / 2); sgst = round2(tax - cgst); }
+        else if (invoice.supply_type === "inter_state" || invoice.supply_type === "export_igst") igst = tax;
+        subtotal += gross; discountTotal += discount; taxableValue += taxable;
+        cgstTotal += cgst; sgstTotal += sgst; igstTotal += igst;
+        return {
+          original_line_index: index, description: text(source.description, 240), hsn_sac: text(source.hsn_sac, 20),
+          quantity, unit: text(source.unit || "service", 30), unit_price: Number(source.unit_price || 0),
+          discount_percent: discountPercent, discount_amount: discount, taxable_value: taxable,
+          gst_rate: gstRate, cgst_amount: cgst, sgst_amount: sgst, igst_amount: igst,
+          tax_amount: tax, line_total: round2(taxable + (reverseCharge ? 0 : tax)),
+        };
+      });
+      subtotal = round2(subtotal); discountTotal = round2(discountTotal); taxableValue = round2(taxableValue);
+      cgstTotal = round2(cgstTotal); sgstTotal = round2(sgstTotal); igstTotal = round2(igstTotal);
+      const totalTax = round2(cgstTotal + sgstTotal + igstTotal);
+      const originalTaxable = Number(invoice.taxable_value || 0);
+      const adjustment = round2(originalTaxable ? Number(invoice.adjustment || 0) * taxableValue / originalTaxable : 0);
+      const total = round2(taxableValue + (reverseCharge ? 0 : totalTax) + adjustment);
+      if (!(total > 0)) throw new Error("Credit-note total must be greater than zero.");
+      if (d.save_status === "issue") {
+        const { data: issuedNotes, error: issuedReadError } = await admin.from("shipment_credit_notes").select("total").eq("invoice_id", invoiceId).eq("status", "issued");
+        if (issuedReadError) throw new Error("Could not verify the invoice's remaining creditable amount.");
+        const alreadyCredited = (issuedNotes ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.total || 0), 0);
+        if (alreadyCredited + total > Number(invoice.total) + 0.005) throw new Error("This credit exceeds the remaining invoice amount.");
+      }
+      const row = {
+        ...(id ? { id } : {}), invoice_id: invoiceId, credit_note_number: null, status: "draft",
+        credit_date: creditDate, reason, invoice_number_snapshot: invoice.invoice_number,
+        seller: invoice.seller ?? {}, buyer: invoice.buyer ?? {}, currency: invoice.currency,
+        exchange_rate_to_inr: invoice.exchange_rate_to_inr, fx_date: invoice.fx_date, fx_source: invoice.fx_source,
+        supply_type: invoice.supply_type, place_of_supply: invoice.place_of_supply,
+        place_of_supply_state_code: invoice.place_of_supply_state_code, reverse_charge: reverseCharge,
+        lines, subtotal, discount_total: discountTotal, taxable_value: taxableValue,
+        cgst_total: cgstTotal, sgst_total: sgstTotal, igst_total: igstTotal, total_tax: totalTax,
+        adjustment, total, total_inr: round2(total * Number(invoice.exchange_rate_to_inr || 1)),
+        issued_at: null, updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!id ? { created_by: actorId } : {}),
+      };
+      const { data: saved, error } = await admin.from("shipment_credit_notes").upsert(row).select("*").single();
+      if (error) throw new Error(error.message);
+      let result = saved;
+      if (d.save_status === "issue") {
+        const { data: issued, error: issueError } = await admin.rpc("issue_shipment_credit_note", { p_credit_note_id: saved.id, p_user_id: actorId });
+        if (issueError) {
+          if (!id) await admin.from("shipment_credit_notes").delete().eq("id", saved.id).eq("status", "draft");
+          throw new Error(issueError.message);
+        }
+        result = Array.isArray(issued) ? issued[0] : issued;
+      }
+      await recordAudit(d.save_status === "issue" ? "issue" : (id ? "update" : "create"), "shipment_credit_note", saved.id, before, result);
+      return reply(200, { record: result }, origin);
+    }
+
+    if (action === "issueCreditNote") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("shipment_credit_notes").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Credit note not found.");
+      if (before.status !== "draft") throw new Error("Only a draft credit note can be issued.");
+      const { data, error } = await admin.rpc("issue_shipment_credit_note", { p_credit_note_id: id, p_user_id: actorId });
+      if (error) throw new Error(error.message);
+      const result = Array.isArray(data) ? data[0] : data;
+      await recordAudit("issue", "shipment_credit_note", id, before, result);
+      return reply(200, { record: result }, origin);
+    }
+
+    if (action === "deleteDraftCreditNote") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("shipment_credit_notes").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Credit note not found.");
+      if (before.status !== "draft") throw new Error("An issued credit note cannot be deleted.");
+      const { data: deleted, error } = await admin.from("shipment_credit_notes").delete().eq("id", id).eq("status", "draft").select("id").maybeSingle();
+      if (error || !deleted) throw new Error("Draft credit note could not be deleted.");
+      await recordAudit("delete_draft", "shipment_credit_note", id, before, null);
+      return reply(200, { deleted: true }, origin);
+    }
+
+    if (action === "recordInvoicePayment") {
+      roleCheck(profile.role, "finance");
+      const paymentData = payload.data ?? {};
+      const invoiceId = uuid(paymentData.invoice_id);
+      const amount = number(paymentData.amount, "Receipt amount", 0.01);
+      const currency = text(paymentData.currency, 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
+      const rate = currency === "INR" ? 1 : number(paymentData.exchange_rate_to_inr, "INR exchange rate", 0.000001);
+      const receivedAt = date(paymentData.received_at);
+      if (!receivedAt) throw new Error("Receipt date is required.");
+      const fxDate = date(paymentData.fx_date) || receivedAt;
+      const method = val(paymentData.payment_method || "bank_transfer", ["bank_transfer","upi","cash","card","cheque","other"], "payment method");
+      const { data: invoice } = await admin.from("shipment_invoices").select("*").eq("id", invoiceId).maybeSingle();
+      if (!invoice) throw new Error("Invoice not found.");
+      const { data: payment, error } = await admin.rpc("record_shipment_invoice_payment", {
+        p_invoice_id: invoiceId, p_received_at: receivedAt, p_amount: amount, p_currency: currency,
+        p_exchange_rate_to_inr: rate, p_fx_date: fxDate, p_fx_source: text(currency === "INR" ? "INR base currency" : paymentData.fx_source || "Manual override", 120),
+        p_payment_method: method, p_reference: text(paymentData.reference, 160), p_notes: text(paymentData.notes, 1000), p_user_id: actorId,
+      });
+      if (error) throw new Error(error.message);
+      const result = Array.isArray(payment) ? payment[0] : payment;
+      await recordAudit("receipt", "shipment_invoice_payment", result.id, null, result);
       return reply(200, { record: result }, origin);
     }
 
