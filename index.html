@@ -343,7 +343,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceSettings:{},invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -357,6 +357,25 @@ function notify(m,type){const t=$("toast");t.textContent=m;t.className="toast "+
 function connection(s,type){$("connection").textContent=s;$("connection").className="connect "+(type||"")}
 async function call(fn,body){const {data,error}=await db.functions.invoke(fn,{body});if(error){let msg="";try{msg=(await error.context.clone().json()).error||""}catch(_){}throw new Error(msg||data?.error||error.message||"Request failed")}if(data?.error)throw new Error(data.error);return data}
 async function loadJobs(){const d=await call("logistics-workspace",{action:"read"});for(const k of ["jobs","jobHbls","jobContainers","milestones","sailings","sailingShipments","consolidations","consolidationItems","charges","filings","documents","alertActions"])state.ops[k]=Array.isArray(d[k])?d[k]:[];state.ops.loaded=true;if(d.profile)state.profile={...(state.profile||{}),...d.profile}}
+
+async function loadInvoices(force=false){
+  if(state.ops.invoicesLoading)return;
+  if(state.ops.invoicesLoaded&&!force)return;
+  state.ops.invoicesLoading=true;state.ops.invoiceLoadError="";
+  try{
+    const d=await call("logistics-workspace",{action:"listInvoices"});
+    state.ops.invoices=Array.isArray(d.invoices)?d.invoices:[];
+    state.ops.invoiceSettings=d.settings&&typeof d.settings==="object"?d.settings:{};
+    state.ops.invoicesLoaded=true;
+  }catch(e){
+    state.ops.invoiceLoadError=e.message||"Invoice records could not be loaded.";
+    state.ops.invoicesLoaded=true;
+    notify(state.ops.invoiceLoadError,"error");
+  }finally{
+    state.ops.invoicesLoading=false;
+    if(state.page==="finance")render();
+  }
+}
 async function loadEquipment(){const d=await call("operations-data",{action:"read"});if(!Array.isArray(d.data))throw new Error("The equipment register could not be loaded.");state.rows=d.data;state.updatedAt=d.updatedAt;if(d.profile)state.profile={...(state.profile||{}),...d.profile}}
 function identity(){const p=state.profile||{},who=p.displayName||state.session?.user?.email||"Staff";$("userName").textContent=who;$("railUser").textContent=who;$("railRole").textContent=(p.role||"Staff")+" permissions"}
 function renderWorkspaceLoadError(){const content=$("content");if(!content)return;const localPreview=location.protocol==="file:";content.innerHTML=localPreview?'<section class="cw-load-error" role="alert"><span class="cw-load-error-icon">!</span><div><h2>Use the hosted staff workspace</h2><p>Local file previews cannot connect to protected shipment services. Open the hosted site and sign in to load live records.</p><a class="btn primary" href="https://weirdofactory.github.io/container_tracking/">Open hosted workspace</a></div></section>':'<section class="cw-load-error" role="alert"><span class="cw-load-error-icon">!</span><div><h2>Workspace data did not load</h2><p>The shipment and equipment services could not be reached. Retry the connection in a moment.</p><button class="btn primary" id="retryWorkspace">↻ Retry loading</button></div></section>';const retry=$("retryWorkspace");if(retry)retry.onclick=refreshAll}
@@ -752,9 +771,22 @@ function renderFilings(){
   return pageHead("filings",'<button class="btn primary" data-create="filing">New filing</button>')+
   pane("CUSTOMS & COMPLIANCE REGISTER",table(["JOB / HBL","CONTAINER","TYPE","HBL","MBL","DUE DATE","FILED","ACKNOWLEDGED","STATUS","DOCS","ACTIONS"],rows,"No filing entries."));
 }function renderFinance(){
-  const rows=state.ops.charges.map(x=>{
+  const invoiceRows=(state.ops.invoices||[]).map(inv=>{
+    const linkedHbl=inv.hbl_id?state.ops.jobHbls.find(h=>h.id===inv.hbl_id):null;
+    const j=resolveJob(inv.job_id,inv.container_no,linkedHbl?.hbl_no,inv.hbl_id);
+    const job=j?'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>':'<span class="cell-sub">General invoice</span>';
+    const status=inv.status==="issued"?'<span class="pill green">Issued</span>':'<span class="pill amber">Draft</span>';
+    const ref=inv.invoice_number||("Draft · "+String(inv.id||"").slice(0,8).toUpperCase());
+    const actions=actionBtn("print-invoice","Print",'data-id="'+esc(inv.id)+'"')+
+      (inv.status==="draft"?actionBtn("edit-invoice","Edit",'data-id="'+esc(inv.id)+'"')+actionBtn("issue-invoice","Issue & number",'data-id="'+esc(inv.id)+'"'):"");
+    return '<tr><td><b>'+esc(ref)+'</b><span class="cell-sub">'+esc(inv.invoice_type?.replace(/_/g," ")||"Invoice")+'</span></td><td>'+job+'<span class="cell-sub">'+esc(j?.hbl_no||"")+'</span></td><td>'+esc(inv.buyer?.name||"—")+'</td><td>'+fmt(inv.invoice_date)+'</td><td>'+esc(inv.currency||"INR")+' '+num(inv.total)+'<span class="cell-sub">INR '+num(inv.total_inr)+'</span></td><td>'+status+'</td><td>'+actions+'</td></tr>';
+  });
+  const invoiceTable=state.ops.invoicesLoading?'<div class="empty">Loading invoice register…</div>':
+    state.ops.invoiceLoadError?'<div class="empty">'+esc(state.ops.invoiceLoadError)+' '+actionBtn("retry-invoices","Retry")+'</div>':
+    table(["INVOICE NO. / TYPE","JOB / HBL","BILL TO","INVOICE DATE","TOTAL / INR","STATUS","ACTIONS"],invoiceRows,"No invoices yet. Create a draft, add line items, then issue it to assign the next invoice number.");
+  const chargeRows=state.ops.charges.map(x=>{
     const linkedHbl=x.hbl_id?state.ops.jobHbls.find(h=>h.id===x.hbl_id):null;
-    const j=resolveJob(x.job_id,x.container_no,linkedHbl?.hbl_no||x.hbl_no, x.hbl_id);
+    const j=resolveJob(x.job_id,x.container_no,linkedHbl?.hbl_no||x.hbl_no,x.hbl_id);
     const job=j?'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>':'<span class="pill amber">Unmapped</span>';
     return '<tr><td>'+job+'<span class="cell-sub">'+esc(j?.hbl_no||"")+'</span></td><td>'+esc(x.container_no||"Job level")+'</td><td>'+esc(x.direction)+'</td><td>'+esc(x.charge_code)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.counterparty)+'</td><td>'+esc(x.currency)+' '+num(x.amount)+'<span class="cell-sub">'+(x.amount_inr!=null?"INR "+num(x.amount_inr):"")+'</span></td><td>'+pill(x.approval_status)+'</td><td>'+fmt(x.due_date)+'</td><td>'+actionBtn("edit-charge","Edit",'data-id="'+esc(x.id)+'"')+actionBtn("print-charge","Print",'data-id="'+esc(x.id)+'"')+(x.approval_status!=="approved"&&state.profile?.role==="Admin"?actionBtn("approve-charge","Approve",'data-id="'+esc(x.id)+'"'):"")+(state.profile?.role==="Admin"?actionBtn("delete-charge","Delete",'data-id="'+esc(x.id)+'"'):"")+'</td></tr>';
   });
@@ -762,10 +794,12 @@ function renderFilings(){
   const cost=approved.filter(x=>x.direction==="cost").reduce((n,x)=>n+Number(x.amount_inr??x.amount??0),0);
   const revenue=approved.filter(x=>x.direction==="revenue").reduce((n,x)=>n+Number(x.amount_inr??x.amount??0),0);
   const unmapped=state.ops.charges.filter(x=>!resolveJob(x.job_id,x.container_no)).length;
-  return pageHead("finance",'<button class="btn primary" data-create="charge">New charge</button>')+
-  '<div class="stats">'+stat("Charge lines",state.ops.charges.length,"Costs and revenues")+stat("Cost records",state.ops.charges.filter(x=>x.direction==="cost").length,"Cost postings")+stat("Revenue records",state.ops.charges.filter(x=>x.direction==="revenue").length,"Revenue postings")+stat("Awaiting approval",state.ops.charges.filter(x=>x.approval_status!=="approved").length,"Draft charges")+stat("Approved",approved.length,"Approved records")+'</div>'+
+  return pageHead("finance",'<button class="btn primary" data-create="invoice">Raise invoice</button><button class="btn" data-create="charge">New charge</button>')+
+  '<div class="stats">'+stat("Invoices",(state.ops.invoices||[]).length,"Drafts and issued")+stat("Issued invoices",(state.ops.invoices||[]).filter(x=>x.status==="issued").length,"Numbered records")+stat("Charge lines",state.ops.charges.length,"Costs and revenues")+stat("Awaiting approval",state.ops.charges.filter(x=>x.approval_status!=="approved").length,"Draft charges")+'</div>'+
+  pane("CUSTOMER INVOICE REGISTER",invoiceTable,null,"Drafts receive a number only when issued")+
+  '<div style="height:9px"></div>'+
   '<div class="stats">'+stat("Approved costs","INR "+num(cost),"Converted total")+stat("Approved revenue","INR "+num(revenue),"Converted total")+stat("Contribution","INR "+num(revenue-cost),"Revenue less cost")+stat("Unmapped lines",unmapped,"Need job or container mapping")+'</div>'+
-  pane("SHIPMENT CHARGES REGISTER",table(["JOB / HBL","CONTAINER","TYPE","CHARGE CODE","DESCRIPTION","COUNTERPARTY","AMOUNT","APPROVAL","DUE DATE","ACTIONS"],rows,"No shipment charges."));
+  pane("SHIPMENT CHARGES REGISTER",table(["JOB / HBL","CONTAINER","TYPE","CHARGE CODE","DESCRIPTION","COUNTERPARTY","AMOUNT","APPROVAL","DUE DATE","ACTIONS"],chargeRows,"No shipment charges."));
 }function renderDocuments(){
   const rows=state.ops.documents.map(x=>{
     const filing=state.ops.filings.find(f=>f.id===x.filing_id);
@@ -829,7 +863,7 @@ function renderCustomer(){
 
 async function loadStaffUsers(){const target=$("staffUsers");if(!target)return;target.innerHTML='<span class="desc">Loading staff accounts…</span>';try{const d=await call("logistics-workspace",{action:"listStaffUsers"});const rows=(d.users||[]).map(u=>'<tr><td>'+esc(u.display_name)+'</td><td>'+esc(u.email)+'</td><td>'+pill(u.role)+'</td><td>'+pill(u.is_active?"Active":"Disabled")+'</td><td>'+esc(u.created_at?fmt(u.created_at):"—")+'</td><td><button class="btn small red" data-action="delete-staff-user" data-id="'+esc(u.user_id)+'" data-email="'+esc(u.email)+'">Delete</button></td></tr>');target.innerHTML=table(["NAME","EMAIL","ROLE","STATUS","CREATED","ACTIONS"],rows,"No staff accounts found.")}catch(e){target.innerHTML='<div class="form-error">'+esc(e.message||"Could not load staff accounts.")+'</div>'}}
 function renderSettings(){return pageHead("settings")+(state.profile?.role==="Admin"?'<div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">CREATE STAFF LOGIN</span><span class="pane-sub">Admin only · managed inside this website</span></div><div class="pane-body"><form id="staffCreateForm"><div class="formgrid"><div class="field"><label>FULL NAME *</label><input name="display_name" required maxlength="120"></div><div class="field"><label>EMAIL ADDRESS *</label><input name="email" type="email" required maxlength="254"></div><div class="field"><label>TEMPORARY PASSWORD *</label><input name="password" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>ACCESS ROLE *</label><select name="role"><option>Operator</option><option>Editor</option><option>Viewer</option><option>Admin</option></select></div></div><button class="btn primary" type="submit">＋ Create staff user</button><div class="form-error" id="staffFormError"></div></form></div></div><div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">STAFF ACCOUNTS</span><button class="btn small" id="reloadStaff">↻ Refresh users</button></div><div class="pane-body" id="staffUsers"><span class="desc">Loading staff accounts…</span></div></div>':'<div class="pane"><div class="pane-body">Staff account administration is restricted to Admin users.</div></div>')+'<div class="columns">'+pane("STAFF SESSION",'<div class="pane-body">User: '+esc(state.session?.user?.email||"—")+'<br>Role: '+esc(state.profile?.role||"—")+'<br>Equipment records: '+state.rows.length+'</div>')+pane("CONNECTED SERVICES",'<div class="pane-body">Supabase authentication '+pill("Connected")+'<br>Protected operations API '+pill("Connected")+'<br>Customer tracking API '+pill("Active")+'</div>')+'</div>'}
-function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(state.page==="finance")html=renderFinance();else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
+function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(state.page==="finance"){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=renderFinance()}else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
 function setNavigationOpen(open){$("app").classList.toggle("menu-open",open);$("hamb").setAttribute("aria-expanded",String(open))}
 function navigate(p){if(p==="jobdetail"||p==="consol")p="containers";state.page=p;state.query="";$("globalSearch").value="";setNavigationOpen(false);render()}
 function field(f){const value=f.value??"";let input;if(f.options)input='<select name="'+esc(f.name)+'" '+(f.required?"required":"")+'>'+f.options.map(o=>'<option value="'+esc(o[0])+'" '+(String(o[0])===String(value)?"selected":"")+'>'+esc(o[1])+'</option>').join("")+'</select>';else if(f.type==="textarea")input='<textarea name="'+esc(f.name)+'">'+esc(value)+'</textarea>';else{let v=value;if(f.type==="date"&&v)v=String(v).slice(0,10);if(f.type==="datetime-local"&&v)v=new Date(v).toISOString().slice(0,16);input='<input name="'+esc(f.name)+'" type="'+(f.type||"text")+'" value="'+esc(v)+'" '+(f.accept?'accept="'+esc(f.accept)+'"':"") +' '+(f.required?"required":"")+' '+(f.step?'step="'+esc(f.step)+'"':"")+'>'}return'<div class="field '+(f.span2?"span2":"")+'"><label>'+esc(f.label.toUpperCase())+(f.required?" *":"")+'</label>'+input+'</div>'}
@@ -1002,6 +1036,228 @@ function newCharge(chargeId,presetJobId){
     await loadJobs();closeForm();render();notify(chargeId?"Charge updated":"Charge saved","success");
   });
 }
+
+function invoiceLineMarkup(line){
+  const x=line||{};
+  const inputStyle=' style="width:100%;height:27px;border:1px solid #cfd8df;background:#fff;padding:4px 5px;border-radius:3px;font:10px Segoe UI,Arial,sans-serif"';
+  return '<div data-invoice-line style="display:grid;grid-template-columns:minmax(150px,2fr) minmax(80px,.85fr) minmax(55px,.55fr) minmax(70px,.6fr) minmax(95px,1fr) minmax(70px,.65fr) minmax(70px,.65fr) 28px;gap:5px;align-items:center;margin:5px 0">'+
+    '<input'+inputStyle+' name="line_description" aria-label="Description" placeholder="Service / charge description" required value="'+esc(x.description||"")+'">'+
+    '<input'+inputStyle+' name="line_hsn_sac" aria-label="HSN or SAC" placeholder="HSN / SAC" value="'+esc(x.hsn_sac||"")+'">'+
+    '<input'+inputStyle+' name="line_quantity" aria-label="Quantity" type="number" min="0.000001" step="0.001" required value="'+esc(x.quantity??"1")+'">'+
+    '<input'+inputStyle+' name="line_unit" aria-label="Unit" placeholder="service" value="'+esc(x.unit||"service")+'">'+
+    '<input'+inputStyle+' name="line_unit_price" aria-label="Unit price" type="number" min="0" step="0.01" required value="'+esc(x.unit_price??"")+'">'+
+    '<input'+inputStyle+' name="line_discount" aria-label="Discount percent" type="number" min="0" max="100" step="0.01" value="'+esc(x.discount_percent??"0")+'">'+
+    '<input'+inputStyle+' name="line_gst_rate" aria-label="GST percent" type="number" min="0" max="100" step="0.01" placeholder="GST %" value="'+esc(x.gst_rate??"")+'">'+
+    '<button class="btn small" type="button" data-remove-invoice-line aria-label="Remove invoice line">×</button></div>';
+}
+function updateInvoicePreview(){
+  const fields=$("fields"),editor=$("invoiceLinesWrap");if(!fields||!editor)return;
+  const get=name=>fields.querySelector('[name="'+name+'"]')?.value||"";
+  const type=get("invoice_type"),supply=get("supply_type"),currency=(get("currency")||"INR").toUpperCase();
+  const round2=n=>Math.round((n+Number.EPSILON)*100)/100;
+  let subtotal=0,discount=0,taxable=0,cgst=0,sgst=0,igst=0;
+  editor.querySelectorAll("[data-invoice-line]").forEach(row=>{
+    const val=name=>Number(row.querySelector('[name="'+name+'"]')?.value||0);
+    const gross=round2(val("line_quantity")*val("line_unit_price"));
+    const disc=round2(gross*val("line_discount")/100),net=round2(gross-disc);
+    const rate=type==="tax_invoice"&&supply!=="export_lut"?val("line_gst_rate"):0;
+    const tax=round2(net*rate/100);
+    subtotal+=gross;discount+=disc;taxable+=net;
+    if(supply==="intra_state"){cgst+=round2(tax/2);sgst+=round2(tax-round2(tax/2))}
+    else if(supply==="inter_state"||supply==="export_igst")igst+=tax;
+  });
+  subtotal=round2(subtotal);discount=round2(discount);taxable=round2(taxable);
+  cgst=round2(cgst);sgst=round2(sgst);igst=round2(igst);
+  const tax=round2(cgst+sgst+igst),adjustment=Number(get("adjustment")||0),reverse=get("reverse_charge")==="true",total=round2(taxable+(reverse?0:tax)+adjustment),fx=Number(get("exchange_rate_to_inr")||1);
+  const fmtAmount=n=>currency+" "+n.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const parts=['<span>Subtotal <b>'+fmtAmount(subtotal)+'</b></span>','<span>Discount <b>− '+fmtAmount(discount)+'</b></span>','<span>Taxable <b>'+fmtAmount(taxable)+'</b></span>'];
+  if(cgst)parts.push('<span>CGST <b>'+fmtAmount(cgst)+'</b></span>');
+  if(sgst)parts.push('<span>SGST <b>'+fmtAmount(sgst)+'</b></span>');
+  if(igst)parts.push('<span>IGST <b>'+fmtAmount(igst)+'</b></span>');
+  if(reverse&&tax)parts.push('<span>Tax payable by recipient under reverse charge <b>'+fmtAmount(tax)+'</b></span>');
+  parts.push('<span>Invoice total <b>'+fmtAmount(total)+'</b></span>','<span>INR reference total <b>INR '+(total*fx).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})+'</b></span>');
+  const summary=$("invoiceTotals");if(summary)summary.innerHTML=parts.join("");
+  editor.querySelectorAll('[name="line_hsn_sac"]').forEach(input=>input.required=type!=="commercial_invoice");
+  editor.querySelectorAll('[name="line_gst_rate"]').forEach(input=>input.required=type==="tax_invoice"&&supply!=="export_lut");
+}
+async function updateInvoiceFx(force=false){
+  const fields=$("fields");if(!fields||$("modal").hidden)return;
+  const currency=(fields.querySelector('[name="currency"]')?.value||"INR").trim().toUpperCase();
+  const dateValue=fields.querySelector('[name="invoice_date"]')?.value||"";
+  const rateInput=fields.querySelector('[name="exchange_rate_to_inr"]');
+  const dateInput=fields.querySelector('[name="fx_date"]');
+  const sourceInput=fields.querySelector('[name="fx_source"]');
+  if(!rateInput||!sourceInput)return;
+  if(currency==="INR"){rateInput.value="1";if(dateInput)dateInput.value=dateValue;sourceInput.value="INR base currency";updateInvoicePreview();return}
+  if(!/^[A-Z]{3}$/.test(currency)||!dateValue)return;
+  const key=currency+"|"+dateValue;state.invoiceFxRequest=key;
+  if(!force&&sourceInput.value==="Manual override")return;
+  rateInput.value="";sourceInput.value="Looking up reference rate…";
+  try{
+    const toDate=new Date(dateValue+"T00:00:00Z"),fromDate=new Date(toDate);fromDate.setUTCDate(fromDate.getUTCDate()-10);
+    const from=fromDate.toISOString().slice(0,10);
+    const params=new URLSearchParams({from,to:dateValue,base:currency,quotes:"INR"});
+    const response=await fetch("https://api.frankfurter.dev/v2/rates?"+params.toString());
+    if(!response.ok)throw new Error("Rate service unavailable.");
+    const data=await response.json();
+    const rows=Array.isArray(data)?data:[];
+    const matching=rows.filter(row=>String(row.currency||row.quote||"").toUpperCase()==="INR"&&Number(row.rate)>0).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    if(!matching.length)throw new Error("No reference rate was returned.");
+    const latest=matching[matching.length-1];
+    if(state.invoiceFxRequest!==key||$("modal").hidden)return;
+    rateInput.value=Number(latest.rate).toFixed(8);
+    if(dateInput)dateInput.value=latest.date||dateValue;
+    sourceInput.value="Frankfurter reference rate";
+    updateInvoicePreview();
+  }catch(e){
+    if(state.invoiceFxRequest!==key||$("modal").hidden)return;
+    sourceInput.value="Manual override";
+    if(!rateInput.value||Number(rateInput.value)<=0)rateInput.value="";
+    updateInvoicePreview();
+  }
+}
+function newInvoice(invoiceId,presetJobId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can create invoices.","error");
+  const inv=invoiceId?(state.ops.invoices||[]).find(x=>x.id===invoiceId)||{}:{};
+  if(inv.status==="issued")return notify("Issued invoices are locked. Create a credit or debit note for corrections.","error");
+  const defaults=state.ops.invoiceSettings||{},seller={...defaults,...(inv.seller||{})},buyer=inv.buyer||{};
+  const inferred=resolveJob(inv.job_id,inv.container_no);
+  const jobId=inv.job_id||inferred?.id||presetJobId||"";
+  const today=new Date().toISOString().slice(0,10);
+  const defs=[
+    {name:"invoice_type",label:"Document type",options:[["tax_invoice","GST tax invoice"],["bill_of_supply","Bill of supply"],["commercial_invoice","Commercial invoice"]],value:inv.invoice_type||"tax_invoice"},
+    {name:"save_status",label:"Save as",options:[["draft","Draft — number assigned on issue"],["issue","Issue now — create numbered invoice"]],value:"draft"},
+    {name:"invoice_date",label:"Invoice date",type:"date",value:inv.invoice_date||today,required:true},
+    {name:"due_date",label:"Due date",type:"date",value:inv.due_date||""},
+    {name:"job_id",label:"Forwarding job",options:jobOptions(),value:jobId},
+    {name:"hbl_id",label:"HBL",options:hblOptionsAll(),value:inv.hbl_id||""},
+    {name:"container_no",label:"Container",options:containerOptions(),value:inv.container_no||""},
+    {name:"currency",label:"Invoice currency (ISO)",value:inv.currency||"INR",required:true},
+    {name:"exchange_rate_to_inr",label:"Rate to INR",type:"number",step:"0.00000001",value:inv.exchange_rate_to_inr||"1",required:true},
+    {name:"fx_date",label:"FX rate date",type:"date",value:inv.fx_date||today},
+    {name:"fx_source",label:"FX source",value:inv.fx_source||"INR base currency"},
+    {name:"supply_type",label:"GST place-of-supply treatment",options:[["intra_state","Intra-state · CGST + SGST"],["inter_state","Inter-state · IGST"],["export_lut","Export under LUT · zero-rated"],["export_igst","Export · IGST"],["not_applicable","No GST split"]],value:inv.supply_type||"intra_state"},
+    {name:"place_of_supply",label:"Place of supply",value:inv.place_of_supply||""},
+    {name:"place_of_supply_state_code",label:"Place-of-supply state code",value:inv.place_of_supply_state_code||""},
+    {name:"reverse_charge",label:"Reverse charge",options:[["false","No"],["true","Yes"]],value:String(inv.reverse_charge||false)},
+    {name:"po_number",label:"Customer PO / reference",value:inv.po_number||""},
+    {name:"payment_terms",label:"Payment terms",value:inv.payment_terms||"Due within 30 days"},
+    {name:"seller_name",label:"Seller legal name",value:seller.name||"",required:true},
+    {name:"seller_gstin",label:"Seller GSTIN",value:seller.gstin||""},
+    {name:"seller_address",label:"Seller registered address",type:"textarea",value:seller.address||"",span2:true,required:true},
+    {name:"seller_state",label:"Seller state",value:seller.state||""},
+    {name:"seller_state_code",label:"Seller state code",value:seller.state_code||""},
+    {name:"seller_postal_code",label:"Seller postal code",value:seller.postal_code||""},
+    {name:"seller_email",label:"Seller email",value:seller.email||""},
+    {name:"seller_phone",label:"Seller phone",value:seller.phone||""},
+    {name:"seller_bank_name",label:"Bank name",value:seller.bank_name||""},
+    {name:"seller_bank_account",label:"Bank account",value:seller.bank_account||""},
+    {name:"seller_ifsc",label:"IFSC",value:seller.ifsc||""},
+    {name:"seller_upi",label:"UPI ID",value:seller.upi||""},
+    {name:"buyer_name",label:"Bill-to legal name",value:buyer.name||"",required:true},
+    {name:"buyer_gstin",label:"Buyer GSTIN / UIN",value:buyer.gstin||""},
+    {name:"buyer_address",label:"Bill-to address",type:"textarea",value:buyer.address||"",span2:true,required:true},
+    {name:"buyer_state",label:"Buyer state",value:buyer.state||""},
+    {name:"buyer_state_code",label:"Buyer state code",value:buyer.state_code||""},
+    {name:"buyer_postal_code",label:"Buyer postal code",value:buyer.postal_code||""},
+    {name:"buyer_country",label:"Buyer country",value:buyer.country||"India"},
+    {name:"buyer_email",label:"Buyer email",value:buyer.email||""},
+    {name:"adjustment",label:"Rounding / other adjustment",type:"number",step:"0.01",value:inv.adjustment??"0"},
+    {name:"notes",label:"Notes / declaration",type:"textarea",value:inv.notes||"",span2:true}
+  ];
+  openForm(invoiceId?"Edit draft invoice":"Raise customer invoice",defs,async fd=>{
+    const get=name=>String(fd.get(name)||"");
+    const lines=fd.getAll("line_description").map((description,index)=>({
+      description:String(description||""),hsn_sac:String(fd.getAll("line_hsn_sac")[index]||""),
+      quantity:String(fd.getAll("line_quantity")[index]||""),unit:String(fd.getAll("line_unit")[index]||"service"),
+      unit:String(fd.getAll("line_unit")[index]||"service"),unit_price:String(fd.getAll("line_unit_price")[index]||"0"),discount_percent:String(fd.getAll("line_discount")[index]||"0"),
+      gst_rate:String(fd.getAll("line_gst_rate")[index]||"")
+    }));
+    const data={
+      ...(invoiceId?{id:invoiceId}:{}),save_status:get("save_status"),invoice_type:get("invoice_type"),
+      invoice_date:get("invoice_date"),due_date:get("due_date"),job_id:get("job_id"),hbl_id:get("hbl_id"),container_no:get("container_no"),
+      seller:{name:get("seller_name"),gstin:get("seller_gstin"),address:get("seller_address"),state:get("seller_state"),state_code:get("seller_state_code"),
+        postal_code:get("seller_postal_code"),country:"India",email:get("seller_email"),phone:get("seller_phone"),bank_name:get("seller_bank_name"),
+        bank_account:get("seller_bank_account"),ifsc:get("seller_ifsc"),upi:get("seller_upi")},
+      buyer:{name:get("buyer_name"),gstin:get("buyer_gstin"),address:get("buyer_address"),state:get("buyer_state"),state_code:get("buyer_state_code"),
+        postal_code:get("buyer_postal_code"),country:get("buyer_country"),email:get("buyer_email")},
+      supply_type:get("supply_type"),place_of_supply:get("place_of_supply"),place_of_supply_state_code:get("place_of_supply_state_code"),
+      reverse_charge:get("reverse_charge"),po_number:get("po_number"),payment_terms:get("payment_terms"),currency:get("currency").toUpperCase(),
+      exchange_rate_to_inr:get("exchange_rate_to_inr"),fx_date:get("fx_date"),fx_source:get("fx_source"),lines,
+      adjustment:get("adjustment"),notes:get("notes")
+    };
+    if(data.save_status==="issue"&&!confirm("Issue this invoice now? A consecutive number will be assigned and the issued invoice will be locked."))data.save_status="draft";
+    const result=await call("logistics-workspace",{action:"upsertInvoice",data});
+    await loadInvoices(true);closeForm();render();
+    notify(data.save_status==="issue"?"Invoice issued as "+result.record.invoice_number:"Invoice draft saved","success");
+  });
+  const fields=$("fields");
+  const editor=document.createElement("div");editor.id="invoiceLinesWrap";editor.className="invoice-lines-editor";editor.style.cssText="grid-column:1/-1;border:1px solid #ccd6dd;background:#f8fafb;padding:9px;margin-top:4px";
+  editor.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px"><div><b style="font-size:11px;color:#25475c">Invoice line items</b><div style="font-size:9px;color:#758895">Enter HSN/SAC, quantity, unit price, discount and applicable GST rate on each line.</div></div><button class="btn small" type="button" data-add-invoice-line>+ Add line</button></div>'+
+    '<div style="display:grid;grid-template-columns:minmax(150px,2fr) minmax(80px,.85fr) minmax(55px,.55fr) minmax(70px,.6fr) minmax(95px,1fr) minmax(70px,.65fr) minmax(70px,.65fr) 28px;gap:5px;font-size:8px;color:#657887;font-weight:800"><span>DESCRIPTION</span><span>HSN / SAC</span><span>QTY</span><span>UNIT</span><span>UNIT PRICE</span><span>DISC %</span><span>GST %</span><span></span></div>'+
+    '<div id="invoiceLineRows">'+(Array.isArray(inv.lines)&&inv.lines.length?inv.lines.map(invoiceLineMarkup).join(""):invoiceLineMarkup({quantity:1,unit:"service",discount_percent:0}))+'</div>'+
+    '<div id="invoiceTotals" style="display:flex;gap:14px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid #dce3e8;padding-top:8px;margin-top:8px;font-size:10px"></div>'+
+    '<p style="font-size:9px;color:#8a5d22;margin:8px 0 0">Select and verify the HSN/SAC and tax rate for each service. FX lookup is a reference rate; enter your prescribed accounting / GST valuation rate when it differs.</p>';
+  fields.appendChild(editor);
+  editor.addEventListener("click",event=>{
+    if(event.target.closest("[data-add-invoice-line]")){$("invoiceLineRows").insertAdjacentHTML("beforeend",invoiceLineMarkup({quantity:1,unit:"service",discount_percent:0}));updateInvoicePreview()}
+    const remove=event.target.closest("[data-remove-invoice-line]");
+    if(remove){if($("invoiceLineRows").querySelectorAll("[data-invoice-line]").length<=1)return notify("An invoice needs at least one line.","error");remove.closest("[data-invoice-line]").remove();updateInvoicePreview()}
+  });
+  editor.addEventListener("input",updateInvoicePreview);
+  const getField=name=>fields.querySelector('[name="'+name+'"]');
+  const typeField=getField("invoice_type"),supplyField=getField("supply_type");
+  typeField.onchange=()=>{if(typeField.value!=="tax_invoice"&&supplyField.value!=="not_applicable")supplyField.value="not_applicable";else if(typeField.value==="tax_invoice"&&supplyField.value==="not_applicable")supplyField.value="intra_state";updateInvoicePreview()};
+  supplyField.onchange=updateInvoicePreview;
+  const currencyField=getField("currency"),dateField=getField("invoice_date"),rateField=getField("exchange_rate_to_inr");
+  currencyField.onchange=()=>{currencyField.value=currencyField.value.trim().toUpperCase();updateInvoiceFx(true)};
+  dateField.onchange=()=>updateInvoiceFx(true);
+  rateField.oninput=()=>{if(currencyField.value.toUpperCase()!=="INR"){getField("fx_source").value="Manual override";state.invoiceFxRequest="manual:"+Date.now()}updateInvoicePreview()};
+  getField("fx_source").readOnly=true;
+  getField("fx_date").readOnly=true;
+  const refreshFx=document.createElement("button");refreshFx.type="button";refreshFx.className="btn small";refreshFx.textContent="↻ Fetch FX rate";refreshFx.onclick=()=>updateInvoiceFx(true);
+  const fxField=getField("fx_source").closest(".field");fxField.appendChild(refreshFx);
+  updateInvoicePreview();
+  if(!invoiceId||!String(inv.fx_source||"").toLowerCase().includes("manual"))updateInvoiceFx(true);
+}
+async function issueInvoice(invoiceId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can issue invoices.","error");
+  if(!confirm("Issue this draft now? This creates the next invoice number for its financial year. The issued record will be locked."))return;
+  try{const result=await call("logistics-workspace",{action:"issueInvoice",id:invoiceId});await loadInvoices(true);render();notify("Invoice issued as "+result.record.invoice_number,"success")}
+  catch(e){notify(e.message||"Could not issue invoice","error")}
+}
+function printInvoice(invoiceId){
+  const inv=(state.ops.invoices||[]).find(x=>x.id===invoiceId);if(!inv)return notify("Invoice record not found.","error");
+  const seller=inv.seller||{},buyer=inv.buyer||{},currency=String(inv.currency||"INR");
+  const amount=n=>currency+" "+Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const escLine=v=>esc(v||"—").replace(/\n/g,"<br>");
+  const rows=(inv.lines||[]).map((line,index)=>'<tr><td>'+String(index+1)+'</td><td><b>'+escLine(line.description)+'</b><small>'+esc(line.hsn_sac?"HSN/SAC "+line.hsn_sac:"")+'</small></td><td>'+Number(line.quantity||0).toLocaleString("en-IN")+' '+esc(line.unit||"")+'</td><td>'+amount(line.unit_price)+'</td><td>'+amount(line.taxable_value)+'</td><td>'+Number(line.gst_rate||0).toFixed(2)+'%</td><td>'+amount(line.tax_amount)+'</td><td>'+amount(line.line_total)+'</td></tr>').join("");
+  const taxLabel=inv.reverse_charge?"Tax payable by recipient (reverse charge)":"Total tax";
+  const taxRows=['cgst_total','sgst_total','igst_total'].filter(k=>Number(inv[k]||0)>0).map(k=>{
+    const label=k==="cgst_total"?"CGST":k==="sgst_total"?"SGST":"IGST";
+    return '<tr><td>'+label+'</td><td>'+amount(inv[k])+'</td></tr>';
+  }).join("");
+  const title=inv.invoice_type==="tax_invoice"?"GST TAX INVOICE":inv.invoice_type==="bill_of_supply"?"BILL OF SUPPLY":"COMMERCIAL INVOICE";
+  const draft=inv.status!=="issued";
+  const number=inv.invoice_number||("DRAFT-"+String(inv.id).slice(0,8).toUpperCase());
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>'+esc(number)+'</title><style>body{font:13px Arial,sans-serif;color:#183246;margin:28px}h1{font-size:23px;margin:0 0 5px}.muted{color:#657b8a;font-size:11px}.top{display:flex;justify-content:space-between;border-bottom:3px solid #15445f;padding-bottom:15px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0}.box{border:1px solid #ccd7de;padding:12px;line-height:1.6}.box b{display:block;color:#5f7380;font-size:10px;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border:1px solid #cbd5dc;padding:8px;text-align:left;font-size:11px}th{background:#edf2f5;text-transform:uppercase;font-size:9px}td small{display:block;color:#768794;margin-top:3px}.sum{width:330px;margin:18px 0 0 auto}.sum td{padding:6px 9px}.sum td:last-child{text-align:right}.grand{font-size:16px;font-weight:bold;background:#edf5f8}.draft{border:2px solid #aa4c36;color:#a34431;font-weight:bold;letter-spacing:2px;text-align:center;padding:9px;margin:15px 0}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.meta div{background:#f6f8f9;padding:8px;font-size:11px}.meta b{display:block;color:#687e8b;font-size:9px;text-transform:uppercase}.terms{white-space:pre-wrap;margin-top:15px;font-size:11px}.sign{margin-top:55px;text-align:right}.notice{font-size:10px;color:#70828d;margin-top:15px}@media print{button{display:none}body{margin:14mm}}</style></head><body>'+
+    '<div class="top"><div><h1>'+title+'</h1><div class="muted">'+esc(seller.name||"Seller legal name not configured")+'</div></div><div><b>Invoice no.:</b> '+esc(number)+'<br><b>Date:</b> '+esc(inv.invoice_date||"—")+'<br><b>Due:</b> '+esc(inv.due_date||"—")+'</div></div>'+
+    (draft?'<div class="draft">DRAFT · NOT AN ISSUED TAX INVOICE</div>':'<div class="muted" style="margin-top:10px;font-weight:bold">ORIGINAL FOR RECIPIENT</div>')+
+    '<div class="cols"><div class="box"><b>Supplier</b>'+escLine(seller.name)+'<br>'+escLine(seller.address)+'<br>'+esc(seller.state||"")+' '+esc(seller.postal_code||"")+'<br>'+esc(seller.country||"India")+'<br>GSTIN: '+esc(seller.gstin||"—")+'<br>'+esc(seller.email||"")+' '+esc(seller.phone||"")+'</div>'+
+    '<div class="box"><b>Bill to</b>'+escLine(buyer.name)+'<br>'+escLine(buyer.address)+'<br>'+esc(buyer.state||"")+' '+esc(buyer.postal_code||"")+'<br>'+esc(buyer.country||"")+'<br>GSTIN / UIN: '+esc(buyer.gstin||"—")+'<br>'+esc(buyer.email||"")+'</div></div>'+
+    '<div class="meta"><div><b>Place of supply</b>'+esc(inv.place_of_supply||"—")+' '+esc(inv.place_of_supply_state_code||"")+'</div><div><b>Supply treatment</b>'+esc(String(inv.supply_type||"").replace(/_/g," "))+'</div><div><b>Reverse charge</b>'+((inv.reverse_charge)?"Yes":"No")+'</div>'+
+    '<div><b>Customer PO</b>'+esc(inv.po_number||"—")+'</div><div><b>Forwarding job / container</b>'+esc(inv.job_id||inv.container_no||"—")+'</div><div><b>Payment terms</b>'+esc(inv.payment_terms||"—")+'</div></div>'+
+    '<table><thead><tr><th>#</th><th>Description / HSN-SAC</th><th>Qty / unit</th><th>Unit price</th><th>Taxable value</th><th>GST rate</th><th>Tax</th><th>Line total</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<table class="sum"><tbody><tr><td>Subtotal</td><td>'+amount(inv.subtotal)+'</td></tr><tr><td>Discount</td><td>− '+amount(inv.discount_total)+'</td></tr><tr><td>Taxable value</td><td>'+amount(inv.taxable_value)+'</td></tr>'+taxRows+
+    '<tr><td>'+taxLabel+'</td><td>'+amount(inv.total_tax)+'</td></tr><tr><td>Adjustment</td><td>'+amount(inv.adjustment)+'</td></tr><tr class="grand"><td>Amount due</td><td>'+amount(inv.total)+'</td></tr></tbody></table>'+
+
+    (currency!=="INR"?'<p class="notice">INR reference equivalent: INR '+Number(inv.total_inr||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})+' · '+Number(inv.exchange_rate_to_inr||0).toFixed(8)+' INR per '+esc(currency)+' · rate date '+esc(inv.fx_date||"not recorded")+' · source '+esc(inv.fx_source||"manual")+'</p>':"")+
+    (seller.bank_name||seller.bank_account||seller.ifsc||seller.upi?'<div class="box"><b>Payment details</b>'+esc(seller.bank_name||"")+' · Account '+esc(seller.bank_account||"")+' · IFSC '+esc(seller.ifsc||"")+' · UPI '+esc(seller.upi||"")+'</div>':"")+
+    '<div class="terms">'+escLine(inv.notes||"")+'</div><div class="sign">For '+esc(seller.name||"Seller")+'<br><br><br>Authorised signatory</div>'+
+    '<p class="notice">Tax treatment and exchange rate must be reviewed against the applicable rules and the supplier’s registration before issue.</p><button onclick="window.print()">Print / Save as PDF</button></body></html>';
+  const win=window.open("","_blank");if(!win)return notify("Allow pop-ups to print this invoice.","error");win.document.open();win.document.write(html);win.document.close();win.focus();
+}
+
 function printChargeInvoice(chargeId){
   const x=state.ops.charges.find(c=>c.id===chargeId);if(!x)return notify("Charge record not found.","error");
   const j=resolveJob(x.job_id,x.container_no),money=(x.currency||"INR")+" "+Number(x.amount||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1045,6 +1301,7 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
         if(job)addMilestone(job.id);else notify("Create a forwarding job first.","error");
       }
       if(type==="filing")newFiling("",button.dataset.jobId||"");
+      if(type==="invoice")newInvoice("",button.dataset.jobId||"");
       if(type==="charge")newCharge("",button.dataset.jobId||"");
     };
   });
@@ -1083,6 +1340,10 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="edit-filing")newFiling(id);
       if(act==="upload-filing-document")uploadFilingDocument(id);
       if(act==="open-document")openDocument(id);if(act==="toggle-job-visibility")toggleJobVisibility(id);
+      if(act==="retry-invoices")loadInvoices(true);
+      if(act==="edit-invoice")newInvoice(id);
+      if(act==="issue-invoice")issueInvoice(id);
+      if(act==="print-invoice")printInvoice(id);
       if(act==="edit-charge")newCharge(id);
       if(act==="print-charge")printChargeInvoice(id);
       if(act==="delete-charge")deleteCharge(id);
