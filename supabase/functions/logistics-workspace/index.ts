@@ -1036,15 +1036,16 @@ Deno.serve(async (req: Request) => {
 
     if (action === "listInvoices") {
       roleCheck(profile.role, "finance");
-      const [invoiceResult, settingsResult, customerResult, creditResult, paymentResult] = await Promise.all([
+      const [invoiceResult, settingsResult, customerResult, creditResult, paymentResult, chargeLinkResult] = await Promise.all([
         admin.from("shipment_invoices").select("*").order("updated_at", { ascending: false }).limit(1000),
         admin.from("shipment_invoice_settings").select("data").eq("id", "default").maybeSingle(),
         admin.from("customer_accounts").select("*").order("legal_name", { ascending: true }).limit(2500),
         admin.from("shipment_credit_notes").select("*").order("created_at", { ascending: false }).limit(2500),
         admin.from("shipment_invoice_payments").select("*").order("received_at", { ascending: false }).limit(5000),
+        admin.from("shipment_invoice_charge_links").select("charge_id,invoice_id").limit(10000),
       ]);
-      if (invoiceResult.error || settingsResult.error || customerResult.error || creditResult.error || paymentResult.error) throw new Error("Invoice, customer and receivables records could not be loaded.");
-      return reply(200, { invoices: invoiceResult.data ?? [], settings: settingsResult.data?.data ?? {}, customers: customerResult.data ?? [], creditNotes: creditResult.data ?? [], payments: paymentResult.data ?? [] }, origin);
+      if (invoiceResult.error || settingsResult.error || customerResult.error || creditResult.error || paymentResult.error || chargeLinkResult.error) throw new Error("Invoice, customer, receivables and source-charge links could not be loaded.");
+      return reply(200, { invoices: invoiceResult.data ?? [], settings: settingsResult.data?.data ?? {}, customers: customerResult.data ?? [], creditNotes: creditResult.data ?? [], payments: paymentResult.data ?? [], chargeLinks: chargeLinkResult.data ?? [] }, origin);
     }
 
     if (action === "upsertInvoice") {
@@ -1100,6 +1101,27 @@ Deno.serve(async (req: Request) => {
       const fxSource = text(currency === "INR" ? "INR base currency" : d.fx_source || "Manual override", 120);
       const rawLines = Array.isArray(d.lines) ? d.lines : [];
       if (!rawLines.length || rawLines.length > 50) throw new Error("Add between 1 and 50 invoice lines.");
+      const sourceChargeIds = Array.from(new Set<string>(rawLines.flatMap((raw: unknown) => {
+        const sourceId = text(obj(raw).source_charge_id, 80);
+        return sourceId ? [uuid(sourceId)] : [];
+      })));
+      const sourceChargesById = new Map<string, Record<string, unknown>>();
+      if (sourceChargeIds.length) {
+        if (!jobId) throw new Error("Select a forwarding job for invoice lines loaded from shipment charges.");
+        const [sourceChargeResult, existingLinkResult] = await Promise.all([
+          admin.from("shipment_charges").select("id,job_id,direction,approval_status").in("id", sourceChargeIds),
+          admin.from("shipment_invoice_charge_links").select("charge_id").in("charge_id", sourceChargeIds),
+        ]);
+        if (sourceChargeResult.error || existingLinkResult.error) throw new Error("Selected shipment charges could not be verified.");
+        if ((sourceChargeResult.data ?? []).length !== sourceChargeIds.length) throw new Error("A selected shipment charge no longer exists.");
+        for (const charge of sourceChargeResult.data ?? []) {
+          if (charge.job_id !== jobId || charge.direction !== "revenue" || charge.approval_status !== "approved") {
+            throw new Error("Invoice source lines must be approved revenue charges from the selected job.");
+          }
+          sourceChargesById.set(charge.id, charge);
+        }
+        if ((existingLinkResult.data ?? []).length) throw new Error("A selected revenue charge has already been invoiced.");
+      }
       const taxApplies = invoiceType === "tax_invoice" && supplyType !== "export_lut";
       const reverseCharge = d.reverse_charge === true || d.reverse_charge === "true";
       const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -1112,6 +1134,8 @@ Deno.serve(async (req: Request) => {
         if (invoiceType !== "commercial_invoice" && !hsnSac) throw new Error("Enter an HSN/SAC code for invoice line " + (index + 1) + ".");
         const quantity = number(line.quantity, "Quantity on line " + (index + 1), 0.000001);
         const unit = text(line.unit || "service", 30);
+        const sourceChargeId = text(line.source_charge_id, 80) ? uuid(text(line.source_charge_id, 80)) : null;
+        if (sourceChargeId && !sourceChargesById.has(sourceChargeId)) throw new Error("Invoice source charge is not valid for this job.");
         const unitPrice = number(line.unit_price, "Unit price on line " + (index + 1), 0);
         const discountPercent = number(line.discount_percent ?? 0, "Discount on line " + (index + 1), 0);
         if (discountPercent > 100) throw new Error("Line discount cannot exceed 100%.");
@@ -1129,6 +1153,7 @@ Deno.serve(async (req: Request) => {
         subtotal += gross; discountTotal += discount; taxableValue += taxable;
         cgstTotal += cgst; sgstTotal += sgst; igstTotal += igst;
         return { description, hsn_sac: hsnSac, quantity, unit, unit_price: unitPrice,
+          ...(sourceChargeId ? { source_charge_id: sourceChargeId } : {}),
           discount_percent: discountPercent, discount_amount: discount, taxable_value: taxable,
           gst_rate: gstRate, cgst_amount: cgst, sgst_amount: sgst, igst_amount: igst,
           tax_amount: tax, line_total: round2(taxable + (reverseCharge ? 0 : tax)) };
