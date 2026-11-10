@@ -290,6 +290,8 @@ tbody td{height:40px;font-size:11px}
 .cw-attention-date{font-size:8px;color:#6d7f8e;white-space:nowrap}
 .cw-attention-item.urgent .cw-attention-date{color:#ac4741;font-weight:700}
 .cw-attention-empty{display:flex;align-items:center;gap:9px;padding:14px;color:#728391;font-size:9px}
+.ar-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px;border-bottom:1px solid var(--line);background:#fbfcfd}.ar-toolbar label{display:flex;align-items:center;gap:6px;color:var(--muted);font-weight:700}.ar-toolbar input,.ar-toolbar select{height:29px;border:1px solid var(--line);padding:4px 7px;background:#fff;color:var(--ink);border-radius:3px}.ar-toolbar .desc{margin-left:auto}.ar-pane{margin-bottom:8px}
+@media(max-width:760px){.ar-toolbar .desc{margin-left:0;width:100%}.ar-toolbar input[type="search"]{min-width:180px;flex:1}}
 .cw-attention-empty b{color:#247459}
 .cw-attention-foot{padding:6px 9px;border-top:1px solid #edf0f3;color:#788997;font-size:8px}
 @media(max-width:900px){.cw-attention-list{grid-template-columns:1fr}}
@@ -329,7 +331,7 @@ tbody td{height:40px;font-size:11px}
       <button class="nav-item" data-page="exceptions"><span class="nav-ico">⚑</span>Operations monitor<span class="nav-count" id="exceptionCount">0</span></button>
     </div>
     <div class="nav-group"><div class="nav-label">FINANCIAL & MANAGEMENT</div>
-      <button class="nav-item" data-page="finance"><span class="nav-ico">₹</span>Accounting & charges</button>
+      <button class="nav-item" data-page="finance"><span class="nav-ico">₹</span>Accounting & charges</button><button class="nav-item" data-page="receivables"><span class="nav-ico">◎</span>Customers & receivables</button>
       <button class="nav-item" data-page="reports"><span class="nav-ico">▥</span>Reports & analytics</button>
       <button class="nav-item" data-page="customer"><span class="nav-ico">↗</span>Customer portal</button>
     </div>
@@ -365,7 +367,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceSettings:{},invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",arCustomerFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -380,6 +382,18 @@ function connection(s,type){$("connection").textContent=s;$("connection").classN
 async function call(fn,body){const {data,error}=await db.functions.invoke(fn,{body});if(error){let msg="";try{msg=(await error.context.clone().json()).error||""}catch(_){}throw new Error(msg||data?.error||error.message||"Request failed")}if(data?.error)throw new Error(data.error);return data}
 async function loadJobs(){const d=await call("logistics-workspace",{action:"read"});for(const k of ["jobs","jobHbls","jobContainers","milestones","sailings","sailingShipments","consolidations","consolidationItems","charges","filings","documents","alertActions"])state.ops[k]=Array.isArray(d[k])?d[k]:[];state.ops.loaded=true;if(d.profile)state.profile={...(state.profile||{}),...d.profile}}
 
+function customerOptions(selectedId=""){return [["","Select customer account"],...state.ops.customers.filter(c=>c.is_active||c.id===selectedId).map(c=>[c.id,(c.customer_code?c.customer_code+" · ":"")+c.legal_name])]}
+function customerAddress(c){return [c?.billing_address,c?.city].filter(Boolean).join(", ")}
+function invoiceLedger(inv){
+  const creditNotes=state.ops.creditNotes.filter(n=>n.invoice_id===inv.id&&n.status==="issued");
+  const payments=state.ops.payments.filter(r=>r.invoice_id===inv.id);
+  const credited=creditNotes.reduce((n,x)=>n+Number(x.total||0),0);
+  const received=payments.reduce((n,x)=>n+Number(x.amount||0),0);
+  const rate=Number(inv.exchange_rate_to_inr||1);
+  const receivedInr=payments.reduce((n,x)=>n+Number(x.amount_inr||0),0);
+  return {credited,received,balance:Math.max(0,Number(inv.total||0)-credited-received),balanceInr:Math.max(0,Number(inv.total_inr||Number(inv.total||0)*rate)-credited*rate-receivedInr),creditNotes,payments};
+}
+function financeDateDifference(from,to){const a=new Date(String(from||"").slice(0,10)+"T00:00:00Z"),b=new Date(String(to||"").slice(0,10)+"T00:00:00Z");return Number.isNaN(+a)||Number.isNaN(+b)?0:Math.floor((b-a)/86400000)}
 async function loadInvoices(force=false){
   if(state.ops.invoicesLoading)return;
   if(state.ops.invoicesLoaded&&!force)return;
@@ -388,6 +402,9 @@ async function loadInvoices(force=false){
     const d=await call("logistics-workspace",{action:"listInvoices"});
     state.ops.invoices=Array.isArray(d.invoices)?d.invoices:[];
     state.ops.invoiceSettings=d.settings&&typeof d.settings==="object"?d.settings:{};
+    state.ops.customers=Array.isArray(d.customers)?d.customers:[];
+    state.ops.creditNotes=Array.isArray(d.creditNotes)?d.creditNotes:[];
+    state.ops.payments=Array.isArray(d.payments)?d.payments:[];
     state.ops.invoicesLoaded=true;
   }catch(e){
     state.ops.invoiceLoadError=e.message||"Invoice records could not be loaded.";
@@ -395,16 +412,16 @@ async function loadInvoices(force=false){
     notify(state.ops.invoiceLoadError,"error");
   }finally{
     state.ops.invoicesLoading=false;
-    if(state.page==="finance")render();
+    if(["finance","receivables"].includes(state.page))render();
   }
 }
 async function loadEquipment(){const d=await call("operations-data",{action:"read"});if(!Array.isArray(d.data))throw new Error("The equipment register could not be loaded.");state.rows=d.data;state.updatedAt=d.updatedAt;if(d.profile)state.profile={...(state.profile||{}),...d.profile}}
 function identity(){const p=state.profile||{},who=p.displayName||state.session?.user?.email||"Staff";$("userName").textContent=who;$("railUser").textContent=who;$("railRole").textContent=(p.role||"Staff")+" permissions"}
 function renderWorkspaceLoadError(){const content=$("content");if(!content)return;const localPreview=location.protocol==="file:";content.innerHTML=localPreview?'<section class="cw-load-error" role="alert"><span class="cw-load-error-icon">!</span><div><h2>Use the hosted staff workspace</h2><p>Local file previews cannot connect to protected shipment services. Open the hosted site and sign in to load live records.</p><a class="btn primary" href="https://weirdofactory.github.io/container_tracking/">Open hosted workspace</a></div></section>':'<section class="cw-load-error" role="alert"><span class="cw-load-error-icon">!</span><div><h2>Workspace data did not load</h2><p>The shipment and equipment services could not be reached. Retry the connection in a moment.</p><button class="btn primary" id="retryWorkspace">↻ Retry loading</button></div></section>';const retry=$("retryWorkspace");if(retry)retry.onclick=refreshAll}
-async function refreshAll(){if(location.protocol==="file:"){connection("Hosted site required","error");renderWorkspaceLoadError();return}connection("Loading","loading");try{await Promise.all([loadJobs(),loadEquipment()]);identity();connection(state.ops.jobs.length+" jobs · "+state.rows.length+" equipment");render()}catch(e){connection("Data unavailable","error");renderWorkspaceLoadError();notify(e.message,"error")}}
-async function auth(session){state.session=session;if(!session){state.profile=null;state.ops.loaded=false;state.ops.invoices=[];state.ops.invoiceSettings={};state.ops.invoicesLoaded=false;state.ops.invoicesLoading=false;state.ops.invoiceLoadError="";state.rows=[];setNavigationOpen(false);$("app").hidden=true;$("login").hidden=false;connection("Signed out");return}$("login").hidden=true;$("app").hidden=false;state.profile={displayName:session.user?.email||"Staff",role:"Staff"};identity();await refreshAll()}
+async function refreshAll(){if(location.protocol==="file:"){connection("Hosted site required","error");renderWorkspaceLoadError();return}connection("Loading","loading");try{await Promise.all([loadJobs(),loadEquipment()]);if(access(["Admin","Editor"]))await loadInvoices();identity();connection(state.ops.jobs.length+" jobs · "+state.rows.length+" equipment");render()}catch(e){connection("Data unavailable","error");renderWorkspaceLoadError();notify(e.message,"error")}}
+async function auth(session){state.session=session;if(!session){state.profile=null;state.ops.loaded=false;state.ops.invoices=[];state.ops.invoiceSettings={};state.ops.customers=[];state.ops.creditNotes=[];state.ops.payments=[];state.ops.invoicesLoaded=false;state.ops.invoicesLoading=false;state.ops.invoiceLoadError="";state.rows=[];setNavigationOpen(false);$("app").hidden=true;$("login").hidden=false;connection("Signed out");return}$("login").hidden=true;$("app").hidden=false;state.profile={displayName:session.user?.email||"Staff",role:"Staff"};identity();await refreshAll()}
 function access(roles){return roles.includes(state.profile?.role)}
-function pageTitle(p){return({dashboard:["Dashboard","Shipment visibility and operational control"],jobs:["Forwarding jobs","HBL-level job control, routing, equipment allocation and lifecycle"],containers:["Containers & equipment","Manage equipment movements from origin gate-in through empty return"],sailings:["Vessel schedules","Voyages, cutoffs and planned vessel movements"],consol:["LCL consolidation","Consolidation references, linked HBLs and capacity"],milestones:["Tracking & events","Planned and actual events across the shipment lifecycle"],filings:["Customs & compliance","HBL, MBL, CSN, IGM, SI and VGM filing control"],documents:["Document manager","Shipment document references and filing attachments"],transport:["Transport & delivery","Destination trucking, delivery and empty-return activity"],exceptions:["Operations monitor","Overdue, delayed and unresolved operational work"],finance:["Accounting & charges","Shipment cost, revenue and approval register"],reports:["Reports & analytics","Forwarding workload, shipment progress and finance indicators"],customer:["Customer portal","Publish customer-safe milestone visibility"],settings:["Administration","Staff identity and connected services"]})[p]||["Workbench","Operations overview"]}
+function pageTitle(p){return({dashboard:["Dashboard","Shipment visibility and operational control"],receivables:["Customers & receivables","Customer accounts, receipt entry and invoice ageing"],jobs:["Forwarding jobs","HBL-level job control, routing, equipment allocation and lifecycle"],containers:["Containers & equipment","Manage equipment movements from origin gate-in through empty return"],sailings:["Vessel schedules","Voyages, cutoffs and planned vessel movements"],consol:["LCL consolidation","Consolidation references, linked HBLs and capacity"],milestones:["Tracking & events","Planned and actual events across the shipment lifecycle"],filings:["Customs & compliance","HBL, MBL, CSN, IGM, SI and VGM filing control"],documents:["Document manager","Shipment document references and filing attachments"],transport:["Transport & delivery","Destination trucking, delivery and empty-return activity"],exceptions:["Operations monitor","Overdue, delayed and unresolved operational work"],finance:["Accounting & charges","Shipment cost, revenue and approval register"],reports:["Reports & analytics","Forwarding workload, shipment progress and finance indicators"],customer:["Customer portal","Publish customer-safe milestone visibility"],settings:["Administration","Staff identity and connected services"]})[p]||["Workbench","Operations overview"]}
 function pageHead(p,actions){const x=pageTitle(p);return'<div class="pagebar"><div><div class="crumb">Freight Operations / '+esc(x[0])+'</div><div class="title">'+esc(x[0])+'</div><div class="desc">'+esc(x[1])+'</div></div><div class="actions">'+(actions||"")+'</div></div>'}
 function pane(title,body,extra,sub){return'<section class="pane"><div class="pane-head"><span class="pane-title">'+title+'</span><span class="pane-sub">'+(sub||"")+'</span>'+(extra||"")+'</div>'+body+'</section>'}
 function stat(label,value,note){return'<div class="stat"><label>'+label+'</label><strong>'+num(value)+'</strong><small>'+note+'</small></div>'}
@@ -853,37 +870,234 @@ function renderFilings(){
   });
   return pageHead("filings",'<button class="btn primary" data-create="filing">New filing</button>')+
   pane("CUSTOMS & COMPLIANCE REGISTER",table(["JOB / HBL","CONTAINER","TYPE","HBL","MBL","DUE DATE","FILED","ACKNOWLEDGED","STATUS","DOCS","ACTIONS"],rows,"No filing entries."));
-}function renderFinance(){
+}function newCustomer(customerId=""){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can manage customer accounts.","error");
+  const c=state.ops.customers.find(x=>x.id===customerId)||{};
+  const defs=[
+    {name:"customer_code",label:"Account code",value:c.customer_code||""},
+    {name:"legal_name",label:"Legal / company name",value:c.legal_name||"",required:true},
+    {name:"display_name",label:"Display name",value:c.display_name||""},
+    {name:"gstin",label:"GSTIN / tax registration",value:c.gstin||""},
+    {name:"billing_address",label:"Billing address",type:"textarea",value:c.billing_address||"",span2:true},
+    {name:"city",label:"City",value:c.city||""},{name:"state",label:"State / province",value:c.state||""},
+    {name:"state_code",label:"GST state code",value:c.state_code||""},{name:"postal_code",label:"Postal code",value:c.postal_code||""},
+    {name:"country",label:"Country",value:c.country||"India"},
+    {name:"email",label:"Accounts email",type:"email",value:c.email||""},{name:"phone",label:"Phone",value:c.phone||""},
+    {name:"default_currency",label:"Default invoice currency",value:c.default_currency||"INR",required:true},
+    {name:"payment_terms",label:"Payment terms",value:c.payment_terms||"Due within 30 days"},
+    {name:"credit_limit_inr",label:"Credit limit (INR)",type:"number",step:"0.01",value:c.credit_limit_inr||"0"},
+    {name:"notes",label:"Internal account notes",type:"textarea",value:c.notes||"",span2:true}
+  ];
+  openForm(customerId?"Edit customer account":"Create customer account",defs,async fd=>{
+    const data=Object.fromEntries(fd.entries());if(customerId)data.id=customerId;
+    await call("logistics-workspace",{action:"upsertCustomer",data});
+    await loadInvoices(true);closeForm();render();notify(customerId?"Customer account updated":"Customer account created","success");
+  });
+}
+async function setCustomerActive(customerId,active){
+  const customer=state.ops.customers.find(x=>x.id===customerId);if(!customer)return;
+  const action=active?"reactivate":"deactivate";
+  if(!confirm((active?"Reactivate":"Deactivate")+" "+customer.legal_name+"? Existing jobs and invoices will remain linked."))return;
+  try{await call("logistics-workspace",{action:"setCustomerStatus",id:customerId,is_active:active});await loadInvoices(true);render();notify("Customer account "+(active?"reactivated":"deactivated"),"success")}
+  catch(e){notify(e.message||"Could not update the customer account","error")}
+}
+async function deleteInvoiceDraft(invoiceId){
+  const inv=state.ops.invoices.find(x=>x.id===invoiceId);if(!inv||inv.status!=="draft")return;
+  if(!confirm("Delete draft invoice "+(inv.invoice_number||"") +"? Only unissued drafts can be removed. The action will be logged."))return;
+  try{await call("logistics-workspace",{action:"deleteDraftInvoice",id:invoiceId});await loadInvoices(true);render();notify("Draft invoice deleted","success")}
+  catch(e){notify(e.message||"Could not delete the draft invoice","error")}
+}
+function creditedQuantity(invoiceId,lineIndex,excludeDraftId=""){
+  return state.ops.creditNotes.filter(n=>n.invoice_id===invoiceId&&n.status==="issued"&&n.id!==excludeDraftId)
+    .flatMap(n=>Array.isArray(n.lines)?n.lines:[]).filter(l=>Number(l.original_line_index)===lineIndex)
+    .reduce((total,l)=>total+Number(l.quantity||0),0);
+}
+function newCreditNote(invoiceId,creditNoteId=""){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can issue credit notes.","error");
+  const prior=creditNoteId?state.ops.creditNotes.find(x=>x.id===creditNoteId):null;
+  const inv=state.ops.invoices.find(x=>x.id===(prior?.invoice_id||invoiceId));
+  if(!inv||inv.status!=="issued")return notify("Credit notes can only be raised against an issued invoice.","error");
+  if(prior&&prior.status!=="draft")return notify("Issued credit notes are locked.","error");
+  const maxQuantities=(inv.lines||[]).map((line,index)=>Math.max(0,Number(line.quantity||0)-creditedQuantity(inv.id,index,prior?.id||"")));
+  const priorQty=new Map((prior?.lines||[]).map(line=>[Number(line.original_line_index),Number(line.quantity||0)]));
+  const defs=[
+    {name:"credit_date",label:"Credit note date",type:"date",value:prior?.credit_date||new Date().toISOString().slice(0,10),required:true},
+    {name:"reason",label:"Reason for credit",value:prior?.reason||"",required:true},
+    {name:"save_status",label:"Save as",options:[["draft","Draft credit note"],["issue","Issue numbered credit note now"]],value:prior?"draft":"issue"}
+  ];
+  (inv.lines||[]).forEach((line,index)=>defs.push({
+    name:"credit_qty_"+index,label:(line.description||("Invoice line "+(index+1)))+" · credit qty (max "+maxQuantities[index]+")",
+    type:"number",step:"0.001",value:priorQty.has(index)?priorQty.get(index):maxQuantities[index]
+  }));
+  openForm(creditNoteId?"Edit draft credit note":"Credit against "+inv.invoice_number,defs,async fd=>{
+    const data={...(creditNoteId?{id:creditNoteId}:{}),invoice_id:inv.id,credit_date:fd.get("credit_date"),reason:fd.get("reason"),save_status:fd.get("save_status"),
+      lines:(inv.lines||[]).map((line,index)=>({original_line_index:index,quantity:Number(fd.get("credit_qty_"+index)||0)})).filter(line=>line.quantity>0)};
+    if(!data.lines.length)throw new Error("Enter a quantity to credit on at least one invoice line.");
+    if(data.save_status==="issue"&&!confirm("Issue this credit note now? A permanent credit-note number will be assigned and it will reduce the invoice balance."))data.save_status="draft";
+    const result=await call("logistics-workspace",{action:"upsertCreditNote",data});
+    await loadInvoices(true);closeForm();render();
+    notify(data.save_status==="issue"?"Credit note issued as "+(result.record?.credit_note_number||""):"Credit note draft saved","success");
+  });
+}
+async function issueCreditNote(creditNoteId){
+  if(!confirm("Issue this credit note? It will be numbered and permanently reduce the linked invoice balance."))return;
+  try{const result=await call("logistics-workspace",{action:"issueCreditNote",id:creditNoteId});await loadInvoices(true);render();notify("Credit note issued as "+result.record.credit_note_number,"success")}
+  catch(e){notify(e.message||"Could not issue the credit note","error")}
+}
+async function deleteCreditNoteDraft(creditNoteId){
+  if(!confirm("Delete this unissued credit-note draft?"))return;
+  try{await call("logistics-workspace",{action:"deleteDraftCreditNote",id:creditNoteId});await loadInvoices(true);render();notify("Draft credit note deleted","success")}
+  catch(e){notify(e.message||"Could not delete the draft credit note","error")}
+}
+function printCreditNote(noteId){
+  const note=state.ops.creditNotes.find(x=>x.id===noteId);if(!note)return notify("Credit note record not found.","error");
+  const inv=state.ops.invoices.find(x=>x.id===note.invoice_id),currency=note.currency||inv?.currency||"INR";
+  const money=n=>currency+" "+Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const rows=(note.lines||[]).map((line,index)=>'<tr><td>'+(index+1)+'</td><td>'+esc(line.description)+'</td><td>'+esc(line.hsn_sac||"")+'</td><td>'+Number(line.quantity||0).toLocaleString("en-IN")+' '+esc(line.unit||"")+'</td><td>'+money(line.taxable_value)+'</td><td>'+Number(line.gst_rate||0).toFixed(2)+'%</td><td>'+money(line.tax_amount)+'</td><td>'+money(line.line_total)+'</td></tr>').join("");
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>'+esc(note.credit_note_number||"Credit note")+'</title><style>body{font:13px Arial,sans-serif;color:#183246;margin:30px}h1{font-size:22px}.top{border-bottom:3px solid #352c8d;padding-bottom:12px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ccd5dc;padding:8px;text-align:left}th{background:#edf1f5}small{color:#71808d}</style></head><body><div class="top"><h1>CREDIT NOTE</h1><b>'+esc(note.credit_note_number||"DRAFT")+'</b><p>Against invoice '+esc(note.invoice_number_snapshot||inv?.invoice_number||"—")+' · '+fmt(note.credit_date)+'</p></div><p><b>Bill to:</b> '+esc(note.buyer?.name||"—")+'<br>'+esc(note.buyer?.address||"")+'</p><p><b>Reason:</b> '+esc(note.reason)+'</p><table><thead><tr><th>#</th><th>Service</th><th>HSN/SAC</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Tax</th><th>Credit</th></tr></thead><tbody>'+rows+'</tbody></table><p style="text-align:right;font-size:18px"><b>Credit total: '+money(note.total)+'</b></p><p><small>GST treatment: '+esc(note.supply_type||"—")+' · INR reference '+Number(note.total_inr||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})+'</small></p><script>window.onload=()=>window.print()<\/script></body></html>';
+  const win=window.open("","_blank","width=1050,height=750");if(!win)return notify("Allow pop-ups to print the credit note.","error");win.document.write(html);win.document.close();
+}
+async function updatePaymentFx(){
+  const fields=$("fields");if(!fields||$("modal").hidden)return;
+  const currency=(fields.querySelector('[name="currency"]')?.value||"INR").trim().toUpperCase();
+  const dateValue=fields.querySelector('[name="fx_date"]')?.value||"";
+  const rate=fields.querySelector('[name="exchange_rate_to_inr"]');
+  const source=fields.querySelector('[name="fx_source"]');
+  if(!rate||!source||!dateValue)return;
+  if(currency==="INR"){rate.value="1";source.value="INR base currency";return}
+  source.value="Looking up reference rate…";rate.value="";
+  try{
+    const end=new Date(dateValue+"T00:00:00Z"),start=new Date(end);start.setUTCDate(start.getUTCDate()-10);
+    const params=new URLSearchParams({from:start.toISOString().slice(0,10),to:dateValue,base:currency,quotes:"INR"});
+    const response=await fetch("https://api.frankfurter.dev/v2/rates?"+params.toString());if(!response.ok)throw new Error("FX service unavailable.");
+    const data=await response.json(),rows=Array.isArray(data)?data.filter(x=>String(x.currency||x.quote||"").toUpperCase()==="INR"&&Number(x.rate)>0):[];
+    if(!rows.length)throw new Error("No reference FX rate returned.");
+    const latest=rows.sort((a,b)=>String(a.date).localeCompare(String(b.date))).at(-1);
+    if($("modal").hidden)return;rate.value=Number(latest.rate).toFixed(8);
+    fields.querySelector('[name="fx_date"]').value=latest.date||dateValue;source.value="Frankfurter reference rate";
+  }catch(e){if(!$("modal").hidden){source.value="Manual override";rate.value=""}}
+}
+function recordInvoicePayment(invoiceId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can record receipts.","error");
+  const inv=state.ops.invoices.find(x=>x.id===invoiceId);if(!inv||inv.status!=="issued")return;
+  const balance=invoiceLedger(inv).balance;if(balance<=0.005)return notify("This invoice has no open balance.","error");
+  const today=new Date().toISOString().slice(0,10);
+  const defs=[
+    {name:"received_at",label:"Receipt date",type:"date",value:today,required:true},
+    {name:"amount",label:"Amount received · open "+inv.currency+" "+balance.toFixed(2),type:"number",step:"0.01",value:"",required:true},
+    {name:"currency",label:"Receipt currency (must match invoice)",value:inv.currency||"INR",required:true},
+    {name:"exchange_rate_to_inr",label:"Rate to INR",type:"number",step:"0.00000001",value:inv.exchange_rate_to_inr||"1",required:true},
+    {name:"fx_date",label:"FX rate date",type:"date",value:today},
+    {name:"fx_source",label:"FX source",value:inv.currency==="INR"?"INR base currency":"Looking up reference rate"},
+    {name:"payment_method",label:"Payment method",options:[["bank_transfer","Bank transfer"],["upi","UPI"],["cash","Cash"],["card","Card"],["cheque","Cheque"],["other","Other"]],value:"bank_transfer"},
+    {name:"reference",label:"Bank / transaction reference",value:""},
+    {name:"notes",label:"Receipt notes",type:"textarea",value:"",span2:true}
+  ];
+  openForm("Record receipt · "+inv.invoice_number,defs,async fd=>{
+    const data=Object.fromEntries(fd.entries());data.invoice_id=inv.id;
+    await call("logistics-workspace",{action:"recordInvoicePayment",data});
+    await loadInvoices(true);closeForm();render();notify("Customer receipt recorded","success");
+  });
+  const fields=$("fields"),rate=fields.querySelector('[name="exchange_rate_to_inr"]'),source=fields.querySelector('[name="fx_source"]');
+  fields.querySelector('[name="currency"]').readOnly=true;source.readOnly=true;fields.querySelector('[name="fx_date"]').readOnly=true;
+  fields.querySelector('[name="received_at"]').onchange=()=>{fields.querySelector('[name="fx_date"]').value=fields.querySelector('[name="received_at"]').value;source.value="";updatePaymentFx()};
+  rate.oninput=()=>{if(inv.currency!=="INR")source.value="Manual override"};
+  if(inv.currency!=="INR")updatePaymentFx();
+}
+function renderReceivables(){
+  const asOf=state.financeAsOf||new Date().toISOString().slice(0,10);
+  const customerSearch=String(state.customerSearch||"").toLowerCase();
+  const customers=(state.ops.customers||[]).filter(c=>[c.customer_code,c.legal_name,c.display_name,c.gstin,c.email].join(" ").toLowerCase().includes(customerSearch));
+  const customerRows=customers.map(c=>{
+    const jobs=state.ops.jobs.filter(j=>j.customer_id===c.id).length;
+    const invoices=state.ops.invoices.filter(i=>i.customer_id===c.id&&i.status==="issued");
+    const openInr=invoices.reduce((sum,i)=>sum+invoiceLedger(i).balanceInr,0);
+    const action=actionBtn("edit-customer","Edit",'data-id="'+esc(c.id)+'"')+
+      '<button class="btn small" data-action="toggle-customer" data-id="'+esc(c.id)+'" data-active="'+String(!c.is_active)+'">'+(c.is_active?"Deactivate":"Reactivate")+'</button>';
+    return '<tr><td><b>'+esc(c.customer_code)+'</b><span class="cell-sub">'+esc(c.display_name||"")+'</span></td><td>'+esc(c.legal_name)+'</td><td>'+esc(c.gstin||"—")+'</td><td>'+esc(c.email||"—")+'<span class="cell-sub">'+esc(c.phone||"")+'</span></td><td>'+jobs+'</td><td>'+invoices.length+'</td><td>INR '+num(openInr)+'</td><td>'+pill(c.is_active?"Active":"Inactive")+'</td><td>'+action+'</td></tr>';
+  });
+  const report=(state.ops.invoices||[]).filter(inv=>inv.status==="issued"&&(!state.arCustomerFilter||inv.customer_id===state.arCustomerFilter)).map(inv=>{
+    const ledger=invoiceLedger(inv);if(ledger.balance<=0.005)return null;
+    const due=inv.due_date||inv.invoice_date,days=financeDateDifference(due,asOf);
+    const bucket=days<=0?"Not due":days<=30?"1–30 days":days<=60?"31–60 days":days<=90?"61–90 days":"90+ days";
+    return {inv,ledger,due,days,bucket};
+  }).filter(Boolean);
+  const kpis={"Not due":0,"1–30 days":0,"31–60 days":0,"61–90 days":0,"90+ days":0};
+  report.forEach(row=>kpis[row.bucket]+=row.ledger.balanceInr);
+  const reportRows=report.map(({inv,ledger,due,days,bucket})=>'<tr><td><b>'+esc(state.ops.customers.find(c=>c.id===inv.customer_id)?.legal_name||inv.buyer?.name||"—")+'</b></td><td><b>'+esc(inv.invoice_number)+'</b><span class="cell-sub">'+esc(inv.job_id?state.ops.jobs.find(j=>j.id===inv.job_id)?.job_no||"":"")+'</span></td><td>'+fmt(inv.invoice_date)+'</td><td>'+fmt(due)+'</td><td>'+esc(bucket)+(days>0?' · '+days+'d overdue':"")+'</td><td>'+esc(inv.currency)+' '+num(inv.total)+'</td><td>'+esc(inv.currency)+' '+num(ledger.credited)+'</td><td>'+esc(inv.currency)+' '+num(ledger.received)+'</td><td><b>'+esc(inv.currency)+' '+num(ledger.balance)+'</b><span class="cell-sub">INR '+num(ledger.balanceInr)+'</span></td><td>'+actionBtn("record-payment","Record receipt",'data-id="'+esc(inv.id)+'"')+actionBtn("credit-invoice","Credit note",'data-id="'+esc(inv.id)+'"')+'</td></tr>');
+  const filteredOpen=report.reduce((sum,row)=>sum+row.ledger.balanceInr,0);
+  const creditRows=(state.ops.creditNotes||[]).slice().sort((a,b)=>String(b.credit_date).localeCompare(String(a.credit_date))).map(n=>{
+    const inv=state.ops.invoices.find(x=>x.id===n.invoice_id);
+    const actions=n.status==="draft"?actionBtn("edit-credit-note","Edit",'data-id="'+esc(n.id)+'"')+actionBtn("issue-credit-note","Issue",'data-id="'+esc(n.id)+'"')+actionBtn("delete-credit-note","Delete draft",'data-id="'+esc(n.id)+'"'):actionBtn("print-credit-note","Print",'data-id="'+esc(n.id)+'"');
+    return '<tr><td><b>'+esc(n.credit_note_number||"Draft")+'</b></td><td>'+esc(inv?.invoice_number||n.invoice_number_snapshot||"—")+'</td><td>'+esc(n.buyer?.name||"—")+'</td><td>'+fmt(n.credit_date)+'</td><td>'+esc(n.currency)+' '+num(n.total)+'</td><td>'+pill(n.status)+'</td><td>'+actions+'</td></tr>';
+  });
+  const paymentRows=(state.ops.payments||[]).slice().sort((a,b)=>String(b.received_at).localeCompare(String(a.received_at))).map(r=>{
+    const inv=state.ops.invoices.find(x=>x.id===r.invoice_id);
+    return '<tr><td><b>'+esc(r.receipt_number)+'</b></td><td>'+esc(inv?.invoice_number||"—")+'</td><td>'+esc(inv?.buyer?.name||"—")+'</td><td>'+fmt(r.received_at)+'</td><td>'+esc(r.currency)+' '+num(r.amount)+'<span class="cell-sub">INR '+num(r.amount_inr)+'</span></td><td>'+esc(r.payment_method?.replace(/_/g," ")||"—")+'</td><td>'+esc(r.reference||"—")+'</td></tr>';
+  });
+  const options=[["","All customer accounts"],...state.ops.customers.filter(c=>c.is_active).map(c=>[c.id,c.legal_name])];
+  const select=options.map(o=>'<option value="'+esc(o[0])+'" '+(o[0]===state.arCustomerFilter?"selected":"")+'>'+esc(o[1])+'</option>').join("");
+  const controls='<div class="ar-toolbar"><label>As of <input id="arAsOf" type="date" value="'+esc(asOf)+'"></label><label>Customer <select id="arCustomerFilter">'+select+'</select></label><span class="desc">'+report.length+' open invoices · INR '+num(filteredOpen)+'</span><button class="btn small" data-action="export-ar">Export CSV</button><button class="btn small" data-action="print-ar">Print</button></div>';
+  const reportTable=table(["CUSTOMER","INVOICE / JOB","INVOICE DATE","DUE DATE","AGEING","INVOICE TOTAL","CREDIT NOTES","RECEIPTS","OPEN BALANCE","ACTIONS"],reportRows,"No outstanding invoices match this report.");
+  return pageHead("receivables",'<button class="btn" data-nav="finance">Accounting & charges</button><button class="btn primary" data-create="customer">＋ New customer</button>')+
+    '<div class="stats">'+stat("Receivables · INR","INR "+num(filteredOpen),"As of "+fmt(asOf))+stat("Not due","INR "+num(kpis["Not due"]),"Within payment terms")+stat("1–30 days","INR "+num(kpis["1–30 days"]),"Past due")+stat("31–60 days","INR "+num(kpis["31–60 days"]),"Past due")+stat("60+ days","INR "+num(kpis["61–90 days"]+kpis["90+ days"]),"Collection follow-up")+'</div>'+
+    '<div class="pane ar-pane"><div class="pane-head"><span class="pane-title">ACCOUNTS RECEIVABLE · AGEING</span><span class="pane-sub">Open invoice balances net of receipts and issued credit notes</span></div>'+controls+reportTable+'</div><div style="height:9px"></div>'+
+    pane("CUSTOMER ACCOUNTS",'<div class="ar-toolbar"><input id="customerSearch" type="search" placeholder="Find account, GSTIN or contact" value="'+esc(state.customerSearch||"")+'"><span class="desc">'+state.ops.customers.length+' accounts</span></div>'+table(["ACCOUNT CODE","CUSTOMER","GSTIN","CONTACT","JOBS","ISSUED INVOICES","OPEN INR","STATUS","ACTIONS"],customerRows,"No customer accounts yet. Add a customer to reuse its bill-to and tax details on jobs and invoices."))+
+    '<div style="height:9px"></div>'+
+    pane("CREDIT NOTE REGISTER",table(["CREDIT NOTE","AGAINST INVOICE","CUSTOMER","DATE","AMOUNT","STATUS","ACTIONS"],creditRows,"No credit notes issued or drafted."))+
+    '<div style="height:9px"></div>'+
+    pane("CUSTOMER RECEIPTS",table(["RECEIPT","INVOICE","CUSTOMER","DATE","AMOUNT","METHOD","REFERENCE"],paymentRows,"No receipts recorded."));
+}
+function exportReceivables(){
+  const asOf=state.financeAsOf||new Date().toISOString().slice(0,10);
+  const rows=(state.ops.invoices||[]).filter(i=>i.status==="issued"&&(!state.arCustomerFilter||i.customer_id===state.arCustomerFilter)).map(inv=>{
+    const ledger=invoiceLedger(inv);if(ledger.balance<=0.005)return null;const due=inv.due_date||inv.invoice_date,days=financeDateDifference(due,asOf);
+    return [state.ops.customers.find(c=>c.id===inv.customer_id)?.legal_name||inv.buyer?.name||"",inv.invoice_number,inv.invoice_date,due,days,inv.currency,inv.total,ledger.credited,ledger.received,ledger.balance,ledger.balanceInr];
+  }).filter(Boolean);
+  const csv=[["Customer","Invoice","Invoice date","Due date","Days overdue","Currency","Invoice total","Credit notes","Receipts","Open balance","Open INR"],...rows].map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="accounts-receivable-"+asOf+".csv";a.click();URL.revokeObjectURL(a.href);
+}
+function printReceivables(){
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>Accounts receivable ageing</title><style>body{font:12px Arial;margin:24px;color:#22384a}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cad4dd;padding:6px;text-align:left}th{background:#e9eef2}h1{font-size:20px}</style></head><body><h1>Accounts receivable ageing</h1><p>As of '+esc(state.financeAsOf||new Date().toISOString().slice(0,10))+'</p>'+document.querySelector(".ar-pane")?.innerHTML+'<script>window.onload=()=>window.print()<\/script></body></html>';
+  const win=window.open("","_blank","width=1200,height=800");if(!win)return notify("Allow pop-ups to print the ageing report.","error");win.document.write(html);win.document.close();
+}
+function renderFinance(){
   const invoiceRows=(state.ops.invoices||[]).map(inv=>{
+    const ledger=invoiceLedger(inv);
     const linkedHbl=inv.hbl_id?state.ops.jobHbls.find(h=>h.id===inv.hbl_id):null;
     const j=resolveJob(inv.job_id,inv.container_no,linkedHbl?.hbl_no,inv.hbl_id);
     const job=j?'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>':'<span class="cell-sub">General invoice</span>';
-    const status=inv.status==="issued"?'<span class="pill green">Issued</span>':'<span class="pill amber">Draft</span>';
+    const status=inv.status==="draft"?'<span class="pill amber">Draft</span>':ledger.balance<=0.005?'<span class="pill green">Settled</span>':ledger.received>0||ledger.credited>0?'<span class="pill blue">Part paid</span>':'<span class="pill green">Issued</span>';
     const ref=inv.invoice_number||("Draft · "+String(inv.id||"").slice(0,8).toUpperCase());
-    const actions=actionBtn("print-invoice","Print",'data-id="'+esc(inv.id)+'"')+
-      (inv.status==="draft"?actionBtn("edit-invoice","Edit",'data-id="'+esc(inv.id)+'"')+actionBtn("issue-invoice","Issue & number",'data-id="'+esc(inv.id)+'"'):"");
-    return '<tr><td><b>'+esc(ref)+'</b><span class="cell-sub">'+esc(inv.invoice_type?.replace(/_/g," ")||"Invoice")+'</span></td><td>'+job+'<span class="cell-sub">'+esc(j?.hbl_no||"")+'</span></td><td>'+esc(inv.buyer?.name||"—")+'</td><td>'+fmt(inv.invoice_date)+'</td><td>'+esc(inv.currency||"INR")+' '+num(inv.total)+'<span class="cell-sub">INR '+num(inv.total_inr)+'</span></td><td>'+status+'</td><td>'+actions+'</td></tr>';
+    const actions=inv.status==="draft"
+      ?actionBtn("print-invoice","Print",'data-id="'+esc(inv.id)+'"')+actionBtn("edit-invoice","Edit",'data-id="'+esc(inv.id)+'"')+actionBtn("issue-invoice","Issue",'data-id="'+esc(inv.id)+'"')+actionBtn("delete-invoice","Delete draft",'data-id="'+esc(inv.id)+'"')
+      :actionBtn("print-invoice","Print",'data-id="'+esc(inv.id)+'"')+actionBtn("credit-invoice","Credit note",'data-id="'+esc(inv.id)+'"')+(ledger.balance>0.005?actionBtn("record-payment","Record receipt",'data-id="'+esc(inv.id)+'"'):"");
+    return '<tr><td><b>'+esc(ref)+'</b><span class="cell-sub">'+esc(inv.invoice_type?.replace(/_/g," ")||"Invoice")+'</span></td><td>'+job+'<span class="cell-sub">'+esc(j?.hbl_no||"")+'</span></td><td>'+esc(inv.buyer?.name||"—")+'</td><td>'+fmt(inv.invoice_date)+'</td><td>'+esc(inv.currency||"INR")+' '+num(inv.total)+'<span class="cell-sub">INR '+num(inv.total_inr)+'</span></td><td>'+esc(inv.currency||"INR")+' '+num(ledger.balance)+'<span class="cell-sub">INR '+num(ledger.balanceInr)+'</span></td><td>'+status+'</td><td>'+actions+'</td></tr>';
   });
   const invoiceTable=state.ops.invoicesLoading?'<div class="empty">Loading invoice register…</div>':
     state.ops.invoiceLoadError?'<div class="empty">'+esc(state.ops.invoiceLoadError)+' '+actionBtn("retry-invoices","Retry")+'</div>':
-    table(["INVOICE NO. / TYPE","JOB / HBL","BILL TO","INVOICE DATE","TOTAL / INR","STATUS","ACTIONS"],invoiceRows,"No invoices yet. Create a draft, add line items, then issue it to assign the next invoice number.");
+    table(["INVOICE NO. / TYPE","JOB / HBL","BILL TO","INVOICE DATE","INVOICE TOTAL","OPEN BALANCE","STATUS","ACTIONS"],invoiceRows,"No invoices yet. Create a draft, add line items, then issue it to assign the next invoice number.");
   const chargeRows=state.ops.charges.map(x=>{
     const linkedHbl=x.hbl_id?state.ops.jobHbls.find(h=>h.id===x.hbl_id):null;
     const j=resolveJob(x.job_id,x.container_no,linkedHbl?.hbl_no||x.hbl_no,x.hbl_id);
     const job=j?'<button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button>':'<span class="pill amber">Unmapped</span>';
     return '<tr><td>'+job+'<span class="cell-sub">'+esc(j?.hbl_no||"")+'</span></td><td>'+esc(x.container_no||"Job level")+'</td><td>'+esc(x.direction)+'</td><td>'+esc(x.charge_code)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.counterparty)+'</td><td>'+esc(x.currency)+' '+num(x.amount)+'<span class="cell-sub">'+(x.amount_inr!=null?"INR "+num(x.amount_inr):"")+'</span></td><td>'+pill(x.approval_status)+'</td><td>'+fmt(x.due_date)+'</td><td>'+actionBtn("edit-charge","Edit",'data-id="'+esc(x.id)+'"')+actionBtn("print-charge","Print",'data-id="'+esc(x.id)+'"')+(x.approval_status!=="approved"&&state.profile?.role==="Admin"?actionBtn("approve-charge","Approve",'data-id="'+esc(x.id)+'"'):"")+(state.profile?.role==="Admin"?actionBtn("delete-charge","Delete",'data-id="'+esc(x.id)+'"'):"")+'</td></tr>';
   });
+  const issued=(state.ops.invoices||[]).filter(x=>x.status==="issued");
+  const open=issued.reduce((n,x)=>n+invoiceLedger(x).balanceInr,0);
+  const overdue=issued.filter(x=>invoiceLedger(x).balance>0.005&&financeDateDifference(x.due_date||x.invoice_date,new Date().toISOString().slice(0,10))>0).length;
   const approved=state.ops.charges.filter(x=>x.approval_status==="approved");
   const cost=approved.filter(x=>x.direction==="cost").reduce((n,x)=>n+Number(x.amount_inr??x.amount??0),0);
   const revenue=approved.filter(x=>x.direction==="revenue").reduce((n,x)=>n+Number(x.amount_inr??x.amount??0),0);
   const unmapped=state.ops.charges.filter(x=>!resolveJob(x.job_id,x.container_no)).length;
-  return pageHead("finance",'<button class="btn primary" data-create="invoice">Raise invoice</button><button class="btn" data-create="charge">New charge</button>')+
-  '<div class="stats">'+stat("Invoices",(state.ops.invoices||[]).length,"Drafts and issued")+stat("Issued invoices",(state.ops.invoices||[]).filter(x=>x.status==="issued").length,"Numbered records")+stat("Charge lines",state.ops.charges.length,"Costs and revenues")+stat("Awaiting approval",state.ops.charges.filter(x=>x.approval_status!=="approved").length,"Draft charges")+'</div>'+
-  pane("CUSTOMER INVOICE REGISTER",invoiceTable,null,"Drafts receive a number only when issued")+
+  return pageHead("finance",'<button class="btn" data-nav="receivables">Customers & receivables</button><button class="btn primary" data-create="invoice">Raise invoice</button><button class="btn" data-create="charge">New charge</button>')+
+  '<div class="stats">'+stat("Invoices",(state.ops.invoices||[]).length,"Drafts and issued")+stat("Customers",state.ops.customers.length,"Customer accounts")+stat("Open receivables","INR "+num(open),"After receipts and credit notes")+stat("Overdue invoices",overdue,"Need collection follow-up")+'</div>'+
+  pane("CUSTOMER INVOICE REGISTER",invoiceTable,null,"Issued invoices are locked; use a credit note to reduce or reverse them. Draft invoices can be deleted.")+
   '<div style="height:9px"></div>'+
-  '<div class="stats">'+stat("Approved costs","INR "+num(cost),"Converted total")+stat("Approved revenue","INR "+num(revenue),"Converted total")+stat("Contribution","INR "+num(revenue-cost),"Revenue less cost")+stat("Unmapped lines",unmapped,"Need job or container mapping")+'</div>'+
+  '<div class="stats">'+stat("Approved costs","INR "+num(cost),"Converted total")+stat("Approved revenue","INR "+num(revenue),"Approved shipment revenue")+stat("Contribution","INR "+num(revenue-cost),"Revenue less cost")+stat("Unmapped lines",unmapped,"Need job or container mapping")+'</div>'+
   pane("SHIPMENT CHARGES REGISTER",table(["JOB / HBL","CONTAINER","TYPE","CHARGE CODE","DESCRIPTION","COUNTERPARTY","AMOUNT","APPROVAL","DUE DATE","ACTIONS"],chargeRows,"No shipment charges."));
-}function renderDocuments(){
+}
+function renderDocuments(){
   const rows=state.ops.documents.map(x=>{
     const filing=state.ops.filings.find(f=>f.id===x.filing_id);
     const j=filing?resolveJob(filing.job_id,filing.container_no,filing.hbl_no):null;
@@ -946,14 +1160,14 @@ function renderCustomer(){
 
 async function loadStaffUsers(){const target=$("staffUsers");if(!target)return;target.innerHTML='<span class="desc">Loading staff accounts…</span>';try{const d=await call("logistics-workspace",{action:"listStaffUsers"});const rows=(d.users||[]).map(u=>'<tr><td>'+esc(u.display_name)+'</td><td>'+esc(u.email)+'</td><td>'+pill(u.role)+'</td><td>'+pill(u.is_active?"Active":"Disabled")+'</td><td>'+esc(u.created_at?fmt(u.created_at):"—")+'</td><td><button class="btn small red" data-action="delete-staff-user" data-id="'+esc(u.user_id)+'" data-email="'+esc(u.email)+'">Delete</button></td></tr>');target.innerHTML=table(["NAME","EMAIL","ROLE","STATUS","CREATED","ACTIONS"],rows,"No staff accounts found.")}catch(e){target.innerHTML='<div class="form-error">'+esc(e.message||"Could not load staff accounts.")+'</div>'}}
 function renderSettings(){return pageHead("settings")+(state.profile?.role==="Admin"?'<div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">CREATE STAFF LOGIN</span><span class="pane-sub">Admin only · managed inside this website</span></div><div class="pane-body"><form id="staffCreateForm"><div class="formgrid"><div class="field"><label>FULL NAME *</label><input name="display_name" required maxlength="120"></div><div class="field"><label>EMAIL ADDRESS *</label><input name="email" type="email" required maxlength="254"></div><div class="field"><label>TEMPORARY PASSWORD *</label><input name="password" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>ACCESS ROLE *</label><select name="role"><option>Operator</option><option>Editor</option><option>Viewer</option><option>Admin</option></select></div></div><button class="btn primary" type="submit">＋ Create staff user</button><div class="form-error" id="staffFormError"></div></form></div></div><div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">STAFF ACCOUNTS</span><button class="btn small" id="reloadStaff">↻ Refresh users</button></div><div class="pane-body" id="staffUsers"><span class="desc">Loading staff accounts…</span></div></div>':'<div class="pane"><div class="pane-body">Staff account administration is restricted to Admin users.</div></div>')+'<div class="columns">'+pane("STAFF SESSION",'<div class="pane-body">User: '+esc(state.session?.user?.email||"—")+'<br>Role: '+esc(state.profile?.role||"—")+'<br>Equipment records: '+state.rows.length+'</div>')+pane("CONNECTED SERVICES",'<div class="pane-body">Supabase authentication '+pill("Connected")+'<br>Protected operations API '+pill("Connected")+'<br>Customer tracking API '+pill("Active")+'</div>')+'</div>'}
-function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(state.page==="finance"){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=renderFinance()}else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
+function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="transport")html=renderTransport();else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports")html=renderReports();else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
 function setNavigationOpen(open){$("app").classList.toggle("menu-open",open);$("hamb").setAttribute("aria-expanded",String(open))}
 function navigate(p){if(p==="jobdetail"||p==="consol")p="containers";state.page=p;state.query="";$("globalSearch").value="";setNavigationOpen(false);render()}
 function field(f){const value=f.value??"";let input;if(f.options)input='<select name="'+esc(f.name)+'" '+(f.required?"required":"")+'>'+f.options.map(o=>'<option value="'+esc(o[0])+'" '+(String(o[0])===String(value)?"selected":"")+'>'+esc(o[1])+'</option>').join("")+'</select>';else if(f.type==="textarea")input='<textarea name="'+esc(f.name)+'">'+esc(value)+'</textarea>';else{let v=value;if(f.type==="date"&&v)v=String(v).slice(0,10);if(f.type==="datetime-local"&&v)v=new Date(v).toISOString().slice(0,16);input='<input name="'+esc(f.name)+'" type="'+(f.type||"text")+'" value="'+esc(v)+'" '+(f.accept?'accept="'+esc(f.accept)+'"':"") +' '+(f.required?"required":"")+' '+(f.step?'step="'+esc(f.step)+'"':"")+'>'}return'<div class="field '+(f.span2?"span2":"")+'"><label>'+esc(f.label.toUpperCase())+(f.required?" *":"")+'</label>'+input+'</div>'}
 function openForm(title,defs,save){$("modalTitle").textContent=title;$("fields").innerHTML=defs.map(field).join("");$("formError").textContent="";state.modalSave=save;$("modal").hidden=false}
 function closeForm(){$("modal").hidden=true;state.modalSave=null}
 async function saveJob(fd,id,linkContainerNo){const d=Object.fromEntries(fd.entries());if(id)d.id=id;const result=await call("logistics-workspace",{action:"upsertForwardingJob",data:d});const saved=result.record;if(linkContainerNo&&saved?.id)await call("logistics-workspace",{action:"linkJobContainer",data:{job_id:saved.id,container_no:linkContainerNo,allocation_role:"primary"}});await loadJobs();state.selectedJob=saved?.id||id||null;state.page=state.selectedJob?"jobdetail":"jobs";render();notify(id?"Forwarding job updated":linkContainerNo?"Job created and container linked":"Forwarding job created","success")}
-function newJob(jobId,seed,linkContainerNo){if(!access(["Admin","Editor"])){notify("Only Admin / Editor can create or edit forwarding jobs.","error");return}const j={...(seed||{}),...(jobId?state.ops.jobs.find(x=>x.id===jobId)||{}:{})};const defs=[{name:"job_no",label:"Job number",value:j.job_no,required:true},{name:"customer_reference",label:"Customer reference",value:j.customer_reference},{name:"service_type",label:"Service type",options:[["FCL","Sea FCL"],["LCL","Sea LCL"],["AIR","Air"],["OTHER","Other"]],value:j.service_type||"FCL"},{name:"direction",label:"Direction",options:[["import","Import"],["export","Export"],["cross_trade","Cross trade"],["transshipment","Transshipment"]],value:j.direction||"import"},{name:"status",label:"Lifecycle status",options:["draft","booked","origin_handling","departed","transshipment","arrived","customs","destination_handling","out_for_delivery","delivered","closed","on_hold","cancelled"].map(x=>[x,x.replace(/_/g," ")]),value:j.status||"draft"},{name:"hbl_no",label:"House bill of lading",value:j.hbl_no},{name:"mbl_no",label:"Master bill of lading",value:j.mbl_no},{name:"booking_no",label:"Booking number",value:j.booking_no},{name:"customer_name",label:"Customer / forwarder",value:j.customer_name},{name:"shipper",label:"Shipper",value:j.shipper},{name:"consignee",label:"Consignee",value:j.consignee},{name:"notify_party",label:"Notify party",value:j.notify_party},{name:"origin_agent",label:"Origin agent",value:j.origin_agent},{name:"destination_agent",label:"Destination agent",value:j.destination_agent},{name:"carrier",label:"Carrier / liner",value:j.carrier},{name:"vessel_name",label:"Vessel name",value:j.vessel_name},{name:"voyage_no",label:"Voyage number",value:j.voyage_no},{name:"pol",label:"Port of loading",value:j.pol},{name:"transshipment_port",label:"Transshipment port",value:j.transshipment_port},{name:"pod",label:"Port of discharge",value:j.pod},{name:"final_delivery_place",label:"Final delivery place",value:j.final_delivery_place},{name:"incoterm",label:"Incoterm",value:j.incoterm},{name:"commodity",label:"Commodity",value:j.commodity},{name:"package_count",label:"Package count",type:"number",step:"1",value:j.package_count},{name:"package_type",label:"Package type",value:j.package_type},{name:"gross_weight_kg",label:"Gross weight (KG)",type:"number",step:"0.01",value:j.gross_weight_kg},{name:"volume_cbm",label:"Volume (CBM)",type:"number",step:"0.001",value:j.volume_cbm},{name:"cargo_ready_date",label:"Cargo ready date",type:"date",value:j.cargo_ready_date},{name:"etd",label:"ETD",type:"date",value:j.etd},{name:"eta",label:"ETA",type:"date",value:j.eta},{name:"branch",label:"Branch",value:j.branch||"Chennai"},{name:"sales_owner",label:"Sales owner",value:j.sales_owner},{name:"operations_owner",label:"Operations owner",value:j.operations_owner},{name:"customer_visible",label:"Customer portal visibility",options:[["false","Internal only"],["true","Visible to customer"]],value:j.customer_visible?"true":"false"},{name:"notes",label:"Internal notes",type:"textarea",value:j.notes,span2:true}];openForm(jobId?"Edit forwarding job":linkContainerNo?"Create job from container":"Create forwarding job",defs,fd=>saveJob(fd,jobId,linkContainerNo))}
+function newJob(jobId,seed,linkContainerNo){if(!access(["Admin","Editor"])){notify("Only Admin / Editor can create or edit forwarding jobs.","error");return}const j={...(seed||{}),...(jobId?state.ops.jobs.find(x=>x.id===jobId)||{}:{})};const defs=[{name:"job_no",label:"Job number",value:j.job_no,required:true},{name:"customer_reference",label:"Customer reference",value:j.customer_reference},{name:"service_type",label:"Service type",options:[["FCL","Sea FCL"],["LCL","Sea LCL"],["AIR","Air"],["OTHER","Other"]],value:j.service_type||"FCL"},{name:"direction",label:"Direction",options:[["import","Import"],["export","Export"],["cross_trade","Cross trade"],["transshipment","Transshipment"]],value:j.direction||"import"},{name:"status",label:"Lifecycle status",options:["draft","booked","origin_handling","departed","transshipment","arrived","customs","destination_handling","out_for_delivery","delivered","closed","on_hold","cancelled"].map(x=>[x,x.replace(/_/g," ")]),value:j.status||"draft"},{name:"hbl_no",label:"House bill of lading",value:j.hbl_no},{name:"mbl_no",label:"Master bill of lading",value:j.mbl_no},{name:"booking_no",label:"Booking number",value:j.booking_no},{name:"customer_name",label:"Customer / forwarder",value:j.customer_name},{name:"customer_id",label:"Customer account",options:customerOptions(j.customer_id),value:j.customer_id||""},{name:"shipper",label:"Shipper",value:j.shipper},{name:"consignee",label:"Consignee",value:j.consignee},{name:"notify_party",label:"Notify party",value:j.notify_party},{name:"origin_agent",label:"Origin agent",value:j.origin_agent},{name:"destination_agent",label:"Destination agent",value:j.destination_agent},{name:"carrier",label:"Carrier / liner",value:j.carrier},{name:"vessel_name",label:"Vessel name",value:j.vessel_name},{name:"voyage_no",label:"Voyage number",value:j.voyage_no},{name:"pol",label:"Port of loading",value:j.pol},{name:"transshipment_port",label:"Transshipment port",value:j.transshipment_port},{name:"pod",label:"Port of discharge",value:j.pod},{name:"final_delivery_place",label:"Final delivery place",value:j.final_delivery_place},{name:"incoterm",label:"Incoterm",value:j.incoterm},{name:"commodity",label:"Commodity",value:j.commodity},{name:"package_count",label:"Package count",type:"number",step:"1",value:j.package_count},{name:"package_type",label:"Package type",value:j.package_type},{name:"gross_weight_kg",label:"Gross weight (KG)",type:"number",step:"0.01",value:j.gross_weight_kg},{name:"volume_cbm",label:"Volume (CBM)",type:"number",step:"0.001",value:j.volume_cbm},{name:"cargo_ready_date",label:"Cargo ready date",type:"date",value:j.cargo_ready_date},{name:"etd",label:"ETD",type:"date",value:j.etd},{name:"eta",label:"ETA",type:"date",value:j.eta},{name:"branch",label:"Branch",value:j.branch||"Chennai"},{name:"sales_owner",label:"Sales owner",value:j.sales_owner},{name:"operations_owner",label:"Operations owner",value:j.operations_owner},{name:"customer_visible",label:"Customer portal visibility",options:[["false","Internal only"],["true","Visible to customer"]],value:j.customer_visible?"true":"false"},{name:"notes",label:"Internal notes",type:"textarea",value:j.notes,span2:true}];openForm(jobId?"Edit forwarding job":linkContainerNo?"Create job from container":"Create forwarding job",defs,fd=>saveJob(fd,jobId,linkContainerNo));const customerField=$("fields").querySelector('[name="customer_id"]');if(customerField)customerField.onchange=()=>{const c=state.ops.customers.find(x=>x.id===customerField.value);const name=$("fields").querySelector('[name="customer_name"]');if(c&&name)name.value=c.legal_name}}
 function jobsForContainer(containerNo){
   const ids=new Set(state.ops.jobContainers.filter(x=>norm(x.container_no)===norm(containerNo)).map(x=>x.job_id));
   return state.ops.jobs.filter(j=>ids.has(j.id));
@@ -1203,9 +1417,12 @@ function newInvoice(invoiceId,presetJobId){
   if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can create invoices.","error");
   const inv=invoiceId?(state.ops.invoices||[]).find(x=>x.id===invoiceId)||{}:{};
   if(inv.status==="issued")return notify("Issued invoices are locked. Create a credit or debit note for corrections.","error");
-  const defaults=state.ops.invoiceSettings||{},seller={...defaults,...(inv.seller||{})},buyer=inv.buyer||{};
+  const defaults=state.ops.invoiceSettings||{},seller={...defaults,...(inv.seller||{})};
   const inferred=resolveJob(inv.job_id,inv.container_no);
   const jobId=inv.job_id||inferred?.id||presetJobId||"";
+  const customerId=inv.customer_id||inferred?.customer_id||state.ops.jobs.find(j=>j.id===presetJobId)?.customer_id||"";
+  const account=state.ops.customers.find(c=>c.id===customerId);
+  const buyer=inv.buyer?.name?inv.buyer:account?{name:account.legal_name,gstin:account.gstin,address:customerAddress(account),state:account.state,state_code:account.state_code,postal_code:account.postal_code,country:account.country,email:account.email}:inv.buyer||{};
   const today=new Date().toISOString().slice(0,10);
   const defs=[
     {name:"invoice_type",label:"Document type",options:[["tax_invoice","GST tax invoice"],["bill_of_supply","Bill of supply"],["commercial_invoice","Commercial invoice"]],value:inv.invoice_type||"tax_invoice"},
@@ -1213,9 +1430,10 @@ function newInvoice(invoiceId,presetJobId){
     {name:"invoice_date",label:"Invoice date",type:"date",value:inv.invoice_date||today,required:true},
     {name:"due_date",label:"Due date",type:"date",value:inv.due_date||""},
     {name:"job_id",label:"Forwarding job",options:jobOptions(),value:jobId},
+    {name:"customer_id",label:"Customer account",options:customerOptions(customerId),value:customerId},
     {name:"hbl_id",label:"HBL",options:hblOptionsAll(),value:inv.hbl_id||""},
     {name:"container_no",label:"Container",options:containerOptions(),value:inv.container_no||""},
-    {name:"currency",label:"Invoice currency (ISO)",value:inv.currency||"INR",required:true},
+    {name:"currency",label:"Invoice currency (ISO)",value:inv.currency||account?.default_currency||"INR",required:true},
     {name:"exchange_rate_to_inr",label:"Rate to INR",type:"number",step:"0.00000001",value:inv.exchange_rate_to_inr||"1",required:true},
     {name:"fx_date",label:"FX rate date",type:"date",value:inv.fx_date||today},
     {name:"fx_source",label:"FX source",value:inv.fx_source||"INR base currency"},
@@ -1224,7 +1442,7 @@ function newInvoice(invoiceId,presetJobId){
     {name:"place_of_supply_state_code",label:"Place-of-supply state code",value:inv.place_of_supply_state_code||""},
     {name:"reverse_charge",label:"Reverse charge",options:[["false","No"],["true","Yes"]],value:String(inv.reverse_charge||false)},
     {name:"po_number",label:"Customer PO / reference",value:inv.po_number||""},
-    {name:"payment_terms",label:"Payment terms",value:inv.payment_terms||"Due within 30 days"},
+    {name:"payment_terms",label:"Payment terms",value:inv.payment_terms||account?.payment_terms||"Due within 30 days"},
     {name:"seller_name",label:"Seller legal name",value:seller.name||"",required:true},
     {name:"seller_gstin",label:"Seller GSTIN",value:seller.gstin||""},
     {name:"seller_address",label:"Seller registered address",type:"textarea",value:seller.address||"",span2:true,required:true},
@@ -1258,7 +1476,7 @@ function newInvoice(invoiceId,presetJobId){
     }));
     const data={
       ...(invoiceId?{id:invoiceId}:{}),save_status:get("save_status"),invoice_type:get("invoice_type"),
-      invoice_date:get("invoice_date"),due_date:get("due_date"),job_id:get("job_id"),hbl_id:get("hbl_id"),container_no:get("container_no"),
+      invoice_date:get("invoice_date"),due_date:get("due_date"),job_id:get("job_id"),customer_id:get("customer_id"),hbl_id:get("hbl_id"),container_no:get("container_no"),
       seller:{name:get("seller_name"),gstin:get("seller_gstin"),address:get("seller_address"),state:get("seller_state"),state_code:get("seller_state_code"),
         postal_code:get("seller_postal_code"),country:"India",email:get("seller_email"),phone:get("seller_phone"),bank_name:get("seller_bank_name"),
         bank_account:get("seller_bank_account"),ifsc:get("seller_ifsc"),upi:get("seller_upi")},
@@ -1289,6 +1507,10 @@ function newInvoice(invoiceId,presetJobId){
   });
   editor.addEventListener("input",updateInvoicePreview);
   const getField=name=>fields.querySelector('[name="'+name+'"]');
+  const accountField=getField("customer_id");
+  if(accountField)accountField.onchange=()=>{const c=state.ops.customers.find(x=>x.id===accountField.value);if(!c)return;const put=(name,value)=>{const el=getField(name);if(el)el.value=value||""};put("buyer_name",c.legal_name);put("buyer_gstin",c.gstin);put("buyer_address",customerAddress(c));put("buyer_state",c.state);put("buyer_state_code",c.state_code);put("buyer_postal_code",c.postal_code);put("buyer_country",c.country||"India");put("buyer_email",c.email);put("payment_terms",c.payment_terms);put("currency",c.default_currency||"INR");put("place_of_supply",c.state||c.city);put("place_of_supply_state_code",c.state_code);updateInvoiceFx(true)};
+  const jobField=getField("job_id");
+  if(jobField)jobField.onchange=()=>{const j=state.ops.jobs.find(x=>x.id===jobField.value);if(j&&j.customer_id&&accountField){accountField.value=j.customer_id;accountField.dispatchEvent(new Event("change"))}};
   const typeField=getField("invoice_type"),supplyField=getField("supply_type");
   typeField.onchange=()=>{if(typeField.value!=="tax_invoice"&&supplyField.value!=="not_applicable")supplyField.value="not_applicable";else if(typeField.value==="tax_invoice"&&supplyField.value==="not_applicable")supplyField.value="intra_state";updateInvoicePreview()};
   supplyField.onchange=updateInvoicePreview;
@@ -1364,6 +1586,9 @@ async function submitForm(e){e.preventDefault();if(!state.modalSave)return;const
 function exportJobs(){const cols=["job_no","customer_reference","service_type","direction","status","hbl_no","mbl_no","booking_no","customer_name","shipper","consignee","carrier","vessel_name","voyage_no","pol","transshipment_port","pod","final_delivery_place","etd","eta","package_count","gross_weight_kg","volume_cbm"];const rows=state.ops.jobs;if(!rows.length)return notify("No jobs to export.");const csv=[cols.join(","),...rows.map(r=>cols.map(c=>'"'+String(r[c]??"").replace(/"/g,'""')+'"').join(","))].join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="forwarding-jobs.csv";a.click();URL.revokeObjectURL(a.href)}
 function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(button=>{button.onclick=()=>{const mode=button.dataset.workbenchMode==="containers"?"containers":"forwarding";if(state.workbenchMode===mode)return;state.workbenchMode=mode;state.query="";$("globalSearch").value="";render()}});document.querySelectorAll("[data-dashboard-filter]").forEach(button=>{button.onclick=()=>{state.dashboardFilter=button.dataset.dashboardFilter||"all";render()}});
   const containerStageSelect=$("containerStageFilter");if(containerStageSelect)containerStageSelect.onchange=()=>{state.containerStageFilter=containerStageSelect.value;render()};
+  const arAsOf=$("arAsOf");if(arAsOf)arAsOf.onchange=()=>{state.financeAsOf=arAsOf.value;render()};
+  const arCustomer=$("arCustomerFilter");if(arCustomer)arCustomer.onchange=()=>{state.arCustomerFilter=arCustomer.value;render()};
+  const customerSearch=$("customerSearch");if(customerSearch)customerSearch.onchange=()=>{state.customerSearch=customerSearch.value;render()};
   if(state.page==="settings"&&state.profile?.role==="Admin"){
     loadStaffUsers();
     const form=$("staffCreateForm");
@@ -1385,6 +1610,7 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       }
       if(type==="filing")newFiling("",button.dataset.jobId||"");
       if(type==="invoice")newInvoice("",button.dataset.jobId||"");
+      if(type==="customer")newCustomer();
       if(type==="charge")newCharge("",button.dataset.jobId||"");
     };
   });
@@ -1426,7 +1652,18 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="retry-invoices")loadInvoices(true);
       if(act==="edit-invoice")newInvoice(id);
       if(act==="issue-invoice")issueInvoice(id);
+      if(act==="delete-invoice")deleteInvoiceDraft(id);
       if(act==="print-invoice")printInvoice(id);
+      if(act==="credit-invoice")newCreditNote(id);
+      if(act==="edit-customer")newCustomer(id);
+      if(act==="toggle-customer")setCustomerActive(id,button.dataset.active==="true");
+      if(act==="record-payment")recordInvoicePayment(id);
+      if(act==="edit-credit-note")newCreditNote("",id);
+      if(act==="issue-credit-note")issueCreditNote(id);
+      if(act==="delete-credit-note")deleteCreditNoteDraft(id);
+      if(act==="print-credit-note")printCreditNote(id);
+      if(act==="export-ar")exportReceivables();
+      if(act==="print-ar")printReceivables();
       if(act==="edit-charge")newCharge(id);
       if(act==="print-charge")printChargeInvoice(id);
       if(act==="delete-charge")deleteCharge(id);
