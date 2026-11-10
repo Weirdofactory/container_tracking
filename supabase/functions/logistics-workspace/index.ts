@@ -592,6 +592,175 @@ Deno.serve(async (req: Request) => {
       return reply(200, { record: data }, origin);
     }
 
+
+    if (action === "listInvoices") {
+      roleCheck(profile.role, "finance");
+      const [{ data: invoices, error: invoiceError }, { data: settings, error: settingsError }] = await Promise.all([
+        admin.from("shipment_invoices").select("*").order("updated_at", { ascending: false }).limit(250),
+        admin.from("shipment_invoice_settings").select("data").eq("id", "default").maybeSingle(),
+      ]);
+      if (invoiceError || settingsError) throw new Error("Invoice records could not be loaded.");
+      return reply(200, { invoices: invoices ?? [], settings: settings?.data ?? {} }, origin);
+    }
+
+    if (action === "upsertInvoice") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const before = id ? (await admin.from("shipment_invoices").select("*").eq("id", id).maybeSingle()).data : null;
+      if (id && !before) throw new Error("Invoice not found.");
+      if (before?.status === "issued") throw new Error("Issued invoices are locked. Create a separate credit or debit note for corrections.");
+      let linkedJob = d.job_id ? await assertJob(d.job_id) : null;
+      const linkedHbl = d.hbl_id ? await assertJobHbl(d.hbl_id, linkedJob?.id) : null;
+      if (linkedHbl && !linkedJob) linkedJob = await assertJob(linkedHbl.job_id);
+      const jobId = linkedHbl?.job_id ?? linkedJob?.id ?? null;
+      const containerNo = text(d.container_no, 40) ? await assertContainer(d.container_no) : null;
+      if (jobId && containerNo) await assertJobContainer(jobId, containerNo);
+
+      const obj = (v: unknown): Record<string, unknown> =>
+        v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : {};
+      const s = obj(d.seller), b = obj(d.buyer);
+      const seller = {
+        name: text(s.name, 180), gstin: text(s.gstin, 20).toUpperCase(), address: text(s.address, 700),
+        state: text(s.state, 100), state_code: text(s.state_code, 2), postal_code: text(s.postal_code, 20),
+        country: text(s.country || "India", 80), email: text(s.email, 180), phone: text(s.phone, 60),
+        bank_name: text(s.bank_name, 140), bank_account: text(s.bank_account, 80),
+        ifsc: text(s.ifsc, 30).toUpperCase(), upi: text(s.upi, 120),
+      };
+      const buyer = {
+        name: text(b.name, 180), gstin: text(b.gstin, 20).toUpperCase(), address: text(b.address, 700),
+        state: text(b.state, 100), state_code: text(b.state_code, 2), postal_code: text(b.postal_code, 20),
+        country: text(b.country || "India", 80), email: text(b.email, 180),
+      };
+      const invoiceType = val(d.invoice_type, ["tax_invoice", "bill_of_supply", "commercial_invoice"], "invoice type");
+      const supplyType = val(d.supply_type, ["intra_state", "inter_state", "export_lut", "export_igst", "not_applicable"], "GST supply type");
+      const invoiceDate = date(d.invoice_date);
+      if (!invoiceDate) throw new Error("Invoice date is required.");
+      const dueDate = date(d.due_date);
+      const currency = text(d.currency || "INR", 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
+      const fx = currency === "INR" ? 1 : number(d.exchange_rate_to_inr, "INR exchange rate", 0.000001);
+      const fxDate = date(d.fx_date);
+      const fxSource = text(currency === "INR" ? "INR base currency" : d.fx_source || "Manual override", 120);
+      const rawLines = Array.isArray(d.lines) ? d.lines : [];
+      if (!rawLines.length || rawLines.length > 50) throw new Error("Add between 1 and 50 invoice lines.");
+      const taxApplies = invoiceType === "tax_invoice" && supplyType !== "export_lut";
+      const reverseCharge = d.reverse_charge === true || d.reverse_charge === "true";
+      const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+      let subtotal = 0, discountTotal = 0, taxableValue = 0, cgstTotal = 0, sgstTotal = 0, igstTotal = 0;
+      const lines = rawLines.map((raw: unknown, index: number) => {
+        const line = obj(raw);
+        const description = text(line.description, 240);
+        if (!description) throw new Error("Description is required for invoice line " + (index + 1) + ".");
+        const hsnSac = text(line.hsn_sac, 20);
+        if (invoiceType !== "commercial_invoice" && !hsnSac) throw new Error("Enter an HSN/SAC code for invoice line " + (index + 1) + ".");
+        const quantity = number(line.quantity, "Quantity on line " + (index + 1), 0.000001);
+        const unit = text(line.unit || "service", 30);
+        const unitPrice = number(line.unit_price, "Unit price on line " + (index + 1), 0);
+        const discountPercent = number(line.discount_percent ?? 0, "Discount on line " + (index + 1), 0);
+        if (discountPercent > 100) throw new Error("Line discount cannot exceed 100%.");
+        const rawRate = text(line.gst_rate, 12);
+        if (taxApplies && rawRate === "") throw new Error("Enter the GST rate for invoice line " + (index + 1) + ".");
+        const gstRate = taxApplies ? number(rawRate || 0, "GST rate on line " + (index + 1), 0) : 0;
+        if (gstRate > 100) throw new Error("GST rate cannot exceed 100%.");
+        const gross = round2(quantity * unitPrice);
+        const discount = round2(gross * discountPercent / 100);
+        const taxable = round2(gross - discount);
+        const tax = round2(taxable * gstRate / 100);
+        let cgst = 0, sgst = 0, igst = 0;
+        if (supplyType === "intra_state") { cgst = round2(tax / 2); sgst = round2(tax - cgst); }
+        else if (supplyType === "inter_state" || supplyType === "export_igst") igst = tax;
+        subtotal += gross; discountTotal += discount; taxableValue += taxable;
+        cgstTotal += cgst; sgstTotal += sgst; igstTotal += igst;
+        return { description, hsn_sac: hsnSac, quantity, unit, unit_price: unitPrice,
+          discount_percent: discountPercent, discount_amount: discount, taxable_value: taxable,
+          gst_rate: gstRate, cgst_amount: cgst, sgst_amount: sgst, igst_amount: igst,
+          tax_amount: tax, line_total: round2(taxable + (reverseCharge ? 0 : tax)) };
+      });
+      subtotal = round2(subtotal); discountTotal = round2(discountTotal); taxableValue = round2(taxableValue);
+      cgstTotal = round2(cgstTotal); sgstTotal = round2(sgstTotal); igstTotal = round2(igstTotal);
+      const totalTax = round2(cgstTotal + sgstTotal + igstTotal);
+      const adjustmentRaw = Number(d.adjustment ?? 0);
+      if (!Number.isFinite(adjustmentRaw) || Math.abs(adjustmentRaw) > 1000000) throw new Error("Invoice adjustment must be a valid amount.");
+      const adjustment = round2(adjustmentRaw);
+      const total = round2(taxableValue + (reverseCharge ? 0 : totalTax) + adjustment);
+      if (total < 0) throw new Error("Invoice total cannot be negative.");
+      const row = {
+        ...(id ? { id } : {}), invoice_number: null, status: "draft", invoice_type: invoiceType,
+        invoice_date: invoiceDate, due_date: dueDate, job_id: jobId, hbl_id: linkedHbl?.id ?? null,
+        container_no: containerNo, seller, buyer, supply_type: supplyType,
+        place_of_supply: text(d.place_of_supply, 160), place_of_supply_state_code: text(d.place_of_supply_state_code, 2),
+        reverse_charge: reverseCharge,
+        po_number: text(d.po_number, 120), payment_terms: text(d.payment_terms, 500),
+        currency, exchange_rate_to_inr: fx, fx_date: fxDate, fx_source: fxSource, lines,
+        subtotal, discount_total: discountTotal, taxable_value: taxableValue, cgst_total: cgstTotal,
+        sgst_total: sgstTotal, igst_total: igstTotal, total_tax: totalTax, adjustment, total,
+        total_inr: round2(total * fx), notes: text(d.notes, 2000), issued_at: null,
+        updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!id ? { created_by: actorId } : {}),
+      };
+      const issueNow = d.save_status === "issue";
+      if (issueNow) {
+        if (!seller.name || !seller.address) throw new Error("Complete the seller legal name and registered address before issuing.");
+        if (invoiceType === "tax_invoice" && (!/^[0-9]{2}[A-Z0-9]{13}$/.test(seller.gstin) || !seller.state || !/^\d{2}$/.test(seller.state_code))) throw new Error("Enter the seller’s 15-character GSTIN, state and two-digit state code.");
+        if (!buyer.name || !buyer.address || !buyer.country || !row.place_of_supply) throw new Error("Complete the bill-to name, address, country and place of supply before issuing.");
+        if (invoiceType === "tax_invoice") {
+          if (supplyType === "intra_state" && (!/^\d{2}$/.test(row.place_of_supply_state_code) || row.place_of_supply_state_code !== seller.state_code)) throw new Error("For intra-state GST, the place-of-supply state code must match the seller state code.");
+          if (supplyType === "inter_state" && (!/^\d{2}$/.test(row.place_of_supply_state_code) || row.place_of_supply_state_code === seller.state_code)) throw new Error("For inter-state GST, use a place-of-supply state code different from the seller state code.");
+          if (!["intra_state", "inter_state", "export_lut", "export_igst"].includes(supplyType)) throw new Error("Choose an intra-state, inter-state or export GST treatment before issuing.");
+          if (["export_lut", "export_igst"].includes(supplyType) && /^india$/i.test(buyer.country)) throw new Error("Choose an export GST treatment only for a recipient outside India.");
+          if (!["export_lut", "export_igst"].includes(supplyType) && !/^india$/i.test(buyer.country)) throw new Error("Choose an export GST treatment for a recipient outside India.");
+          if (lines.some((line: Record<string, unknown>) => !line.hsn_sac)) throw new Error("Each GST invoice line needs an HSN/SAC code.");
+        }
+      }
+      const { data: saved, error } = await admin.from("shipment_invoices").upsert(row).select("*").single();
+      if (error) throw new Error(error.message);
+      if (profile.role === "Admin") {
+        const { error: settingsError } = await admin.from("shipment_invoice_settings").upsert({
+          id: "default", data: seller, updated_by: actorId, updated_at: new Date().toISOString(),
+        });
+        if (settingsError) throw new Error("Invoice saved but seller defaults could not be updated.");
+      }
+      let result = saved;
+      if (issueNow) {
+        const { data: issued, error: issueError } = await admin.rpc("issue_shipment_invoice", {
+          p_invoice_id: saved.id, p_user_id: actorId,
+        });
+        if (issueError) throw new Error(issueError.message);
+        result = Array.isArray(issued) ? issued[0] : issued;
+      }
+      await recordAudit(issueNow ? "issue" : (id ? "update" : "create"), "shipment_invoice", saved.id, before, result);
+      return reply(200, { record: result }, origin);
+    }
+
+    if (action === "issueInvoice") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: invoice, error: readError } = await admin.from("shipment_invoices").select("*").eq("id", id).maybeSingle();
+      if (readError || !invoice) throw new Error("Invoice not found.");
+      if (invoice.status !== "draft") throw new Error("Only a draft invoice can be issued.");
+      const seller = invoice.seller && typeof invoice.seller === "object" ? invoice.seller : {};
+      const buyer = invoice.buyer && typeof invoice.buyer === "object" ? invoice.buyer : {};
+      if (!seller.name || !seller.address) throw new Error("Complete the seller legal name and registered address before issuing.");
+      if (invoice.invoice_type === "tax_invoice" && (!/^[0-9]{2}[A-Z0-9]{13}$/.test(String(seller.gstin || "")) || !seller.state || !/^\d{2}$/.test(String(seller.state_code || "")))) throw new Error("Enter the seller’s 15-character GSTIN, state and two-digit state code.");
+      if (!buyer.name || !buyer.address || !buyer.country || !invoice.place_of_supply) throw new Error("Complete bill-to details and place of supply before issuing.");
+      if (invoice.invoice_type === "tax_invoice") {
+        if (invoice.supply_type === "intra_state" && (!/^\d{2}$/.test(String(invoice.place_of_supply_state_code || "")) || invoice.place_of_supply_state_code !== seller.state_code)) throw new Error("For intra-state GST, the place-of-supply state code must match the seller state code.");
+        if (invoice.supply_type === "inter_state" && (!/^\d{2}$/.test(String(invoice.place_of_supply_state_code || "")) || invoice.place_of_supply_state_code === seller.state_code)) throw new Error("For inter-state GST, use a place-of-supply state code different from the seller state code.");
+        if (!["intra_state", "inter_state", "export_lut", "export_igst"].includes(invoice.supply_type)) throw new Error("Choose an intra-state, inter-state or export GST treatment before issuing.");
+        if (["export_lut", "export_igst"].includes(invoice.supply_type) && /^india$/i.test(String(buyer.country))) throw new Error("Choose an export GST treatment only for a recipient outside India.");
+        if (!["export_lut", "export_igst"].includes(invoice.supply_type) && !/^india$/i.test(String(buyer.country))) throw new Error("Choose an export GST treatment for a recipient outside India.");
+        if (Array.isArray(invoice.lines) && invoice.lines.some((line: Record<string, unknown>) => !line.hsn_sac)) throw new Error("Each GST invoice line needs an HSN/SAC code.");
+      }
+      const { data: issued, error: issueError } = await admin.rpc("issue_shipment_invoice", {
+        p_invoice_id: id, p_user_id: actorId,
+      });
+      if (issueError) throw new Error(issueError.message);
+      const result = Array.isArray(issued) ? issued[0] : issued;
+      await recordAudit("issue", "shipment_invoice", id, invoice, result);
+      return reply(200, { record: result }, origin);
+    }
+
     if (action === "upsertCharge") {
       roleCheck(profile.role, "finance");
       const d = payload.data ?? {};
