@@ -1200,6 +1200,11 @@ Deno.serve(async (req: Request) => {
       if (id && !before) throw new Error("Bank account not found.");
       const currency = text(d.currency || before?.currency || "INR", 3).toUpperCase();
       if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
+      if (before && currency !== before.currency) {
+        const { count, error: transactionCountError } = await admin.from("finance_bank_transactions").select("id", { count: "exact", head: true }).eq("bank_account_id", id);
+        if (transactionCountError) throw new Error("Could not verify existing bank statement rows.");
+        if ((count ?? 0) > 0) throw new Error("Bank account currency is locked after statement rows have been imported.");
+      }
       const last4 = text(d.account_last4 ?? before?.account_last4, 20);
       if (last4 && !/^\d{4}$/.test(last4)) throw new Error("Enter only the last four account digits.");
       const openingBalance = Number(d.opening_balance ?? before?.opening_balance ?? 0);
