@@ -367,7 +367,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",payablesAsOf:"",arCustomerFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",payablesAsOf:"",arCustomerFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -402,6 +402,7 @@ async function loadInvoices(force=false){
   try{
     const d=await call("logistics-workspace",{action:"listInvoices"});
     state.ops.invoices=Array.isArray(d.invoices)?d.invoices:[];
+    state.ops.invoiceChargeLinks=Array.isArray(d.chargeLinks)?d.chargeLinks:[];
     state.ops.invoiceSettings=d.settings&&typeof d.settings==="object"?d.settings:{};
     state.ops.customers=Array.isArray(d.customers)?d.customers:[];
     state.ops.creditNotes=Array.isArray(d.creditNotes)?d.creditNotes:[];
@@ -1850,6 +1851,7 @@ function invoiceLineMarkup(line){
     '<input'+inputStyle+' name="line_unit_price" aria-label="Unit price" type="number" min="0" step="0.01" required value="'+esc(x.unit_price??"")+'">'+
     '<input'+inputStyle+' name="line_discount" aria-label="Discount percent" type="number" min="0" max="100" step="0.01" value="'+esc(x.discount_percent??"0")+'">'+
     '<input'+inputStyle+' name="line_gst_rate" aria-label="GST percent" type="number" min="0" max="100" step="0.01" placeholder="GST %" value="'+esc(x.gst_rate??"")+'">'+
+    '<input type="hidden" name="line_source_charge" value="'+esc(x.source_charge_id||"")+'">'+
     '<button class="btn small" type="button" data-remove-invoice-line aria-label="Remove invoice line">×</button></div>';
 }
 function updateInvoicePreview(){
@@ -1980,8 +1982,8 @@ function newInvoice(invoiceId,presetJobId){
     const lines=fd.getAll("line_description").map((description,index)=>({
       description:String(description||""),hsn_sac:String(fd.getAll("line_hsn_sac")[index]||""),
       quantity:String(fd.getAll("line_quantity")[index]||""),unit:String(fd.getAll("line_unit")[index]||"service"),
-      unit:String(fd.getAll("line_unit")[index]||"service"),unit_price:String(fd.getAll("line_unit_price")[index]||"0"),discount_percent:String(fd.getAll("line_discount")[index]||"0"),
-      gst_rate:String(fd.getAll("line_gst_rate")[index]||"")
+      unit_price:String(fd.getAll("line_unit_price")[index]||"0"),discount_percent:String(fd.getAll("line_discount")[index]||"0"),
+      gst_rate:String(fd.getAll("line_gst_rate")[index]||""),source_charge_id:String(fd.getAll("line_source_charge")[index]||"")
     }));
     const data={
       ...(invoiceId?{id:invoiceId}:{}),save_status:get("save_status"),invoice_type:get("invoice_type"),
@@ -2003,13 +2005,31 @@ function newInvoice(invoiceId,presetJobId){
   });
   const fields=$("fields");
   const editor=document.createElement("div");editor.id="invoiceLinesWrap";editor.className="invoice-lines-editor";editor.style.cssText="grid-column:1/-1;border:1px solid #ccd6dd;background:#f8fafb;padding:9px;margin-top:4px";
-  editor.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px"><div><b style="font-size:11px;color:#25475c">Invoice line items</b><div style="font-size:9px;color:#758895">Enter HSN/SAC, quantity, unit price, discount and applicable GST rate on each line.</div></div><button class="btn small" type="button" data-add-invoice-line>+ Add line</button></div>'+
+  editor.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap"><div><b style="font-size:11px;color:#25475c">Invoice line items</b><div style="font-size:9px;color:#758895">Add services manually or load approved revenue from the selected job.</div></div><div style="display:flex;gap:5px"><button class="btn small" type="button" data-load-approved-revenue>Load approved revenue</button><button class="btn small" type="button" data-add-invoice-line>+ Add line</button></div></div>'+
     '<div style="display:grid;grid-template-columns:minmax(150px,2fr) minmax(80px,.85fr) minmax(55px,.55fr) minmax(70px,.6fr) minmax(95px,1fr) minmax(70px,.65fr) minmax(70px,.65fr) 28px;gap:5px;font-size:8px;color:#657887;font-weight:800"><span>DESCRIPTION</span><span>HSN / SAC</span><span>QTY</span><span>UNIT</span><span>UNIT PRICE</span><span>DISC %</span><span>GST %</span><span></span></div>'+
     '<div id="invoiceLineRows">'+(Array.isArray(inv.lines)&&inv.lines.length?inv.lines.map(invoiceLineMarkup).join(""):invoiceLineMarkup({quantity:1,unit:"service",discount_percent:0}))+'</div>'+
     '<div id="invoiceTotals" style="display:flex;gap:14px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid #dce3e8;padding-top:8px;margin-top:8px;font-size:10px"></div>'+
-    '<p style="font-size:9px;color:#8a5d22;margin:8px 0 0">Select and verify the HSN/SAC and tax rate for each service. FX lookup is a reference rate; enter your prescribed accounting / GST valuation rate when it differs.</p>';
+    '<p style="font-size:9px;color:#8a5d22;margin:8px 0 0">Verify HSN/SAC and GST for every line, including imported charges. FX lookup is a reference rate; enter your prescribed accounting / GST valuation rate when it differs. Imported charges retain their source job link and can only be invoiced once.</p>';
   fields.appendChild(editor);
-  editor.addEventListener("click",event=>{
+  editor.addEventListener("click",async event=>{
+    if(event.target.closest("[data-load-approved-revenue]")){
+      const jobId=fields.querySelector('[name="job_id"]')?.value||"";
+      if(!jobId)return notify("Select a forwarding job before loading revenue charges.","error");
+      const linkedIds=new Set((state.ops.invoiceChargeLinks||[]).map(x=>x.charge_id));
+      const currentIds=new Set(Array.from($("invoiceLineRows").querySelectorAll('[name="line_source_charge"]')).map(x=>x.value).filter(Boolean));
+      const eligible=(state.ops.charges||[]).filter(c=>c.job_id===jobId&&c.direction==="revenue"&&c.approval_status==="approved"&&!linkedIds.has(c.id)&&!currentIds.has(c.id));
+      if(!eligible.length)return notify("No uninvoiced approved revenue charges are available for this job.","error");
+      if(!confirm("Add "+eligible.length+" approved job revenue charge(s) to these invoice lines? Review for duplicates, then enter HSN/SAC and GST for each line."))return;
+      const fx=Math.max(Number(fields.querySelector('[name="exchange_rate_to_inr"]')?.value||1),0.000001);
+      const round2=n=>Math.round((n+Number.EPSILON)*100)/100;
+      for(const charge of eligible){
+        const amountInr=Number(charge.amount_inr)||Number(charge.amount||0)*Number(charge.exchange_rate_to_inr||1);
+        const price=round2(amountInr/fx);
+        $("invoiceLineRows").insertAdjacentHTML("beforeend",invoiceLineMarkup({description:[charge.charge_code,charge.description].filter(Boolean).join(" · "),hsn_sac:"",quantity:1,unit:"service",unit_price:price,discount_percent:0,gst_rate:"",source_charge_id:charge.id}));
+      }
+      updateInvoicePreview();
+      return notify(eligible.length+" approved revenue charge(s) added. Complete HSN/SAC and GST before issue.","success");
+    }
     if(event.target.closest("[data-add-invoice-line]")){$("invoiceLineRows").insertAdjacentHTML("beforeend",invoiceLineMarkup({quantity:1,unit:"service",discount_percent:0}));updateInvoicePreview()}
     const remove=event.target.closest("[data-remove-invoice-line]");
     if(remove){if($("invoiceLineRows").querySelectorAll("[data-invoice-line]").length<=1)return notify("An invoice needs at least one line.","error");remove.closest("[data-invoice-line]").remove();updateInvoicePreview()}
