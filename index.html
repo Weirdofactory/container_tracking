@@ -414,7 +414,7 @@ async function loadShipmentDocuments(force=false){
     const d=await call("logistics-workspace",{action:"listShipmentDocuments"});
     state.ops.shipmentDocuments=Array.isArray(d.documents)?d.documents:[];
     state.ops.shipmentDocumentsLoaded=true;
-  }catch(e){state.ops.shipmentDocumentsError=e.message||"Generated shipment documents could not be loaded.";notify(state.ops.shipmentDocumentsError,"error")}
+  }catch(e){state.ops.shipmentDocumentsError=e.message||"Generated shipment documents could not be loaded.";state.ops.shipmentDocumentsLoaded=true;notify(state.ops.shipmentDocumentsError,"error")}
   finally{state.ops.shipmentDocumentsLoading=false;if(["jobdetail","documents"].includes(state.page))render()}
 }
 async function loadInvoices(force=false){
@@ -453,7 +453,7 @@ async function loadBankReconciliation(force=false){
     state.ops.bankBills=Array.isArray(d.bills)?d.bills:[];
     state.ops.bankVendors=Array.isArray(d.vendors)?d.vendors:[];
     state.ops.bankLoaded=true;
-  }catch(e){state.ops.bankError=e.message||"Bank reconciliation records could not be loaded.";notify(state.ops.bankError,"error")}
+  }catch(e){state.ops.bankError=e.message||"Bank reconciliation records could not be loaded.";state.ops.bankLoaded=true;notify(state.ops.bankError,"error")}
   finally{state.ops.bankLoading=false;if(state.page==="finance")render()}
 }
 async function loadSales(force=false){
