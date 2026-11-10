@@ -697,6 +697,131 @@ Deno.serve(async (req: Request) => {
       return reply(200, { record: data }, origin);
     }
 
+    if (action === "listSales") {
+      roleCheck(profile.role, "finance");
+      const [enquiryResult, quoteResult, lineResult, customerResult] = await Promise.all([
+        admin.from("sales_enquiries").select("*").order("created_at", { ascending: false }).limit(2500),
+        admin.from("freight_quotes").select("*").order("created_at", { ascending: false }).limit(2500),
+        admin.from("freight_quote_lines").select("*").order("line_no", { ascending: true }).limit(10000),
+        admin.from("customer_accounts").select("id,customer_code,legal_name,display_name,is_active,default_currency,email,phone").order("legal_name", { ascending: true }).limit(2500),
+      ]);
+      if (enquiryResult.error || quoteResult.error || lineResult.error || customerResult.error) throw new Error("Sales enquiries and quotations could not be loaded.");
+      return reply(200, { enquiries: enquiryResult.data ?? [], quotes: quoteResult.data ?? [], lines: lineResult.data ?? [], customers: customerResult.data ?? [] }, origin);
+    }
+
+    if (action === "upsertSalesEnquiry") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const before = id ? (await admin.from("sales_enquiries").select("*").eq("id", id).maybeSingle()).data : null;
+      if (id && !before) throw new Error("Sales enquiry not found.");
+      const customerId = d.customer_id ? uuid(d.customer_id) : null;
+      let customerLegalName = "";
+      if (customerId) {
+        const { data, error } = await admin.from("customer_accounts").select("id,legal_name,is_active").eq("id", customerId).maybeSingle();
+        if (error || !data || !data.is_active) throw new Error("Select an active customer account.");
+        customerLegalName = data.legal_name;
+      }
+      const companyName = text(d.company_name || customerLegalName, 180);
+      if (!companyName) throw new Error("Prospect or company name is required.");
+      const packageCount = optionalNumber(d.package_count, "Package count", 1);
+      if (packageCount !== null && !Number.isInteger(packageCount)) throw new Error("Package count must be a whole number.");
+      const row = {
+        ...(id ? { id } : { enquiry_no: "ENQ-" + new Date().getUTCFullYear() + "-" + crypto.randomUUID().slice(0, 8).toUpperCase() }),
+        customer_id: customerId, company_name: companyName, contact_name: text(d.contact_name, 160),
+        email: text(d.email, 180).toLowerCase(), phone: text(d.phone, 60),
+        service_type: val(d.service_type || "FCL", ["FCL","LCL","AIR","OTHER"], "service type"),
+        direction: val(d.direction || "import", ["import","export","cross_trade","transshipment"], "shipment direction"),
+        origin: text(d.origin, 160), destination: text(d.destination, 160), commodity: text(d.commodity, 240),
+        package_count: packageCount, gross_weight_kg: optionalNumber(d.gross_weight_kg, "Gross weight"),
+        volume_cbm: optionalNumber(d.volume_cbm, "Volume"), cargo_ready_date: date(d.cargo_ready_date),
+        follow_up_date: date(d.follow_up_date), notes: text(d.notes, 3000), updated_by: actorId,
+        updated_at: new Date().toISOString(), ...(!id ? { created_by: actorId } : {}),
+      };
+      const { data, error } = id
+        ? await admin.from("sales_enquiries").update(row).eq("id", id).select("*").single()
+        : await admin.from("sales_enquiries").insert(row).select("*").single();
+      if (error) throw new Error(error.message || "Could not save sales enquiry.");
+      await recordAudit(id ? "update" : "create", "sales_enquiry", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "upsertFreightQuote") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const quoteId = d.id ? uuid(d.id) : null;
+      const enquiryId = uuid(d.enquiry_id);
+      const before = quoteId ? (await admin.from("freight_quotes").select("*").eq("id", quoteId).maybeSingle()).data : null;
+      if (quoteId && (!before || before.status !== "draft")) throw new Error("Only draft quotes can be edited.");
+      const { data: enquiry, error: enquiryError } = await admin.from("sales_enquiries").select("*").eq("id", enquiryId).maybeSingle();
+      if (enquiryError || !enquiry) throw new Error("Sales enquiry not found.");
+      const customerId = d.customer_id ? uuid(d.customer_id) : enquiry.customer_id;
+      if (customerId) {
+        const { data: customer, error: customerError } = await admin.from("customer_accounts").select("id,is_active").eq("id", customerId).maybeSingle();
+        if (customerError || !customer || !customer.is_active) throw new Error("Select an active customer account.");
+      }
+      const currency = text(d.currency || "INR", 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
+      const fxRate = number(d.exchange_rate_to_inr ?? 1, "Exchange rate", Number.MIN_VALUE);
+      const taxMode = val(d.tax_mode || "exclusive", ["exclusive","inclusive"], "GST mode");
+      const lineInput = Array.isArray(d.lines) ? d.lines : [];
+      if (!lineInput.length || lineInput.length > 50) throw new Error("Add between 1 and 50 quote lines.");
+      const lines = lineInput.map((line: Record<string, unknown>) => {
+        const qty = number(line.quantity, "Quantity", Number.MIN_VALUE);
+        const unitPrice = number(line.unit_price, "Unit price", Number.MIN_VALUE);
+        const gstRate = number(line.gst_rate ?? 0, "GST rate", 0);
+        if (gstRate > 100) throw new Error("GST rate cannot exceed 100%.");
+        const description = text(line.description, 240);
+        if (!description) throw new Error("Every quote line needs a description.");
+        return { charge_code: text(line.charge_code || "FREIGHT", 40) || "FREIGHT", description,
+          quantity: qty, unit: text(line.unit || "shipment", 40) || "shipment", unit_price: unitPrice, gst_rate: gstRate };
+      });
+      const { data, error } = await admin.rpc("save_freight_quote_draft", {
+        p_quote_id: quoteId, p_enquiry_id: enquiryId, p_customer_id: customerId, p_currency: currency,
+        p_exchange_rate_to_inr: fxRate, p_fx_rate_date: date(d.fx_rate_date),
+        p_fx_rate_source: text(d.fx_rate_source, 80), p_tax_mode: taxMode, p_valid_until: date(d.valid_until),
+        p_terms: text(d.terms, 3000), p_lines: lines, p_actor: actorId,
+      });
+      if (error) throw new Error(error.message || "Could not save quote.");
+      await recordAudit(quoteId ? "update" : "create", "freight_quote", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "issueFreightQuote") {
+      roleCheck(profile.role, "finance");
+      const quoteId = uuid(payload.id);
+      const before = (await admin.from("freight_quotes").select("*").eq("id", quoteId).maybeSingle()).data;
+      if (!before) throw new Error("Quote not found.");
+      const { data, error } = await admin.rpc("issue_freight_quote", { p_quote_id: quoteId, p_actor: actorId });
+      if (error) throw new Error(error.message || "Could not issue quote.");
+      await recordAudit("issue", "freight_quote", quoteId, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "freightQuoteOutcome") {
+      roleCheck(profile.role, "finance");
+      const quoteId = uuid(payload.id);
+      const outcome = val(payload.data?.outcome, ["accepted","rejected"], "quote outcome");
+      const before = (await admin.from("freight_quotes").select("*").eq("id", quoteId).maybeSingle()).data;
+      if (!before) throw new Error("Quote not found.");
+      const { data, error } = await admin.rpc("set_freight_quote_outcome", { p_quote_id: quoteId, p_outcome: outcome });
+      if (error) throw new Error(error.message || "Could not update quote outcome.");
+      await recordAudit(outcome, "freight_quote", quoteId, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "convertAcceptedQuote") {
+      roleCheck(profile.role, "finance");
+      const quoteId = uuid(payload.id);
+      const before = (await admin.from("freight_quotes").select("*").eq("id", quoteId).maybeSingle()).data;
+      if (!before) throw new Error("Quote not found.");
+      const { data, error } = await admin.rpc("convert_accepted_quote_to_job", { p_quote_id: quoteId, p_actor: actorId });
+      if (error) throw new Error(error.message || "Could not create a job from this accepted quote.");
+      await recordAudit("convert", "freight_quote", quoteId, before, data.quote);
+      if (data.job?.id) await recordAudit("create", "forwarding_job", data.job.id, null, data.job);
+      return reply(200, data, origin);
+    }
+
     if (action === "listInvoices") {
       roleCheck(profile.role, "finance");
       const [invoiceResult, settingsResult, customerResult, creditResult, paymentResult] = await Promise.all([
