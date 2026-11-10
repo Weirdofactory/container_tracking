@@ -395,6 +395,16 @@ function invoiceLedger(inv){
   return {credited,received,balance:Math.max(0,Number(inv.total||0)-credited-received),balanceInr:Math.max(0,Number(inv.total_inr||Number(inv.total||0)*rate)-credited*rate-receivedInr),creditNotes,payments};
 }
 function financeDateDifference(from,to){const a=new Date(String(from||"").slice(0,10)+"T00:00:00Z"),b=new Date(String(to||"").slice(0,10)+"T00:00:00Z");return Number.isNaN(+a)||Number.isNaN(+b)?0:Math.floor((b-a)/86400000)}
+function invoiceLedgerAt(inv,asOf){
+  const cutoff=String(asOf||"").slice(0,10),rate=Number(inv.exchange_rate_to_inr||1);
+  const creditNotes=state.ops.creditNotes.filter(n=>n.invoice_id===inv.id&&n.status==="issued"&&String(n.credit_date||"").slice(0,10)<=cutoff);
+  const payments=state.ops.payments.filter(p=>p.invoice_id===inv.id&&String(p.received_at||"").slice(0,10)<=cutoff);
+  const credited=creditNotes.reduce((sum,n)=>sum+Number(n.total||0),0),received=payments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+  const creditedInr=creditNotes.reduce((sum,n)=>sum+Number(n.total_inr||Number(n.total||0)*rate),0);
+  const receivedInr=payments.reduce((sum,p)=>sum+Number(p.amount_inr||Number(p.amount||0)*rate),0);
+  return{credited,received,balance:Math.max(0,Number(inv.total||0)-credited-received),
+    balanceInr:Math.max(0,Number(inv.total_inr||Number(inv.total||0)*rate)-creditedInr-receivedInr),creditNotes,payments};
+}
 async function loadInvoices(force=false){
   if(state.ops.invoicesLoading)return;
   if(state.ops.invoicesLoaded&&!force)return;
@@ -1260,13 +1270,14 @@ function renderReceivables(){
   const customerRows=customers.map(c=>{
     const jobs=state.ops.jobs.filter(j=>j.customer_id===c.id).length;
     const invoices=state.ops.invoices.filter(i=>i.customer_id===c.id&&i.status==="issued");
-    const openInr=invoices.reduce((sum,i)=>sum+invoiceLedger(i).balanceInr,0);
+    const openInr=invoices.reduce((sum,i)=>sum+invoiceLedgerAt(i,asOf).balanceInr,0);
     const action=actionBtn("edit-customer","Edit",'data-id="'+esc(c.id)+'"')+
       '<button class="btn small" data-action="toggle-customer" data-id="'+esc(c.id)+'" data-active="'+String(!c.is_active)+'">'+(c.is_active?"Deactivate":"Reactivate")+'</button>';
     return '<tr><td><b>'+esc(c.customer_code)+'</b><span class="cell-sub">'+esc(c.display_name||"")+'</span></td><td>'+esc(c.legal_name)+'</td><td>'+esc(c.gstin||"—")+'</td><td>'+esc(c.email||"—")+'<span class="cell-sub">'+esc(c.phone||"")+'</span></td><td>'+jobs+'</td><td>'+invoices.length+'</td><td>INR '+num(openInr)+'</td><td>'+pill(c.is_active?"Active":"Inactive")+'</td><td>'+action+'</td></tr>';
   });
   const report=(state.ops.invoices||[]).filter(inv=>inv.status==="issued"&&(!state.arCustomerFilter||inv.customer_id===state.arCustomerFilter)).map(inv=>{
-    const ledger=invoiceLedger(inv);if(ledger.balance<=0.005)return null;
+    if(String(inv.invoice_date||"").slice(0,10)>asOf)return null;
+    const ledger=invoiceLedgerAt(inv,asOf);if(ledger.balance<=0.005)return null;
     const due=inv.due_date||inv.invoice_date,days=financeDateDifference(due,asOf);
     const bucket=days<=0?"Not due":days<=30?"1–30 days":days<=60?"31–60 days":days<=90?"61–90 days":"90+ days";
     return {inv,ledger,due,days,bucket};
@@ -1286,7 +1297,7 @@ function renderReceivables(){
   });
   const options=[["","All customer accounts"],...state.ops.customers.filter(c=>c.is_active).map(c=>[c.id,c.legal_name])];
   const select=options.map(o=>'<option value="'+esc(o[0])+'" '+(o[0]===state.arCustomerFilter?"selected":"")+'>'+esc(o[1])+'</option>').join("");
-  const controls='<div class="ar-toolbar"><label>As of <input id="arAsOf" type="date" value="'+esc(asOf)+'"></label><label>Customer <select id="arCustomerFilter">'+select+'</select></label><span class="desc">'+report.length+' open invoices · INR '+num(filteredOpen)+'</span><button class="btn small" data-action="export-ar">Export CSV</button><button class="btn small" data-action="print-ar">Print</button></div>';
+  const controls='<div class="ar-toolbar"><label>As of <input id="arAsOf" type="date" value="'+esc(asOf)+'"></label><label>Customer <select id="arCustomerFilter">'+select+'</select></label><span class="desc">'+report.length+' open invoices · INR '+num(filteredOpen)+'</span><button class="btn small" data-action="outstanding-statement" '+(state.arCustomerFilter?'':'disabled')+'>Generate customer statement</button><button class="btn small" data-action="export-ar">Export CSV</button><button class="btn small" data-action="print-ar">Print ageing</button></div>';
   const reportTable=table(["CUSTOMER","INVOICE / JOB","INVOICE DATE","DUE DATE","AGEING","INVOICE TOTAL","CREDIT NOTES","RECEIPTS","OPEN BALANCE","ACTIONS"],reportRows,"No outstanding invoices match this report.");
   return pageHead("receivables",'<button class="btn" data-nav="finance">Accounting & charges</button><button class="btn primary" data-create="customer">＋ New customer</button>')+
     '<div class="stats">'+stat("Receivables · INR","INR "+num(filteredOpen),"As of "+fmt(asOf))+stat("Not due","INR "+num(kpis["Not due"]),"Within payment terms")+stat("1–30 days","INR "+num(kpis["1–30 days"]),"Past due")+stat("31–60 days","INR "+num(kpis["31–60 days"]),"Past due")+stat("60+ days","INR "+num(kpis["61–90 days"]+kpis["90+ days"]),"Collection follow-up")+'</div>'+
@@ -1300,7 +1311,7 @@ function renderReceivables(){
 function exportReceivables(){
   const asOf=state.financeAsOf||new Date().toISOString().slice(0,10);
   const rows=(state.ops.invoices||[]).filter(i=>i.status==="issued"&&(!state.arCustomerFilter||i.customer_id===state.arCustomerFilter)).map(inv=>{
-    const ledger=invoiceLedger(inv);if(ledger.balance<=0.005)return null;const due=inv.due_date||inv.invoice_date,days=financeDateDifference(due,asOf);
+    if(String(inv.invoice_date||"").slice(0,10)>asOf)return null;const ledger=invoiceLedgerAt(inv,asOf);if(ledger.balance<=0.005)return null;const due=inv.due_date||inv.invoice_date,days=financeDateDifference(due,asOf);
     return [state.ops.customers.find(c=>c.id===inv.customer_id)?.legal_name||inv.buyer?.name||"",inv.invoice_number,inv.invoice_date,due,days,inv.currency,inv.total,ledger.credited,ledger.received,ledger.balance,ledger.balanceInr];
   }).filter(Boolean);
   const csv=[["Customer","Invoice","Invoice date","Due date","Days overdue","Currency","Invoice total","Credit notes","Receipts","Open balance","Open INR"],...rows].map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
@@ -1309,6 +1320,25 @@ function exportReceivables(){
 function printReceivables(){
   const html='<!doctype html><html><head><meta charset="utf-8"><title>Accounts receivable ageing</title><style>body{font:12px Arial;margin:24px;color:#22384a}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cad4dd;padding:6px;text-align:left}th{background:#e9eef2}h1{font-size:20px}</style></head><body><h1>Accounts receivable ageing</h1><p>As of '+esc(state.financeAsOf||new Date().toISOString().slice(0,10))+'</p>'+document.querySelector(".ar-pane")?.innerHTML+'<script>window.onload=()=>window.print()<\/script></body></html>';
   const win=window.open("","_blank","width=1200,height=800");if(!win)return notify("Allow pop-ups to print the ageing report.","error");win.document.write(html);win.document.close();
+}
+function printCustomerOutstandingStatement(){
+  const customerId=state.arCustomerFilter;
+  if(!customerId)return notify("Select one customer in the receivables filter before generating a statement.","error");
+  const customer=(state.ops.customers||[]).find(c=>c.id===customerId);if(!customer)return notify("Customer account not found.","error");
+  const asOf=$("arAsOf")?.value||state.financeAsOf||new Date().toISOString().slice(0,10);
+  const records=(state.ops.invoices||[]).filter(inv=>inv.customer_id===customerId&&inv.status==="issued"&&String(inv.invoice_date||"").slice(0,10)<=asOf)
+    .map(inv=>({inv,ledger:invoiceLedgerAt(inv,asOf)})).filter(x=>x.ledger.balance>0.005)
+    .sort((a,b)=>String(a.inv.due_date||a.inv.invoice_date).localeCompare(String(b.inv.due_date||b.inv.invoice_date)));
+  const totalInr=records.reduce((sum,x)=>sum+x.ledger.balanceInr,0),totalsByCurrency={};
+  for(const x of records)totalsByCurrency[x.inv.currency]=(totalsByCurrency[x.inv.currency]||0)+x.ledger.balance;
+  const rows=records.map(({inv,ledger})=>{
+    const due=inv.due_date||inv.invoice_date,days=financeDateDifference(due,asOf),job=state.ops.jobs.find(j=>j.id===inv.job_id);
+    return '<tr><td><b>'+esc(inv.invoice_number)+'</b><br>'+esc(job?.job_no||"")+'</td><td>'+esc(fmt(inv.invoice_date))+'</td><td>'+esc(fmt(due))+'</td><td>'+esc(days>0?days+" days overdue":"Not overdue")+'</td><td class="money">'+esc(inv.currency)+' '+money2(inv.total)+'</td><td class="money">'+esc(inv.currency)+' '+money2(ledger.credited)+'</td><td class="money">'+esc(inv.currency)+' '+money2(ledger.received)+'</td><td class="money"><b>'+esc(inv.currency)+' '+money2(ledger.balance)+'</b><br><small>INR '+money2(ledger.balanceInr)+'</small></td></tr>';
+  }).join("");
+  const currencySummary=Object.entries(totalsByCurrency).map(([currency,total])=>'<tr><td>'+esc(currency)+'</td><td class="money">'+money2(total)+'</td></tr>').join("")||'<tr><td colspan="2">No open balance as of this date</td></tr>';
+  const seller=state.ops.invoiceSettings||{},sellerName=seller.name||records[0]?.inv.seller?.name||"Freight Operations";
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>Customer outstanding statement</title><style>body{font:12px Arial,sans-serif;margin:30px;color:#23384a}h1{font-size:22px;margin:5px 0}.head{display:flex;justify-content:space-between;border-bottom:3px solid #403696;padding-bottom:14px}.muted,small{color:#708292}.box{border:1px solid #d3dce3;padding:12px;margin:16px 0}table{width:100%;border-collapse:collapse;margin:12px 0}th,td{border:1px solid #cbd5dd;padding:8px;text-align:left;vertical-align:top}th{background:#eef1f5;color:#42596b;font-size:10px}.money{text-align:right;white-space:nowrap}.totals{width:330px;margin-left:auto}.grand{font-size:16px;color:#302b8a;font-weight:700}.actions{margin-top:20px}button{padding:8px 14px;background:#403696;color:white;border:0;border-radius:3px}@media print{.actions{display:none}body{margin:12mm}}</style></head><body onload="window.print()"><div class="head"><div><div class="muted">FREIGHT OPERATIONS · CUSTOMER STATEMENT</div><h1>'+esc(sellerName)+'</h1><div>'+esc(seller.gstin||"")+'</div></div><div><b>Statement date</b><br>'+esc(fmt(asOf))+'</div></div><div class="box"><b>Statement for</b><br>'+esc(customer.legal_name)+'<br>'+esc(customer.billing_address||"")+' '+esc(customer.city||"")+'<br>'+esc(customer.state||"")+' '+esc(customer.postal_code||"")+'<br>GSTIN: '+esc(customer.gstin||"—")+' · '+esc(customer.email||"")+'</div><p>This statement includes issued invoices, issued credit notes, and recorded receipts through '+esc(fmt(asOf))+'.</p><table><thead><tr><th>INVOICE / JOB</th><th>INVOICE DATE</th><th>DUE DATE</th><th>AGE</th><th class="money">INVOICE TOTAL</th><th class="money">CREDITS</th><th class="money">RECEIVED</th><th class="money">OUTSTANDING</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8">No outstanding invoices as of this date.</td></tr>')+'</tbody></table><table class="totals"><thead><tr><th colspan="2">OUTSTANDING BY CURRENCY</th></tr></thead><tbody>'+currencySummary+'</tbody></table><p class="grand">Total outstanding reference: INR '+money2(totalInr)+'</p><p>Please quote the invoice number when making payment. Contact us if you need a copy of an invoice or believe this statement needs correction.</p><div class="actions"><button onclick="window.print()">Print / Save as PDF</button></div></body></html>';
+  const win=window.open("","_blank","width=1100,height=800");if(!win)return notify("Allow pop-ups to generate the customer statement.","error");win.document.open();win.document.write(html);win.document.close();win.focus();
 }
 function money2(value){return Number(value||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}
 function payableStatus(bill,open,paid,asOf){
@@ -2224,6 +2254,7 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="print-credit-note")printCreditNote(id);
       if(act==="export-ar")exportReceivables();
       if(act==="print-ar")printReceivables();
+      if(act==="outstanding-statement")printCustomerOutstandingStatement();
       if(act==="edit-charge")newCharge(id);
       if(act==="print-charge")printChargeInvoice(id);
       if(act==="delete-charge")deleteCharge(id);
