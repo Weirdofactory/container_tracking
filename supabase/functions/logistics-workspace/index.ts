@@ -264,6 +264,13 @@ Deno.serve(async (req: Request) => {
     }
 
 
+    if (action === "listTransportVendors") {
+      const { data, error } = await admin.from("vendor_accounts")
+        .select("id,vendor_code,legal_name,display_name,is_active").order("legal_name", { ascending: true }).limit(2500);
+      if (error) throw new Error("Transport vendors could not be loaded.");
+      return reply(200, { vendors: data ?? [] }, origin);
+    }
+
     if (action === "upsertTransportDispatch") {
       roleCheck(profile.role, "transport");
       const d = payload.data ?? {};
@@ -279,6 +286,15 @@ Deno.serve(async (req: Request) => {
       const containerNo = text(d.container_no ?? before?.container_no, 40)
         ? await assertContainer(d.container_no ?? before?.container_no) : null;
       if (containerNo) await assertJobContainer(job.id, containerNo);
+      const carrierVendorId = d.carrier_vendor_id ? uuid(d.carrier_vendor_id) : null;
+      let carrierVendorLabel = "";
+      if (carrierVendorId) {
+        const vendorResult = await admin.from("vendor_accounts").select("id,legal_name,display_name,is_active").eq("id", carrierVendorId).maybeSingle();
+        if (vendorResult.error || !vendorResult.data) throw new Error("Selected transport vendor account was not found.");
+        if (!vendorResult.data.is_active && carrierVendorId !== before?.carrier_vendor_id) throw new Error("Select an active transport vendor.");
+        carrierVendorLabel = text(vendorResult.data.display_name || vendorResult.data.legal_name, 180);
+      }
+      const carrierName = text(d.carrier_name ?? before?.carrier_name, 180) || carrierVendorLabel;
       const movementType = val(d.movement_type || before?.movement_type || "delivery",
         ["pickup","delivery","haulage","empty_return","customs_transfer","other"], "transport movement");
       const status = val(d.status || before?.status || "planned",
@@ -287,7 +303,7 @@ Deno.serve(async (req: Request) => {
       const actualPickupDate = date(d.actual_pickup_date ?? before?.actual_pickup_date);
       const plannedDeliveryDate = date(d.planned_delivery_date ?? before?.planned_delivery_date);
       const actualDeliveryDate = date(d.actual_delivery_date ?? before?.actual_delivery_date);
-      if (status === "assigned" && !text(d.carrier_name ?? before?.carrier_name, 180) &&
+      if (status === "assigned" && !carrierName &&
           !text(d.vehicle_no ?? before?.vehicle_no, 60) && !text(d.driver_name ?? before?.driver_name, 160)) {
         throw new Error("Add a carrier, vehicle or driver before assigning this move.");
       }
@@ -305,7 +321,7 @@ Deno.serve(async (req: Request) => {
         pickup_location: pickupLocation, delivery_location: deliveryLocation,
         planned_pickup_date: plannedPickupDate, actual_pickup_date: actualPickupDate,
         planned_delivery_date: plannedDeliveryDate, actual_delivery_date: actualDeliveryDate,
-        carrier_name: text(d.carrier_name ?? before?.carrier_name, 180),
+        carrier_vendor_id: carrierVendorId, carrier_name: carrierName,
         vehicle_no: text(d.vehicle_no ?? before?.vehicle_no, 60).toUpperCase(),
         driver_name: text(d.driver_name ?? before?.driver_name, 160),
         driver_phone: text(d.driver_phone ?? before?.driver_phone, 60),
