@@ -64,6 +64,7 @@ const allowed = {
   jobOps: new Set(["Admin", "Editor", "Operator"]),
   sailing: new Set(["Admin", "Editor", "Operator"]),
   consolidation: new Set(["Admin", "Editor", "Operator"]),
+  transport: new Set(["Admin", "Editor", "Operator"]),
   filing: new Set(["Admin", "Editor", "Operator"]),
   alert: new Set(["Admin", "Editor", "Operator"]),
   finance: new Set(["Admin", "Editor"]),
@@ -237,6 +238,7 @@ Deno.serve(async (req: Request) => {
         ["consolidations", "lcl_consolidations", "created_at"],
         ["consolidationItems", "lcl_consolidation_items", "created_at"],
         ["charges", "shipment_charges", "created_at"],
+        ["transportDispatches", "transport_dispatches", "created_at"],
         ["filings", "shipment_filings", "created_at"],
         ["documents", "filing_documents", "created_at"],
         ["alertActions", "logistics_alert_actions", "updated_at"],
@@ -261,6 +263,89 @@ Deno.serve(async (req: Request) => {
       return reply(200, { ...Object.fromEntries(results), jobs, jobHbls, profile: { displayName: profile.display_name, role: profile.role } }, origin);
     }
 
+
+    if (action === "upsertTransportDispatch") {
+      roleCheck(profile.role, "transport");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      let before: Record<string, unknown> | null = null;
+      if (id) {
+        const result = await admin.from("transport_dispatches").select("*").eq("id", id).maybeSingle();
+        if (result.error || !result.data) throw new Error("Transport dispatch not found.");
+        before = result.data;
+      }
+      const job = await assertJob(d.job_id ?? before?.job_id);
+      if (!job) throw new Error("Select an active forwarding job.");
+      const containerNo = text(d.container_no ?? before?.container_no, 40)
+        ? await assertContainer(d.container_no ?? before?.container_no) : null;
+      if (containerNo) await assertJobContainer(job.id, containerNo);
+      const movementType = val(d.movement_type || before?.movement_type || "delivery",
+        ["pickup","delivery","haulage","empty_return","customs_transfer","other"], "transport movement");
+      const status = val(d.status || before?.status || "planned",
+        ["planned","assigned","in_transit","completed","exception","cancelled"], "transport status");
+      const plannedPickupDate = date(d.planned_pickup_date ?? before?.planned_pickup_date);
+      const actualPickupDate = date(d.actual_pickup_date ?? before?.actual_pickup_date);
+      const plannedDeliveryDate = date(d.planned_delivery_date ?? before?.planned_delivery_date);
+      const actualDeliveryDate = date(d.actual_delivery_date ?? before?.actual_delivery_date);
+      if (status === "assigned" && !text(d.carrier_name ?? before?.carrier_name, 180) &&
+          !text(d.vehicle_no ?? before?.vehicle_no, 60) && !text(d.driver_name ?? before?.driver_name, 160)) {
+        throw new Error("Add a carrier, vehicle or driver before assigning this move.");
+      }
+      if (status === "in_transit" && !actualPickupDate) throw new Error("Enter the actual pickup date before marking this move in transit.");
+      if (status === "completed" && !(actualDeliveryDate || (movementType === "pickup" && actualPickupDate))) {
+        throw new Error("Enter the actual completion date before completing this move.");
+      }
+      if (before?.status === "completed" && status !== "completed") throw new Error("A completed transport move cannot be reopened.");
+      if (before?.status === "cancelled" && status !== "cancelled") throw new Error("A cancelled transport move cannot be reopened; create a new move.");
+      const pickupLocation = text(d.pickup_location ?? before?.pickup_location, 240);
+      const deliveryLocation = text(d.delivery_location ?? before?.delivery_location, 240);
+      if (!pickupLocation && !deliveryLocation) throw new Error("Enter a pickup or delivery location.");
+      const row = {
+        job_id: job.id, container_no: containerNo, movement_type: movementType, status,
+        pickup_location: pickupLocation, delivery_location: deliveryLocation,
+        planned_pickup_date: plannedPickupDate, actual_pickup_date: actualPickupDate,
+        planned_delivery_date: plannedDeliveryDate, actual_delivery_date: actualDeliveryDate,
+        carrier_name: text(d.carrier_name ?? before?.carrier_name, 180),
+        vehicle_no: text(d.vehicle_no ?? before?.vehicle_no, 60).toUpperCase(),
+        driver_name: text(d.driver_name ?? before?.driver_name, 160),
+        driver_phone: text(d.driver_phone ?? before?.driver_phone, 60),
+        pod_reference: text(d.pod_reference ?? before?.pod_reference, 120),
+        instructions: text(d.instructions ?? before?.instructions, 3000),
+        notes: text(d.notes ?? before?.notes, 3000),
+        updated_by: actorId, updated_at: new Date().toISOString(),
+      };
+      const result = id
+        ? await admin.from("transport_dispatches").update(row).eq("id", id).select("*").single()
+        : await admin.from("transport_dispatches").insert({ ...row, created_by: actorId }).select("*").single();
+      if (result.error || !result.data) throw new Error(result.error?.message || "Could not save transport dispatch.");
+      const saved = result.data;
+      await recordAudit(id ? "update" : "create", "transport_dispatch", saved.id, before, saved);
+      if (status === "completed") {
+        const source = "trn:" + saved.id;
+        const milestoneResult = await admin.from("shipment_milestones").select("*")
+          .eq("job_id", saved.job_id).eq("source", source).maybeSingle();
+        if (milestoneResult.error) throw new Error("Transport dispatch saved, but its shipment event could not be checked.");
+        const prior = milestoneResult.data;
+        const completedDate = actualDeliveryDate || actualPickupDate;
+        const completedAt = new Date(completedDate + "T12:00:00Z").toISOString();
+        const plannedAt = plannedDeliveryDate || plannedPickupDate
+          ? new Date((plannedDeliveryDate || plannedPickupDate) + "T12:00:00Z").toISOString() : null;
+        const event = {
+          ...(prior?.id ? { id: prior.id } : {}),
+          job_id: saved.job_id, container_no: saved.container_no,
+          milestone_code: movementType === "delivery" ? "delivered_to_consignee" : "other",
+          milestone_name: movementType === "delivery" ? "Delivery completed" : "Transport " + movementType.replace(/_/g, " ") + " completed",
+          location: deliveryLocation || pickupLocation, planned_at: plannedAt, actual_at: completedAt,
+          status: "completed", customer_visible: prior?.customer_visible === true,
+          source, notes: "", updated_by: actorId, updated_at: new Date().toISOString(),
+          ...(!prior?.id ? { created_by: actorId } : {}),
+        };
+        const eventResult = await admin.from("shipment_milestones").upsert(event).select("*").single();
+        if (eventResult.error) throw new Error("Transport dispatch saved, but its shipment event could not be updated.");
+        await recordAudit(prior ? "update" : "create", "shipment_milestone", eventResult.data.id, prior, eventResult.data);
+      }
+      return reply(200, { record: saved }, origin);
+    }
 
     if (action === "upsertForwardingJob") {
       roleCheck(profile.role, "job");
