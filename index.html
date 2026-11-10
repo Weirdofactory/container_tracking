@@ -1269,7 +1269,7 @@ function renderReceivables(){
   const customers=(state.ops.customers||[]).filter(c=>[c.customer_code,c.legal_name,c.display_name,c.gstin,c.email].join(" ").toLowerCase().includes(customerSearch));
   const customerRows=customers.map(c=>{
     const jobs=state.ops.jobs.filter(j=>j.customer_id===c.id).length;
-    const invoices=state.ops.invoices.filter(i=>i.customer_id===c.id&&i.status==="issued");
+    const invoices=state.ops.invoices.filter(i=>i.customer_id===c.id&&i.status==="issued"&&String(i.invoice_date||"").slice(0,10)<=asOf);
     const openInr=invoices.reduce((sum,i)=>sum+invoiceLedgerAt(i,asOf).balanceInr,0);
     const action=actionBtn("edit-customer","Edit",'data-id="'+esc(c.id)+'"')+
       '<button class="btn small" data-action="toggle-customer" data-id="'+esc(c.id)+'" data-active="'+String(!c.is_active)+'">'+(c.is_active?"Deactivate":"Reactivate")+'</button>';
