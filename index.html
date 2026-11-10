@@ -368,7 +368,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",gstFrom:"",gstTo:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],shipmentDocuments:[],shipmentDocumentsLoaded:false,shipmentDocumentsLoading:false,shipmentDocumentsError:"",bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",gstFrom:"",gstTo:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -405,6 +405,17 @@ function invoiceLedgerAt(inv,asOf){
   const receivedInr=payments.reduce((sum,p)=>sum+Number(p.amount_inr||Number(p.amount||0)*rate),0);
   return{credited,received,balance:Math.max(0,Number(inv.total||0)-credited-received),
     balanceInr:Math.max(0,Number(inv.total_inr||Number(inv.total||0)*rate)-creditedInr-receivedInr),creditNotes,payments};
+}
+async function loadShipmentDocuments(force=false){
+  if(state.ops.shipmentDocumentsLoading)return;
+  if(state.ops.shipmentDocumentsLoaded&&!force)return;
+  state.ops.shipmentDocumentsLoading=true;state.ops.shipmentDocumentsError="";
+  try{
+    const d=await call("logistics-workspace",{action:"listShipmentDocuments"});
+    state.ops.shipmentDocuments=Array.isArray(d.documents)?d.documents:[];
+    state.ops.shipmentDocumentsLoaded=true;
+  }catch(e){state.ops.shipmentDocumentsError=e.message||"Generated shipment documents could not be loaded.";notify(state.ops.shipmentDocumentsError,"error")}
+  finally{state.ops.shipmentDocumentsLoading=false;if(["jobdetail","documents"].includes(state.page))render()}
 }
 async function loadInvoices(force=false){
   if(state.ops.invoicesLoading)return;
@@ -733,6 +744,99 @@ function renderDashboard(){
   '<div class="filters"><input class="filter search" id="pageSearch" placeholder="Filter job number, any HBL, MBL, customer, vessel or port…" value="'+esc(state.query)+'"><select class="filter" id="serviceFilter"><option value="">All services</option><option value="FCL">Sea FCL</option><option value="LCL">Sea LCL</option><option value="AIR">Air</option></select><select class="filter" id="statusFilter"><option value="">All statuses</option>'+["draft","booked","origin_handling","departed","transshipment","arrived","customs","destination_handling","out_for_delivery","delivered","closed","on_hold","cancelled"].map(x=>'<option value="'+x+'">'+x.replace(/_/g," ")+'</option>').join("")+'</select><span class="pane-sub">'+items.length+' of '+state.ops.jobs.length+' jobs</span></div>'+
   pane("FORWARDING JOB REGISTER",table(["JOB NO.","SERVICE","HBL NUMBERS","MBL NO.","CUSTOMER","CONSIGNEE","POL → POD","CARRIER / VESSEL","ETD","ETA","STATUS","CNTR","ACTIONS"],rows,"No forwarding jobs match the selected filters."),'','One job can contain multiple HBLs');
 }
+const SHIPMENT_DOCUMENT_TYPES={shipping_instructions:"Shipping Instructions",pre_alert:"Shipment Pre-Alert",arrival_notice:"Cargo Arrival Notice",delivery_order:"Delivery Order"};
+function shipmentDocumentTypeLabel(type){return SHIPMENT_DOCUMENT_TYPES[type]||"Shipment document"}
+function shipmentDocumentPane(jobId){
+  const docs=(state.ops.shipmentDocuments||[]).filter(d=>d.job_id===jobId);
+  const rows=docs.map(d=>'<tr><td><b>'+esc(d.document_number)+'</b><span class="cell-sub">'+esc(shipmentDocumentTypeLabel(d.document_type))+'</span></td><td>'+fmt(d.document_date)+'</td><td>'+esc(d.recipient_name||"—")+'</td><td>'+pill(d.status)+'</td><td>'+actionBtn("print-shipment-document","Print / preview",'data-id="'+esc(d.id)+'"')+(d.status==="draft"?actionBtn("edit-shipment-document","Edit draft",'data-id="'+esc(d.id)+'"')+actionBtn("issue-shipment-document","Issue",'data-id="'+esc(d.id)+'"')+actionBtn("delete-shipment-document","Delete draft",'data-id="'+esc(d.id)+'"'):actionBtn("email-shipment-document","Email draft",'data-id="'+esc(d.id)+'"'))+'</td></tr>');
+  const content=state.ops.shipmentDocumentsLoading?'<div class="empty">Loading generated documents…</div>':state.ops.shipmentDocumentsError?'<div class="empty">'+esc(state.ops.shipmentDocumentsError)+' '+actionBtn("retry-shipment-documents","Retry")+'</div>':table(["DOCUMENT NO. / TYPE","DATE","RECIPIENT","STATUS","ACTIONS"],rows,"No shipment notices or instructions generated for this job yet.");
+  return pane("GENERATED SHIPMENT DOCUMENTS",'<div class="ar-toolbar"><span class="desc">Create and issue job-linked operating copies; issued versions keep a frozen job and HBL snapshot.</span><button class="btn primary small" data-action="new-shipment-document" data-job-id="'+esc(jobId)+'">＋ Generate document</button></div>'+content);
+}
+function newShipmentDocument(jobId="",documentId=""){
+  if(!access(["Admin","Editor","Operator"]))return notify("Your role cannot create shipment documents.","error");
+  const prior=documentId?(state.ops.shipmentDocuments||[]).find(x=>x.id===documentId):null;
+  if(documentId&&(!prior||prior.status!=="draft"))return notify("Only a draft shipment document can be edited.","error");
+  const activeJobId=prior?.job_id||jobId,job=state.ops.jobs.find(x=>x.id===activeJobId);
+  if(!job)return notify("Select an active forwarding job first.","error");
+  const hbls=hblsForJob(activeJobId),account=state.ops.customers.find(c=>c.id===job.customer_id);
+  const savedFields=prior?.fields||{};
+  const type=prior?.document_type||"shipping_instructions";
+  const recipient=prior?.recipient_name||(type==="pre_alert"?job.destination_agent||"":type==="shipping_instructions"?job.carrier||"":"");
+  const recipientEmail=prior?.recipient_email||account?.email||"";
+  const defs=[
+    {name:"document_type",label:"Document",options:Object.entries(SHIPMENT_DOCUMENT_TYPES).map(([k,v])=>[k,v]),value:type,required:true},
+    {name:"hbl_id",label:"House bill of lading",options:[["","Job level"] ,...hbls.map(h=>[h.id,h.hbl_no])],value:prior?.hbl_id||""},
+    {name:"document_date",label:"Document date",type:"date",value:prior?.document_date||new Date().toISOString().slice(0,10),required:true},
+    {name:"recipient_name",label:"Recipient / partner",value:recipient,required:true},
+    {name:"recipient_email",label:"Recipient email",type:"email",value:recipientEmail},
+    {name:"cargo_location",label:"Cargo / delivery location",value:savedFields.cargo_location||job.final_delivery_place||job.pod||""},
+    {name:"customs_release_reference",label:"Customs release / delivery reference",value:savedFields.customs_release_reference||""},
+    {name:"freight_status",label:"Freight terms",options:[["not_stated","Not stated"],["prepaid","Freight prepaid"],["collect","Freight collect"]],value:savedFields.freight_status||"not_stated"},
+    {name:"free_time_until",label:"Free time until",type:"date",value:savedFields.free_time_until||""},
+    {name:"amount_due",label:"Amount payable (optional)",type:"number",step:"0.01",value:savedFields.amount_due??""},
+    {name:"amount_currency",label:"Amount currency (ISO)",value:savedFields.amount_currency||"INR"},
+    {name:"instructions",label:"Additional instructions",type:"textarea",value:savedFields.instructions||"",span2:true},
+  ];
+  openForm(documentId?"Edit shipment document draft":"Generate shipment document",defs,async fd=>{
+    const data={...(documentId?{id:documentId}:{}),job_id:activeJobId,hbl_id:fd.get("hbl_id")||null,
+      document_type:fd.get("document_type"),document_date:fd.get("document_date"),recipient_name:fd.get("recipient_name"),
+      recipient_email:fd.get("recipient_email"),fields:{cargo_location:fd.get("cargo_location"),customs_release_reference:fd.get("customs_release_reference"),
+        freight_status:fd.get("freight_status"),free_time_until:fd.get("free_time_until"),amount_due:fd.get("amount_due"),
+        amount_currency:fd.get("amount_currency"),instructions:fd.get("instructions")}};
+    const result=await call("logistics-workspace",{action:"upsertShipmentDocument",data});
+    await loadShipmentDocuments(true);closeForm();render();notify("Shipment document draft saved as "+result.record.document_number,"success");
+  });
+}
+async function issueGeneratedShipmentDocument(documentId){
+  const doc=(state.ops.shipmentDocuments||[]).find(x=>x.id===documentId);if(!doc||doc.status!=="draft")return;
+  if(!confirm("Issue "+shipmentDocumentTypeLabel(doc.document_type)+" "+doc.document_number+"? The job and cargo details will be frozen as an issued snapshot."))return;
+  try{
+    await call("logistics-workspace",{action:"issueShipmentDocument",id:documentId});
+    await loadShipmentDocuments(true);render();notify("Shipment document issued","success");
+  }catch(e){notify(e.message||"Could not issue shipment document.","error")}
+}
+async function deleteGeneratedShipmentDocument(documentId){
+  const doc=(state.ops.shipmentDocuments||[]).find(x=>x.id===documentId);if(!doc||doc.status!=="draft")return;
+  if(!confirm("Delete draft "+shipmentDocumentTypeLabel(doc.document_type)+" "+doc.document_number+"?"))return;
+  try{await call("logistics-workspace",{action:"deleteDraftShipmentDocument",id:documentId});await loadShipmentDocuments(true);render();notify("Draft shipment document deleted","success")}
+  catch(e){notify(e.message||"Could not delete the shipment document draft.","error")}
+}
+function shipmentDocumentContext(doc){
+  const snapshot=doc.snapshot||{},job=snapshot.job||state.ops.jobs.find(x=>x.id===doc.job_id)||{};
+  const hbl=snapshot.hbl||(state.ops.jobHbls||[]).find(x=>x.id===doc.hbl_id)||null;
+  const fields=snapshot.document?.fields||doc.fields||{},customer=snapshot.customer||state.ops.customers.find(x=>x.id===job.customer_id)||null;
+  const containers=snapshot.containers||(state.ops.jobContainers||[]).filter(x=>x.job_id===doc.job_id);
+  return{job,hbl,fields,customer,containers,document:snapshot.document||doc};
+}
+function printShipmentDocument(documentId){
+  const doc=(state.ops.shipmentDocuments||[]).find(x=>x.id===documentId);if(!doc)return notify("Shipment document not found.","error");
+  const {job,hbl,fields,customer,containers,document}=shipmentDocumentContext(doc);
+  const type=shipmentDocumentTypeLabel(doc.document_type),party=(label,value)=>'<div class="box"><small>'+label+'</small><b>'+esc(value||"—")+'</b></div>';
+  const route=[job.pol,job.transshipment_port,job.pod].filter(Boolean).join(" → ");
+  const cargo=hbl||job,containerList=containers.map(x=>esc(x.container_no)+" · "+esc(x.allocation_role||"assigned")).join("<br>")||"No container linked";
+  const amount=fields.amount_due===null||fields.amount_due===undefined||fields.amount_due===""?"":'<tr><td>Amount payable</td><td><b>'+esc(fields.amount_currency||"INR")+' '+money2(fields.amount_due)+'</b></td></tr>';
+  const details=[
+    ["Job number",job.job_no],["Customer reference",job.customer_reference],["Booking",job.booking_no],["Shipper",cargo.shipper||job.shipper],["Consignee",cargo.consignee||job.consignee],["Notify party",cargo.notify_party||job.notify_party],["Origin agent",job.origin_agent],["Destination agent",job.destination_agent],["HBL",hbl?.hbl_no||job.hbl_no],
+    ["MBL",job.mbl_no],["Mode / direction",(job.service_type||"")+" · "+(job.direction||"")],["Carrier",job.carrier],
+    ["Vessel / voyage",(job.vessel_name||"")+" "+(job.voyage_no||"")],["Origin → destination",route],["Final delivery",fields.cargo_location||job.final_delivery_place],
+    ["ETD / ETA",fmt(job.etd)+" / "+fmt(job.eta)],["Commodity",cargo.commodity||job.commodity],
+    ["Packages",num(cargo.package_count??job.package_count)+" "+(cargo.package_type||job.package_type||"")],
+    ["Gross weight",num(cargo.gross_weight_kg??job.gross_weight_kg)+" KG"],["Volume",num(cargo.volume_cbm??job.volume_cbm)+" CBM"],
+    ["Freight terms",fields.freight_status||"not stated"],["Free time until",fields.free_time_until?fmt(fields.free_time_until):""],
+    ["Customs / release reference",fields.customs_release_reference],["Containers",containerList],
+  ];
+  const detailRows=details.map(([k,v])=>'<tr><th>'+esc(k)+'</th><td>'+esc(v||"—")+'</td></tr>').join("");
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>'+esc(document.document_number||"Shipment document")+'</title><style>body{font:13px Arial,sans-serif;color:#20394c;margin:28px}header{display:flex;justify-content:space-between;border-bottom:3px solid #174c68;padding-bottom:12px}h1{font-size:22px;margin:3px 0}.muted,small{color:#6e8492;font-size:10px}.status{padding:8px;margin:14px 0;text-align:center;font-weight:800;background:#eef2f5;color:#566978}.draft{border:2px dashed #bd5750;background:#fff5f3;color:#a13e39}.columns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.box{border:1px solid #d2dce2;padding:10px}.box b{display:block;margin-top:4px}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{border:1px solid #cad5dc;padding:8px;text-align:left;vertical-align:top}th{width:28%;background:#edf2f5;font-size:10px;text-transform:uppercase}.footer{border-top:1px solid #ccd6dd;padding-top:10px;font-size:10px;color:#718391;margin-top:24px}@media print{body{margin:12mm}}</style></head><body><header><div><small>FREIGHT OPERATIONS · '+esc(type.toUpperCase())+'</small><h1>'+esc(job.customer_name||customer?.legal_name||"Freight operations")+'</h1><div class="muted">Document '+esc(document.document_number||"Draft")+' · '+esc(fmt(document.document_date||doc.document_date))+'</div></div><div>'+esc(job.branch||"")+'</div></header><div class="status '+(doc.status==="draft"?"draft":"")+'">'+(doc.status==="draft"?"DRAFT · NOT ISSUED":"ISSUED OPERATIONS COPY")+'</div><div class="columns">'+party("TO",doc.recipient_name)+'<div class="box"><small>RELATED CUSTOMER</small><b>'+esc(customer?.legal_name||job.customer_name||"—")+'</b><div>'+esc(customer?.email||"")+'</div><div>'+esc(customer?.gstin||"")+'</div></div></div><table>'+detailRows+(amount||"")+'</table>'+(fields.instructions?'<h3>Special instructions</h3><p style="white-space:pre-wrap">'+esc(fields.instructions)+'</p>':"")+'<div class="footer">Internal freight operations document. This is not a carrier-issued bill of lading, customs release, or proof of payment. Verify shipment particulars before sending externally.</div><p><button onclick="window.print()">Print / Save as PDF</button></p></body></html>';
+  const win=window.open("","_blank","width=1050,height=850");if(!win)return notify("Allow pop-ups to print the shipment document.","error");win.document.write(html);win.document.close();win.focus();
+}
+function draftShipmentDocumentEmail(documentId){
+  const doc=(state.ops.shipmentDocuments||[]).find(x=>x.id===documentId);if(!doc)return;
+  if(!doc.recipient_email)return notify("Add a recipient email to the document draft first.","error");
+  const {job,fields,document}=shipmentDocumentContext(doc),type=shipmentDocumentTypeLabel(doc.document_type);
+  const subject=type+" · "+(doc.document_number||"Draft")+" · "+(job.job_no||"Shipment");
+  const body=["Dear "+(doc.recipient_name||"Operations partner")+",","","Please find the "+type.toLowerCase()+" for shipment "+(job.job_no||"")+" ("+(doc.hbl_id?((state.ops.jobHbls||[]).find(x=>x.id===doc.hbl_id)?.hbl_no||job.hbl_no):job.hbl_no||"")+") attached.","","Route: "+(job.pol||"—")+" → "+(job.pod||"—"),"Vessel / voyage: "+(job.vessel_name||"—")+" "+(job.voyage_no||""),"ETA: "+fmt(job.eta),"Cargo location: "+(fields.cargo_location||job.final_delivery_place||"—"),"","Please attach the printed document PDF before sending. This email draft will not send automatically.","","Regards,",state.ops.invoiceSettings?.name||"Freight Operations"].join("\n");
+  location.href="mailto:"+encodeURIComponent(doc.recipient_email)+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+}
 function renderJobDetail(jobId){
   const j=state.ops.jobs.find(x=>x.id===jobId);if(!j)return renderJobs();
   const hbls=hblsForJob(jobId);
@@ -756,7 +860,7 @@ function renderJobDetail(jobId){
   const chargeRows=charges.map(x=>{const h=resolveHbl(x.hbl_id,"",jobId);return '<tr><td>'+esc(h?.hbl_no||"Job level")+'</td><td>'+esc(x.container_no||"—")+'</td><td>'+esc(x.direction)+'</td><td>'+esc(x.charge_code)+'</td><td>'+esc(x.currency)+' '+num(x.amount)+'</td><td>'+pill(x.approval_status)+'</td><td>'+actionBtn("edit-charge","Edit",'data-id="'+esc(x.id)+'"')+'</td></tr>'});
   const docRows=docs.map(x=>'<tr><td>'+esc(x.original_name)+'</td><td>'+esc(x.content_type)+'</td><td>'+fmt(x.created_at)+'</td><td>'+actionBtn("open-document","Open",'data-id="'+esc(x.id)+'"')+'</td></tr>');
   const deleteButton=state.profile?.role==="Admin"?actionBtn("delete-job","Delete job",'data-id="'+esc(j.id)+'"'):"";
-  return pageHead("jobs",'<button class="btn" data-nav="jobs">Back to jobs</button><button class="btn" data-edit-job="'+esc(j.id)+'">Edit job</button><button class="btn" data-link-job="'+esc(j.id)+'">Link container</button><button class="btn" data-create="filing" data-job-id="'+esc(j.id)+'">New filing</button><button class="btn" data-create="charge" data-job-id="'+esc(j.id)+'">New charge</button><button class="btn" data-create="transport-dispatch" data-job-id="'+esc(j.id)+'">Plan transport</button><button class="btn primary" data-event-job="'+esc(j.id)+'">Add milestone</button>'+deleteButton)+
+  return pageHead("jobs",'<button class="btn" data-nav="jobs">Back to jobs</button><button class="btn" data-edit-job="'+esc(j.id)+'">Edit job</button><button class="btn" data-link-job="'+esc(j.id)+'">Link container</button><button class="btn" data-create="filing" data-job-id="'+esc(j.id)+'">New filing</button><button class="btn" data-create="charge" data-job-id="'+esc(j.id)+'">New charge</button><button class="btn" data-create="transport-dispatch" data-job-id="'+esc(j.id)+'">Plan transport</button><button class="btn" data-action="new-shipment-document" data-job-id="'+esc(j.id)+'">Generate document</button><button class="btn primary" data-event-job="'+esc(j.id)+'">Add milestone</button>'+deleteButton)+
   '<div class="stats">'+stat("Job number",j.job_no,"Forwarding reference")+stat("House bills",hbls.length,"HBL records under this job")+stat("MBL",j.mbl_no||"—","Master bill")+stat("Status",j.status,"Job lifecycle")+'</div>'+
   '<div class="columns"><div class="stack">'+
   pane("HOUSE BILLS OF LADING",'<div class="pane-body"><div class="pane-toolbar"><span class="pane-sub">One forwarding job can contain multiple HBLs. Import a manifest Excel to create HBLs automatically.</span><button class="btn" data-import-hbls="'+esc(jobId)+'">↑ Import Excel</button><input hidden type="file" accept=".xls,.xlsx,.xlsm" id="hblManifest-'+esc(jobId)+'"><button class="btn primary" data-create="job-hbl" data-job-id="'+esc(jobId)+'">＋ Add HBL</button></div>'+table(["HBL NUMBER","SHIPPER","CONSIGNEE","PACKAGES","GROSS WEIGHT","VOLUME","VISIBILITY","ACTIONS"],hblRows,"No HBL records yet. Add the first HBL here.")+'</div>','',hbls.length+" HBLs")+
@@ -767,7 +871,7 @@ function renderJobDetail(jobId){
   pane("LCL CONSOLIDATION LINES",table(["CONSOLIDATION","HBL","PACKAGES","CBM","MAPPING"],itemRows,"No LCL lines linked."),'',items.length+" lines")+
   pane("MILESTONES",table(["EVENT","CONTAINER","LOCATION","PLANNED","ACTUAL","STATUS","PHOTO"],eventRows,"No milestones recorded."),'',events.length+" events")+
   pane("CUSTOMS FILINGS",table(["HBL","CONTAINER","TYPE","REFERENCE","STATUS","DUE","ACTION"],filingRows,"No filings linked."),'',filings.length+" filings")+
-  pane("DOCUMENTS",table(["FILE","TYPE","UPLOADED","ACTION"],docRows,"No documents linked."),'',docs.length+" docs")+
+  pane("DOCUMENTS",table(["FILE","TYPE","UPLOADED","ACTION"],docRows,"No documents linked."),'',docs.length+" docs")+shipmentDocumentPane(jobId)+
   pane("COSTS & REVENUE",table(["HBL","CONTAINER","DIRECTION","CHARGE","AMOUNT","APPROVAL","ACTION"],chargeRows,"No charge lines linked."),'',charges.length+" lines")+
   '</div><div class="stack">'+pane("JOB STATUS",'<div class="pane-body">'+pill(j.status)+'<p>Customer visibility: '+(j.customer_visible?"Enabled":"Disabled")+'</p><p>Job HBLs: '+hbls.length+'</p></div>')+pane("RELATED RECORD COUNTS",'<div class="pane-body">HBLs '+hbls.length+'<br>Containers '+links.length+'<br>Schedules '+sailings.length+'<br>LCL lines '+items.length+'<br>Milestones '+events.length+'<br>Filings '+filings.length+'<br>Documents '+docs.length+'<br>Charge lines '+charges.length+'</div>')+'</div></div>';
 }
@@ -1894,7 +1998,11 @@ function renderDocuments(){
     const job=state.ops.jobs.find(j=>j.id===d.job_id)||{};
     return '<tr><td><b>'+esc(d.pod_document_name||"Proof of delivery")+'</b></td><td><button class="btn small" data-action="job-detail" data-id="'+esc(job.id)+'">'+esc(job.job_no||"—")+'</button></td><td>'+esc(d.container_no||"Job level")+'</td><td>—</td><td>Transport POD · '+esc(d.dispatch_no)+'</td><td>'+esc(d.pod_content_type||"—")+'</td><td>'+num(d.pod_file_size)+'</td><td>'+fmt(d.updated_at)+'</td><td>'+actionBtn("open-transport-pod","Open / download",'data-id="'+esc(d.id)+'"')+'</td></tr>';
   });
-  const allRows=rows.concat(transportPods);
+  const generated=(state.ops.shipmentDocuments||[]).map(d=>{
+    const job=state.ops.jobs.find(j=>j.id===d.job_id)||{},hbl=(state.ops.jobHbls||[]).find(h=>h.id===d.hbl_id);
+    return '<tr><td><b>'+esc(d.document_number)+'</b></td><td><button class="btn small" data-action="job-detail" data-id="'+esc(job.id)+'">'+esc(job.job_no||"—")+'</button></td><td>—</td><td>'+esc(hbl?.hbl_no||job.hbl_no||"—")+'</td><td>'+esc(shipmentDocumentTypeLabel(d.document_type))+'</td><td>'+pill(d.status==="issued"?"Issued operations copy":"Draft")+'</td><td>—</td><td>'+fmt(d.issued_at||d.created_at)+'</td><td>'+actionBtn("print-shipment-document","Print / preview",'data-id="'+esc(d.id)+'"')+(d.status==="issued"?actionBtn("email-shipment-document","Email draft",'data-id="'+esc(d.id)+'"'):actionBtn("issue-shipment-document","Issue",'data-id="'+esc(d.id)+'"'))+'</td></tr>';
+  });
+  const allRows=rows.concat(transportPods,generated);
   return pageHead("documents",'<button class="btn" data-nav="filings">Open customs filings</button>')+
   pane("DOCUMENT MANAGER",table(["FILE NAME","JOB","CONTAINER","HBL","DOCUMENT TYPE","TYPE","SIZE BYTES","UPLOADED","ACTION"],allRows,"No document metadata found. Upload a document from a customs filing."));
 }function uploadTransportPod(dispatchId){
@@ -2102,7 +2210,7 @@ function renderCustomer(){
 
 async function loadStaffUsers(){const target=$("staffUsers");if(!target)return;target.innerHTML='<span class="desc">Loading staff accounts…</span>';try{const d=await call("logistics-workspace",{action:"listStaffUsers"});const rows=(d.users||[]).map(u=>'<tr><td>'+esc(u.display_name)+'</td><td>'+esc(u.email)+'</td><td>'+pill(u.role)+'</td><td>'+pill(u.is_active?"Active":"Disabled")+'</td><td>'+esc(u.created_at?fmt(u.created_at):"—")+'</td><td><button class="btn small red" data-action="delete-staff-user" data-id="'+esc(u.user_id)+'" data-email="'+esc(u.email)+'">Delete</button></td></tr>');target.innerHTML=table(["NAME","EMAIL","ROLE","STATUS","CREATED","ACTIONS"],rows,"No staff accounts found.")}catch(e){target.innerHTML='<div class="form-error">'+esc(e.message||"Could not load staff accounts.")+'</div>'}}
 function renderSettings(){return pageHead("settings")+(state.profile?.role==="Admin"?'<div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">CREATE STAFF LOGIN</span><span class="pane-sub">Admin only · managed inside this website</span></div><div class="pane-body"><form id="staffCreateForm"><div class="formgrid"><div class="field"><label>FULL NAME *</label><input name="display_name" required maxlength="120"></div><div class="field"><label>EMAIL ADDRESS *</label><input name="email" type="email" required maxlength="254"></div><div class="field"><label>TEMPORARY PASSWORD *</label><input name="password" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>ACCESS ROLE *</label><select name="role"><option>Operator</option><option>Editor</option><option>Viewer</option><option>Admin</option></select></div></div><button class="btn primary" type="submit">＋ Create staff user</button><div class="form-error" id="staffFormError"></div></form></div></div><div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">STAFF ACCOUNTS</span><button class="btn small" id="reloadStaff">↻ Refresh users</button></div><div class="pane-body" id="staffUsers"><span class="desc">Loading staff accounts…</span></div></div>':'<div class="pane"><div class="pane-body">Staff account administration is restricted to Admin users.</div></div>')+'<div class="columns">'+pane("STAFF SESSION",'<div class="pane-body">User: '+esc(state.session?.user?.email||"—")+'<br>Role: '+esc(state.profile?.role||"—")+'<br>Equipment records: '+state.rows.length+'</div>')+pane("CONNECTED SERVICES",'<div class="pane-body">Supabase authentication '+pill("Connected")+'<br>Protected operations API '+pill("Connected")+'<br>Customer tracking API '+pill("Active")+'</div>')+'</div>'}
-function render(){if($("app").hidden)return;document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length+(state.ops.transportDispatches||[]).filter(d=>d.status==="exception").length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="sales"){if(!state.ops.salesLoaded&&!state.ops.salesLoading)loadSales();html=renderSales()}else if(state.page==="payables"){if(!state.ops.payablesLoaded&&!state.ops.payablesLoading)loadPayables();html=renderPayables()}else if(state.page==="transport"){if(!state.ops.transportVendorsLoaded&&!state.ops.transportVendorsLoading)loadTransportVendors();html=renderTransport()}else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();if(state.page==="finance"&&!state.ops.bankLoaded&&!state.ops.bankLoading)loadBankReconciliation();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports"){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=renderReports()}else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
+function render(){if($("app").hidden)return;if(["jobdetail","documents"].includes(state.page)&&!state.ops.shipmentDocumentsLoaded&&!state.ops.shipmentDocumentsLoading)loadShipmentDocuments();document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length+(state.ops.transportDispatches||[]).filter(d=>d.status==="exception").length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="sales"){if(!state.ops.salesLoaded&&!state.ops.salesLoading)loadSales();html=renderSales()}else if(state.page==="payables"){if(!state.ops.payablesLoaded&&!state.ops.payablesLoading)loadPayables();html=renderPayables()}else if(state.page==="transport"){if(!state.ops.transportVendorsLoaded&&!state.ops.transportVendorsLoading)loadTransportVendors();html=renderTransport()}else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();if(state.page==="finance"&&!state.ops.bankLoaded&&!state.ops.bankLoading)loadBankReconciliation();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports"){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=renderReports()}else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
 function setNavigationOpen(open){$("app").classList.toggle("menu-open",open);$("hamb").setAttribute("aria-expanded",String(open))}
 function navigate(p){if(p==="jobdetail"||p==="consol")p="containers";state.page=p;state.query="";$("globalSearch").value="";setNavigationOpen(false);render()}
 function field(f){const value=f.value??"";let input;if(f.options)input='<select name="'+esc(f.name)+'" '+(f.required?"required":"")+'>'+f.options.map(o=>'<option value="'+esc(o[0])+'" '+(String(o[0])===String(value)?"selected":"")+'>'+esc(o[1])+'</option>').join("")+'</select>';else if(f.type==="textarea")input='<textarea name="'+esc(f.name)+'">'+esc(value)+'</textarea>';else{let v=value;if(f.type==="date"&&v)v=String(v).slice(0,10);if(f.type==="datetime-local"&&v)v=new Date(v).toISOString().slice(0,16);input='<input name="'+esc(f.name)+'" type="'+(f.type||"text")+'" value="'+esc(v)+'" '+(f.accept?'accept="'+esc(f.accept)+'"':"") +' '+(f.required?"required":"")+' '+(f.step?'step="'+esc(f.step)+'"':"")+'>'}return'<div class="field '+(f.span2?"span2":"")+'"><label>'+esc(f.label.toUpperCase())+(f.required?" *":"")+'</label>'+input+'</div>'}
@@ -2671,6 +2779,13 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="customer-ledger-statement")printCustomerAccountStatement();
       if(act==="export-customer-ledger")exportCustomerAccountStatement();
       if(act==="outstanding-reminder")draftCustomerOutstandingReminder();
+      if(act==="new-shipment-document")newShipmentDocument(button.dataset.jobId||"");
+      if(act==="edit-shipment-document")newShipmentDocument("",id);
+      if(act==="issue-shipment-document")issueGeneratedShipmentDocument(id);
+      if(act==="delete-shipment-document")deleteGeneratedShipmentDocument(id);
+      if(act==="print-shipment-document")printShipmentDocument(id);
+      if(act==="email-shipment-document")draftShipmentDocumentEmail(id);
+      if(act==="retry-shipment-documents")loadShipmentDocuments(true);
       if(act==="new-bank-account")newBankAccount();
       if(act==="edit-bank-account")newBankAccount(id);
       if(act==="retry-bank-reconciliation")loadBankReconciliation(true);
