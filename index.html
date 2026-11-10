@@ -368,7 +368,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",gstFrom:"",gstTo:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -1737,6 +1737,7 @@ function newBankAccount(accountId=""){
   });
 }
 function parseBankCsv(raw){
+  raw=String(raw).replace(/^\uFEFF/,"");
   const rows=[];let row=[],field="",quoted=false;
   for(let i=0;i<raw.length;i++){
     const ch=raw[i];
@@ -1781,7 +1782,7 @@ function normalizeBankCsvRows(objects,account){
 }
 async function uploadBankStatementCsv(file,accountId){
   if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can import bank statements.","error");
-  if(!accountId)return notify("Select a bank account before importing a statement.","error");
+  if(!accountId||accountId==="__all__")return notify("Select one bank account before importing a statement.","error");
   if(!file)return;
   if(file.size>5*1024*1024)return notify("Bank statement CSV files must be 5 MB or smaller.","error");
   try{
@@ -2015,6 +2016,50 @@ function exportJobProfitability(){
     .map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="job-profitability-"+new Date().toISOString().slice(0,10)+".csv";a.click();URL.revokeObjectURL(a.href);
 }
+function gstRegisterData(){
+  const from=state.gstFrom||defaultFinanceFrom(),through=state.gstTo||new Date().toISOString().slice(0,10),rows=[];
+  const invoiceById=new Map((state.ops.invoices||[]).map(inv=>[inv.id,inv]));
+  const append=(doc,invoice,isCredit)=>{
+    const dateValue=String((isCredit?doc.credit_date:doc.invoice_date)||"").slice(0,10);
+    if(!dateValue||dateValue<from||dateValue>through)return;
+    const currency=String(doc.currency||invoice?.currency||"INR"),rate=Number(doc.exchange_rate_to_inr||invoice?.exchange_rate_to_inr||1);
+    const lines=Array.isArray(doc.lines)&&doc.lines.length?doc.lines:[{description:"Invoice total",hsn_sac:"",taxable_value:doc.taxable_value||0,cgst_amount:doc.cgst_total||0,sgst_amount:doc.sgst_total||0,igst_amount:doc.igst_total||0,tax_amount:doc.total_tax||0,gst_rate:0}];
+    lines.forEach((line,index)=>{
+      const sign=isCredit?-1:1,taxable=Number(line.taxable_value||0)*sign;
+      const cgst=Number(line.cgst_amount||0)*sign,sgst=Number(line.sgst_amount||0)*sign,igst=Number(line.igst_amount||0)*sign;
+      const tax=Number(line.tax_amount??(Number(line.cgst_amount||0)+Number(line.sgst_amount||0)+Number(line.igst_amount||0)))*sign;
+      const buyer=doc.buyer||invoice?.buyer||{};
+      rows.push({date:dateValue,document:isCredit?(doc.credit_note_number||"Credit note"):(doc.invoice_number||"Invoice"),
+        kind:isCredit?"Credit note":"GST invoice",against:isCredit?(doc.invoice_number_snapshot||invoice?.invoice_number||""):"",
+        customer:buyer.name||"—",gstin:buyer.gstin||"",supply_type:doc.supply_type||invoice?.supply_type||"",
+        reverse_charge:doc.reverse_charge===true||invoice?.reverse_charge===true,line_no:index+1,
+        description:line.description||"",hsn_sac:line.hsn_sac||"",currency,taxable,cgst,sgst,igst,tax,rate,amount_inr:tax*rate});
+    });
+  };
+  for(const invoice of state.ops.invoices||[])if(invoice.status==="issued"&&invoice.invoice_type==="tax_invoice")append(invoice,invoice,false);
+  for(const note of state.ops.creditNotes||[]){if(note.status!=="issued")continue;const invoice=invoiceById.get(note.invoice_id);if(invoice?.invoice_type==="tax_invoice")append(note,invoice,true)}
+  rows.sort((a,b)=>a.date.localeCompare(b.date)||a.document.localeCompare(b.document)||a.line_no-b.line_no);
+  const totals=new Map();
+  for(const row of rows){const x=totals.get(row.currency)||{taxable:0,cgst:0,sgst:0,igst:0,tax:0,inr:0};x.taxable+=row.taxable;x.cgst+=row.cgst;x.sgst+=row.sgst;x.igst+=row.igst;x.tax+=row.tax;x.inr+=row.amount_inr;totals.set(row.currency,x)}
+  return{from,through,rows,totals,totalTaxInr:[...totals.values()].reduce((n,x)=>n+x.inr,0)};
+}
+function renderGSTRegister(){
+  const r=gstRegisterData();
+  const sums=[...r.totals.entries()].map(([currency,x])=>'<tr><td><b>'+esc(currency)+'</b></td><td>'+money2(x.taxable)+'</td><td>'+money2(x.cgst)+'</td><td>'+money2(x.sgst)+'</td><td>'+money2(x.igst)+'</td><td><b>'+money2(x.tax)+'</b><span class="cell-sub">INR ref '+money2(x.inr)+'</span></td></tr>');
+  const rows=r.rows.map(x=>'<tr><td>'+fmt(x.date)+'</td><td><b>'+esc(x.document)+'</b><span class="cell-sub">'+esc(x.kind)+(x.against?' · against '+esc(x.against):'')+'</span></td><td>'+esc(x.customer)+'<span class="cell-sub">'+esc(x.gstin||"No GSTIN")+'</span></td><td>'+esc(x.supply_type.replace(/_/g," "))+(x.reverse_charge?'<span class="cell-sub">Reverse charge</span>':"")+'</td><td>'+esc(x.hsn_sac||"—")+'<span class="cell-sub">'+esc(x.description)+'</span></td><td>'+esc(x.currency)+' '+money2(x.taxable)+'</td><td>'+Number(x.rate||0).toFixed(2)+'%</td><td>'+esc(x.currency)+' '+money2(x.cgst)+'</td><td>'+esc(x.currency)+' '+money2(x.sgst)+'</td><td>'+esc(x.currency)+' '+money2(x.igst)+'</td><td><b>'+esc(x.currency)+' '+money2(x.tax)+'</b></td></tr>');
+  const toolbar='<div class="ar-toolbar"><label>From <input id="gstFromDate" type="date" value="'+esc(r.from)+'"></label><label>Through <input id="gstToDate" type="date" value="'+esc(r.through)+'"></label><span class="desc">'+r.rows.length+' tax invoice and credit-note lines</span><button class="btn small" data-action="export-gst-register">Export GST CSV</button><button class="btn small" data-action="print-gst-register">Print / Save PDF</button></div>';
+  return pane("GST TAX REGISTER · ISSUED INVOICES AND CREDIT NOTES",toolbar+table(["CURRENCY","TAXABLE VALUE","CGST","SGST","IGST","DOCUMENT TAX"],sums,"No GST tax activity in this period.")+'<div class="gridwrap">'+table(["DATE","DOCUMENT","CUSTOMER / GSTIN","SUPPLY","HSN / SAC","TAXABLE","RATE","CGST","SGST","IGST","TAX"],rows,"No issued GST invoices or credit notes in this period.")+'</div><div class="pane-body desc">Credit notes reduce the tax totals. INR values use document exchange-rate snapshots; review reverse-charge and export treatment before filing.</div>');
+}
+function exportGSTRegister(){
+  const r=gstRegisterData(),rows=[["Date","Document","Type","Against invoice","Customer","GSTIN","Supply type","Reverse charge","HSN/SAC","Line description","Currency","Taxable value","GST rate","CGST","SGST","IGST","Total tax","INR tax reference"]];
+  r.rows.forEach(x=>rows.push([x.date,x.document,x.kind,x.against,x.customer,x.gstin,x.supply_type,x.reverse_charge?"Yes":"No",x.hsn_sac,x.description,x.currency,x.taxable,x.rate,x.cgst,x.sgst,x.igst,x.tax,x.amount_inr]));
+  const csv=rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="gst-tax-register-"+r.from+"-to-"+r.through+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function printGSTRegister(){
+  const r=gstRegisterData(),html='<!doctype html><html><head><meta charset="utf-8"><title>GST tax register</title><style>body{font:12px Arial;color:#263b4b;margin:24px}table{border-collapse:collapse;width:100%;margin:9px 0}th,td{border:1px solid #ccd5dc;padding:5px;text-align:left;vertical-align:top}th{background:#edf1f4;font-size:9px}.cell-sub{display:block;color:#728391;font-size:9px;margin-top:2px}.ar-toolbar button{display:none}.desc{font-size:9px;color:#697b88}</style></head><body><h1>GST tax register</h1><p>Period: '+esc(fmt(r.from))+' through '+esc(fmt(r.through))+'</p>'+renderGSTRegister()+'</body></html>';
+  const win=window.open("","_blank","width=1400,height=850");if(!win)return notify("Allow pop-ups to print the GST tax register.","error");win.document.write(html);win.document.close();setTimeout(()=>win.print(),250);
+}
 function renderReports(){
   const approved=state.ops.charges.filter(x=>x.approval_status==="approved");
   const cost=approved.filter(x=>x.direction==="cost").reduce((n,x)=>n+Number(x.amount_inr??x.amount??0),0);
@@ -2028,6 +2073,7 @@ function renderReports(){
   '<div class="stats">'+stat("Jobs",state.ops.jobs.length,"Forwarding job records")+stat("Containers",state.rows.length,"Equipment records")+stat("Milestones",state.ops.milestones.length,"Planned and actual events")+stat("Sailings",state.ops.sailings.length,"Vessel schedules")+stat("Charges",state.ops.charges.length,"Commercial lines")+'</div>'+
   '<div class="stats">'+stat("Approved costs","INR "+num(cost),"Converted total")+stat("Approved revenue","INR "+num(revenue),"Converted total")+stat("Contribution","INR "+num(revenue-cost),"Revenue less cost")+stat("Unmapped charges",unmappedCharges,"Need job link")+stat("Unmapped filings",unmappedFilings,"Need job link")+'</div>'+
   pane("JOB PROFITABILITY BY FORWARDING JOB",table(["JOB","CUSTOMER","SERVICE / ROUTE","APPROVED REVENUE","APPROVED COST","CONTRIBUTION","ISSUED INVOICES","OPEN RECEIVABLE"],profitRows,"No forwarding jobs yet. Job totals use approved shipment charges and issued customer invoices."))+
+  renderGSTRegister()+
   '<div style="height:9px"></div><div class="columns"><div class="stack">'+
   pane("OPERATIONAL SUMMARY",'<div class="pane-body"><div class="barlist">'+[['Draft / booked',state.ops.jobs.filter(x=>["draft","booked"].includes(x.status)).length],["At origin / departed",state.ops.jobs.filter(x=>["origin_handling","departed"].includes(x.status)).length],["Transshipment",state.ops.jobs.filter(x=>x.status==="transshipment").length],["At destination / delivered",state.ops.jobs.filter(x=>["arrived","customs","destination_handling","out_for_delivery","delivered","closed"].includes(x.status)).length]].map(([l,n])=>'<div class="barrow"><span>'+l+'</span><div class="bartrack"><div class="barfill" style="width:'+Math.min(100,state.ops.jobs.length?Number(n)/state.ops.jobs.length*100:0)+'%"></div></div><b>'+n+'</b></div>').join("")+'</div></div>')+
   pane("DATA MAPPING CHECK",'<div class="pane-body" style="font-size:10px;line-height:2;color:#607686">Jobs without containers: <b>'+noContainerJobs+'</b><br>Unmapped charges: <b>'+unmappedCharges+'</b><br>Unmapped filings: <b>'+unmappedFilings+'</b><br>Unmapped LCL HBL lines: <b>'+unlinkedLcl+'</b><br>Transport moves without job: <b>'+state.rows.filter(r=>val(r,["TRUCK NO.","PORT OUT","CFS IN","DESTUFFING DATE"])&&!jobsForContainer(container(r)).length).length+'</b></div>')+
@@ -2506,7 +2552,8 @@ function exportJobs(){const cols=["job_no","customer_reference","service_type","
 function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(button=>{button.onclick=()=>{const mode=button.dataset.workbenchMode==="containers"?"containers":"forwarding";if(state.workbenchMode===mode)return;state.workbenchMode=mode;state.query="";$("globalSearch").value="";render()}});document.querySelectorAll("[data-dashboard-filter]").forEach(button=>{button.onclick=()=>{state.dashboardFilter=button.dataset.dashboardFilter||"all";render()}});
   const containerStageSelect=$("containerStageFilter");if(containerStageSelect)containerStageSelect.onchange=()=>{state.containerStageFilter=containerStageSelect.value;render()};
   const arFrom=$("arFromDate");if(arFrom)arFrom.onchange=()=>{state.financeFrom=arFrom.value;render()};const arAsOf=$("arAsOf");if(arAsOf)arAsOf.onchange=()=>{state.financeAsOf=arAsOf.value;render()};
-  const apAsOf=$("apAsOf");if(apAsOf)apAsOf.onchange=()=>{state.payablesAsOf=apAsOf.value;render()};
+  const gstFromDate=$("gstFromDate");if(gstFromDate)gstFromDate.onchange=()=>{state.gstFrom=gstFromDate.value;render()};
+  const gstToDate=$("gstToDate");if(gstToDate)gstToDate.onchange=()=>{state.gstTo=gstToDate.value;render()};const apAsOf=$("apAsOf");if(apAsOf)apAsOf.onchange=()=>{state.payablesAsOf=apAsOf.value;render()};
   const arCustomer=$("arCustomerFilter");if(arCustomer)arCustomer.onchange=()=>{state.arCustomerFilter=arCustomer.value;render()};
   const customerSearch=$("customerSearch");if(customerSearch)customerSearch.onchange=()=>{state.customerSearch=customerSearch.value;render()};
   const bankAccountFilter=$("bankAccountFilter");if(bankAccountFilter)bankAccountFilter.onchange=()=>{state.bankAccountFilter=bankAccountFilter.value;render()};
@@ -2617,6 +2664,8 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="print-credit-note")printCreditNote(id);
       if(act==="export-ar")exportReceivables();
       if(act==="export-job-profitability")exportJobProfitability();
+      if(act==="export-gst-register")exportGSTRegister();
+      if(act==="print-gst-register")printGSTRegister();
       if(act==="print-ar")printReceivables();
       if(act==="outstanding-statement")printCustomerOutstandingStatement();
       if(act==="customer-ledger-statement")printCustomerAccountStatement();
