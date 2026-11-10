@@ -697,6 +697,134 @@ Deno.serve(async (req: Request) => {
       return reply(200, { record: data }, origin);
     }
 
+    if (action === "listPayables") {
+      roleCheck(profile.role, "finance");
+      const [vendorResult, billResult, lineResult, paymentResult] = await Promise.all([
+        admin.from("vendor_accounts").select("*").order("legal_name", { ascending: true }).limit(2500),
+        admin.from("vendor_bills").select("*").order("bill_date", { ascending: false }).limit(5000),
+        admin.from("vendor_bill_lines").select("*").order("line_no", { ascending: true }).limit(20000),
+        admin.from("vendor_bill_payments").select("*").order("paid_at", { ascending: false }).limit(10000),
+      ]);
+      if (vendorResult.error || billResult.error || lineResult.error || paymentResult.error) throw new Error("Supplier accounts and payable bills could not be loaded.");
+      return reply(200, { vendors: vendorResult.data ?? [], bills: billResult.data ?? [], lines: lineResult.data ?? [], payments: paymentResult.data ?? [] }, origin);
+    }
+
+    if (action === "upsertVendorAccount") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const before = id ? (await admin.from("vendor_accounts").select("*").eq("id", id).maybeSingle()).data : null;
+      if (id && !before) throw new Error("Supplier account not found.");
+      const legalName = text(d.legal_name, 180);
+      if (!legalName) throw new Error("Supplier legal name is required.");
+      const country = text(d.country || "India", 80);
+      const gstin = text(d.gstin, 20).toUpperCase();
+      if (gstin && /^india$/i.test(country) && !/^[0-9]{2}[A-Z0-9]{13}$/.test(gstin)) throw new Error("Enter a valid 15-character GSTIN or leave the tax ID blank.");
+      const stateCode = text(d.state_code, 2);
+      if (stateCode && !/^\d{2}$/.test(stateCode)) throw new Error("GST state code must contain two digits.");
+      const currency = text(d.default_currency || "INR", 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
+      const row = {
+        ...(id ? { id, vendor_code: text(d.vendor_code, 40) || before.vendor_code } : { vendor_code: text(d.vendor_code, 40) || "VEN-" + crypto.randomUUID().slice(0, 8).toUpperCase(), created_by: actorId }),
+        legal_name: legalName, display_name: text(d.display_name, 180), gstin,
+        billing_address: text(d.billing_address, 700), city: text(d.city, 120), state: text(d.state, 100),
+        state_code: stateCode, postal_code: text(d.postal_code, 20), country,
+        email: text(d.email, 180).toLowerCase(), phone: text(d.phone, 60),
+        default_currency: currency, payment_terms: text(d.payment_terms || "Due within 30 days", 80),
+        is_active: d.is_active === undefined ? (before?.is_active ?? true) : d.is_active === true || d.is_active === "true",
+        notes: text(d.notes, 3000), updated_by: actorId, updated_at: new Date().toISOString(),
+      };
+      const { data, error } = id
+        ? await admin.from("vendor_accounts").update(row).eq("id", id).select("*").single()
+        : await admin.from("vendor_accounts").insert(row).select("*").single();
+      if (error) throw new Error(error.message || "Could not save supplier account.");
+      await recordAudit(id ? "update" : "create", "vendor_account", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "saveVendorBillDraft") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const billId = d.id ? uuid(d.id) : null;
+      const before = billId ? (await admin.from("vendor_bills").select("*").eq("id", billId).maybeSingle()).data : null;
+      if (billId && (!before || before.status !== "draft")) throw new Error("Only draft supplier bills can be edited.");
+      const vendorId = uuid(d.vendor_id);
+      const jobId = d.job_id ? (await assertJob(d.job_id)).id : null;
+      const currency = text(d.currency || "INR", 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
+      const exchangeRate = number(d.exchange_rate_to_inr ?? 1, "Exchange rate", Number.MIN_VALUE);
+      const rawLines = Array.isArray(d.lines) ? d.lines : [];
+      if (!rawLines.length || rawLines.length > 50) throw new Error("Add between 1 and 50 supplier bill lines.");
+      const lines = rawLines.map((line: Record<string, unknown>) => {
+        const quantity = number(line.quantity, "Quantity", Number.MIN_VALUE);
+        const unitPrice = number(line.unit_price, "Unit price", Number.MIN_VALUE);
+        const gstRate = number(line.gst_rate ?? 0, "GST rate", 0);
+        if (gstRate > 100) throw new Error("GST rate cannot exceed 100%.");
+        const description = text(line.description, 240);
+        if (!description) throw new Error("Every supplier bill line needs a description.");
+        return { charge_code: text(line.charge_code || "OTHER", 40) || "OTHER", description,
+          hsn_sac: text(line.hsn_sac, 30), quantity, unit: text(line.unit || "service", 40) || "service",
+          unit_price: unitPrice, gst_rate: gstRate };
+      });
+      const { data, error } = await admin.rpc("save_vendor_bill_draft", {
+        p_bill_id: billId, p_vendor_id: vendorId, p_job_id: jobId,
+        p_supplier_invoice_no: text(d.supplier_invoice_no, 120),
+        p_bill_date: date(d.bill_date), p_due_date: date(d.due_date), p_currency: currency,
+        p_exchange_rate_to_inr: exchangeRate, p_fx_rate_date: date(d.fx_rate_date),
+        p_fx_rate_source: text(d.fx_rate_source, 80),
+        p_tax_mode: val(d.tax_mode || "exclusive", ["exclusive","inclusive"], "tax mode"),
+        p_supply_type: val(d.supply_type || "intra_state", ["intra_state","inter_state","not_applicable"], "GST supply type"),
+        p_notes: text(d.notes, 3000), p_lines: lines, p_actor: actorId,
+      });
+      if (error) throw new Error(error.message || "Could not save supplier bill.");
+      await recordAudit(billId ? "update" : "create", "vendor_bill", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "postVendorBill") {
+      roleCheck(profile.role, "finance");
+      const billId = uuid(payload.id);
+      const before = (await admin.from("vendor_bills").select("*").eq("id", billId).maybeSingle()).data;
+      if (!before) throw new Error("Supplier bill not found.");
+      const { data, error } = await admin.rpc("post_vendor_bill", { p_bill_id: billId, p_actor: actorId });
+      if (error) throw new Error(error.message || "Could not post supplier bill.");
+      await recordAudit("post", "vendor_bill", billId, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "deleteVendorBillDraft") {
+      roleCheck(profile.role, "finance");
+      const billId = uuid(payload.id);
+      const { data: before, error: fetchError } = await admin.from("vendor_bills").select("*").eq("id", billId).maybeSingle();
+      if (fetchError || !before) throw new Error("Supplier bill not found.");
+      if (before.status !== "draft") throw new Error("Only draft supplier bills can be deleted.");
+      const { error } = await admin.from("vendor_bills").delete().eq("id", billId);
+      if (error) throw new Error("Could not delete supplier bill draft.");
+      await recordAudit("delete", "vendor_bill", billId, before, null);
+      return reply(200, { deleted: true }, origin);
+    }
+
+    if (action === "recordVendorBillPayment") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const billId = uuid(d.bill_id);
+      const before = (await admin.from("vendor_bills").select("*").eq("id", billId).maybeSingle()).data;
+      if (!before) throw new Error("Supplier bill not found.");
+      const currency = text(d.currency || before.currency, 3).toUpperCase();
+      const amount = number(d.amount, "Payment amount", Number.MIN_VALUE);
+      const exchangeRate = number(d.exchange_rate_to_inr ?? 1, "Exchange rate", Number.MIN_VALUE);
+      const { data, error } = await admin.rpc("record_vendor_bill_payment", {
+        p_bill_id: billId, p_paid_at: date(d.paid_at), p_amount: amount, p_currency: currency,
+        p_exchange_rate_to_inr: exchangeRate, p_fx_rate_date: date(d.fx_rate_date),
+        p_fx_rate_source: text(d.fx_rate_source, 80),
+        p_payment_method: val(d.payment_method || "bank_transfer", ["bank_transfer","upi","cash","cheque","card","other"], "payment method"),
+        p_bank_reference: text(d.bank_reference, 120), p_notes: text(d.notes, 1000), p_actor: actorId,
+      });
+      if (error) throw new Error(error.message || "Could not record supplier payment.");
+      await recordAudit("payment", "vendor_bill", billId, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
     if (action === "listSales") {
       roleCheck(profile.role, "finance");
       const [enquiryResult, quoteResult, lineResult, customerResult] = await Promise.all([
