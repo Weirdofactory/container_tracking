@@ -697,6 +697,73 @@ Deno.serve(async (req: Request) => {
       return reply(200, { record: data }, origin);
     }
 
+    if (action === "upsertFreightRateCardDraft") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const cardId = d.id ? uuid(d.id) : null;
+      const before = cardId ? (await admin.from("freight_rate_cards").select("*").eq("id", cardId).maybeSingle()).data : null;
+      if (cardId && (!before || before.status !== "draft")) throw new Error("Only draft rate cards can be edited.");
+      const customerId = d.customer_id ? uuid(d.customer_id) : null;
+      const currency = text(d.currency || "INR", 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Use a three-letter ISO currency code.");
+      const rawLines = Array.isArray(d.lines) ? d.lines : [];
+      if (!rawLines.length || rawLines.length > 50) throw new Error("Add between 1 and 50 rate lines.");
+      const lines = rawLines.map((line: Record<string, unknown>) => {
+        const description = text(line.description, 240);
+        const rate = number(line.unit_rate, "Unit rate", Number.MIN_VALUE);
+        const gst = number(line.gst_rate ?? 0, "GST rate", 0);
+        if (!description || gst > 100) throw new Error("Check the rate line description and GST rate.");
+        return { charge_code: text(line.charge_code || "FREIGHT", 40) || "FREIGHT",
+          description, unit: text(line.unit || "shipment", 40) || "shipment", unit_rate: rate, gst_rate: gst };
+      });
+      const { data, error } = await admin.rpc("save_freight_rate_card_draft", {
+        p_card_id: cardId, p_rate_code: text(d.rate_code, 50) || "RATE-" + crypto.randomUUID().slice(0, 8).toUpperCase(),
+        p_title: text(d.title, 180), p_customer_id: customerId,
+        p_service_type: val(d.service_type || "FCL", ["FCL","LCL","AIR","OTHER"], "service type"),
+        p_direction: val(d.direction || "import", ["import","export","cross_trade","transshipment"], "shipment direction"),
+        p_origin: text(d.origin, 160), p_destination: text(d.destination, 160), p_carrier: text(d.carrier, 160),
+        p_valid_from: date(d.valid_from) || new Date().toISOString().slice(0, 10), p_valid_to: date(d.valid_to),
+        p_currency: currency, p_notes: text(d.notes, 3000), p_lines: lines, p_actor: actorId,
+      });
+      if (error) throw new Error(error.message || "Could not save rate card.");
+      await recordAudit(cardId ? "update" : "create", "freight_rate_card", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "publishFreightRateCard") {
+      roleCheck(profile.role, "finance");
+      const cardId = uuid(payload.id);
+      const before = (await admin.from("freight_rate_cards").select("*").eq("id", cardId).maybeSingle()).data;
+      if (!before) throw new Error("Rate card not found.");
+      const { data, error } = await admin.rpc("publish_freight_rate_card", { p_card_id: cardId, p_actor: actorId });
+      if (error) throw new Error(error.message || "Could not publish rate card.");
+      await recordAudit("publish", "freight_rate_card", cardId, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "retireFreightRateCard") {
+      roleCheck(profile.role, "finance");
+      const cardId = uuid(payload.id);
+      const before = (await admin.from("freight_rate_cards").select("*").eq("id", cardId).maybeSingle()).data;
+      if (!before) throw new Error("Rate card not found.");
+      const { data, error } = await admin.rpc("retire_freight_rate_card", { p_card_id: cardId, p_actor: actorId });
+      if (error) throw new Error(error.message || "Could not retire rate card.");
+      await recordAudit("retire", "freight_rate_card", cardId, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "deleteFreightRateCardDraft") {
+      roleCheck(profile.role, "finance");
+      const cardId = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("freight_rate_cards").select("*").eq("id", cardId).maybeSingle();
+      if (readError || !before) throw new Error("Rate card not found.");
+      if (before.status !== "draft") throw new Error("Only draft rate cards can be deleted.");
+      const { error } = await admin.from("freight_rate_cards").delete().eq("id", cardId);
+      if (error) throw new Error("Could not delete draft rate card.");
+      await recordAudit("delete", "freight_rate_card", cardId, before, null);
+      return reply(200, { deleted: true }, origin);
+    }
+
     if (action === "listPayables") {
       roleCheck(profile.role, "finance");
       const [vendorResult, billResult, lineResult, paymentResult] = await Promise.all([
@@ -827,14 +894,16 @@ Deno.serve(async (req: Request) => {
 
     if (action === "listSales") {
       roleCheck(profile.role, "finance");
-      const [enquiryResult, quoteResult, lineResult, customerResult] = await Promise.all([
+      const [enquiryResult, quoteResult, lineResult, customerResult, rateResult, rateLineResult] = await Promise.all([
         admin.from("sales_enquiries").select("*").order("created_at", { ascending: false }).limit(2500),
         admin.from("freight_quotes").select("*").order("created_at", { ascending: false }).limit(2500),
         admin.from("freight_quote_lines").select("*").order("line_no", { ascending: true }).limit(10000),
         admin.from("customer_accounts").select("id,customer_code,legal_name,display_name,is_active,default_currency,email,phone").order("legal_name", { ascending: true }).limit(2500),
+        admin.from("freight_rate_cards").select("*").order("created_at", { ascending: false }).limit(2500),
+        admin.from("freight_rate_lines").select("*").order("line_no", { ascending: true }).limit(10000),
       ]);
-      if (enquiryResult.error || quoteResult.error || lineResult.error || customerResult.error) throw new Error("Sales enquiries and quotations could not be loaded.");
-      return reply(200, { enquiries: enquiryResult.data ?? [], quotes: quoteResult.data ?? [], lines: lineResult.data ?? [], customers: customerResult.data ?? [] }, origin);
+      if (enquiryResult.error || quoteResult.error || lineResult.error || customerResult.error || rateResult.error || rateLineResult.error) throw new Error("Sales enquiries, quotations and rate cards could not be loaded.");
+      return reply(200, { enquiries: enquiryResult.data ?? [], quotes: quoteResult.data ?? [], lines: lineResult.data ?? [], customers: customerResult.data ?? [], rateCards: rateResult.data ?? [], rateLines: rateLineResult.data ?? [] }, origin);
     }
 
     if (action === "upsertSalesEnquiry") {
@@ -884,6 +953,21 @@ Deno.serve(async (req: Request) => {
       const { data: enquiry, error: enquiryError } = await admin.from("sales_enquiries").select("*").eq("id", enquiryId).maybeSingle();
       if (enquiryError || !enquiry) throw new Error("Sales enquiry not found.");
       const customerId = d.customer_id ? uuid(d.customer_id) : enquiry.customer_id;
+      const rateCardId = d.rate_card_id ? uuid(d.rate_card_id) : null;
+      if (rateCardId) {
+        const { data: rateCard, error: rateError } = await admin.from("freight_rate_cards").select("*").eq("id", rateCardId).maybeSingle();
+        if (rateError || !rateCard || rateCard.status !== "published") throw new Error("Selected rate card is not published.");
+        const today = new Date().toISOString().slice(0,10);
+        if (rateCard.valid_from > today || (rateCard.valid_to && rateCard.valid_to < today)) throw new Error("Selected rate card is outside its validity dates.");
+        if (rateCard.service_type !== enquiry.service_type || rateCard.direction !== enquiry.direction ||
+          String(rateCard.origin).trim().toLowerCase() !== String(enquiry.origin).trim().toLowerCase() ||
+          String(rateCard.destination).trim().toLowerCase() !== String(enquiry.destination).trim().toLowerCase()) throw new Error("Selected rate card does not match this enquiry lane.");
+        const effectiveCustomer = customerId || enquiry.customer_id;
+        if (rateCard.customer_id && rateCard.customer_id !== effectiveCustomer) throw new Error("Selected rate card belongs to another customer.");
+        if (String(rateCard.currency).toUpperCase() !== String(d.currency || "").toUpperCase()) throw new Error("Quote currency must match the selected rate card.");
+        const expiry = date(d.valid_until);
+        if (rateCard.valid_to && expiry && expiry > rateCard.valid_to) throw new Error("Quote validity cannot extend beyond rate card validity.");
+      }
       if (customerId) {
         const { data: customer, error: customerError } = await admin.from("customer_accounts").select("id,is_active").eq("id", customerId).maybeSingle();
         if (customerError || !customer || !customer.is_active) throw new Error("Select an active customer account.");
@@ -905,7 +989,7 @@ Deno.serve(async (req: Request) => {
           quantity: qty, unit: text(line.unit || "shipment", 40) || "shipment", unit_price: unitPrice, gst_rate: gstRate };
       });
       const { data, error } = await admin.rpc("save_freight_quote_draft", {
-        p_quote_id: quoteId, p_enquiry_id: enquiryId, p_customer_id: customerId, p_currency: currency,
+        p_quote_id: quoteId, p_enquiry_id: enquiryId, p_rate_card_id: rateCardId, p_customer_id: customerId, p_currency: currency,
         p_exchange_rate_to_inr: fxRate, p_fx_rate_date: date(d.fx_rate_date),
         p_fx_rate_source: text(d.fx_rate_source, 80), p_tax_mode: taxMode, p_valid_until: date(d.valid_until),
         p_terms: text(d.terms, 3000), p_lines: lines, p_actor: actorId,
