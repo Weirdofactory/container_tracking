@@ -605,6 +605,24 @@ function operationsAttention(){
         action:"edit-sailing",actionLabel:"Open",extra:'data-id="'+esc(sailing.id)+'"'});
     }
   }
+  for(const dispatch of state.ops.transportDispatches||[]){
+    const job=jobById(dispatch.job_id),due=dayValue(dispatch.planned_delivery_date||dispatch.planned_pickup_date);
+    if(dispatch.status==="exception"){
+      items.push({rank:0,sortAt:due?.getTime()??today.getTime(),tag:"Transport dispatch exception",
+        title:(dispatch.dispatch_no||"Transport move")+" · "+(job.job_no||"No job"),
+        detail:[dispatch.carrier_name,dispatch.vehicle_no,dispatch.delivery_location].filter(Boolean).join(" · ")||"Review the dispatch order",
+        date:dispatch.planned_delivery_date||dispatch.planned_pickup_date,action:"edit-transport-dispatch",actionLabel:"Review",
+        extra:'data-id="'+esc(dispatch.id)+'"',job_id:dispatch.job_id,container_no:dispatch.container_no||""});
+      continue;
+    }
+    if(!due||due>horizon||!["planned","assigned","in_transit"].includes(dispatch.status))continue;
+    const overdue=due<today;
+    items.push({rank:overdue?0:1,sortAt:due.getTime(),tag:overdue?"Transport delivery overdue":"Transport delivery due soon",
+      title:(dispatch.dispatch_no||"Transport move")+" · "+(job.job_no||"No job"),
+      detail:[dispatch.container_no,dispatch.carrier_name,dispatch.delivery_location].filter(Boolean).join(" · ")||"Review pickup and delivery plan",
+      date:dispatch.planned_delivery_date||dispatch.planned_pickup_date,action:"edit-transport-dispatch",actionLabel:"Open",
+      extra:'data-id="'+esc(dispatch.id)+'"',job_id:dispatch.job_id,container_no:dispatch.container_no||""});
+  }
   const linked=new Set((state.ops.jobContainers||[]).filter(link=>state.ops.jobs.some(job=>job.id===link.job_id)).map(link=>norm(link.container_no)));
   (state.rows||[]).forEach((row,index)=>{
     const no=container(row);if(!no||linked.has(norm(no)))return;
@@ -619,7 +637,7 @@ function operationsAttention(){
 function renderAttentionQueue(items=operationsAttention()){
   const shown=items.slice(0,6);
   const body=shown.length?'<div class="cw-attention-list">'+shown.map(item=>'<div class="cw-attention-item '+(item.rank===0?"urgent":"")+'"><span class="cw-attention-mark">'+(item.rank===0?"!":"•")+'</span><div class="cw-attention-copy"><b>'+esc(item.tag)+'</b><strong>'+esc(item.title)+'</strong><small>'+esc(item.detail)+'</small></div><span class="cw-attention-date">'+(item.date?fmt(item.date):"")+'</span>'+actionBtn(item.action,item.actionLabel,item.extra)+'</div>').join("")+'</div>':
-    '<div class="cw-attention-empty"><b>Everything is up to date</b><span>No overdue milestones, filing deadlines, empty returns or unlinked equipment.</span></div>';
+    '<div class="cw-attention-empty"><b>Everything is up to date</b><span>No overdue milestones, transport issues, filing deadlines, empty returns or unlinked equipment.</span></div>';
   const more=items.length>shown.length?'<div class="cw-attention-foot">Showing the 6 most urgent of '+items.length+' open actions. Use the relevant register to review the rest.</div>':"";
   return '<section class="cw-panel cw-attention"><div class="cw-panel-head"><strong>OPERATIONS ACTION QUEUE</strong><span>'+items.length+' open '+(items.length===1?"action":"actions")+'</span></div>'+body+more+'</section>';
 }
@@ -1750,7 +1768,18 @@ function renderTransport(){
 }
 function containerReturnExceptions(){const today=new Date();today.setHours(0,0,0,0);return state.rows.map(r=>{const no=container(r),raw=val(r,["EMPTY RETURN VALIDITY"]),returned=val(r,["CONTAINER RETURN DATE"]);if(!raw||returned)return null;const d=new Date(raw);if(Number.isNaN(d.getTime())||d>=today)return null;const due=d.toISOString().slice(0,10),key=norm(no)+"|empty_return|"+due,action=state.ops.alertActions.find(a=>a.alert_key===key);if(action?.status==="resolved")return null;return{no,due,key,action}}).filter(Boolean)}
 async function saveContainerAlert(a,status){try{await call("logistics-workspace",{action:"saveAlertAction",container_no:a.no,alert_code:"empty_return",due_date:a.due,alert_key:a.key,status,note:""});await loadJobs();render();notify(status==="resolved"?"Empty-return exception resolved":"Exception acknowledged","success")}catch(e){notify(e.message||"Could not update exception","error")}}
-function renderExceptions(){const overdue=visibleQueue(),milestoneRows=overdue.map(m=>{const j=state.ops.jobs.find(x=>x.id===m.job_id)||{};return '<tr><td><b>'+esc(j.job_no||"—")+'</b><span class="cell-sub">'+esc(j.hbl_no||"")+'</span></td><td>'+esc(m.milestone_name||m.milestone_code)+'</td><td>'+esc(m.location||"—")+'</td><td>'+fmt(m.planned_at)+'</td><td>'+pill(m.status==="delayed"?"delayed":"overdue")+'</td><td>'+actionBtn("edit-milestone","Review",'data-id="'+esc(m.id)+'" data-job-id="'+esc(j.id)+'"')+'</td></tr>'}),alerts=containerReturnExceptions(),alertRows=alerts.map(a=>'<tr><td><b>'+esc(a.no)+'</b></td><td>Empty return validity expired</td><td>'+fmt(a.due)+'</td><td>'+pill(a.action?.status||"open")+'</td><td>'+(a.action?.status!=="acknowledged"?actionBtn("ack-container-alert","Acknowledge",'data-container-no="'+esc(a.no)+'" data-due-date="'+a.due+'"'):"")+actionBtn("resolve-container-alert","Resolve",'data-container-no="'+esc(a.no)+'" data-due-date="'+a.due+'"')+'</td></tr>');return pageHead("exceptions",'<button class="btn" id="refreshOps">↻ Refresh</button>')+'<div class="stats">'+stat("Delayed milestones",overdue.length,"Planned past due or marked delayed")+stat("Expired empty returns",alerts.length,"Return validity passed")+stat("Acknowledged",alerts.filter(a=>a.action?.status==="acknowledged").length,"Awaiting resolution")+stat("Resolved",state.ops.alertActions.filter(a=>a.status==="resolved").length,"Recorded exception closures")+'</div>'+pane("SHIPMENT MILESTONE EXCEPTIONS",table(["JOB / HBL","EVENT","LOCATION","PLANNED DATE","STATE","ACTION"],milestoneRows,"No overdue or delayed planned shipment events."))+'<div style="height:9px"></div>'+pane("CONTAINER EMPTY-RETURN EXCEPTIONS",table(["CONTAINER","EXCEPTION","DUE DATE","STATUS","ACTION"],alertRows,"No expired empty-return validity dates."))}
+function renderExceptions(){
+  const overdue=visibleQueue(),dispatchExceptions=(state.ops.transportDispatches||[]).filter(d=>d.status==="exception");
+  const milestoneRows=overdue.map(m=>{const j=state.ops.jobs.find(x=>x.id===m.job_id)||{};return '<tr><td><b>'+esc(j.job_no||"—")+'</b><span class="cell-sub">'+esc(j.hbl_no||"")+'</span></td><td>'+esc(m.milestone_name||m.milestone_code)+'</td><td>'+esc(m.location||"—")+'</td><td>'+fmt(m.planned_at)+'</td><td>'+pill(m.status==="delayed"?"delayed":"overdue")+'</td><td>'+actionBtn("edit-milestone","Review",'data-id="'+esc(m.id)+'" data-job-id="'+esc(j.id)+'"')+'</td></tr>'});
+  const alerts=containerReturnExceptions(),alertRows=alerts.map(a=>'<tr><td><b>'+esc(a.no)+'</b></td><td>Empty return validity expired</td><td>'+fmt(a.due)+'</td><td>'+pill(a.action?.status||"open")+'</td><td>'+(a.action?.status!=="acknowledged"?actionBtn("ack-container-alert","Acknowledge",'data-container-no="'+esc(a.no)+'" data-due-date="'+a.due+'"'):"")+actionBtn("resolve-container-alert","Resolve",'data-container-no="'+esc(a.no)+'" data-due-date="'+a.due+'"')+'</td></tr>');
+  const transportRows=dispatchExceptions.map(d=>{const job=state.ops.jobs.find(j=>j.id===d.job_id)||{};return '<tr><td><b>'+esc(d.dispatch_no)+'</b></td><td>'+actionBtn("job-detail",job.job_no||"Open job",'data-id="'+esc(job.id)+'"')+'</td><td>'+esc(d.container_no||"Job level")+'</td><td>'+esc(d.carrier_name||"—")+'</td><td>'+esc(d.pickup_location||"—")+' → '+esc(d.delivery_location||"—")+'</td><td>'+fmt(d.planned_delivery_date)+'</td><td>'+actionBtn("edit-transport-dispatch","Review dispatch",'data-id="'+esc(d.id)+'"')+'</td></tr>'});
+  return pageHead("exceptions",'<button class="btn" id="refreshOps">↻ Refresh</button><button class="btn" data-nav="transport">Transport register</button>')+
+    '<div class="stats">'+stat("Delayed milestones",overdue.length,"Planned past due or marked delayed")+stat("Transport exceptions",dispatchExceptions.length,"Require dispatcher review")+stat("Expired empty returns",alerts.length,"Return validity passed")+stat("Acknowledged",alerts.filter(a=>a.action?.status==="acknowledged").length,"Awaiting resolution")+stat("Resolved",state.ops.alertActions.filter(a=>a.status==="resolved").length,"Recorded exception closures")+'</div>'+
+    pane("SHIPMENT MILESTONE EXCEPTIONS",table(["JOB / HBL","EVENT","LOCATION","PLANNED DATE","STATE","ACTION"],milestoneRows,"No overdue or delayed planned shipment events."))+
+    '<div style="height:9px"></div>'+pane("TRANSPORT DISPATCH EXCEPTIONS",table(["ORDER","JOB","CONTAINER","CARRIER","PICKUP → DELIVERY","PLANNED DELIVERY","ACTION"],transportRows,"No transport dispatch exceptions."))+
+    '<div style="height:9px"></div>'+pane("CONTAINER EMPTY-RETURN EXCEPTIONS",table(["CONTAINER","EXCEPTION","DUE DATE","STATUS","ACTION"],alertRows,"No expired empty-return validity dates."));
+}
+
 function jobProfitabilityData(){
   const inr=value=>Number(value?.amount_inr??(Number(value?.amount||0)*Number(value?.exchange_rate_to_inr||1)));
   return (state.ops.jobs||[]).map(job=>{
