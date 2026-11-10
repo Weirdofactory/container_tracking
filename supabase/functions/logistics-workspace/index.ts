@@ -820,6 +820,7 @@ Deno.serve(async (req: Request) => {
       };
       const issueNow = d.save_status === "issue";
       if (issueNow) {
+        if (!dueDate) throw new Error("Enter a payment due date before issuing.");
         if (!seller.name || !seller.address) throw new Error("Complete the seller legal name and registered address before issuing.");
         if (invoiceType === "tax_invoice" && (!/^[0-9]{2}[A-Z0-9]{13}$/.test(seller.gstin) || !seller.state || !/^\d{2}$/.test(seller.state_code))) throw new Error("Enter the seller’s 15-character GSTIN, state and two-digit state code.");
         if (!buyer.name || !buyer.address || !buyer.country || !row.place_of_supply) throw new Error("Complete the bill-to name, address, country and place of supply before issuing.");
