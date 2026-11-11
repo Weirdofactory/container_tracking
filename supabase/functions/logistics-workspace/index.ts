@@ -1295,7 +1295,7 @@ Deno.serve(async (req: Request) => {
 
     if (action === "listBankReconciliation") {
       roleCheck(profile.role, "finance");
-      const [accountResult, transactionResult, receiptResult, invoiceResult, vendorPaymentResult, billResult, vendorResult] = await Promise.all([
+      const [accountResult, transactionResult, receiptResult, invoiceResult, vendorPaymentResult, billResult, vendorResult, refundResult] = await Promise.all([
         admin.from("finance_bank_accounts").select("*").order("account_label", { ascending: true }).limit(500),
         admin.from("finance_bank_transactions").select("*").order("transaction_date", { ascending: false }).limit(10000),
         admin.from("shipment_invoice_payments").select("id,receipt_number,invoice_id,received_at,amount,currency,amount_inr,payment_method,reference").order("received_at", { ascending: false }).limit(5000),
@@ -1303,14 +1303,16 @@ Deno.serve(async (req: Request) => {
         admin.from("vendor_bill_payments").select("id,payment_no,bill_id,paid_at,amount,currency,amount_inr,payment_method,bank_reference").order("paid_at", { ascending: false }).limit(10000),
         admin.from("vendor_bills").select("id,ap_number,vendor_id,description,currency,total_amount").limit(5000),
         admin.from("vendor_accounts").select("id,vendor_code,legal_name,display_name").limit(2500),
+        admin.from("shipment_invoice_refunds").select("id,refund_number,invoice_id,payment_id,refunded_at,amount,currency,amount_inr,refund_method,reference").order("refunded_at", { ascending: false }).limit(5000),
       ]);
-      if ([accountResult, transactionResult, receiptResult, invoiceResult, vendorPaymentResult, billResult, vendorResult].some(r => r.error)) {
+      if ([accountResult, transactionResult, receiptResult, invoiceResult, vendorPaymentResult, billResult, vendorResult, refundResult].some(r => r.error)) {
         throw new Error("Bank reconciliation data could not be loaded.");
       }
       return reply(200, {
         accounts: accountResult.data ?? [], transactions: transactionResult.data ?? [],
         receipts: receiptResult.data ?? [], invoices: invoiceResult.data ?? [],
         vendorPayments: vendorPaymentResult.data ?? [], bills: billResult.data ?? [], vendors: vendorResult.data ?? [],
+        refunds: refundResult.data ?? [],
       }, origin);
     }
 
@@ -1388,8 +1390,8 @@ Deno.serve(async (req: Request) => {
     if (action === "reconcileBankTransaction") {
       roleCheck(profile.role, "finance");
       const id = uuid(payload.id);
-      const matchType = val(payload.match_type, ["receipt", "vendor_payment", "ignore", "unmatch"], "reconciliation action");
-      const paymentId = matchType === "receipt" || matchType === "vendor_payment" ? uuid(payload.payment_id) : null;
+      const matchType = val(payload.match_type, ["receipt", "vendor_payment", "invoice_refund", "ignore", "unmatch"], "reconciliation action");
+      const paymentId = matchType === "receipt" || matchType === "vendor_payment" || matchType === "invoice_refund" ? uuid(payload.payment_id) : null;
       const { data: before, error: readError } = await admin.from("finance_bank_transactions").select("*").eq("id", id).maybeSingle();
       if (readError || !before) throw new Error("Bank statement transaction not found.");
       const { data, error } = await admin.rpc("reconcile_finance_bank_transaction", {
