@@ -1153,16 +1153,17 @@ Deno.serve(async (req: Request) => {
 
     if (action === "listSales") {
       roleCheck(profile.role, "finance");
-      const [enquiryResult, quoteResult, lineResult, customerResult, rateResult, rateLineResult] = await Promise.all([
+      const [enquiryResult, quoteResult, lineResult, customerResult, rateResult, rateLineResult, activityResult] = await Promise.all([
         admin.from("sales_enquiries").select("*").order("created_at", { ascending: false }).limit(2500),
         admin.from("freight_quotes").select("*").order("created_at", { ascending: false }).limit(2500),
         admin.from("freight_quote_lines").select("*").order("line_no", { ascending: true }).limit(10000),
-        admin.from("customer_accounts").select("id,customer_code,legal_name,display_name,is_active,default_currency,email,phone").order("legal_name", { ascending: true }).limit(2500),
+        admin.from("customer_accounts").select("id,customer_code,legal_name,display_name,is_active,default_currency,email,phone,contact_name").order("legal_name", { ascending: true }).limit(2500),
         admin.from("freight_rate_cards").select("*").order("created_at", { ascending: false }).limit(2500),
         admin.from("freight_rate_lines").select("*").order("line_no", { ascending: true }).limit(10000),
+        admin.from("customer_activities").select("*").eq("follow_up_status", "open").not("follow_up_at", "is", null).order("follow_up_at", { ascending: true }).limit(2500),
       ]);
-      if (enquiryResult.error || quoteResult.error || lineResult.error || customerResult.error || rateResult.error || rateLineResult.error) throw new Error("Sales enquiries, quotations and rate cards could not be loaded.");
-      return reply(200, { enquiries: enquiryResult.data ?? [], quotes: quoteResult.data ?? [], lines: lineResult.data ?? [], customers: customerResult.data ?? [], rateCards: rateResult.data ?? [], rateLines: rateLineResult.data ?? [] }, origin);
+      if (enquiryResult.error || quoteResult.error || lineResult.error || customerResult.error || rateResult.error || rateLineResult.error || activityResult.error) throw new Error("Sales enquiries, quotations, rate cards and customer follow-ups could not be loaded.");
+      return reply(200, { enquiries: enquiryResult.data ?? [], quotes: quoteResult.data ?? [], lines: lineResult.data ?? [], customers: customerResult.data ?? [], rateCards: rateResult.data ?? [], rateLines: rateLineResult.data ?? [], activities: activityResult.data ?? [] }, origin);
     }
 
     if (action === "setSalesEnquiryStatus") {
