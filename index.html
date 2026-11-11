@@ -2173,7 +2173,7 @@ function renderSales(){
     const related=quotes.filter(q=>q.enquiry_id===enq.id);
     const current=related[0];
     const quoteSummary=current?(esc(current.quote_no||"Draft quote")+" · "+esc(current.status)+" · "+esc(current.currency||"INR")+" "+money2(current.total_amount)):"No quote yet";
-    const action=actionBtn("new-quote","Create quote",'data-id="'+esc(enq.id)+'"');
+    const action=enq.status==="lost"?"":actionBtn("new-quote","Create quote",'data-id="'+esc(enq.id)+'"');
     const accountActions=enq.customer_id?"":actionBtn("create-customer-from-enquiry","Create customer",'data-id="'+esc(enq.id)+'"')+actionBtn("link-customer-to-enquiry","Link account",'data-id="'+esc(enq.id)+'"');
     const hasOpenQuote=related.some(q=>q.status==="accepted"||q.status==="converted"||(q.status==="sent"&&(!q.valid_until||q.valid_until>=today)));
     const statusAction=enq.status==="lost"?actionBtn("reopen-enquiry","Reopen",'data-id="'+esc(enq.id)+'"'):["won","converted"].includes(enq.status)||hasOpenQuote?"":actionBtn("mark-enquiry-lost","Mark lost",'data-id="'+esc(enq.id)+'"');
@@ -2187,9 +2187,9 @@ function renderSales(){
     const expired=q.status==="sent"&&q.valid_until&&q.valid_until<today;
     const status=expired?"expired":q.status;
     let actions="";
-    if(q.status==="draft")actions=actionBtn("edit-quote","Edit",'data-id="'+esc(q.id)+'"')+actionBtn("issue-quote","Issue",'data-id="'+esc(q.id)+'"');
-    if(q.status==="sent"&&!expired)actions=actionBtn("accept-quote","Accept",'data-id="'+esc(q.id)+'"')+actionBtn("reject-quote","Decline",'data-id="'+esc(q.id)+'"');
-    if(q.status==="accepted")actions=actionBtn("convert-quote","Create job",'data-id="'+esc(q.id)+'"');
+    if(q.status==="draft"&&enq.status!=="lost")actions=actionBtn("edit-quote","Edit",'data-id="'+esc(q.id)+'"')+actionBtn("issue-quote","Issue",'data-id="'+esc(q.id)+'"');
+    if(q.status==="sent"&&!expired&&enq.status!=="lost")actions=actionBtn("accept-quote","Accept",'data-id="'+esc(q.id)+'"')+actionBtn("reject-quote","Decline",'data-id="'+esc(q.id)+'"');
+    if(q.status==="accepted"&&enq.status!=="lost")actions=actionBtn("convert-quote","Create job",'data-id="'+esc(q.id)+'"');
     if(q.status==="converted"&&q.accepted_job_id){const job=state.ops.jobs.find(j=>j.id===q.accepted_job_id);actions=job?actionBtn("open-converted-job","Open job",'data-id="'+esc(job.id)+'"'):"Job "+esc(job.job_no||"created");}
     actions+=actionBtn("print-quote","Print",'data-id="'+esc(q.id)+'"');
     const total=esc(q.currency||"INR")+" "+money2(q.total_amount);
