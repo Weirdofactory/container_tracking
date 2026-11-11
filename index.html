@@ -368,7 +368,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],shipmentDocuments:[],shipmentDocumentsLoaded:false,shipmentDocumentsLoading:false,shipmentDocumentsError:"",airWaybills:[],airWaybillEvents:[],airWaybillsLoaded:false,airWaybillsLoading:false,airWaybillsError:"",bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",gstFrom:"",gstTo:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],shipmentDocuments:[],shipmentDocumentsLoaded:false,shipmentDocumentsLoading:false,shipmentDocumentsError:"",airWaybills:[],airWaybillEvents:[],airWaybillsLoaded:false,airWaybillsLoading:false,airWaybillsError:"",bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",customerPortalTokens:[],customerPortalTokensLoaded:false,customerPortalTokensLoading:false,customerPortalTokensError:"",oneTimePortalLink:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",gstFrom:"",gstTo:"",customerSearch:"",selectedJob:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -448,7 +448,23 @@ async function loadInvoices(force=false){
     notify(state.ops.invoiceLoadError,"error");
   }finally{
     state.ops.invoicesLoading=false;
-    if(["finance","receivables","reports"].includes(state.page))render();
+    if(["finance","receivables","reports","customer"].includes(state.page))render();
+  }
+}
+async function loadCustomerPortalTokens(force=false){
+  if(state.ops.customerPortalTokensLoading)return;
+  if(state.ops.customerPortalTokensLoaded&&!force)return;
+  state.ops.customerPortalTokensLoading=true;state.ops.customerPortalTokensError="";
+  try{
+    const d=await call("logistics-workspace",{action:"listCustomerPortalTokens"});
+    state.ops.customerPortalTokens=Array.isArray(d.tokens)?d.tokens:[];
+    state.ops.customerPortalTokensLoaded=true;
+  }catch(e){
+    state.ops.customerPortalTokensError=e.message||"Customer portal access links could not be loaded.";
+    state.ops.customerPortalTokensLoaded=true;
+  }finally{
+    state.ops.customerPortalTokensLoading=false;
+    if(state.page==="customer")render();
   }
 }
 async function loadBankReconciliation(force=false){
@@ -1418,6 +1434,31 @@ function newCustomer(customerId=""){
     await loadInvoices(true);closeForm();render();notify(customerId?"Customer account updated":"Customer account created","success");
   });
 }
+async function createCustomerPortalLink(customerId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can manage customer portal links.","error");
+  const customer=state.ops.customers.find(x=>x.id===customerId);if(!customer)return;
+  const raw=prompt("Portal link validity in days (1–365). Default: 90","90");if(raw===null)return;
+  const days=Number(raw||90);if(!Number.isInteger(days)||days<1||days>365)return notify("Enter an expiry between 1 and 365 days.","error");
+  try{
+    const d=await call("logistics-workspace",{action:"createCustomerPortalToken",data:{customer_id:customerId,expires_in_days:days,label:(customer.customer_code||customer.legal_name)+" customer portal"}});
+    const link=new URL("./portal.html",location.href);link.hash=d.token;
+    state.ops.oneTimePortalLink=link.href;
+    await loadCustomerPortalTokens(true);
+    render();
+    notify("Customer portal link created. Copy it now; it cannot be retrieved again.","success");
+  }catch(e){notify(e.message||"Could not create the customer portal link.","error")}
+}
+async function copyCustomerPortalLink(){
+  const link=state.ops.oneTimePortalLink;if(!link)return;
+  try{await navigator.clipboard.writeText(link);notify("Customer portal link copied.","success")}
+  catch{prompt("Copy this one-time customer portal link:",link)}
+}
+async function revokeCustomerPortalLink(id){
+  const token=(state.ops.customerPortalTokens||[]).find(x=>x.id===id);if(!token)return;
+  if(!confirm("Revoke this customer portal link? Anyone using it will lose access immediately."))return;
+  try{await call("logistics-workspace",{action:"revokeCustomerPortalToken",id});await loadCustomerPortalTokens(true);render();notify("Customer portal link revoked.","success")}
+  catch(e){notify(e.message||"Could not revoke the portal link.","error")}
+}
 async function setCustomerActive(customerId,active){
   const customer=state.ops.customers.find(x=>x.id===customerId);if(!customer)return;
   const action=active?"reactivate":"deactivate";
@@ -2321,21 +2362,40 @@ async function toggleJobVisibility(jobId){
   }catch(e){notify(e.message||"Could not update customer visibility","error")}
 }
 function renderCustomer(){
+  const customers=state.ops.customers||[];
+  const now=Date.now();
+  const tokenRows=(state.ops.customerPortalTokens||[]).map(token=>{
+    const customer=customers.find(c=>c.id===token.customer_id);
+    const active=!token.revoked_at&&new Date(token.expires_at).getTime()>now;
+    const status=token.revoked_at?'<span class="pill red">Revoked</span>':active?'<span class="pill green">Active</span>':'<span class="pill amber">Expired</span>';
+    const action=active?actionBtn("revoke-customer-portal-token","Revoke",'data-id="'+esc(token.id)+'"'):"";
+    return '<tr><td><b>'+esc(customer?.customer_code||"Account")+'</b><span class="cell-sub">'+esc(customer?.legal_name||"Customer")+'</span></td><td>'+esc(token.label||"Customer portal")+'</td><td>'+fmt(token.created_at)+'</td><td>'+fmt(token.expires_at)+'</td><td>'+fmt(token.last_used_at)+'</td><td>'+status+'</td><td>'+action+'</td></tr>';
+  });
+  const customerRows=customers.map(c=>{
+    const openLinks=(state.ops.customerPortalTokens||[]).filter(t=>t.customer_id===c.id&&!t.revoked_at&&new Date(t.expires_at).getTime()>now).length;
+    return '<tr><td><b>'+esc(c.customer_code)+'</b></td><td>'+esc(c.legal_name)+'<span class="cell-sub">'+esc(c.display_name||"")+'</span></td><td>'+esc(c.contact_name||"—")+'<span class="cell-sub">'+esc(c.email||"")+'</span></td><td>'+pill(c.is_active?"Active":"Inactive")+'</td><td>'+openLinks+' active link'+(openLinks===1?"":"s")+'</td><td>'+actionBtn("edit-customer","Edit account",'data-id="'+esc(c.id)+'"')+(c.is_active?actionBtn("create-customer-portal-link","Create portal link",'data-id="'+esc(c.id)+'"'):"")+'</td></tr>';
+  });
+  const oneTimeLink=state.ops.oneTimePortalLink?'<div class="pane" style="border-left:3px solid #18815d;margin-bottom:9px"><div class="pane-head"><span class="pane-title">NEW CUSTOMER PORTAL LINK · COPY BEFORE CLOSING</span><button class="btn small" data-action="dismiss-customer-portal-link">Dismiss</button></div><div class="pane-body"><div class="ar-toolbar"><input readonly value="'+esc(state.ops.oneTimePortalLink)+'" aria-label="New customer portal link"><button class="btn primary" data-action="copy-customer-portal-link">Copy link</button></div><div class="desc">The secret link is shown once. Share it only with this customer. It expires automatically and can be revoked from the access register.</div></div></div>':"";
+  const loading=state.ops.customerPortalTokensLoading?'<div class="empty">Loading portal access links…</div>':state.ops.customerPortalTokensError?'<div class="empty">'+esc(state.ops.customerPortalTokensError)+' '+actionBtn("refresh-customer-portal-tokens","Retry")+'</div>':"";
   const rows=state.ops.jobs.map(j=>{
     const events=state.ops.milestones.filter(m=>m.job_id===j.id),visible=events.filter(m=>m.customer_visible).length;
     const hblText=hblsForJob(j.id).filter(h=>h.customer_visible).map(h=>h.hbl_no).join(", ")||"No customer-visible HBL";
     return '<tr><td><button class="btn small" data-action="job-detail" data-id="'+esc(j.id)+'">'+esc(j.job_no)+'</button><span class="cell-sub">'+esc(hblText)+'</span></td><td>'+esc(j.customer_name||j.consignee||"—")+'</td><td>'+esc(j.pol||"—")+' to '+esc(j.pod||"—")+'</td><td>'+pill(j.status)+'</td><td>'+pill(j.customer_visible?"Published":"Internal")+'</td><td>'+visible+' / '+events.length+'</td><td>'+actionBtn("edit-job","Edit",'data-id="'+esc(j.id)+'"')+actionBtn("toggle-job-visibility",j.customer_visible?"Unpublish":"Publish",'data-id="'+esc(j.id)+'"')+'</td></tr>';
   });
   const published=state.ops.jobs.filter(j=>j.customer_visible).length;
-  return pageHead("customer",'<a class="btn primary" href="./track.html" target="_blank" rel="noopener">Open customer portal</a>')+
-  '<div class="stats">'+stat("Forwarding jobs",state.ops.jobs.length,"Job masters")+stat("Published",published,"Approved for customer copys")+stat("Internal",state.ops.jobs.length-published,"Not published")+stat("Visible HBLs",state.ops.jobHbls.filter(h=>h.customer_visible).length,"Published HBL numbers")+stat("Visible events",state.ops.milestones.filter(m=>m.customer_visible).length,"Customer-safe events")+'</div>'+
-  '<div class="pane" style="margin-bottom:9px"><div class="pane-body" style="font-size:10px;color:#6e8190;line-height:1.8">A customer can search a published HBL number, job number, MBL or linked container. Each HBL must be marked customer-visible, and its parent job must also be published. Internal notes, charges, filings and private documents are not exposed.</div></div>'+
-  pane("CUSTOMER TRACKING PUBLICATION REGISTER",table(["JOB / PUBLISHED HBLs","CUSTOMER","ROUTE","STATUS","JOB VISIBILITY","VISIBLE EVENTS","ACTIONS"],rows,"No forwarding jobs available for customer publication."));
+  return pageHead("customer",'<a class="btn" href="./track.html" target="_blank" rel="noopener">Open tracking lookup</a><button class="btn" data-create="customer">＋ New customer</button><a class="btn primary" href="./portal.html" target="_blank" rel="noopener">Open customer portal</a>')+
+  oneTimeLink+
+  '<div class="stats">'+stat("Customer accounts",customers.length,"Reusable billing and tax profiles")+stat("Active portal links",(state.ops.customerPortalTokens||[]).filter(t=>!t.revoked_at&&new Date(t.expires_at).getTime()>now).length,"Expiring, revocable access")+stat("Published shipments",published,"Visible to linked customers")+stat("Visible HBLs",state.ops.jobHbls.filter(h=>h.customer_visible).length,"Customer-safe references")+stat("Visible events",state.ops.milestones.filter(m=>m.customer_visible).length,"Approved milestones")+'</div>'+
+  pane("CUSTOMER ACCOUNTS & SELF-SERVICE",'<div class="pane-body" style="font-size:10px;color:#6e8190;line-height:1.8">Create customer accounts under Customers & receivables, then issue each account a private expiring portal link. Customers can see only their own published shipments, sent quotes, issued invoices, receipts, credit notes, and open balance. Accepting a quote converts it into a forwarding booking. Links are bearer access; revoke a link immediately if it is shared incorrectly.</div>'+loading+table(["CODE","CUSTOMER","PRIMARY CONTACT","ACCOUNT","PORTAL LINKS","ACTIONS"],customerRows,"No customer accounts yet. Create an account under Customers & receivables.")+
+  '<div class="pane-head"><span class="pane-title">PORTAL ACCESS LINK REGISTER</span><button class="btn small" data-action="refresh-customer-portal-tokens">↻ Refresh</button></div>'+table(["ACCOUNT","LINK LABEL","CREATED","EXPIRES","LAST USED","STATUS","ACTIONS"],tokenRows,"No customer portal links have been issued."))+
+  '<div style="height:9px"></div>'+
+  '<div class="pane" style="margin-bottom:9px"><div class="pane-body" style="font-size:10px;color:#6e8190;line-height:1.8">Shipment publication remains separate: a job must be published, and each HBL or milestone must be marked customer-visible. Charges, internal notes, customs filings, and private documents stay staff-only.</div></div>'+
+  pane("CUSTOMER SHIPMENT PUBLICATION REGISTER",table(["JOB / PUBLISHED HBLs","CUSTOMER","ROUTE","STATUS","JOB VISIBILITY","VISIBLE EVENTS","ACTIONS"],rows,"No forwarding jobs available for customer publication."));
 }
 
 async function loadStaffUsers(){const target=$("staffUsers");if(!target)return;target.innerHTML='<span class="desc">Loading staff accounts…</span>';try{const d=await call("logistics-workspace",{action:"listStaffUsers"});const rows=(d.users||[]).map(u=>'<tr><td>'+esc(u.display_name)+'</td><td>'+esc(u.email)+'</td><td>'+pill(u.role)+'</td><td>'+pill(u.is_active?"Active":"Disabled")+'</td><td>'+esc(u.created_at?fmt(u.created_at):"—")+'</td><td><button class="btn small red" data-action="delete-staff-user" data-id="'+esc(u.user_id)+'" data-email="'+esc(u.email)+'">Delete</button></td></tr>');target.innerHTML=table(["NAME","EMAIL","ROLE","STATUS","CREATED","ACTIONS"],rows,"No staff accounts found.")}catch(e){target.innerHTML='<div class="form-error">'+esc(e.message||"Could not load staff accounts.")+'</div>'}}
 function renderSettings(){return pageHead("settings")+(state.profile?.role==="Admin"?'<div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">CREATE STAFF LOGIN</span><span class="pane-sub">Admin only · managed inside this website</span></div><div class="pane-body"><form id="staffCreateForm"><div class="formgrid"><div class="field"><label>FULL NAME *</label><input name="display_name" required maxlength="120"></div><div class="field"><label>EMAIL ADDRESS *</label><input name="email" type="email" required maxlength="254"></div><div class="field"><label>TEMPORARY PASSWORD *</label><input name="password" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>ACCESS ROLE *</label><select name="role"><option>Operator</option><option>Editor</option><option>Viewer</option><option>Admin</option></select></div></div><button class="btn primary" type="submit">＋ Create staff user</button><div class="form-error" id="staffFormError"></div></form></div></div><div class="pane" style="margin-bottom:10px"><div class="pane-head"><span class="pane-title">STAFF ACCOUNTS</span><button class="btn small" id="reloadStaff">↻ Refresh users</button></div><div class="pane-body" id="staffUsers"><span class="desc">Loading staff accounts…</span></div></div>':'<div class="pane"><div class="pane-body">Staff account administration is restricted to Admin users.</div></div>')+'<div class="columns">'+pane("STAFF SESSION",'<div class="pane-body">User: '+esc(state.session?.user?.email||"—")+'<br>Role: '+esc(state.profile?.role||"—")+'<br>Equipment records: '+state.rows.length+'</div>')+pane("CONNECTED SERVICES",'<div class="pane-body">Supabase authentication '+pill("Connected")+'<br>Protected operations API '+pill("Connected")+'<br>Customer tracking API '+pill("Active")+'</div>')+'</div>'}
-function render(){if($("app").hidden)return;if(["jobdetail","documents"].includes(state.page)&&!state.ops.shipmentDocumentsLoaded&&!state.ops.shipmentDocumentsLoading)loadShipmentDocuments();if(["jobdetail","documents"].includes(state.page)&&!state.ops.airWaybillsLoaded&&!state.ops.airWaybillsLoading)loadAirWaybills();document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length+(state.ops.transportDispatches||[]).filter(d=>d.status==="exception").length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="sales"){if(!state.ops.salesLoaded&&!state.ops.salesLoading)loadSales();html=renderSales()}else if(state.page==="payables"){if(!state.ops.payablesLoaded&&!state.ops.payablesLoading)loadPayables();html=renderPayables()}else if(state.page==="transport"){if(!state.ops.transportVendorsLoaded&&!state.ops.transportVendorsLoading)loadTransportVendors();html=renderTransport()}else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();if(state.page==="finance"&&!state.ops.bankLoaded&&!state.ops.bankLoading)loadBankReconciliation();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports"){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=renderReports()}else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
+function render(){if($("app").hidden)return;if(state.page==="customer"&&!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();if(state.page==="customer"&&!state.ops.customerPortalTokensLoaded&&!state.ops.customerPortalTokensLoading)loadCustomerPortalTokens();if(["jobdetail","documents"].includes(state.page)&&!state.ops.shipmentDocumentsLoaded&&!state.ops.shipmentDocumentsLoading)loadShipmentDocuments();if(["jobdetail","documents"].includes(state.page)&&!state.ops.airWaybillsLoaded&&!state.ops.airWaybillsLoading)loadAirWaybills();document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===state.page));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.page));$("exceptionCount").textContent=visibleQueue().length+containerReturnExceptions().length+(state.ops.transportDispatches||[]).filter(d=>d.status==="exception").length;let html="";if(state.page==="dashboard")html=renderDashboard();else if(state.page==="jobs")html=renderJobs();else if(state.page==="jobdetail")html=renderJobDetail(state.selectedJob);else if(state.page==="containers")html=renderContainers();else if(state.page==="sailings")html=renderSailings();else if(state.page==="consol")html=renderConsol();else if(state.page==="consoldetail")html=renderConsolDetail();else if(state.page==="milestones")html=renderMilestones();else if(state.page==="filings")html=renderFilings();else if(state.page==="documents")html=renderDocuments();else if(state.page==="sales"){if(!state.ops.salesLoaded&&!state.ops.salesLoading)loadSales();html=renderSales()}else if(state.page==="payables"){if(!state.ops.payablesLoaded&&!state.ops.payablesLoading)loadPayables();html=renderPayables()}else if(state.page==="transport"){if(!state.ops.transportVendorsLoaded&&!state.ops.transportVendorsLoading)loadTransportVendors();html=renderTransport()}else if(state.page==="exceptions")html=renderExceptions();else if(["finance","receivables"].includes(state.page)){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();if(state.page==="finance"&&!state.ops.bankLoaded&&!state.ops.bankLoading)loadBankReconciliation();html=state.page==="finance"?renderFinance():renderReceivables()}else if(state.page==="reports"){if(!state.ops.invoicesLoaded&&!state.ops.invoicesLoading)loadInvoices();html=renderReports()}else if(state.page==="customer")html=renderCustomer();else if(state.page==="settings")html=renderSettings();else html=renderDashboard();$("content").innerHTML=html;bindPage();if(state.page==="dashboard")renderControlTowerMap();else destroyControlTowerMap()}
 function setNavigationOpen(open){$("app").classList.toggle("menu-open",open);$("hamb").setAttribute("aria-expanded",String(open))}
 function navigate(p){if(p==="jobdetail"||p==="consol")p="containers";state.page=p;state.query="";$("globalSearch").value="";setNavigationOpen(false);render()}
 function field(f){const value=f.value??"";let input;if(f.options)input='<select name="'+esc(f.name)+'" '+(f.required?"required":"")+'>'+f.options.map(o=>'<option value="'+esc(o[0])+'" '+(String(o[0])===String(value)?"selected":"")+'>'+esc(o[1])+'</option>').join("")+'</select>';else if(f.type==="textarea")input='<textarea name="'+esc(f.name)+'">'+esc(value)+'</textarea>';else{let v=value;if(f.type==="date"&&v)v=String(v).slice(0,10);if(f.type==="datetime-local"&&v)v=new Date(v).toISOString().slice(0,16);input='<input name="'+esc(f.name)+'" type="'+(f.type||"text")+'" value="'+esc(v)+'" '+(f.accept?'accept="'+esc(f.accept)+'"':"") +' '+(f.required?"required":"")+' '+(f.step?'step="'+esc(f.step)+'"':"")+'>'}return'<div class="field '+(f.span2?"span2":"")+'"><label>'+esc(f.label.toUpperCase())+(f.required?" *":"")+'</label>'+input+'</div>'}
@@ -2863,6 +2923,11 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="open-document")openDocument(id);if(act==="toggle-job-visibility")toggleJobVisibility(id);
       if(act==="retry-invoices")loadInvoices(true);
       if(act==="refresh-sales")loadSales(true);
+      if(act==="refresh-customer-portal-tokens")loadCustomerPortalTokens(true);
+      if(act==="create-customer-portal-link")createCustomerPortalLink(id);
+      if(act==="copy-customer-portal-link")copyCustomerPortalLink();
+      if(act==="dismiss-customer-portal-link"){state.ops.oneTimePortalLink="";render()}
+      if(act==="revoke-customer-portal-token")revokeCustomerPortalLink(id);
       if(act==="edit-enquiry")newSalesEnquiry(id);
       if(act==="new-quote")newFreightQuote("",id);
       if(act==="edit-quote")newFreightQuote(id);
