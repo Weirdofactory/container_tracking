@@ -1165,6 +1165,26 @@ Deno.serve(async (req: Request) => {
       return reply(200, { enquiries: enquiryResult.data ?? [], quotes: quoteResult.data ?? [], lines: lineResult.data ?? [], customers: customerResult.data ?? [], rateCards: rateResult.data ?? [], rateLines: rateLineResult.data ?? [] }, origin);
     }
 
+    if (action === "linkSalesEnquiryCustomer") {
+      roleCheck(profile.role, "finance");
+      const enquiryId = uuid(payload.id);
+      const customerId = uuid(payload.customer_id);
+      const { data: before, error: enquiryError } = await admin.from("sales_enquiries")
+        .select("*").eq("id", enquiryId).maybeSingle();
+      if (enquiryError || !before) throw new Error("Sales enquiry not found.");
+      if (before.status === "converted") throw new Error("A converted enquiry cannot be relinked.");
+      if (before.customer_id) throw new Error("This enquiry already has a customer account. Edit the enquiry to change it.");
+      const { data: customer, error: customerError } = await admin.from("customer_accounts")
+        .select("id, is_active").eq("id", customerId).maybeSingle();
+      if (customerError || !customer || !customer.is_active) throw new Error("Select an active customer account.");
+      const { data, error } = await admin.from("sales_enquiries").update({
+        customer_id: customerId, updated_by: actorId, updated_at: new Date().toISOString(),
+      }).eq("id", enquiryId).select("*").single();
+      if (error) throw new Error(error.message || "Could not link the customer account.");
+      await recordAudit("link", "sales_enquiry", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
     if (action === "upsertSalesEnquiry") {
       roleCheck(profile.role, "finance");
       const d = payload.data ?? {};
