@@ -1580,12 +1580,12 @@ Deno.serve(async (req: Request) => {
         ifsc: text(s.ifsc, 30).toUpperCase(), upi: text(s.upi, 120),
       };
       const buyer = account ? {
-        name: text(account.legal_name, 180), gstin: text(account.gstin, 20).toUpperCase(),
+        name: text(account.legal_name, 180), contact_name: text(account.contact_name, 140), gstin: text(account.gstin, 20).toUpperCase(),
         address: text([account.billing_address, account.city].filter(Boolean).join(", "), 700),
         state: text(account.state, 100), state_code: text(account.state_code, 2),
         postal_code: text(account.postal_code, 20), country: text(account.country || "India", 80), email: text(account.email, 180),
       } : {
-        name: text(b.name, 180), gstin: text(b.gstin, 20).toUpperCase(), address: text(b.address, 700),
+        name: text(b.name, 180), contact_name: text(b.contact_name, 140), gstin: text(b.gstin, 20).toUpperCase(), address: text(b.address, 700),
         state: text(b.state, 100), state_code: text(b.state_code, 2), postal_code: text(b.postal_code, 20),
         country: text(b.country || "India", 80), email: text(b.email, 180),
       };
