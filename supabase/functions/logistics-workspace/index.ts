@@ -59,6 +59,12 @@ async function sha256Hex(value: string) {
   const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
 }
+function makeCustomerPortalToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  let binary = "";
+  bytes.forEach(byte => binary += String.fromCharCode(byte));
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/g, "");
+}
 const allowed = {
   job: new Set(["Admin", "Editor"]),
   jobOps: new Set(["Admin", "Editor", "Operator"]),
@@ -1532,6 +1538,51 @@ Deno.serve(async (req: Request) => {
       }
       await recordAudit("record_event", "air_waybill", waybillId, waybill, waybill);
       return reply(200, { record: saved, waybill }, origin);
+    }
+
+    if (action === "listCustomerPortalTokens") {
+      roleCheck(profile.role, "finance");
+      const { data, error } = await admin.from("customer_portal_access_tokens")
+        .select("id, customer_id, label, expires_at, revoked_at, last_used_at, created_at")
+        .order("created_at", { ascending: false }).limit(10000);
+      if (error) throw new Error("Customer portal access links could not be loaded.");
+      return reply(200, { tokens: data ?? [] }, origin);
+    }
+
+    if (action === "createCustomerPortalToken") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const customerId = uuid(d.customer_id);
+      const { data: customer, error: customerError } = await admin.from("customer_accounts")
+        .select("id, customer_code, legal_name, is_active").eq("id", customerId).maybeSingle();
+      if (customerError || !customer || !customer.is_active) throw new Error("Select an active customer account.");
+      const days = Number(d.expires_in_days ?? 90);
+      if (!Number.isInteger(days) || days < 1 || days > 365) throw new Error("Portal link expiry must be between 1 and 365 days.");
+      const token = makeCustomerPortalToken();
+      const expiresAt = new Date(Date.now() + days * 86400000).toISOString();
+      const label = text(d.label || (customer.customer_code + " customer portal"), 120);
+      const { data, error } = await admin.from("customer_portal_access_tokens").insert({
+        customer_id: customerId, token_hash: await sha256Hex(token), label,
+        expires_at: expiresAt, created_by: actorId,
+      }).select("id, customer_id, label, expires_at, revoked_at, last_used_at, created_at").single();
+      if (error || !data) throw new Error("Could not create the customer portal link.");
+      await recordAudit("create", "customer_portal_token", data.id, null, data);
+      return reply(201, { token, record: data }, origin);
+    }
+
+    if (action === "revokeCustomerPortalToken") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("customer_portal_access_tokens")
+        .select("id, customer_id, label, expires_at, revoked_at, last_used_at, created_at").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Customer portal link not found.");
+      if (before.revoked_at) throw new Error("This customer portal link has already been revoked.");
+      const { data, error } = await admin.from("customer_portal_access_tokens").update({ revoked_at: new Date().toISOString() })
+        .eq("id", id).is("revoked_at", null)
+        .select("id, customer_id, label, expires_at, revoked_at, last_used_at, created_at").maybeSingle();
+      if (error || !data) throw new Error("Customer portal link could not be revoked.");
+      await recordAudit("revoke", "customer_portal_token", id, before, data);
+      return reply(200, { revoked: true, record: data }, origin);
     }
 
     if (action === "listInvoices") {
