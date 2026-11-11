@@ -629,6 +629,122 @@ Deno.serve(async (req: Request) => {
       return reply(200, { record: data }, origin);
     }
 
+    if (action === "listJobLegs") {
+      roleCheck(profile.role, "jobOps");
+      const jobId = uuid(payload.job_id);
+      const { data: job, error: jobError } = await admin.from("forwarding_jobs")
+        .select("id,deleted_at").eq("id", jobId).maybeSingle();
+      if (jobError || !job || job.deleted_at) throw new Error("Active forwarding job not found.");
+      const { data: legs, error: legsError } = await admin.from("forwarding_job_legs")
+        .select("*").eq("job_id", jobId).is("deleted_at", null).order("leg_no", { ascending: true }).limit(200);
+      if (legsError) throw new Error("Shipment route legs could not be loaded.");
+      const legIds = (legs ?? []).map(leg => String(leg.id));
+      let events: Record<string, unknown>[] = [];
+      if (legIds.length) {
+        const result = await admin.from("forwarding_job_leg_events").select("*")
+          .in("leg_id", legIds).order("event_at", { ascending: false }).limit(5000);
+        if (result.error) throw new Error("Shipment leg events could not be loaded.");
+        events = result.data ?? [];
+      }
+      return reply(200, { legs: legs ?? [], events }, origin);
+    }
+
+    if (action === "upsertJobLeg") {
+      roleCheck(profile.role, "jobOps");
+      const d = payload.data ?? {};
+      const jobId = uuid(d.job_id);
+      const id = d.id ? uuid(d.id) : undefined;
+      const { data: job, error: jobError } = await admin.from("forwarding_jobs")
+        .select("id,customer_visible,deleted_at").eq("id", jobId).maybeSingle();
+      if (jobError || !job || job.deleted_at) throw new Error("Select an active forwarding job.");
+      const before = id ? (await admin.from("forwarding_job_legs").select("*").eq("id", id).eq("job_id", jobId).maybeSingle()).data : null;
+      if (id && (!before || before.deleted_at)) throw new Error("Route leg not found.");
+      const legNo = Number(d.leg_no ?? before?.leg_no ?? 1);
+      if (!Number.isInteger(legNo) || legNo < 1 || legNo > 99) throw new Error("Leg number must be between 1 and 99.");
+      const legRole = val(d.leg_role ?? before?.leg_role ?? "main_carriage",
+        ["pre_carriage","main_carriage","transshipment","on_carriage","last_mile","other"], "route leg role");
+      const mode = val(d.mode ?? before?.mode ?? "ocean",
+        ["ocean","air","road","rail","barge","warehouse","other"], "transport mode");
+      const status = val(d.status ?? before?.status ?? "planned",
+        ["planned","booked","cargo_received","departed","in_transit","arrived","customs","delivered","exception","cancelled"], "route leg status");
+      const etd = date(d.etd ?? before?.etd);
+      const eta = date(d.eta ?? before?.eta);
+      if (etd && eta && eta < etd) throw new Error("Leg ETA cannot be earlier than ETD.");
+      const actualDeparture = timestamp(d.actual_departure_at ?? before?.actual_departure_at);
+      const actualArrival = timestamp(d.actual_arrival_at ?? before?.actual_arrival_at);
+      if (actualDeparture && actualArrival && Date.parse(actualArrival) < Date.parse(actualDeparture)) throw new Error("Actual arrival cannot be earlier than actual departure.");
+      const customerVisible = d.customer_visible === true || d.customer_visible === "true";
+      if (customerVisible && profile.role === "Operator") throw new Error("Only Admin or Editor roles can publish customer-visible route legs.");
+      const row = {
+        ...(id ? { id } : {}),
+        job_id: jobId, leg_no: legNo, leg_role: legRole, mode, status,
+        carrier: text(d.carrier ?? before?.carrier, 160),
+        service_reference: text(d.service_reference ?? before?.service_reference, 120),
+        tracking_reference: text(d.tracking_reference ?? before?.tracking_reference, 160),
+        origin: text(d.origin ?? before?.origin, 180),
+        destination: text(d.destination ?? before?.destination, 180),
+        etd, eta, actual_departure_at: actualDeparture, actual_arrival_at: actualArrival,
+        customer_visible: customerVisible,
+        notes: text(d.notes ?? before?.notes, 2000),
+        updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!id ? { created_by: actorId } : {}),
+      };
+      const { data, error } = await admin.from("forwarding_job_legs").upsert(row).select("*").single();
+      if (error || !data) throw new Error(error?.message || "Shipment route leg could not be saved.");
+      await recordAudit(id ? "update" : "create", "forwarding_job_leg", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "addJobLegEvent") {
+      roleCheck(profile.role, "jobOps");
+      const d = payload.data ?? {};
+      const legId = uuid(d.leg_id);
+      const { data: leg, error: legError } = await admin.from("forwarding_job_legs")
+        .select("*").eq("id", legId).is("deleted_at", null).maybeSingle();
+      if (legError || !leg) throw new Error("Active shipment route leg not found.");
+      const { data: job, error: jobError } = await admin.from("forwarding_jobs")
+        .select("id,deleted_at").eq("id", leg.job_id).maybeSingle();
+      if (jobError || !job || job.deleted_at) throw new Error("The parent forwarding job is unavailable.");
+      const eventCode = val(d.event_code,
+        ["booking_confirmed","cargo_received","departed","transshipment_arrived","arrived","customs_cleared","delivered","exception","other"], "route leg event");
+      const eventAt = timestamp(d.event_at);
+      if (!eventAt) throw new Error("Event date and time are required.");
+      const names: Record<string,string> = {
+        booking_confirmed:"Booking confirmed",cargo_received:"Cargo received",departed:"Departed",
+        transshipment_arrived:"Transshipment arrival",arrived:"Arrived",customs_cleared:"Customs cleared",
+        delivered:"Delivered",exception:"Exception",other:text(d.event_name,120),
+      };
+      const eventName = text(d.event_name,120) || names[eventCode];
+      if (!eventName || eventName.length < 2) throw new Error("Event name is required.");
+      const customerVisible = d.customer_visible === true || d.customer_visible === "true";
+      if (customerVisible && profile.role === "Operator") throw new Error("Only Admin or Editor roles can publish customer-visible route events.");
+      const row = {
+        job_id: leg.job_id, leg_id: legId, event_code:eventCode, event_name:eventName,
+        location:text(d.location,180), event_at:eventAt, notes:text(d.notes,2000),
+        customer_visible:customerVisible, created_by:actorId,
+      };
+      const { data: saved, error } = await admin.from("forwarding_job_leg_events").insert(row).select("*").single();
+      if (error || !saved) throw new Error(error?.message || "Shipment route event could not be saved.");
+      const mapped: Record<string,string> = {
+        booking_confirmed:"booked",cargo_received:"cargo_received",departed:"departed",
+        transshipment_arrived:"arrived",arrived:"arrived",customs_cleared:"customs",delivered:"delivered",exception:"exception",
+      };
+      const rank: Record<string,number> = {planned:0,booked:1,cargo_received:2,departed:3,in_transit:3,arrived:4,customs:5,delivered:6,cancelled:7};
+      const nextStatus = mapped[eventCode];
+      let updatedLeg = leg;
+      if (nextStatus && (nextStatus === "exception" || (rank[nextStatus] ?? -1) >= (rank[String(leg.status)] ?? 0))) {
+        const changes: Record<string, unknown> = { status:nextStatus, updated_by:actorId, updated_at:new Date().toISOString() };
+        if (eventCode === "departed") changes.actual_departure_at = eventAt;
+        if (["transshipment_arrived","arrived","delivered"].includes(eventCode)) changes.actual_arrival_at = eventAt;
+        const result = await admin.from("forwarding_job_legs").update(changes).eq("id",legId).select("*").single();
+        if (result.error || !result.data) throw new Error("The event was saved, but the route leg status could not be updated.");
+        updatedLeg = result.data;
+        await recordAudit("status_update","forwarding_job_leg",legId,leg,updatedLeg);
+      }
+      await recordAudit("create","forwarding_job_leg_event",saved.id,null,saved);
+      return reply(200, { record:saved, leg:updatedLeg }, origin);
+    }
+
     if (action === "upsertSailing") {
       roleCheck(profile.role, "sailing");
       const d = payload.data ?? {};
