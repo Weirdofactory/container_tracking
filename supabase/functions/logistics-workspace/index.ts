@@ -1818,6 +1818,74 @@ Deno.serve(async (req: Request) => {
       return reply(200, { revoked: true, record: data }, origin);
     }
 
+    if (action === "createLedgerAccount") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const accountCode = text(d.account_code, 8);
+      const accountName = text(d.account_name, 120);
+      const accountType = String(d.account_type ?? "");
+      if (!/^[0-9]{4,8}$/.test(accountCode)) throw new Error("Use a 4 to 8 digit account code.");
+      if (accountName.length < 2) throw new Error("Enter an account name.");
+      if (!["asset","liability","equity","income","expense"].includes(accountType)) throw new Error("Select a valid account type.");
+      const normalBalance = ["asset","expense"].includes(accountType) ? "debit" : "credit";
+      const { data, error } = await admin.from("finance_ledger_accounts").insert({
+        account_code: accountCode,
+        account_name: accountName,
+        account_type: accountType,
+        normal_balance: normalBalance,
+        is_system: false,
+        is_active: true,
+      }).select("id,account_code,account_name,account_type,normal_balance,is_active").single();
+      if (error || !data) throw new Error(error?.message || "Could not create the ledger account.");
+      await recordAudit("create", "finance_ledger_account", data.id, null, data);
+      return reply(201, { record: data }, origin);
+    }
+
+    if (action === "listFinanceLedger") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const fromDate = d.from_date ? date(d.from_date) : null;
+      const asOfDate = d.as_of_date ? date(d.as_of_date) : date(new Date().toISOString().slice(0,10));
+      if (fromDate && fromDate > asOfDate) throw new Error("The report start date must be on or before the as-of date.");
+      const [accountResult, summaryResult, entryResult] = await Promise.all([
+        admin.from("finance_ledger_accounts").select("id,account_code,account_name,account_type,normal_balance,is_active").order("account_code"),
+        admin.rpc("finance_general_ledger_summary", { p_from_date: fromDate, p_as_of_date: asOfDate }),
+        admin.from("finance_journal_entries").select("id,entry_number,entry_date,source_type,source_id,reference,description,currency,exchange_rate_to_inr,total_debit_inr,total_credit_inr,posted_at").order("entry_date", { ascending: false }).order("created_at", { ascending: false }).limit(200),
+      ]);
+      if (accountResult.error || summaryResult.error || entryResult.error) throw new Error("General ledger accounts, balances or journal entries could not be loaded.");
+      const entryIds = (entryResult.data ?? []).map(row => row.id);
+      const lineResult = entryIds.length
+        ? await admin.from("finance_journal_lines").select("entry_id,line_no,account_code_snapshot,account_name_snapshot,description,debit_inr,credit_inr,job_id,customer_id,vendor_id").in("entry_id", entryIds).order("line_no")
+        : { data: [], error: null };
+      if (lineResult.error) throw new Error("General ledger journal lines could not be loaded.");
+      return reply(200, {
+        accounts: accountResult.data ?? [],
+        summary: summaryResult.data ?? [],
+        entries: entryResult.data ?? [],
+        lines: lineResult.data ?? [],
+        from_date: fromDate,
+        as_of_date: asOfDate,
+      }, origin);
+    }
+
+    if (action === "createManualJournal") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const description = text(d.description, 500);
+      if (description.length < 2) throw new Error("Enter a journal description.");
+      const lines = Array.isArray(d.lines) ? d.lines : [];
+      const { data, error } = await admin.rpc("record_finance_manual_journal", {
+        p_entry_date: date(d.entry_date),
+        p_reference: text(d.reference, 120),
+        p_description: description,
+        p_lines: lines,
+        p_actor: actorId,
+      });
+      if (error || !data?.id) throw new Error(error?.message || "Could not save the journal entry.");
+      await recordAudit("create", "finance_journal_entry", data.id, null, data);
+      return reply(201, { record: data }, origin);
+    }
+
     if (action === "listInvoices") {
       roleCheck(profile.role, "finance");
       const [invoiceResult, settingsResult, customerResult, creditResult, paymentResult, refundResult, chargeLinkResult] = await Promise.all([
