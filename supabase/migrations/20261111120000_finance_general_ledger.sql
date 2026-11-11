@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.finance_ledger_accounts (
   is_system boolean NOT NULL DEFAULT false,
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT finance_ledger_accounts_normal_balance_check CHECK (
+  CONSTRAINT finance_ledger_accounts_type_balance_check CHECK (
     (account_type IN ('asset','expense') AND normal_balance='debit')
     OR (account_type IN ('liability','equity','income') AND normal_balance='credit')
   )
