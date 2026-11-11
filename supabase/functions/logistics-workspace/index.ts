@@ -2101,10 +2101,20 @@ Deno.serve(async (req: Request) => {
       const total = round2(taxableValue + (reverseCharge ? 0 : totalTax) + adjustment);
       if (!(total > 0)) throw new Error("Credit-note total must be greater than zero.");
       if (d.save_status === "issue") {
-        const { data: issuedNotes, error: issuedReadError } = await admin.from("shipment_credit_notes").select("total").eq("invoice_id", invoiceId).eq("status", "issued");
-        if (issuedReadError) throw new Error("Could not verify the invoice's remaining creditable amount.");
-        const alreadyCredited = (issuedNotes ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.total || 0), 0);
-        if (alreadyCredited + total > Number(invoice.total) + 0.005) throw new Error("This credit exceeds the remaining invoice amount.");
+        const [issuedNotesResult, paymentsResult] = await Promise.all([
+          admin.from("shipment_credit_notes").select("total,total_inr").eq("invoice_id", invoiceId).eq("status", "issued"),
+          admin.from("shipment_invoice_payments").select("amount_inr").eq("invoice_id", invoiceId),
+        ]);
+        if (issuedNotesResult.error || paymentsResult.error) throw new Error("Could not verify the invoice's remaining creditable balance.");
+        const invoiceRate = Number(invoice.exchange_rate_to_inr || 1);
+        const invoiceInr = Number(invoice.total_inr ?? Number(invoice.total || 0) * invoiceRate);
+        const alreadyCreditedInr = (issuedNotesResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) =>
+          sum + Number(item.total_inr ?? Number(item.total || 0) * invoiceRate), 0);
+        const receivedInr = (paymentsResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.amount_inr || 0), 0);
+        const newCreditInr = round2(total * invoiceRate);
+        if (alreadyCreditedInr + receivedInr + newCreditInr > invoiceInr + 0.005) {
+          throw new Error("Credit note plus recorded receipts cannot exceed the invoice total. A customer credit or refund workflow is required for any excess.");
+        }
       }
       const row = {
         ...(id ? { id } : {}), invoice_id: invoiceId, credit_note_number: null, status: "draft",
@@ -2140,6 +2150,22 @@ Deno.serve(async (req: Request) => {
       const { data: before, error: readError } = await admin.from("shipment_credit_notes").select("*").eq("id", id).maybeSingle();
       if (readError || !before) throw new Error("Credit note not found.");
       if (before.status !== "draft") throw new Error("Only a draft credit note can be issued.");
+      const { data: invoice, error: invoiceError } = await admin.from("shipment_invoices").select("total,total_inr,exchange_rate_to_inr").eq("id", before.invoice_id).maybeSingle();
+      if (invoiceError || !invoice) throw new Error("The linked invoice could not be loaded.");
+      const [issuedNotesResult, paymentsResult] = await Promise.all([
+        admin.from("shipment_credit_notes").select("total,total_inr").eq("invoice_id", before.invoice_id).eq("status", "issued"),
+        admin.from("shipment_invoice_payments").select("amount_inr").eq("invoice_id", before.invoice_id),
+      ]);
+      if (issuedNotesResult.error || paymentsResult.error) throw new Error("Could not verify the invoice's remaining creditable balance.");
+      const invoiceRate = Number(invoice.exchange_rate_to_inr || 1);
+      const invoiceInr = Number(invoice.total_inr ?? Number(invoice.total || 0) * invoiceRate);
+      const alreadyCreditedInr = (issuedNotesResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) =>
+        sum + Number(item.total_inr ?? Number(item.total || 0) * invoiceRate), 0);
+      const receivedInr = (paymentsResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.amount_inr || 0), 0);
+      const draftCreditInr = Number(before.total_inr ?? Number(before.total || 0) * invoiceRate);
+      if (alreadyCreditedInr + receivedInr + draftCreditInr > invoiceInr + 0.005) {
+        throw new Error("Credit note plus recorded receipts cannot exceed the invoice total. A customer credit or refund workflow is required for any excess.");
+      }
       const { data, error } = await admin.rpc("issue_shipment_credit_note", { p_credit_note_id: id, p_user_id: actorId });
       if (error) throw new Error(error.message);
       const result = Array.isArray(data) ? data[0] : data;
