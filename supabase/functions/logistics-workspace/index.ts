@@ -1540,6 +1540,121 @@ Deno.serve(async (req: Request) => {
       return reply(200, { record: saved, waybill }, origin);
     }
 
+    if (action === "listCustomerDirectory") {
+      roleCheck(profile.role, "finance");
+      const customerId = uuid(payload.customer_id);
+      const [contactResult, addressResult] = await Promise.all([
+        admin.from("customer_account_contacts").select("*").eq("customer_id", customerId).order("contact_name", { ascending: true }).limit(5000),
+        admin.from("customer_account_addresses").select("*").eq("customer_id", customerId).order("address_type", { ascending: true }).order("label", { ascending: true }).limit(5000),
+      ]);
+      if (contactResult.error || addressResult.error) throw new Error("Customer contacts and addresses could not be loaded.");
+      return reply(200, { contacts: contactResult.data ?? [], addresses: addressResult.data ?? [] }, origin);
+    }
+
+    if (action === "upsertCustomerContact") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const customerId = uuid(d.customer_id);
+      const { data: customer, error: customerError } = await admin.from("customer_accounts").select("id,is_active").eq("id", customerId).maybeSingle();
+      if (customerError || !customer || !customer.is_active) throw new Error("Select an active customer account.");
+      const id = d.id ? uuid(d.id) : undefined;
+      const before = id ? (await admin.from("customer_account_contacts").select("*").eq("id", id).eq("customer_id", customerId).maybeSingle()).data : null;
+      if (id && !before) throw new Error("Customer contact not found.");
+      const contactName = text(d.contact_name, 140);
+      if (!contactName) throw new Error("Contact name is required.");
+      const contactType = val(d.contact_type || "operations", ["accounts","operations","sales","customs","management","other"], "contact type");
+      const email = text(d.email, 254).toLowerCase();
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid contact email address.");
+      const row = {
+        ...(id ? { id } : {}),
+        customer_id: customerId,
+        contact_name: contactName,
+        department: text(d.department, 100),
+        contact_type: contactType,
+        email,
+        phone: text(d.phone, 60),
+        notes: text(d.notes, 1000),
+        is_active: before?.is_active ?? true,
+        ...(before ? { updated_by: actorId, updated_at: new Date().toISOString() } : { created_by: actorId, updated_by: actorId }),
+      };
+      const { data, error } = await admin.from("customer_account_contacts").upsert(row).select("*").single();
+      if (error || !data) throw new Error(error?.message || "Customer contact could not be saved.");
+      await recordAudit(id ? "update" : "create", "customer_contact", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "setCustomerContactStatus") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("customer_account_contacts").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Customer contact not found.");
+      const isActive = payload.is_active === true || payload.is_active === "true";
+      const { data, error } = await admin.from("customer_account_contacts").update({
+        is_active: isActive, updated_by: actorId, updated_at: new Date().toISOString(),
+      }).eq("id", id).select("*").single();
+      if (error || !data) throw new Error(error?.message || "Customer contact status could not be updated.");
+      await recordAudit(isActive ? "reactivate" : "deactivate", "customer_contact", id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "upsertCustomerAddress") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const customerId = uuid(d.customer_id);
+      const { data: customer, error: customerError } = await admin.from("customer_accounts").select("id,is_active").eq("id", customerId).maybeSingle();
+      if (customerError || !customer || !customer.is_active) throw new Error("Select an active customer account.");
+      const id = d.id ? uuid(d.id) : undefined;
+      const before = id ? (await admin.from("customer_account_addresses").select("*").eq("id", id).eq("customer_id", customerId).maybeSingle()).data : null;
+      if (id && !before) throw new Error("Customer address not found.");
+      const addressType = val(d.address_type || "other", ["registered","billing","pickup","delivery","branch","other"], "address type");
+      const address = text(d.address, 1000);
+      if (!address) throw new Error("Enter the address.");
+      const country = text(d.country || "India", 80);
+      const gstin = text(d.gstin, 20).toUpperCase();
+      if (gstin && /^india$/i.test(country) && !/^[0-9]{2}[A-Z0-9]{13}$/.test(gstin)) throw new Error("Enter a valid 15-character GSTIN or leave the tax ID blank.");
+      const stateCode = text(d.state_code, 2);
+      if (stateCode && !/^\\d{2}$/.test(stateCode)) throw new Error("GST state code must contain two digits.");
+      const email = text(d.email, 254).toLowerCase();
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid address contact email.");
+      const row = {
+        ...(id ? { id } : {}),
+        customer_id: customerId,
+        address_type: addressType,
+        label: text(d.label, 120),
+        address,
+        city: text(d.city, 120),
+        state: text(d.state, 100),
+        state_code: stateCode,
+        postal_code: text(d.postal_code, 20),
+        country,
+        gstin,
+        contact_name: text(d.contact_name, 140),
+        email,
+        phone: text(d.phone, 60),
+        notes: text(d.notes, 1000),
+        is_active: before?.is_active ?? true,
+        ...(before ? { updated_by: actorId, updated_at: new Date().toISOString() } : { created_by: actorId, updated_by: actorId }),
+      };
+      const { data, error } = await admin.from("customer_account_addresses").upsert(row).select("*").single();
+      if (error || !data) throw new Error(error?.message || "Customer address could not be saved.");
+      await recordAudit(id ? "update" : "create", "customer_address", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "setCustomerAddressStatus") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("customer_account_addresses").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Customer address not found.");
+      const isActive = payload.is_active === true || payload.is_active === "true";
+      const { data, error } = await admin.from("customer_account_addresses").update({
+        is_active: isActive, updated_by: actorId, updated_at: new Date().toISOString(),
+      }).eq("id", id).select("*").single();
+      if (error || !data) throw new Error(error?.message || "Customer address status could not be updated.");
+      await recordAudit(isActive ? "reactivate" : "deactivate", "customer_address", id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
     if (action === "listCustomerPortalTokens") {
       roleCheck(profile.role, "finance");
       const { data, error } = await admin.from("customer_portal_access_tokens")
