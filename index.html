@@ -2729,7 +2729,7 @@ async function updateInvoiceFx(force=false){
     updateInvoicePreview();
   }
 }
-function newInvoice(invoiceId,presetJobId){
+async function newInvoice(invoiceId,presetJobId){
   if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can create invoices.","error");
   const inv=invoiceId?(state.ops.invoices||[]).find(x=>x.id===invoiceId)||{}:{};
   if(inv.status==="issued")return notify("Issued invoices are locked. Create a credit or debit note for corrections.","error");
@@ -2738,6 +2738,7 @@ function newInvoice(invoiceId,presetJobId){
   const jobId=inv.job_id||inferred?.id||presetJobId||"";
   const customerId=inv.customer_id||inferred?.customer_id||state.ops.jobs.find(j=>j.id===presetJobId)?.customer_id||"";
   const account=state.ops.customers.find(c=>c.id===customerId);
+  if(customerId&&state.ops.customerDirectoryLoadedFor!==customerId&&!state.ops.customerDirectoryLoading)await loadCustomerDirectory(customerId);
   const buyer=inv.buyer?.name?inv.buyer:account?{name:account.legal_name,contact_name:account.contact_name,gstin:account.gstin,address:customerAddress(account),state:account.state,state_code:account.state_code,postal_code:account.postal_code,country:account.country,email:account.email}:inv.buyer||{};
   const today=new Date().toISOString().slice(0,10);
   const invoiceDateValue=inv.invoice_date||today;
@@ -2751,6 +2752,7 @@ function newInvoice(invoiceId,presetJobId){
     {name:"due_date",label:"Due date",type:"date",value:dueDateDefault,required:true},
     {name:"job_id",label:"Forwarding job",options:jobOptions(),value:jobId},
     {name:"customer_id",label:"Customer account",options:customerOptions(customerId),value:customerId},
+    {name:"buyer_address_id",label:"Bill-to / customer site",options:[["","Use account default billing address"],...(state.ops.customerAddresses||[]).filter(a=>a.customer_id===customerId&&a.is_active).map(a=>[a.id,[a.label,a.city,a.state].filter(Boolean).join(" · ")])],value:""},
     {name:"hbl_id",label:"HBL",options:hblOptionsAll(),value:inv.hbl_id||""},
     {name:"container_no",label:"Container",options:containerOptions(),value:inv.container_no||""},
     {name:"currency",label:"Invoice currency (ISO)",value:inv.currency||account?.default_currency||"INR",required:true},
@@ -2784,6 +2786,7 @@ function newInvoice(invoiceId,presetJobId){
     {name:"buyer_postal_code",label:"Buyer postal code",value:buyer.postal_code||""},
     {name:"buyer_country",label:"Buyer country",value:buyer.country||"India"},
     {name:"buyer_email",label:"Buyer email",value:buyer.email||""},
+    {name:"buyer_phone",label:"Buyer phone",value:buyer.phone||""},
     {name:"adjustment",label:"Rounding / other adjustment",type:"number",step:"0.01",value:inv.adjustment??"0"},
     {name:"notes",label:"Notes / declaration",type:"textarea",value:inv.notes||"",span2:true}
   ];
@@ -2802,7 +2805,7 @@ function newInvoice(invoiceId,presetJobId){
         postal_code:get("seller_postal_code"),country:"India",email:get("seller_email"),phone:get("seller_phone"),bank_name:get("seller_bank_name"),
         bank_account:get("seller_bank_account"),ifsc:get("seller_ifsc"),upi:get("seller_upi")},
       buyer:{name:get("buyer_name"),contact_name:get("buyer_contact"),gstin:get("buyer_gstin"),address:get("buyer_address"),state:get("buyer_state"),state_code:get("buyer_state_code"),
-        postal_code:get("buyer_postal_code"),country:get("buyer_country"),email:get("buyer_email")},
+        postal_code:get("buyer_postal_code"),country:get("buyer_country"),email:get("buyer_email"),phone:get("buyer_phone")},
       supply_type:get("supply_type"),place_of_supply:get("place_of_supply"),place_of_supply_state_code:get("place_of_supply_state_code"),
       reverse_charge:get("reverse_charge"),po_number:get("po_number"),payment_terms:get("payment_terms"),currency:get("currency").toUpperCase(),
       exchange_rate_to_inr:get("exchange_rate_to_inr"),fx_date:get("fx_date"),fx_source:get("fx_source"),lines,
@@ -2814,6 +2817,33 @@ function newInvoice(invoiceId,presetJobId){
     notify(data.save_status==="issue"?"Invoice issued as "+result.record.invoice_number:"Invoice draft saved","success");
   });
   const fields=$("fields");
+  const customerSelect=fields.querySelector('[name="customer_id"]');
+  const addressSelect=fields.querySelector('[name="buyer_address_id"]');
+  const setBuyerField=(name,value)=>{const input=fields.querySelector('[name="'+name+'"]');if(input)input.value=value||""};
+  const populateBuyerFromAccount=customer=>{
+    if(!customer)return;
+    setBuyerField("buyer_name",customer.legal_name);setBuyerField("buyer_contact",customer.contact_name);setBuyerField("buyer_gstin",customer.gstin);
+    setBuyerField("buyer_address",customerAddress(customer));setBuyerField("buyer_state",customer.state);setBuyerField("buyer_state_code",customer.state_code);
+    setBuyerField("buyer_postal_code",customer.postal_code);setBuyerField("buyer_country",customer.country);setBuyerField("buyer_email",customer.email);setBuyerField("buyer_phone",customer.phone);
+  };
+  const refreshCustomerAddresses=async()=>{
+    const selected=customerSelect?.value||"";
+    if(addressSelect){addressSelect.disabled=true;addressSelect.innerHTML='<option value="">Loading customer sites…</option>';}
+    state.ops.customerContacts=[];state.ops.customerAddresses=[];state.ops.customerDirectoryLoadedFor="";
+    if(selected)await loadCustomerDirectory(selected,true);
+    const available=(state.ops.customerAddresses||[]).filter(a=>a.customer_id===selected&&a.is_active);
+    if(addressSelect){addressSelect.innerHTML='<option value="">Use account default billing address</option>'+available.map(a=>'<option value="'+esc(a.id)+'">'+esc([a.label,a.city,a.state].filter(Boolean).join(" · "))+'</option>').join("");addressSelect.disabled=false;}
+    populateBuyerFromAccount(state.ops.customers.find(c=>c.id===selected));
+  };
+  if(customerSelect)customerSelect.addEventListener("change",refreshCustomerAddresses);
+  if(addressSelect)addressSelect.addEventListener("change",()=>{
+    const site=(state.ops.customerAddresses||[]).find(a=>a.id===addressSelect.value);
+    if(!site){populateBuyerFromAccount(state.ops.customers.find(c=>c.id===customerSelect?.value));return;}
+    setBuyerField("buyer_contact",site.contact_name);setBuyerField("buyer_gstin",site.gstin);
+    setBuyerField("buyer_address",[site.address,site.city,site.state,site.postal_code,site.country].filter(Boolean).join(", "));
+    setBuyerField("buyer_state",site.state);setBuyerField("buyer_state_code",site.state_code);setBuyerField("buyer_postal_code",site.postal_code);
+    setBuyerField("buyer_country",site.country);setBuyerField("buyer_email",site.email);setBuyerField("buyer_phone",site.phone);
+  });
   const editor=document.createElement("div");editor.id="invoiceLinesWrap";editor.className="invoice-lines-editor";editor.style.cssText="grid-column:1/-1;border:1px solid #ccd6dd;background:#f8fafb;padding:9px;margin-top:4px";
   editor.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap"><div><b style="font-size:11px;color:#25475c">Invoice line items</b><div style="font-size:9px;color:#758895">Add services manually or load approved revenue from the selected job.</div></div><div style="display:flex;gap:5px"><button class="btn small" type="button" data-load-approved-revenue>Load approved revenue</button><button class="btn small" type="button" data-add-invoice-line>+ Add line</button></div></div>'+
     '<div style="display:grid;grid-template-columns:minmax(150px,2fr) minmax(80px,.85fr) minmax(55px,.55fr) minmax(70px,.6fr) minmax(95px,1fr) minmax(70px,.65fr) minmax(70px,.65fr) 28px;gap:5px;font-size:8px;color:#657887;font-weight:800"><span>DESCRIPTION</span><span>HSN / SAC</span><span>QTY</span><span>UNIT</span><span>UNIT PRICE</span><span>DISC %</span><span>GST %</span><span></span></div>'+
