@@ -196,6 +196,7 @@ Deno.serve(async (req: Request) => {
   if (jobsError || !Array.isArray(jobs)) return reply(503, { error: "Shipment data is temporarily unavailable." }, origin);
 
   const jobIds = jobs.map(job => String(job.id));
+  const jobById = new Map(jobs.map(job => [String(job.id), job]));
   let hbls: Record<string, unknown>[] = [];
   let milestones: Record<string, unknown>[] = [];
   let waybills: Record<string, unknown>[] = [];
@@ -257,6 +258,7 @@ Deno.serve(async (req: Request) => {
     const enquiry = enquiryById.get(String(quote.enquiry_id)) ?? {};
     const status = quote.status === "sent" && quote.valid_until && String(quote.valid_until) < today ? "expired" : quote.status;
     return {
+      id: quote.id,
       quote_no: quote.quote_no || "Quotation",
       status,
       currency: quote.currency,
@@ -272,7 +274,7 @@ Deno.serve(async (req: Request) => {
       terms: quote.terms || "",
       issued_at: quote.issued_at,
       responded_at: quote.responded_at,
-      accepted_job_id: quote.accepted_job_id,
+      has_booking: !!quote.accepted_job_id,
       enquiry: {
         service_type: enquiry.service_type || "",
         direction: enquiry.direction || "",
@@ -339,8 +341,8 @@ Deno.serve(async (req: Request) => {
       invoice_type: invoice.invoice_type,
       invoice_date: invoice.invoice_date,
       due_date: invoice.due_date,
-      job_id: invoice.job_id,
-      hbl_id: invoice.hbl_id,
+      job_no: jobById.get(String(invoice.job_id))?.job_no || "",
+      hbl_no: hbls.find(hbl => String(hbl.id) === String(invoice.hbl_id))?.hbl_no || "",
       container_no: invoice.container_no,
       seller: safeParty(invoice.seller),
       buyer: safeParty(invoice.buyer),
