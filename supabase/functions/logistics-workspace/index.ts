@@ -1165,6 +1165,35 @@ Deno.serve(async (req: Request) => {
       return reply(200, { enquiries: enquiryResult.data ?? [], quotes: quoteResult.data ?? [], lines: lineResult.data ?? [], customers: customerResult.data ?? [], rateCards: rateResult.data ?? [], rateLines: rateLineResult.data ?? [] }, origin);
     }
 
+    if (action === "setSalesEnquiryStatus") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const d = payload.data ?? {};
+      const status = val(d.status, ["new", "lost"], "enquiry status");
+      const { data: before, error: readError } = await admin.from("sales_enquiries").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Sales enquiry not found.");
+      if (before.status === "converted" || before.status === "won") throw new Error("Converted or won enquiries cannot be changed here.");
+      if (status === "lost") {
+        if (before.status === "lost") throw new Error("This enquiry is already closed as lost.");
+        const { data: quotes, error: quoteError } = await admin.from("freight_quotes")
+          .select("status,valid_until").eq("enquiry_id", id);
+        if (quoteError) throw new Error("Could not check outstanding quotes for this enquiry.");
+        const today = new Date().toISOString().slice(0, 10);
+        const openQuote = (quotes ?? []).some(q => q.status === "accepted" || q.status === "converted" ||
+          (q.status === "sent" && (!q.valid_until || q.valid_until >= today)));
+        if (openQuote) throw new Error("Decline all active quotes before closing this enquiry as lost.");
+      } else if (before.status !== "lost") {
+        throw new Error("Only enquiries marked lost can be reopened.");
+      }
+      const { data, error } = await admin.from("sales_enquiries").update({
+        status, updated_by: actorId, updated_at: new Date().toISOString(),
+      }).eq("id", id).select("*").single();
+      if (error) throw new Error(error.message || "Could not update the sales enquiry.");
+      const auditAfter = status === "lost" ? { ...data, close_reason: text(d.reason, 1200) } : data;
+      await recordAudit(status === "lost" ? "lost" : "reopen", "sales_enquiry", data.id, before, auditAfter);
+      return reply(200, { record: data }, origin);
+    }
+
     if (action === "linkSalesEnquiryCustomer") {
       roleCheck(profile.role, "finance");
       const enquiryId = uuid(payload.id);
@@ -1231,6 +1260,7 @@ Deno.serve(async (req: Request) => {
       if (quoteId && (!before || before.status !== "draft")) throw new Error("Only draft quotes can be edited.");
       const { data: enquiry, error: enquiryError } = await admin.from("sales_enquiries").select("*").eq("id", enquiryId).maybeSingle();
       if (enquiryError || !enquiry) throw new Error("Sales enquiry not found.");
+      if (enquiry.status === "lost") throw new Error("Reopen this lost enquiry before creating or editing a quote.");
       const customerId = d.customer_id ? uuid(d.customer_id) : enquiry.customer_id;
       const rateCardId = d.rate_card_id ? uuid(d.rate_card_id) : null;
       if (rateCardId) {
@@ -1283,6 +1313,9 @@ Deno.serve(async (req: Request) => {
       const quoteId = uuid(payload.id);
       const before = (await admin.from("freight_quotes").select("*").eq("id", quoteId).maybeSingle()).data;
       if (!before) throw new Error("Quote not found.");
+      const { data: enquiry, error: enquiryError } = await admin.from("sales_enquiries").select("status").eq("id", before.enquiry_id).maybeSingle();
+      if (enquiryError || !enquiry) throw new Error("Sales enquiry not found.");
+      if (enquiry.status === "lost") throw new Error("Reopen the lost enquiry before issuing this quote.");
       const { data, error } = await admin.rpc("issue_freight_quote", { p_quote_id: quoteId, p_actor: actorId });
       if (error) throw new Error(error.message || "Could not issue quote.");
       await recordAudit("issue", "freight_quote", quoteId, before, data);
@@ -1295,6 +1328,11 @@ Deno.serve(async (req: Request) => {
       const outcome = val(payload.data?.outcome, ["accepted","rejected"], "quote outcome");
       const before = (await admin.from("freight_quotes").select("*").eq("id", quoteId).maybeSingle()).data;
       if (!before) throw new Error("Quote not found.");
+      if (outcome === "accepted") {
+        const { data: enquiry, error: enquiryError } = await admin.from("sales_enquiries").select("status").eq("id", before.enquiry_id).maybeSingle();
+        if (enquiryError || !enquiry) throw new Error("Sales enquiry not found.");
+        if (enquiry.status === "lost") throw new Error("This enquiry is closed as lost. Reopen it before accepting the quote.");
+      }
       const { data, error } = await admin.rpc("set_freight_quote_outcome", { p_quote_id: quoteId, p_outcome: outcome });
       if (error) throw new Error(error.message || "Could not update quote outcome.");
       await recordAudit(outcome, "freight_quote", quoteId, before, data);
@@ -1306,6 +1344,9 @@ Deno.serve(async (req: Request) => {
       const quoteId = uuid(payload.id);
       const before = (await admin.from("freight_quotes").select("*").eq("id", quoteId).maybeSingle()).data;
       if (!before) throw new Error("Quote not found.");
+      const { data: enquiry, error: enquiryError } = await admin.from("sales_enquiries").select("status").eq("id", before.enquiry_id).maybeSingle();
+      if (enquiryError || !enquiry) throw new Error("Sales enquiry not found.");
+      if (enquiry.status === "lost") throw new Error("This enquiry is closed as lost. Reopen it before creating a forwarding job.");
       const { data, error } = await admin.rpc("convert_accepted_quote_to_job", { p_quote_id: quoteId, p_actor: actorId });
       if (error) throw new Error(error.message || "Could not create a job from this accepted quote.");
       await recordAudit("convert", "freight_quote", quoteId, before, data.quote);

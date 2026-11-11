@@ -1532,6 +1532,22 @@ function linkExistingCustomerToEnquiry(enquiryId){
     await loadSales(true);closeForm();render();notify("Customer account linked to "+enquiry.enquiry_no,"success");
   });
 }
+function closeSalesEnquiryAsLost(enquiryId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can close sales enquiries.","error");
+  const enquiry=(state.ops.enquiries||[]).find(x=>x.id===enquiryId);
+  if(!enquiry)return notify("Sales enquiry not found. Refresh the sales workspace and try again.","error");
+  openForm("Close "+enquiry.enquiry_no+" as lost",[{name:"reason",label:"Reason for loss (optional)",type:"textarea",value:"",span2:true}],async fd=>{
+    await call("logistics-workspace",{action:"setSalesEnquiryStatus",id:enquiry.id,data:{status:"lost",reason:String(fd.get("reason")||"")}});
+    closeForm();await loadSales(true);render();notify(enquiry.enquiry_no+" closed as lost","success");
+  });
+}
+async function reopenSalesEnquiry(enquiryId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can reopen sales enquiries.","error");
+  try{
+    await call("logistics-workspace",{action:"setSalesEnquiryStatus",id:enquiryId,data:{status:"new"}});
+    await loadSales(true);render();notify("Sales enquiry reopened","success");
+  }catch(e){notify(e.message||"Could not reopen sales enquiry.","error")}
+}
 function openCustomerDirectory(customerId){
   if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can manage customer details.","error");
   state.selectedCustomer=customerId;state.page="customerdetail";state.ops.customerContacts=[];state.ops.customerAddresses=[];state.ops.customerDirectoryLoadedFor="";render();
@@ -2159,7 +2175,9 @@ function renderSales(){
     const quoteSummary=current?(esc(current.quote_no||"Draft quote")+" · "+esc(current.status)+" · "+esc(current.currency||"INR")+" "+money2(current.total_amount)):"No quote yet";
     const action=actionBtn("new-quote","Create quote",'data-id="'+esc(enq.id)+'"');
     const accountActions=enq.customer_id?"":actionBtn("create-customer-from-enquiry","Create customer",'data-id="'+esc(enq.id)+'"')+actionBtn("link-customer-to-enquiry","Link account",'data-id="'+esc(enq.id)+'"');
-    return'<tr><td><b>'+esc(enq.enquiry_no)+'</b><div class="cell-sub">'+esc(enq.contact_name||enq.email||"")+'</div></td><td>'+esc(account?.legal_name||enq.company_name||"Prospect")+'</td><td>'+esc(enq.origin||"—")+' → '+esc(enq.destination||"—")+'<div class="cell-sub">'+esc(enq.service_type)+" · "+esc(enq.direction.replaceAll("_"," "))+'</div></td><td>'+pill(enq.status||"new")+'</td><td>'+esc(fmt(enq.follow_up_date))+'</td><td>'+quoteSummary+'<div class="cell-sub">'+related.length+' quote(s)</div></td><td>'+actionBtn("edit-enquiry","Edit",'data-id="'+esc(enq.id)+'"')+action+accountActions+'</td></tr>';
+    const hasOpenQuote=related.some(q=>q.status==="accepted"||q.status==="converted"||(q.status==="sent"&&(!q.valid_until||q.valid_until>=today)));
+    const statusAction=enq.status==="lost"?actionBtn("reopen-enquiry","Reopen",'data-id="'+esc(enq.id)+'"'):["won","converted"].includes(enq.status)||hasOpenQuote?"":actionBtn("mark-enquiry-lost","Mark lost",'data-id="'+esc(enq.id)+'"');
+    return'<tr><td><b>'+esc(enq.enquiry_no)+'</b><div class="cell-sub">'+esc(enq.contact_name||enq.email||"")+'</div></td><td>'+esc(account?.legal_name||enq.company_name||"Prospect")+'</td><td>'+esc(enq.origin||"—")+' → '+esc(enq.destination||"—")+'<div class="cell-sub">'+esc(enq.service_type)+" · "+esc(enq.direction.replaceAll("_"," "))+'</div></td><td>'+pill(enq.status||"new")+(statusAction?'<div class="cell-sub">'+statusAction+'</div>':"")+'</td><td>'+esc(fmt(enq.follow_up_date))+'</td><td>'+quoteSummary+'<div class="cell-sub">'+related.length+' quote(s)</div></td><td>'+actionBtn("edit-enquiry","Edit",'data-id="'+esc(enq.id)+'"')+action+accountActions+'</td></tr>';
   });
   const quoteRows=quotes.map(q=>{
     const enq=enquiries.find(x=>x.id===q.enquiry_id)||{};
@@ -3352,6 +3370,8 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="edit-enquiry")newSalesEnquiry(id);
       if(act==="create-customer-from-enquiry")createCustomerFromEnquiry(id);
       if(act==="link-customer-to-enquiry")linkExistingCustomerToEnquiry(id);
+      if(act==="mark-enquiry-lost")closeSalesEnquiryAsLost(id);
+      if(act==="reopen-enquiry")reopenSalesEnquiry(id);
       if(act==="new-quote")newFreightQuote("",id);
       if(act==="edit-quote")newFreightQuote(id);
       if(act==="issue-quote")issueFreightQuote(id);
