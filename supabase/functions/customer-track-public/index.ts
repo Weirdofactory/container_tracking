@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const allowedOrigin = () => Deno.env.get("CUSTOMER_TRACKING_ALLOWED_ORIGIN") ?? "https://weirdofactory.github.io";
-const PHOTO_BUCKET = "shipment-milestone-photos";
+const PHOTO_BUCKET = "logistics-documents";
 
 function headersFor(origin: string | null) {
   const headers: Record<string, string> = {
@@ -160,6 +160,65 @@ function safeForwardingJob(
     milestones,
   };
 }
+function safeAirWaybill(
+  waybill: Record<string, unknown>,
+  job: Record<string, unknown>,
+  events: Record<string, unknown>[],
+) {
+  const snapshot = waybill.hawb_snapshot && typeof waybill.hawb_snapshot === "object"
+    ? waybill.hawb_snapshot as Record<string, unknown> : {};
+  const frozen = snapshot.waybill && typeof snapshot.waybill === "object"
+    ? snapshot.waybill as Record<string, unknown> : waybill;
+  const statusLabels: Record<string, string> = {
+    planned: "Shipment planned", booked: "Flight booked", cargo_received: "Cargo received",
+    departed: "Flight departed", in_transit: "In transit", arrived: "Flight arrived",
+    customs: "Customs clearance", delivered: "Delivered", closed: "Completed",
+    exception: "Exception reported", cancelled: "Cancelled",
+  };
+  const milestones = events
+    .filter(event => event.customer_visible === true)
+    .sort((a, b) => Date.parse(String(a.event_at || "")) - Date.parse(String(b.event_at || "")))
+    .map(event => ({
+      label: field(event, ["event_name"]) || "Air shipment update",
+      date: field(event, ["event_at"]),
+      estimate: false,
+    }));
+  return {
+    mode: "air",
+    jobNo: field(job, ["job_no"]),
+    hblNo: "",
+    mblNo: "",
+    hawbNo: field(frozen, ["hawb_no"]),
+    mawbNo: field(frozen, ["mawb_no"]),
+    container: "",
+    type: "Air Freight",
+    status: statusLabels[String(waybill.status || "")] || "Air shipment in progress",
+    vessel: [field(frozen, ["airline"]), field(frozen, ["flight_no"])].filter(Boolean).join(" / "),
+    airline: field(frozen, ["airline"]),
+    flightNo: field(frozen, ["flight_no"]),
+    shippingLine: field(frozen, ["airline"]),
+    origin: field(frozen, ["origin_airport"]),
+    transshipmentPort: "",
+    gateway: field(frozen, ["destination_airport"]),
+    etd: field(frozen, ["etd"]),
+    eta: field(frozen, ["eta"]),
+    pieces: Number(frozen.pieces || 0),
+    packageType: field(frozen, ["package_type"]),
+    grossWeightKg: Number(frozen.gross_weight_kg || 0),
+    volumeCbm: Number(frozen.volume_cbm || 0),
+    chargeableWeightKg: Number(frozen.chargeable_weight_kg || 0),
+    commodity: field(frozen, ["commodity"]),
+    goodsDescription: field(frozen, ["goods_description"]),
+    shipper: field(frozen, ["shipper"]),
+    consignee: field(frozen, ["consignee"]),
+    notifyParty: field(frozen, ["notify_party"]),
+    freightTerms: field(frozen, ["freight_terms"]),
+    warnings: [] as string[],
+    photos: [] as Array<Record<string, string>>,
+    milestones,
+    updatedAt: field(waybill, ["updated_at"]),
+  };
+}
 function clientAddress(req: Request): string {
   const direct = req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip");
   if (direct) return direct.trim().slice(0, 100);
@@ -188,8 +247,8 @@ Deno.serve(async (req: Request) => {
   }
   const rawReference = typeof payload.reference === "string" ? payload.reference.trim() : "";
   const reference = normalize(rawReference);
-  if (reference.length < 5 || reference.length > 40 || !/^[A-Z0-9]+$/.test(reference)) {
-    return reply(400, { error: "Enter a valid container, HBL, MBL or job number." }, origin);
+  if (reference.length < 4 || reference.length > 40 || !/^[A-Z0-9]+$/.test(reference)) {
+    return reply(400, { error: "Enter a valid container, HBL, MBL, HAWB, MAWB or job number." }, origin);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -236,23 +295,30 @@ Deno.serve(async (req: Request) => {
   let visibleHbls: Record<string, unknown>[] = [];
   let jobLinks: Record<string, unknown>[] = [];
   let jobEvents: Record<string, unknown>[] = [];
+  let visibleAirWaybills: Record<string, unknown>[] = [];
   // Batch ID filters to keep the PostgREST URL comfortably below gateway limits.
   for (let offset = 0; offset < visibleJobIds.length; offset += 200) {
     const idBatch = visibleJobIds.slice(offset, offset + 200);
-    const [hblResult, linksResult, eventsResult] = await Promise.all([
+    const [hblResult, linksResult, eventsResult, airWaybillResult] = await Promise.all([
       admin.from("forwarding_job_hbls").select("job_id,hbl_no").in("job_id", idBatch).eq("customer_visible", true).limit(10000),
       admin.from("job_container_links").select("job_id,container_no").in("job_id", idBatch).limit(10000),
       admin.from("shipment_milestones")
-        .select("job_id,container_no,milestone_code,milestone_name,planned_at,actual_at,status,customer_visible,created_at")
+        .select("job_id,container_no,milestone_code,milestone_name,planned_at,actual_at,status,customer_visible,created_at,photo_path")
         .in("job_id", idBatch).eq("customer_visible", true)
         .order("created_at", { ascending: true }).limit(10000),
+      admin.from("air_waybills")
+        .select("id,job_id,hawb_no,mawb_no,airline,flight_no,origin_airport,destination_airport,etd,eta,pieces,package_type,gross_weight_kg,volume_cbm,chargeable_weight_kg,commodity,goods_description,shipper,consignee,notify_party,freight_terms,status,customer_visible,hawb_status,hawb_snapshot,updated_at")
+        .in("job_id", idBatch).eq("customer_visible", true).eq("hawb_status", "issued").limit(10000),
     ]);
-    if (hblResult.error || linksResult.error || eventsResult.error || !Array.isArray(hblResult.data) || !Array.isArray(linksResult.data) || !Array.isArray(eventsResult.data)) {
+    if (hblResult.error || linksResult.error || eventsResult.error || airWaybillResult.error ||
+        !Array.isArray(hblResult.data) || !Array.isArray(linksResult.data) ||
+        !Array.isArray(eventsResult.data) || !Array.isArray(airWaybillResult.data)) {
       return reply(503, { error: "Tracking service is temporarily unavailable." }, origin);
     }
     visibleHbls.push(...hblResult.data as Record<string, unknown>[]);
     jobLinks.push(...linksResult.data as Record<string, unknown>[]);
     jobEvents.push(...eventsResult.data as Record<string, unknown>[]);
+    visibleAirWaybills.push(...airWaybillResult.data as Record<string, unknown>[]);
   }
 
   const linksByJob = new Map<string, Record<string, unknown>[]>();
@@ -275,6 +341,34 @@ Deno.serve(async (req: Request) => {
     const containerMatches = (linksByJob.get(String(job.id)) || []).some(link => normalize(link.container_no) === reference);
     return jobMatches || hblMatches || containerMatches;
   });
+  const matchedJobIds = new Set(matchedJobs.map(job => String(job.id || "")));
+  const selectedAirWaybills = visibleAirWaybills.filter(row =>
+    normalize(row.hawb_no) === reference || normalize(row.mawb_no) === reference || matchedJobIds.has(String(row.job_id || ""))
+  );
+  const selectedAirIds = selectedAirWaybills.map(row => String(row.id || "")).filter(Boolean);
+  let airWaybillEvents: Record<string, unknown>[] = [];
+  for (let offset = 0; offset < selectedAirIds.length; offset += 200) {
+    const idBatch = selectedAirIds.slice(offset, offset + 200);
+    const { data, error } = await admin.from("air_waybill_events")
+      .select("air_waybill_id,event_code,event_name,location,event_at,customer_visible")
+      .in("air_waybill_id", idBatch).eq("customer_visible", true)
+      .order("event_at", { ascending: true }).limit(10000);
+    if (error || !Array.isArray(data)) return reply(503, { error: "Tracking service is temporarily unavailable." }, origin);
+    airWaybillEvents.push(...data as Record<string, unknown>[]);
+  }
+  const airEventsByWaybill = new Map<string, Record<string, unknown>[]>();
+  for (const event of airWaybillEvents) {
+    const key = String(event.air_waybill_id || "");
+    const group = airEventsByWaybill.get(key) || [];
+    group.push(event);
+    airEventsByWaybill.set(key, group);
+  }
+  const jobsById = new Map((visibleJobs as Record<string, unknown>[]).map(job => [String(job.id || ""), job]));
+  const airResults = selectedAirWaybills.map(waybill => {
+    const job = jobsById.get(String(waybill.job_id || ""));
+    if (!job) return null;
+    return safeAirWaybill(waybill, job, airEventsByWaybill.get(String(waybill.id || "")) || []);
+  }).filter((item): item is NonNullable<typeof item> => item !== null);
   const jobResults: ReturnType<typeof safeForwardingJob>[] = [];
   for (const job of matchedJobs) {
     const visibleJobHbls = visibleHbls.filter(h => String(h.job_id) === String(job.id));
@@ -290,12 +384,26 @@ Deno.serve(async (req: Request) => {
       const events = (eventsByJob.get(String(job.id)) || []).filter(event =>
         (!String(event.container_no || "").trim() || !containerNo || normalize(event.container_no) === normalize(containerNo))
       );
-      jobResults.push(safeForwardingJob(job, containerNo, events, displayHbl));
+      const shipment = safeForwardingJob(job, containerNo, events, displayHbl);
+      const photoEvents = events.filter(event => typeof event.photo_path === "string" && event.photo_path);
+      const photos = await Promise.all(photoEvents.slice(0, 8).map(async event => {
+        const { data: signed } = await admin.storage.from(PHOTO_BUCKET)
+          .createSignedUrl(String(event.photo_path), 600);
+        if (!signed?.signedUrl) return null;
+        return {
+          url: signed.signedUrl,
+          milestone: field(event, ["milestone_name"]) || String(event.milestone_code || "Shipment update").replace(/_/g, " "),
+          caption: field(event, ["milestone_name"]) || "Shipment status photo",
+          createdAt: field(event, ["actual_at"]) || field(event, ["created_at"]),
+        };
+      }));
+      shipment.photos = photos.filter((photo): photo is NonNullable<typeof photo> => photo !== null);
+      jobResults.push(shipment);
     }
   }
 
-  const totalMatches = matches.length + jobResults.length;
-  const results = [...jobResults, ...matches.map(safeShipment)].slice(0, 12);
+  const totalMatches = matches.length + jobResults.length + airResults.length;
+  const results = [...airResults, ...jobResults, ...matches.map(safeShipment)].slice(0, 12);
   if (results.length) {
     const containerNumbers = Array.from(new Set(results.map(item => normalize(item.container)).filter(Boolean)));
     if (containerNumbers.length) {
@@ -325,7 +433,7 @@ Deno.serve(async (req: Request) => {
       }
     }
   }
-  const updateCandidates = [source.updated_at, ...matchedJobs.map(job => job.updated_at)]
+  const updateCandidates = [source.updated_at, ...matchedJobs.map(job => job.updated_at), ...selectedAirWaybills.map(waybill => waybill.updated_at)]
     .filter(value => typeof value === "string" && Number.isFinite(Date.parse(value as string)));
   const sourceUpdatedAt = updateCandidates.length
     ? updateCandidates.sort((a, b) => Date.parse(String(b)) - Date.parse(String(a)))[0]
