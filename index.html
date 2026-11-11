@@ -1478,9 +1478,9 @@ function printFreightQuote(quoteId){
   const doc='<!doctype html><html><head><meta charset="utf-8"><title>Freight quotation '+esc(q.quote_no||"draft")+'</title><style>body{font:13px Arial;margin:35px;color:#203b4d}header{display:flex;justify-content:space-between;border-bottom:3px solid #163f59;padding-bottom:16px}h1{font-size:24px;margin:4px 0}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{border:1px solid #cad6dd;padding:9px;text-align:left}th{background:#eef3f6}aside{margin:22px 0;padding:14px;background:#f5f8fa}.total{font-weight:bold;font-size:18px;text-align:right;margin-top:18px}.muted{color:#708494}@media print{button{display:none}}</style></head><body><header><div><div class="muted">FREIGHT OPERATIONS · QUOTATION</div><h1>'+esc(q.quote_no||"DRAFT QUOTATION")+'</h1><div>'+esc(q.status.toUpperCase())+' · Valid until '+esc(fmt(q.valid_until))+'</div></div><div>Prepared for<br><b>'+esc(customer?.legal_name||enq.company_name||"Prospect")+'</b><br>'+esc(enq.contact_name||"")+'<br>'+esc(enq.email||"")+'</div></header><aside><b>'+esc(enq.service_type)+" · "+esc(enq.direction.replaceAll("_"," "))+'</b><br>'+esc(enq.origin||"—")+' → '+esc(enq.destination||"—")+'<br>'+esc(enq.commodity||"")+'<br><span class="muted">FX: 1 '+esc(q.currency)+' = '+esc(q.exchange_rate_to_inr)+' INR · '+esc(q.fx_rate_source||"manual")+')</span></aside><table><thead><tr><th>Code</th><th>Description</th><th>Quantity</th><th>Unit rate</th><th>GST</th><th>Line total</th></tr></thead><tbody>'+rows+'</tbody></table><div class="total">Subtotal: '+esc(q.currency)+' '+money2(q.subtotal)+'<br>GST: '+esc(q.currency)+' '+money2(q.tax_total)+'<br>Total: '+esc(q.currency)+' '+money2(q.total_amount)+'<br><small>INR reference: '+money2(q.total_inr)+'</small></div><aside><b>Commercial terms</b><br>'+esc(q.terms||"As agreed")+'</aside><p class="muted">Quotation only. Taxes and final charges are subject to applicable laws, shipment details and confirmation.</p><script>window.onload=()=>window.print()<\/script></body></html>';
   const win=window.open("","_blank","width=1100,height=850");if(!win)return notify("Allow pop-ups to print this quote.","error");win.document.write(doc);win.document.close();
 }
-function newCustomer(customerId=""){
+function newCustomer(customerId="",seed={}){
   if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can manage customer accounts.","error");
-  const c=state.ops.customers.find(x=>x.id===customerId)||{};
+  const c=state.ops.customers.find(x=>x.id===customerId)||seed||{};
   const defs=[
     {name:"customer_code",label:"Account code",value:c.customer_code||""},
     {name:"legal_name",label:"Legal / company name",value:c.legal_name||"",required:true},
@@ -1498,8 +1498,38 @@ function newCustomer(customerId=""){
   ];
   openForm(customerId?"Edit customer account":"Create customer account",defs,async fd=>{
     const data=Object.fromEntries(fd.entries());if(customerId)data.id=customerId;
-    await call("logistics-workspace",{action:"upsertCustomer",data});
-    await loadInvoices(true);closeForm();render();notify(customerId?"Customer account updated":"Customer account created","success");
+    const saved=await call("logistics-workspace",{action:"upsertCustomer",data});
+    let linkError="";
+    if(seed.enquiryId&&saved.record?.id){
+      try{await call("logistics-workspace",{action:"linkSalesEnquiryCustomer",id:seed.enquiryId,customer_id:saved.record.id})}
+      catch(e){linkError=e.message||"The customer account was created, but the enquiry link could not be saved."}
+    }
+    await loadInvoices(true);
+    if(seed.enquiryId)await loadSales(true);
+    closeForm();render();
+    notify(linkError?"Customer account created. "+linkError:customerId?"Customer account updated":"Customer account created",linkError?"error":"success");
+  });
+}
+function createCustomerFromEnquiry(enquiryId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can create customer accounts.","error");
+  const enquiry=(state.ops.enquiries||[]).find(x=>x.id===enquiryId);
+  if(!enquiry)return notify("Sales enquiry not found. Refresh the sales workspace and try again.","error");
+  if(enquiry.customer_id)return notify("This enquiry already has a linked customer account.","error");
+  const company=enquiry.company_name||"";
+  newCustomer("",{legal_name:company,display_name:company,contact_name:enquiry.contact_name||"",email:enquiry.email||"",phone:enquiry.phone||"",enquiryId:enquiry.id});
+}
+function linkExistingCustomerToEnquiry(enquiryId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can link customer accounts.","error");
+  const enquiry=(state.ops.enquiries||[]).find(x=>x.id===enquiryId);
+  if(!enquiry)return notify("Sales enquiry not found. Refresh the sales workspace and try again.","error");
+  if(enquiry.customer_id)return notify("This enquiry already has a linked customer account.","error");
+  const options=customerOptions();
+  if(options.length===1)return notify("Create a customer account first, then link it here.","error");
+  openForm("Link enquiry to customer account",[{name:"customer_id",label:"Active customer account",options,value:"",required:true}],async fd=>{
+    const customerId=String(fd.get("customer_id")||"");
+    if(!customerId)throw new Error("Select a customer account.");
+    await call("logistics-workspace",{action:"linkSalesEnquiryCustomer",id:enquiry.id,customer_id:customerId});
+    await loadSales(true);closeForm();render();notify("Customer account linked to "+enquiry.enquiry_no,"success");
   });
 }
 function openCustomerDirectory(customerId){
@@ -2128,7 +2158,8 @@ function renderSales(){
     const current=related[0];
     const quoteSummary=current?(esc(current.quote_no||"Draft quote")+" · "+esc(current.status)+" · "+esc(current.currency||"INR")+" "+money2(current.total_amount)):"No quote yet";
     const action=actionBtn("new-quote","Create quote",'data-id="'+esc(enq.id)+'"');
-    return'<tr><td><b>'+esc(enq.enquiry_no)+'</b><div class="cell-sub">'+esc(enq.contact_name||enq.email||"")+'</div></td><td>'+esc(account?.legal_name||enq.company_name||"Prospect")+'</td><td>'+esc(enq.origin||"—")+' → '+esc(enq.destination||"—")+'<div class="cell-sub">'+esc(enq.service_type)+" · "+esc(enq.direction.replaceAll("_"," "))+'</div></td><td>'+pill(enq.status||"new")+'</td><td>'+esc(fmt(enq.follow_up_date))+'</td><td>'+quoteSummary+'<div class="cell-sub">'+related.length+' quote(s)</div></td><td>'+actionBtn("edit-enquiry","Edit",'data-id="'+esc(enq.id)+'"')+action+'</td></tr>';
+    const accountActions=enq.customer_id?"":actionBtn("create-customer-from-enquiry","Create customer",'data-id="'+esc(enq.id)+'"')+actionBtn("link-customer-to-enquiry","Link account",'data-id="'+esc(enq.id)+'"');
+    return'<tr><td><b>'+esc(enq.enquiry_no)+'</b><div class="cell-sub">'+esc(enq.contact_name||enq.email||"")+'</div></td><td>'+esc(account?.legal_name||enq.company_name||"Prospect")+'</td><td>'+esc(enq.origin||"—")+' → '+esc(enq.destination||"—")+'<div class="cell-sub">'+esc(enq.service_type)+" · "+esc(enq.direction.replaceAll("_"," "))+'</div></td><td>'+pill(enq.status||"new")+'</td><td>'+esc(fmt(enq.follow_up_date))+'</td><td>'+quoteSummary+'<div class="cell-sub">'+related.length+' quote(s)</div></td><td>'+actionBtn("edit-enquiry","Edit",'data-id="'+esc(enq.id)+'"')+action+accountActions+'</td></tr>';
   });
   const quoteRows=quotes.map(q=>{
     const enq=enquiries.find(x=>x.id===q.enquiry_id)||{};
@@ -3319,6 +3350,8 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="dismiss-customer-portal-link"){state.ops.oneTimePortalLink="";render()}
       if(act==="revoke-customer-portal-token")revokeCustomerPortalLink(id);
       if(act==="edit-enquiry")newSalesEnquiry(id);
+      if(act==="create-customer-from-enquiry")createCustomerFromEnquiry(id);
+      if(act==="link-customer-to-enquiry")linkExistingCustomerToEnquiry(id);
       if(act==="new-quote")newFreightQuote("",id);
       if(act==="edit-quote")newFreightQuote(id);
       if(act==="issue-quote")issueFreightQuote(id);
