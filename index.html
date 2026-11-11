@@ -763,11 +763,12 @@ function airWeight(value){
 }
 function renderAirWaybillPane(jobId){
   const waybills=(state.ops.airWaybills||[]).filter(x=>x.job_id===jobId);
-  const canManage=access(["Admin","Editor","Operator"]);
+  const canManage=access(["Admin","Editor","Operator"]),published=state.ops.jobs.find(j=>j.id===jobId)?.customer_visible===true;
   const rows=waybills.map(w=>{
     const actions=actionBtn("print-air-waybill","Print / preview",'data-id="'+esc(w.id)+'"')+
       (w.hawb_status==="draft"&&canManage?actionBtn("edit-air-waybill","Edit draft",'data-id="'+esc(w.id)+'"')+actionBtn("issue-air-waybill","Issue HAWB",'data-id="'+esc(w.id)+'"')+actionBtn("delete-air-waybill","Delete draft",'data-id="'+esc(w.id)+'"'):"")+
-      (canManage?actionBtn("add-air-waybill-event","Add event",'data-id="'+esc(w.id)+'"'):"");
+      (canManage?actionBtn("add-air-waybill-event","Add event",'data-id="'+esc(w.id)+'"'):"")+
+      (canManage&&published&&w.hawb_status==="issued"&&w.customer_visible?actionBtn("copy-air-track-link","Copy customer link",'data-id="'+esc(w.id)+'"'):"");
     return '<tr><td><b>'+esc(w.hawb_no)+'</b><span class="cell-sub">MAWB · '+esc(w.mawb_no||"—")+'</span></td><td>'+esc(w.airline||"—")+'<span class="cell-sub">'+esc(w.flight_no||"")+'</span></td><td>'+esc(w.origin_airport)+' → '+esc(w.destination_airport)+'</td><td>'+num(w.pieces)+' '+esc(w.package_type||"")+'</td><td>'+airWeight(w.gross_weight_kg)+' kg<span class="cell-sub">'+airWeight(w.volume_cbm)+' cbm · chargeable '+airWeight(w.chargeable_weight_kg)+' kg</span></td><td>'+fmt(w.etd)+' / '+fmt(w.eta)+'</td><td>'+pill(w.status.replaceAll("_"," "))+'<span class="cell-sub">'+pill(w.hawb_status)+'</span></td><td>'+actions+'</td></tr>';
   });
   const ids=new Set(waybills.map(w=>w.id));
@@ -778,7 +779,7 @@ function renderAirWaybillPane(jobId){
   });
   const content=state.ops.airWaybillsLoading?'<div class="empty">Loading air waybills…</div>':state.ops.airWaybillsError?'<div class="empty">'+esc(state.ops.airWaybillsError)+' '+actionBtn("retry-air-waybills","Retry")+'</div>':table(["HAWB / MAWB","AIRLINE / FLIGHT","AIRPORT ROUTE","PACKAGES","WEIGHT / VOLUME","ETD / ETA","STATUS","ACTIONS"],rows,"No house air waybills recorded for this job.");
   const eventTable=table(["DATE / TIME","HAWB","EVENT","LOCATION","NOTES","VISIBILITY"],eventRows,"No air shipment events recorded.");
-  return pane("AIR FREIGHT · HOUSE AIR WAYBILLS",'<div class="ar-toolbar"><span class="desc">Air waybill details, airline routing, chargeable weight and manually recorded events. No live airline tracking or customer portal sync is provided.</span>'+(canManage?'<button class="btn primary small" data-action="new-air-waybill" data-job-id="'+esc(jobId)+'">＋ New HAWB</button>':"")+'</div>'+content+'<div class="pane-head"><span class="pane-title">AIR SHIPMENT EVENT TIMELINE</span><span class="pane-sub">'+events.length+' events</span></div>'+eventTable);
+  return pane("AIR FREIGHT · HOUSE AIR WAYBILLS",'<div class="ar-toolbar"><span class="desc">Air waybill details, airline routing, chargeable weight and manually recorded events. Live airline data is not connected. Issued HAWBs marked for customer sharing appear in the tracking portal when the job is published.</span>'+(canManage?'<button class="btn primary small" data-action="new-air-waybill" data-job-id="'+esc(jobId)+'">＋ New HAWB</button>':"")+'</div>'+content+'<div class="pane-head"><span class="pane-title">AIR SHIPMENT EVENT TIMELINE</span><span class="pane-sub">'+events.length+' events</span></div>'+eventTable);
 }
 function newAirWaybill(jobId="",waybillId=""){
   if(!access(["Admin","Editor","Operator"]))return notify("Your role cannot manage air waybills.","error");
@@ -833,6 +834,17 @@ function addAirWaybillEvent(waybillId){
     await call("logistics-workspace",{action:"addAirWaybillEvent",data});
     await loadAirWaybills(true);closeForm();render();notify("Air shipment event recorded","success");
   });
+}
+async function copyAirTrackingLink(waybillId){
+  const w=(state.ops.airWaybills||[]).find(x=>x.id===waybillId);
+  const job=w&&state.ops.jobs.find(x=>x.id===w.job_id);
+  if(!w||!job||w.hawb_status!=="issued"||!w.customer_visible||!job.customer_visible)return notify("Publish the job and approve the issued HAWB for customer sharing first.","error");
+  const url=new URL("./track.html",location.href);url.searchParams.set("reference",w.hawb_no);
+  try{
+    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(url.toString());
+    else{const area=document.createElement("textarea");area.value=url.toString();area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);area.select();const ok=document.execCommand("copy");area.remove();if(!ok)throw new Error("Clipboard access is unavailable.");}
+    notify("Customer tracking link copied","success");
+  }catch(e){notify(e.message||"Could not copy the customer tracking link.","error")}
 }
 function printAirWaybill(waybillId){
   const current=(state.ops.airWaybills||[]).find(x=>x.id===waybillId);if(!current)return notify("Air waybill not found.","error");
@@ -2912,6 +2924,7 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
         try{await call("logistics-workspace",{action:"deleteDraftAirWaybill",id});await loadAirWaybills(true);render();notify("Draft HAWB deleted","success")}catch(e){notify(e.message||"Could not delete HAWB draft.","error")}
       }
       if(act==="print-air-waybill")printAirWaybill(id);
+      if(act==="copy-air-track-link")copyAirTrackingLink(id);
       if(act==="add-air-waybill-event")addAirWaybillEvent(id);
       if(act==="retry-air-waybills")loadAirWaybills(true);
       if(act==="new-bank-account")newBankAccount();
