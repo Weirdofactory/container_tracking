@@ -1406,7 +1406,7 @@ function newCustomer(customerId=""){
     {name:"city",label:"City",value:c.city||""},{name:"state",label:"State / province",value:c.state||""},
     {name:"state_code",label:"GST state code",value:c.state_code||""},{name:"postal_code",label:"Postal code",value:c.postal_code||""},
     {name:"country",label:"Country",value:c.country||"India"},
-    {name:"email",label:"Accounts email",type:"email",value:c.email||""},{name:"phone",label:"Phone",value:c.phone||""},
+    {name:"contact_name",label:"Primary contact name",value:c.contact_name||""},{name:"email",label:"Accounts email",type:"email",value:c.email||""},{name:"phone",label:"Phone",value:c.phone||""},
     {name:"default_currency",label:"Default invoice currency",value:c.default_currency||"INR",required:true},
     {name:"payment_terms",label:"Payment terms",value:c.payment_terms||"Due within 30 days"},
     {name:"credit_limit_inr",label:"Credit limit (INR)",type:"number",step:"0.01",value:c.credit_limit_inr||"0"},
@@ -1535,14 +1535,14 @@ function recordInvoicePayment(invoiceId){
 function renderReceivables(){
   const asOf=state.financeAsOf||new Date().toISOString().slice(0,10);
   const customerSearch=String(state.customerSearch||"").toLowerCase();
-  const customers=(state.ops.customers||[]).filter(c=>[c.customer_code,c.legal_name,c.display_name,c.gstin,c.email].join(" ").toLowerCase().includes(customerSearch));
+  const customers=(state.ops.customers||[]).filter(c=>[c.customer_code,c.legal_name,c.display_name,c.contact_name,c.gstin,c.email,c.phone].join(" ").toLowerCase().includes(customerSearch));
   const customerRows=customers.map(c=>{
     const jobs=state.ops.jobs.filter(j=>j.customer_id===c.id).length;
     const invoices=state.ops.invoices.filter(i=>i.customer_id===c.id&&i.status==="issued"&&String(i.invoice_date||"").slice(0,10)<=asOf);
     const openInr=invoices.reduce((sum,i)=>sum+invoiceLedgerAt(i,asOf).balanceInr,0);
     const action=actionBtn("edit-customer","Edit",'data-id="'+esc(c.id)+'"')+
       '<button class="btn small" data-action="toggle-customer" data-id="'+esc(c.id)+'" data-active="'+String(!c.is_active)+'">'+(c.is_active?"Deactivate":"Reactivate")+'</button>';
-    return '<tr><td><b>'+esc(c.customer_code)+'</b><span class="cell-sub">'+esc(c.display_name||"")+'</span></td><td>'+esc(c.legal_name)+'</td><td>'+esc(c.gstin||"—")+'</td><td>'+esc(c.email||"—")+'<span class="cell-sub">'+esc(c.phone||"")+'</span></td><td>'+jobs+'</td><td>'+invoices.length+'</td><td>INR '+num(openInr)+'</td><td>'+pill(c.is_active?"Active":"Inactive")+'</td><td>'+action+'</td></tr>';
+    return '<tr><td><b>'+esc(c.customer_code)+'</b><span class="cell-sub">'+esc(c.display_name||"")+'</span></td><td>'+esc(c.legal_name)+'</td><td>'+esc(c.gstin||"—")+'</td><td><b>'+esc(c.contact_name||"—")+'</b><span class="cell-sub">'+esc(c.email||"—")+'</span><span class="cell-sub">'+esc(c.phone||"")+'</span></td><td>'+jobs+'</td><td>'+invoices.length+'</td><td>INR '+num(openInr)+'</td><td>'+pill(c.is_active?"Active":"Inactive")+'</td><td>'+action+'</td></tr>';
   });
   const report=(state.ops.invoices||[]).filter(inv=>inv.status==="issued"&&(!state.arCustomerFilter||inv.customer_id===state.arCustomerFilter)).map(inv=>{
     if(String(inv.invoice_date||"").slice(0,10)>asOf)return null;
@@ -1553,7 +1553,7 @@ function renderReceivables(){
   }).filter(Boolean);
   const kpis={"Not due":0,"1–30 days":0,"31–60 days":0,"61–90 days":0,"90+ days":0};
   report.forEach(row=>kpis[row.bucket]+=row.ledger.balanceInr);
-  const reportRows=report.map(({inv,ledger,due,days,bucket})=>'<tr><td><b>'+esc(state.ops.customers.find(c=>c.id===inv.customer_id)?.legal_name||inv.buyer?.name||"—")+'</b></td><td><b>'+esc(inv.invoice_number)+'</b><span class="cell-sub">'+esc(inv.job_id?state.ops.jobs.find(j=>j.id===inv.job_id)?.job_no||"":"")+'</span></td><td>'+fmt(inv.invoice_date)+'</td><td>'+fmt(due)+'</td><td>'+esc(bucket)+(days>0?' · '+days+'d overdue':"")+'</td><td>'+esc(inv.currency)+' '+num(inv.total)+'</td><td>'+esc(inv.currency)+' '+num(ledger.credited)+'</td><td>'+esc(inv.currency)+' '+num(ledger.received)+'</td><td><b>'+esc(inv.currency)+' '+num(ledger.balance)+'</b><span class="cell-sub">INR '+num(ledger.balanceInr)+'</span></td><td>'+actionBtn("record-payment","Record receipt",'data-id="'+esc(inv.id)+'"')+actionBtn("credit-invoice","Credit note",'data-id="'+esc(inv.id)+'"')+'</td></tr>');
+  const reportRows=report.map(({inv,ledger,due,days,bucket})=>'<tr><td><b>'+esc(state.ops.customers.find(c=>c.id===inv.customer_id)?.legal_name||inv.buyer?.name||"—")+'</b></td><td><b>'+esc(inv.invoice_number)+'</b><span class="cell-sub">'+esc(inv.job_id?state.ops.jobs.find(j=>j.id===inv.job_id)?.job_no||"":"")+'</span></td><td>'+fmt(inv.invoice_date)+'</td><td>'+fmt(due)+'</td><td>'+esc(bucket)+(days>0?' · '+days+'d overdue':"")+'</td><td>'+esc(inv.currency)+' '+num(inv.total)+'</td><td>'+esc(inv.currency)+' '+num(ledger.credited)+'</td><td>'+esc(inv.currency)+' '+num(ledger.received)+'</td><td><b>'+esc(inv.currency)+' '+num(ledger.balance)+'</b><span class="cell-sub">INR '+num(ledger.balanceInr)+'</span></td><td>'+actionBtn("record-payment","Record receipt",'data-id="'+esc(inv.id)+'"')+actionBtn("credit-invoice","Credit note",'data-id="'+esc(inv.id)+'" title="Create a partial or full credit note against this invoice"')+'</td></tr>');
   const filteredOpen=report.reduce((sum,row)=>sum+row.ledger.balanceInr,0);
   const creditRows=(state.ops.creditNotes||[]).slice().sort((a,b)=>String(b.credit_date).localeCompare(String(a.credit_date))).map(n=>{
     const inv=state.ops.invoices.find(x=>x.id===n.invoice_id);
@@ -1566,9 +1566,9 @@ function renderReceivables(){
   });
   const options=[["","All customer accounts"],...state.ops.customers.filter(c=>c.is_active).map(c=>[c.id,c.legal_name])];
   const select=options.map(o=>'<option value="'+esc(o[0])+'" '+(o[0]===state.arCustomerFilter?"selected":"")+'>'+esc(o[1])+'</option>').join("");
-  const controls='<div class="ar-toolbar"><label>From <input id="arFromDate" type="date" value="'+esc(state.financeFrom||defaultFinanceFrom())+'"></label><label>As of <input id="arAsOf" type="date" value="'+esc(asOf)+'"></label><label>Customer <select id="arCustomerFilter">'+select+'</select></label><span class="desc">'+report.length+' open invoices · INR '+num(filteredOpen)+'</span><button class="btn small" data-action="outstanding-reminder" '+(state.arCustomerFilter?'':'disabled')+'>Draft reminder email</button><button class="btn small" data-action="outstanding-statement" '+(state.arCustomerFilter?'':'disabled')+'>Outstanding statement</button><button class="btn small" data-action="customer-ledger-statement" '+(state.arCustomerFilter?'':'disabled')+'>Generate account statement</button><button class="btn small" data-action="export-customer-ledger" '+(state.arCustomerFilter?'':'disabled')+'>Export account CSV</button><button class="btn small" data-action="export-ar">Export CSV</button><button class="btn small" data-action="print-ar">Print ageing</button></div>';
+  const controls='<div class="ar-toolbar"><label>From <input id="arFromDate" type="date" value="'+esc(state.financeFrom||defaultFinanceFrom())+'"></label><label>As of <input id="arAsOf" type="date" value="'+esc(asOf)+'"></label><label>Customer <select id="arCustomerFilter">'+select+'</select></label><span class="desc">'+report.length+' open invoices · INR '+num(filteredOpen)+'</span><button class="btn small" data-action="outstanding-reminder" '+(state.arCustomerFilter?'':'disabled')+'>Draft reminder email</button><button class="btn small" data-action="outstanding-statement" '+(state.arCustomerFilter?'':'disabled')+'>Outstanding statement</button><button class="btn small" data-action="customer-ledger-statement" '+(state.arCustomerFilter?'':'disabled')+'>Generate account statement</button><button class="btn small" data-action="export-customer-ledger" '+(state.arCustomerFilter?'':'disabled')+'>Export account CSV</button></div>';
   const reportTable=table(["CUSTOMER","INVOICE / JOB","INVOICE DATE","DUE DATE","AGEING","INVOICE TOTAL","CREDIT NOTES","RECEIPTS","OPEN BALANCE","ACTIONS"],reportRows,"No outstanding invoices match this report.");
-  return pageHead("receivables",'<button class="btn" data-nav="finance">Accounting & charges</button><button class="btn primary" data-create="customer">＋ New customer</button>')+
+  return pageHead("receivables",'<button class="btn" data-nav="finance">Accounting & charges</button><button class="btn" data-create="customer">＋ New customer</button><button class="btn" data-action="export-ar">Export outstanding CSV</button><button class="btn primary" data-action="print-ar">Generate outstanding report</button>')+
     '<div class="stats">'+stat("Receivables · INR","INR "+num(filteredOpen),"As of "+fmt(asOf))+stat("Not due","INR "+num(kpis["Not due"]),"Within payment terms")+stat("1–30 days","INR "+num(kpis["1–30 days"]),"Past due")+stat("31–60 days","INR "+num(kpis["31–60 days"]),"Past due")+stat("60+ days","INR "+num(kpis["61–90 days"]+kpis["90+ days"]),"Collection follow-up")+'</div>'+
     '<div class="pane ar-pane"><div class="pane-head"><span class="pane-title">ACCOUNTS RECEIVABLE · AGEING</span><span class="pane-sub">Open invoice balances net of receipts and issued credit notes</span></div>'+controls+reportTable+'</div><div style="height:9px"></div>'+
     pane("CUSTOMER ACCOUNTS",'<div class="ar-toolbar"><input id="customerSearch" type="search" placeholder="Find account, GSTIN or contact" value="'+esc(state.customerSearch||"")+'"><span class="desc">'+state.ops.customers.length+' accounts</span></div>'+table(["ACCOUNT CODE","CUSTOMER","GSTIN","CONTACT","JOBS","ISSUED INVOICES","OPEN INR","STATUS","ACTIONS"],customerRows,"No customer accounts yet. Add a customer to reuse its bill-to and tax details on jobs and invoices."))+
@@ -2080,7 +2080,7 @@ function renderFinance(){
     const ref=inv.invoice_number||("Draft · "+String(inv.id||"").slice(0,8).toUpperCase());
     const actions=inv.status==="draft"
       ?actionBtn("print-invoice","Print",'data-id="'+esc(inv.id)+'"')+actionBtn("edit-invoice","Edit",'data-id="'+esc(inv.id)+'"')+actionBtn("issue-invoice","Issue",'data-id="'+esc(inv.id)+'"')+actionBtn("delete-invoice","Delete draft",'data-id="'+esc(inv.id)+'"')
-      :actionBtn("print-invoice","Print",'data-id="'+esc(inv.id)+'"')+actionBtn("credit-invoice","Credit note",'data-id="'+esc(inv.id)+'"')+(ledger.balance>0.005?actionBtn("record-payment","Record receipt",'data-id="'+esc(inv.id)+'"'):"");
+      :actionBtn("print-invoice","Print",'data-id="'+esc(inv.id)+'"')+actionBtn("credit-invoice","Credit note",'data-id="'+esc(inv.id)+'" title="Create a partial or full credit note against this invoice"')+(ledger.balance>0.005?actionBtn("record-payment","Record receipt",'data-id="'+esc(inv.id)+'"'):"");
     return '<tr><td><b>'+esc(ref)+'</b><span class="cell-sub">'+esc(inv.invoice_type?.replace(/_/g," ")||"Invoice")+'</span></td><td>'+job+'<span class="cell-sub">'+esc(j?.hbl_no||"")+'</span></td><td>'+esc(inv.buyer?.name||"—")+'</td><td>'+fmt(inv.invoice_date)+'</td><td>'+esc(inv.currency||"INR")+' '+num(inv.total)+'<span class="cell-sub">INR '+num(inv.total_inr)+'</span></td><td>'+esc(inv.currency||"INR")+' '+num(ledger.balance)+'<span class="cell-sub">INR '+num(ledger.balanceInr)+'</span></td><td>'+status+'</td><td>'+actions+'</td></tr>';
   });
   const invoiceTable=state.ops.invoicesLoading?'<div class="empty">Loading invoice register…</div>':
@@ -2099,7 +2099,7 @@ function renderFinance(){
   const cost=approved.filter(x=>x.direction==="cost").reduce((n,x)=>n+Number(x.amount_inr??x.amount??0),0);
   const revenue=approved.filter(x=>x.direction==="revenue").reduce((n,x)=>n+Number(x.amount_inr??x.amount??0),0);
   const unmapped=state.ops.charges.filter(x=>!resolveJob(x.job_id,x.container_no)).length;
-  return pageHead("finance",'<button class="btn" data-nav="receivables">Customers & receivables</button><button class="btn primary" data-create="invoice">Raise invoice</button><button class="btn" data-create="charge">New charge</button>')+
+  return pageHead("finance",'<button class="btn" data-nav="receivables">Outstanding & customers</button><button class="btn" data-create="customer">＋ New customer</button><button class="btn primary" data-create="invoice">Raise invoice</button><button class="btn" data-create="charge">New charge</button>')+
   '<div class="stats">'+stat("Invoices",(state.ops.invoices||[]).length,"Drafts and issued")+stat("Customers",state.ops.customers.length,"Customer accounts")+stat("Open receivables","INR "+num(open),"After receipts and credit notes")+stat("Overdue invoices",overdue,"Need collection follow-up")+'</div>'+
   pane("CUSTOMER INVOICE REGISTER",invoiceTable,null,"Issued invoices are locked; use a credit note to reduce or reverse them. Draft invoices can be deleted.")+
   '<div style="height:9px"></div>'+
