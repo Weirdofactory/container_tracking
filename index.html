@@ -2419,7 +2419,7 @@ function newLedgerAccount(){
     closeForm();await loadFinanceLedger(true);render();notify("Ledger account created","success");
   });
 }
-function renderFinanceLedger()
+function renderFinanceLedger(){
   const today=state.ledgerAsOf||new Date().toISOString().slice(0,10);
   const start=state.ledgerFrom||ledgerFiscalStart(today);
   const summary=state.ops.ledgerSummary||[],entries=state.ops.ledgerEntries||[],lines=state.ops.ledgerLines||[];
