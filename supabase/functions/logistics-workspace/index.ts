@@ -1818,16 +1818,17 @@ Deno.serve(async (req: Request) => {
 
     if (action === "listInvoices") {
       roleCheck(profile.role, "finance");
-      const [invoiceResult, settingsResult, customerResult, creditResult, paymentResult, chargeLinkResult] = await Promise.all([
+      const [invoiceResult, settingsResult, customerResult, creditResult, paymentResult, refundResult, chargeLinkResult] = await Promise.all([
         admin.from("shipment_invoices").select("*").order("updated_at", { ascending: false }).limit(1000),
         admin.from("shipment_invoice_settings").select("data").eq("id", "default").maybeSingle(),
         admin.from("customer_accounts").select("*").order("legal_name", { ascending: true }).limit(2500),
         admin.from("shipment_credit_notes").select("*").order("created_at", { ascending: false }).limit(2500),
         admin.from("shipment_invoice_payments").select("*").order("received_at", { ascending: false }).limit(5000),
+        admin.from("shipment_invoice_refunds").select("*").order("refunded_at", { ascending: false }).limit(5000),
         admin.from("shipment_invoice_charge_links").select("charge_id,invoice_id").limit(10000),
       ]);
-      if (invoiceResult.error || settingsResult.error || customerResult.error || creditResult.error || paymentResult.error || chargeLinkResult.error) throw new Error("Invoice, customer, receivables and source-charge links could not be loaded.");
-      return reply(200, { invoices: invoiceResult.data ?? [], settings: settingsResult.data?.data ?? {}, customers: customerResult.data ?? [], creditNotes: creditResult.data ?? [], payments: paymentResult.data ?? [], chargeLinks: chargeLinkResult.data ?? [] }, origin);
+      if (invoiceResult.error || settingsResult.error || customerResult.error || creditResult.error || paymentResult.error || refundResult.error || chargeLinkResult.error) throw new Error("Invoice, customer, receivables, refunds and source-charge links could not be loaded.");
+      return reply(200, { invoices: invoiceResult.data ?? [], settings: settingsResult.data?.data ?? {}, customers: customerResult.data ?? [], creditNotes: creditResult.data ?? [], payments: paymentResult.data ?? [], refunds: refundResult.data ?? [], chargeLinks: chargeLinkResult.data ?? [] }, origin);
     }
 
     if (action === "upsertInvoice") {
@@ -2101,19 +2102,17 @@ Deno.serve(async (req: Request) => {
       const total = round2(taxableValue + (reverseCharge ? 0 : totalTax) + adjustment);
       if (!(total > 0)) throw new Error("Credit-note total must be greater than zero.");
       if (d.save_status === "issue") {
-        const [issuedNotesResult, paymentsResult] = await Promise.all([
-          admin.from("shipment_credit_notes").select("total,total_inr").eq("invoice_id", invoiceId).eq("status", "issued"),
-          admin.from("shipment_invoice_payments").select("amount_inr").eq("invoice_id", invoiceId),
+        const [issuedNotesResult, paymentsResult, refundsResult] = await Promise.all([
+          admin.from("shipment_credit_notes").select("total").eq("invoice_id", invoiceId).eq("status", "issued"),
+          admin.from("shipment_invoice_payments").select("amount").eq("invoice_id", invoiceId),
+          admin.from("shipment_invoice_refunds").select("amount").eq("invoice_id", invoiceId),
         ]);
-        if (issuedNotesResult.error || paymentsResult.error) throw new Error("Could not verify the invoice's remaining creditable balance.");
-        const invoiceRate = Number(invoice.exchange_rate_to_inr || 1);
-        const invoiceInr = Number(invoice.total_inr ?? Number(invoice.total || 0) * invoiceRate);
-        const alreadyCreditedInr = (issuedNotesResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) =>
-          sum + Number(item.total_inr ?? Number(item.total || 0) * invoiceRate), 0);
-        const receivedInr = (paymentsResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.amount_inr || 0), 0);
-        const newCreditInr = round2(total * invoiceRate);
-        if (alreadyCreditedInr + receivedInr + newCreditInr > invoiceInr + 0.005) {
-          throw new Error("Credit note plus recorded receipts cannot exceed the invoice total. A customer credit or refund workflow is required for any excess.");
+        if (issuedNotesResult.error || paymentsResult.error || refundsResult.error) throw new Error("Could not verify the invoice's remaining creditable balance.");
+        const alreadyCredited = (issuedNotesResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.total || 0), 0);
+        const received = (paymentsResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.amount || 0), 0);
+        const refunded = (refundsResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.amount || 0), 0);
+        if (alreadyCredited + received - refunded + total > Number(invoice.total || 0) + 0.005) {
+          throw new Error("Credit notes plus net receipts cannot exceed the invoice total. Record the cash refund first, then issue the matching credit note.");
         }
       }
       const row = {
@@ -2152,19 +2151,17 @@ Deno.serve(async (req: Request) => {
       if (before.status !== "draft") throw new Error("Only a draft credit note can be issued.");
       const { data: invoice, error: invoiceError } = await admin.from("shipment_invoices").select("total,total_inr,exchange_rate_to_inr").eq("id", before.invoice_id).maybeSingle();
       if (invoiceError || !invoice) throw new Error("The linked invoice could not be loaded.");
-      const [issuedNotesResult, paymentsResult] = await Promise.all([
-        admin.from("shipment_credit_notes").select("total,total_inr").eq("invoice_id", before.invoice_id).eq("status", "issued"),
-        admin.from("shipment_invoice_payments").select("amount_inr").eq("invoice_id", before.invoice_id),
+      const [issuedNotesResult, paymentsResult, refundsResult] = await Promise.all([
+        admin.from("shipment_credit_notes").select("total").eq("invoice_id", before.invoice_id).eq("status", "issued"),
+        admin.from("shipment_invoice_payments").select("amount").eq("invoice_id", before.invoice_id),
+        admin.from("shipment_invoice_refunds").select("amount").eq("invoice_id", before.invoice_id),
       ]);
-      if (issuedNotesResult.error || paymentsResult.error) throw new Error("Could not verify the invoice's remaining creditable balance.");
-      const invoiceRate = Number(invoice.exchange_rate_to_inr || 1);
-      const invoiceInr = Number(invoice.total_inr ?? Number(invoice.total || 0) * invoiceRate);
-      const alreadyCreditedInr = (issuedNotesResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) =>
-        sum + Number(item.total_inr ?? Number(item.total || 0) * invoiceRate), 0);
-      const receivedInr = (paymentsResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.amount_inr || 0), 0);
-      const draftCreditInr = Number(before.total_inr ?? Number(before.total || 0) * invoiceRate);
-      if (alreadyCreditedInr + receivedInr + draftCreditInr > invoiceInr + 0.005) {
-        throw new Error("Credit note plus recorded receipts cannot exceed the invoice total. A customer credit or refund workflow is required for any excess.");
+      if (issuedNotesResult.error || paymentsResult.error || refundsResult.error) throw new Error("Could not verify the invoice's remaining creditable balance.");
+      const alreadyCredited = (issuedNotesResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.total || 0), 0);
+      const received = (paymentsResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.amount || 0), 0);
+      const refunded = (refundsResult.data ?? []).reduce((sum: number, item: Record<string, unknown>) => sum + Number(item.amount || 0), 0);
+      if (alreadyCredited + received - refunded + Number(before.total || 0) > Number(invoice.total || 0) + 0.005) {
+        throw new Error("Credit notes plus net receipts cannot exceed the invoice total. Record the cash refund first, then issue the matching credit note.");
       }
       const { data, error } = await admin.rpc("issue_shipment_credit_note", { p_credit_note_id: id, p_user_id: actorId });
       if (error) throw new Error(error.message);
@@ -2183,6 +2180,32 @@ Deno.serve(async (req: Request) => {
       if (error || !deleted) throw new Error("Draft credit note could not be deleted.");
       await recordAudit("delete_draft", "shipment_credit_note", id, before, null);
       return reply(200, { deleted: true }, origin);
+    }
+
+    if (action === "recordInvoiceRefund") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const paymentId = uuid(d.payment_id);
+      const amount = number(d.amount, "Refund amount", 0.01);
+      const refundedAt = date(d.refunded_at);
+      if (!refundedAt) throw new Error("Refund date is required.");
+      const fxDate = date(d.fx_date) || refundedAt;
+      const method = val(d.refund_method || "bank_transfer", ["bank_transfer","upi","cash","card","cheque","other"], "refund method");
+      const { data: payment, error: paymentError } = await admin.from("shipment_invoice_payments").select("id,invoice_id,currency").eq("id", paymentId).maybeSingle();
+      if (paymentError || !payment) throw new Error("Receipt not found.");
+      const currency = String(payment.currency || "").toUpperCase();
+      const rate = currency === "INR" ? 1 : number(d.exchange_rate_to_inr, "INR exchange rate", 0.000001);
+      const { data, error } = await admin.rpc("record_shipment_invoice_refund", {
+        p_payment_id: paymentId, p_refunded_at: refundedAt, p_amount: amount,
+        p_exchange_rate_to_inr: rate, p_fx_date: fxDate,
+        p_fx_source: text(currency === "INR" ? "INR base currency" : d.fx_source || "Manual override", 120),
+        p_refund_method: method, p_reference: text(d.reference, 160),
+        p_notes: text(d.notes, 1000), p_user_id: actorId,
+      });
+      if (error) throw new Error(error.message);
+      const result = Array.isArray(data) ? data[0] : data;
+      await recordAudit("refund", "shipment_invoice_refund", result.id, null, result);
+      return reply(200, { record: result }, origin);
     }
 
     if (action === "recordInvoicePayment") {
