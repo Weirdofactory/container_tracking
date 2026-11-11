@@ -1010,7 +1010,7 @@ async function newJobLeg(jobId,legId=""){
  if(state.ops.jobLegsLoadedFor!==jobId)await loadJobLegs(jobId);
  const leg=(state.ops.jobLegs||[]).find(x=>x.id===legId)||{};
  const defs=[
-  {name:"leg_no",label:"Leg number",type:"number",step:"1",value:leg.leg_no||Math.max(1,...(state.ops.jobLegs||[]).map(x=>Number(x.leg_no||0)))+(legId?0:1),required:true},
+  {name:"leg_no",label:"Leg number",type:"number",step:"1",value:leg.leg_no||Math.max(0,...(state.ops.jobLegs||[]).map(x=>Number(x.leg_no||0)))+1,required:true},
   {name:"leg_role",label:"Route leg role",options:[["pre_carriage","Pre-carriage"],["main_carriage","Main carriage"],["transshipment","Transshipment"],["on_carriage","On-carriage"],["last_mile","Last mile"],["other","Other"]],value:leg.leg_role||"main_carriage"},
   {name:"mode",label:"Transport mode",options:[["ocean","Ocean"],["air","Air"],["road","Road"],["rail","Rail"],["barge","Barge"],["warehouse","Warehouse"],["other","Other"]],value:leg.mode||"ocean"},
   {name:"status",label:"Status",options:[["planned","Planned"],["booked","Booked"],["cargo_received","Cargo received"],["departed","Departed"],["in_transit","In transit"],["arrived","Arrived"],["customs","Customs"],["delivered","Delivered"],["exception","Exception"],["cancelled","Cancelled"]],value:leg.status||"planned"},
