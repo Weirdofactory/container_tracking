@@ -369,7 +369,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],jobLegs:[],jobLegEvents:[],jobLegsLoadedFor:"",jobLegsLoading:false,jobLegsError:"",milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],ledgerAccounts:[],ledgerSummary:[],ledgerEntries:[],ledgerLines:[],ledgerLoaded:false,ledgerLoading:false,ledgerError:"",invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],refunds:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankRefunds:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],shipmentDocuments:[],shipmentDocumentsLoaded:false,shipmentDocumentsLoading:false,shipmentDocumentsError:"",airWaybills:[],airWaybillEvents:[],airWaybillsLoaded:false,airWaybillsLoading:false,airWaybillsError:"",bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",customerContacts:[],customerAddresses:[],customerActivities:[],customerDirectoryLoadedFor:"",customerDirectoryLoading:false,customerDirectoryError:"",customerPortalTokens:[],customerPortalTokensLoaded:false,customerPortalTokensLoading:false,customerPortalTokensError:"",oneTimePortalLink:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",ledgerFrom:"",ledgerAsOf:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",gstFrom:"",gstTo:"",customerSearch:"",selectedJob:null,selectedCustomer:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],jobLegs:[],jobLegEvents:[],jobLegsLoadedFor:"",jobLegsLoading:false,jobLegsError:"",milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],ledgerAccounts:[],ledgerSummary:[],ledgerEntries:[],ledgerLines:[],ledgerLoaded:false,ledgerLoading:false,ledgerError:"",invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],refunds:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankRefunds:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],shipmentDocuments:[],shipmentDocumentsLoaded:false,shipmentDocumentsLoading:false,shipmentDocumentsError:"",airWaybills:[],airWaybillEvents:[],airWaybillsLoaded:false,airWaybillsLoading:false,airWaybillsError:"",bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],salesActivities:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",customerContacts:[],customerAddresses:[],customerActivities:[],customerDirectoryLoadedFor:"",customerDirectoryLoading:false,customerDirectoryError:"",customerPortalTokens:[],customerPortalTokensLoaded:false,customerPortalTokensLoading:false,customerPortalTokensError:"",oneTimePortalLink:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",ledgerFrom:"",ledgerAsOf:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",gstFrom:"",gstTo:"",customerSearch:"",selectedJob:null,selectedCustomer:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -525,6 +525,7 @@ async function loadSales(force=false){
     state.ops.quoteLines=Array.isArray(d.lines)?d.lines:[];
     state.ops.rateCards=Array.isArray(d.rateCards)?d.rateCards:[];
     state.ops.rateLines=Array.isArray(d.rateLines)?d.rateLines:[];
+    state.ops.salesActivities=Array.isArray(d.activities)?d.activities:[];
     if(Array.isArray(d.customers))state.ops.customers=d.customers;
     state.ops.salesLoaded=true;
   }catch(e){state.ops.salesLoaded=true;notify(e.message||"Sales data could not be loaded.","error")}
@@ -1629,7 +1630,8 @@ async function completeCustomerActivity(customerId,activityId){
   if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can update customer follow-ups.","error");
   try{
     await call("logistics-workspace",{action:"completeCustomerActivity",id:activityId});
-    await loadCustomerDirectory(customerId,true);render();notify("Customer follow-up marked complete","success");
+    if(state.page==="sales")await loadSales(true);else await loadCustomerDirectory(customerId,true);
+    render();notify("Customer follow-up marked complete","success");
   }catch(e){notify(e.message||"Could not complete the customer follow-up.","error")}
 }
 function renderCustomerDetail(){
@@ -2249,9 +2251,20 @@ function renderSales(){
     if(card.status==="published")actions=actionBtn("retire-rate-card","Retire",'data-id="'+esc(card.id)+'"');
     return'<tr><td><b>'+esc(card.rate_code)+'</b><div class="cell-sub">'+esc(card.title)+'</div></td><td>'+esc(card.service_type)+" · "+esc(card.direction.replaceAll("_"," "))+'<div class="cell-sub">'+esc(card.origin)+' → '+esc(card.destination)+'</div></td><td>'+esc(customer?.legal_name||"General tariff")+'</td><td>'+esc(card.carrier||"Any carrier")+'</td><td>'+esc(card.currency)+'<div class="cell-sub">'+rateLines.length+' charge line(s)</div></td><td>'+esc(fmt(card.valid_from))+' – '+esc(card.valid_to?fmt(card.valid_to):"Open")+'</td><td>'+pill(status)+'</td><td>'+actions+'</td></tr>';
   });
+  const activities=(state.ops.salesActivities||[]).filter(x=>x.follow_up_status==="open"&&x.follow_up_at).slice().sort((a,b)=>String(a.follow_up_at).localeCompare(String(b.follow_up_at)));
+  const overdueCount=activities.filter(x=>x.follow_up_at<today).length;
+  const followUpRows=activities.map(a=>{
+    const customer=state.ops.customers.find(c=>c.id===a.customer_id);
+    const job=(state.ops.jobs||[]).find(j=>j.id===a.job_id);
+    const isOverdue=a.follow_up_at<today;
+    return '<tr><td><b class="'+(isOverdue?"danger":"")+'">'+(isOverdue?"OVERDUE · ":"")+esc(fmt(a.follow_up_at))+'</b></td><td><b>'+esc(customer?.legal_name||"Customer account")+'</b><span class="cell-sub">'+esc(customer?.customer_code||"")+'</span></td><td><b>'+esc(a.subject)+'</b><span class="cell-sub">'+esc((a.activity_type||"task").replace(/_/g," "))+'</span></td><td>'+esc(job?.job_no||"Account follow-up")+'</td><td>'+esc(a.details||"—")+'</td><td>'+actionBtn("manage-customer-directory","Open account",'data-id="'+esc(a.customer_id)+'"')+actionBtn("complete-customer-activity","Complete",'data-id="'+esc(a.id)+'" data-customer-id="'+esc(a.customer_id)+'"')+'</td></tr>';
+  });
+  const followUpPane=pane("CUSTOMER FOLLOW-UP QUEUE",table(["DUE","CUSTOMER","INTERACTION","JOB","NOTES / OUTCOME","ACTIONS"],followUpRows,"No open customer follow-ups. Log calls, meetings or tasks from a customer account to build the queue."),actionBtn("refresh-sales","↻ Refresh"),overdueCount+" overdue · "+(activities.length-overdueCount)+" due today or later");
   const controls='<button class="btn" data-action="refresh-sales">↻ Refresh</button><button class="btn" data-create="rate-card">＋ New rate card</button><button class="btn primary" data-create="enquiry">＋ New enquiry</button>';
   return pageHead("sales",controls)
    +'<div class="stats">'+stat("Active enquiries",active,"Open prospect pipeline")+stat("Quotes awaiting reply",waiting,"Issued and within validity")+stat("Accepted quotes",accepted,"Ready to create bookings")+stat("Converted to jobs",converted,"Linked to forwarding operations")+'</div>'
+   +followUpPane
+   +'<div style="height:9px"></div>'
    +pane("FREIGHT SALES PIPELINE",table(["ENQUIRY","CUSTOMER / PROSPECT","LANE / SERVICE","STAGE","FOLLOW-UP","LATEST QUOTE","ACTIONS"],enquiryRows,"No enquiries yet. Capture an enquiry to start building your sales pipeline."))
    +'<div style="height:9px"></div>'
    +pane("QUOTATIONS",table(["QUOTE","CUSTOMER","PRICING","STATUS","TOTAL / TAX","ACTIONS"],quoteRows,"No freight quotes have been created."))
