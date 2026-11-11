@@ -336,19 +336,24 @@ Deno.serve(async (req: Request) => {
   const invoiceIds = invoices.map(invoice => String(invoice.id));
   let creditNotes: Record<string, unknown>[] = [];
   let payments: Record<string, unknown>[] = [];
+  let refunds: Record<string, unknown>[] = [];
   if (invoiceIds.length) {
-    const [creditResult, paymentResult] = await Promise.all([
+    const [creditResult, paymentResult, refundResult] = await Promise.all([
       admin.from("shipment_credit_notes").select("id,credit_note_number,invoice_id,status,credit_date,reason,seller,buyer,currency,lines,subtotal,discount_total,taxable_value,cgst_total,sgst_total,igst_total,total_tax,adjustment,total,total_inr,issued_at")
         .in("invoice_id", invoiceIds).eq("status", "issued").order("credit_date", { ascending: false }).limit(5000),
       admin.from("shipment_invoice_payments").select("id,receipt_number,invoice_id,received_at,amount,currency,amount_inr,payment_method")
         .in("invoice_id", invoiceIds).order("received_at", { ascending: false }).limit(10000),
+      admin.from("shipment_invoice_refunds").select("id,refund_number,invoice_id,payment_id,refunded_at,amount,currency,amount_inr,refund_method,reference")
+        .in("invoice_id", invoiceIds).order("refunded_at", { ascending: false }).limit(10000),
     ]);
-    if (creditResult.error || paymentResult.error) return reply(503, { error: "Invoice data is temporarily unavailable." }, origin);
+    if (creditResult.error || paymentResult.error || refundResult.error) return reply(503, { error: "Invoice data is temporarily unavailable." }, origin);
     creditNotes = creditResult.data ?? [];
     payments = paymentResult.data ?? [];
+    refunds = refundResult.data ?? [];
   }
   const creditByInvoice = new Map<string, Record<string, unknown>[]>();
   const paymentByInvoice = new Map<string, Record<string, unknown>[]>();
+  const refundByInvoice = new Map<string, Record<string, unknown>[]>();
   for (const credit of creditNotes) {
     const key = String(credit.invoice_id);
     creditByInvoice.set(key, [...(creditByInvoice.get(key) ?? []), credit]);
@@ -357,13 +362,20 @@ Deno.serve(async (req: Request) => {
     const key = String(payment.invoice_id);
     paymentByInvoice.set(key, [...(paymentByInvoice.get(key) ?? []), payment]);
   }
+  for (const refund of refunds) {
+    const key = String(refund.invoice_id);
+    refundByInvoice.set(key, [...(refundByInvoice.get(key) ?? []), refund]);
+  }
   const invoiceRows = invoices.map(invoice => {
     const credits = creditByInvoice.get(String(invoice.id)) ?? [];
     const receipts = paymentByInvoice.get(String(invoice.id)) ?? [];
+    const invoiceRefunds = refundByInvoice.get(String(invoice.id)) ?? [];
     const creditTotal = credits.reduce((sum, note) => sum + Number(note.total || 0), 0);
     const creditTotalInr = credits.reduce((sum, note) => sum + Number(note.total_inr || 0), 0);
     const received = receipts.reduce((sum, receipt) => sum + Number(receipt.amount || 0), 0);
     const receivedInr = receipts.reduce((sum, receipt) => sum + Number(receipt.amount_inr || 0), 0);
+    const refunded = invoiceRefunds.reduce((sum, refund) => sum + Number(refund.amount || 0), 0);
+    const refundedInr = invoiceRefunds.reduce((sum, refund) => sum + Number(refund.amount_inr || 0), 0);
     const invoiceLines = Array.isArray(invoice.lines) ? invoice.lines.map(safeInvoiceLine) : [];
     return {
       invoice_number: invoice.invoice_number || "",
@@ -396,8 +408,8 @@ Deno.serve(async (req: Request) => {
       adjustment: Number(invoice.adjustment || 0),
       total: Number(invoice.total || 0),
       total_inr: Number(invoice.total_inr || 0),
-      balance: round2(Math.max(0, Number(invoice.total || 0) - creditTotal - received)),
-      balance_inr: round2(Math.max(0, Number(invoice.total_inr || 0) - creditTotalInr - receivedInr)),
+      balance: round2(Math.max(0, Number(invoice.total || 0) - creditTotal - received + refunded)),
+      balance_inr: round2(Math.max(0, Number(invoice.total_inr || 0) - creditTotalInr - receivedInr + refundedInr)),
       issued_at: invoice.issued_at,
       credit_notes: credits.map(note => ({
         credit_note_number: note.credit_note_number || "",
@@ -424,6 +436,15 @@ Deno.serve(async (req: Request) => {
         amount_inr: Number(receipt.amount_inr || 0),
         currency: receipt.currency,
         payment_method: receipt.payment_method,
+      })),
+      refunds: invoiceRefunds.map(refund => ({
+        refund_number: refund.refund_number || "",
+        refunded_at: refund.refunded_at,
+        amount: Number(refund.amount || 0),
+        amount_inr: Number(refund.amount_inr || 0),
+        currency: refund.currency,
+        refund_method: refund.refund_method,
+        reference: refund.reference || "",
       })),
     };
   });
