@@ -757,7 +757,7 @@ Deno.serve(async (req: Request) => {
         legal_name: legalName, display_name: text(d.display_name, 140), gstin,
         billing_address: text(d.billing_address, 700), city: text(d.city, 120), state: text(d.state, 100),
         state_code: stateCode, postal_code: text(d.postal_code, 20), country,
-        email: text(d.email, 254).toLowerCase(), phone: text(d.phone, 60), default_currency: currency,
+        contact_name: text(d.contact_name, 140), email: text(d.email, 254).toLowerCase(), phone: text(d.phone, 60), default_currency: currency,
         payment_terms: text(d.payment_terms || "Due within 30 days", 500),
         credit_limit_inr: number(d.credit_limit_inr || 0, "Credit limit", 0),
         is_active: before?.is_active ?? true, notes: text(d.notes, 2000),
@@ -1742,18 +1742,6 @@ Deno.serve(async (req: Request) => {
       const result = Array.isArray(issued) ? issued[0] : issued;
       await recordAudit("issue", "shipment_invoice", id, invoice, result);
       return reply(200, { record: result }, origin);
-    }
-
-    if (action === "deleteDraftInvoice") {
-      roleCheck(profile.role, "finance");
-      const id = uuid(payload.id);
-      const { data: before, error: readError } = await admin.from("shipment_invoices").select("*").eq("id", id).maybeSingle();
-      if (readError || !before) throw new Error("Invoice not found.");
-      if (before.status !== "draft") throw new Error("Issued invoices cannot be deleted. Create a credit note instead.");
-      const { data: deleted, error } = await admin.from("shipment_invoices").delete().eq("id", id).eq("status", "draft").select("id").maybeSingle();
-      if (error || !deleted) throw new Error("Draft invoice could not be deleted.");
-      await recordAudit("delete_draft", "shipment_invoice", id, before, null);
-      return reply(200, { deleted: true }, origin);
     }
 
     if (action === "deleteDraftInvoice") {
