@@ -238,6 +238,14 @@ Deno.serve(async (req: Request) => {
   const quoteMap = new Map<string, Record<string, unknown>>();
   for (const quote of [...(quoteResults[0].data ?? []), ...(quoteResults[1].data ?? [])]) quoteMap.set(String(quote.id), quote);
   const quoteRows = [...quoteMap.values()];
+  const acceptedJobIds = Array.from(new Set(quoteRows.map(quote => String(quote.accepted_job_id || "")).filter(Boolean)));
+  const acceptedJobsById = new Map<string, Record<string, unknown>>();
+  if (acceptedJobIds.length) {
+    const acceptedJobsResult = await admin.from("forwarding_jobs").select("id,job_no")
+      .eq("customer_id", customerId).in("id", acceptedJobIds);
+    if (acceptedJobsResult.error) return reply(503, { error: "Booking references are temporarily unavailable." }, origin);
+    for (const job of acceptedJobsResult.data ?? []) acceptedJobsById.set(String(job.id), job);
+  }
   const quoteIds = quoteRows.map(quote => String(quote.id));
   let quoteLines: Record<string, unknown>[] = [];
   if (quoteIds.length) {
@@ -274,7 +282,8 @@ Deno.serve(async (req: Request) => {
       terms: quote.terms || "",
       issued_at: quote.issued_at,
       responded_at: quote.responded_at,
-      has_booking: !!quote.accepted_job_id,
+      has_booking: acceptedJobsById.has(String(quote.accepted_job_id || "")),
+      accepted_job_no: acceptedJobsById.get(String(quote.accepted_job_id || ""))?.job_no || "",
       enquiry: {
         service_type: enquiry.service_type || "",
         direction: enquiry.direction || "",
