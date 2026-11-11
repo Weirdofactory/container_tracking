@@ -221,6 +221,26 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  let routeLegs: Record<string, unknown>[] = [];
+  let routeLegEvents: Record<string, unknown>[] = [];
+  if (jobIds.length) {
+    const legResult = await admin.from("forwarding_job_legs")
+      .select("id,job_id,leg_no,leg_role,mode,status,carrier,service_reference,tracking_reference,origin,destination,etd,eta,actual_departure_at,actual_arrival_at")
+      .in("job_id", jobIds).is("deleted_at", null).eq("customer_visible", true)
+      .order("leg_no", { ascending: true }).limit(5000);
+    if (legResult.error) return reply(503, { error: "Shipment route data is temporarily unavailable." }, origin);
+    routeLegs = legResult.data ?? [];
+    const routeLegIds = routeLegs.map(leg => String(leg.id));
+    if (routeLegIds.length) {
+      const legEventResult = await admin.from("forwarding_job_leg_events")
+        .select("leg_id,event_code,event_name,location,event_at,notes")
+        .in("leg_id", routeLegIds).eq("customer_visible", true)
+        .order("event_at", { ascending: true }).limit(10000);
+      if (legEventResult.error) return reply(503, { error: "Shipment route events are temporarily unavailable." }, origin);
+      routeLegEvents = legEventResult.data ?? [];
+    }
+  }
+
   const enquiryResult = await admin.from("sales_enquiries")
     .select("id,company_name,service_type,direction,origin,destination,commodity,package_count,gross_weight_kg,volume_cbm,cargo_ready_date")
     .eq("customer_id", customerId).limit(1000);
@@ -419,6 +439,39 @@ Deno.serve(async (req: Request) => {
     const key = String(milestone.job_id);
     milestonesByJob.set(key, [...(milestonesByJob.get(key) ?? []), milestone]);
   }
+  const legEventsById = new Map<string, Record<string, unknown>[]>();
+  const legsByJob = new Map<string, Record<string, unknown>[]>();
+  for (const event of routeLegEvents) {
+    const key = String(event.leg_id);
+    legEventsById.set(key, [...(legEventsById.get(key) ?? []), event]);
+  }
+  for (const leg of routeLegs) {
+    const key = String(leg.job_id);
+    const safeLeg = {
+      leg_no: leg.leg_no,
+      leg_role: leg.leg_role,
+      mode: leg.mode,
+      status: leg.status,
+      carrier: leg.carrier || "",
+      service_reference: leg.service_reference || "",
+      tracking_reference: leg.tracking_reference || "",
+      origin: leg.origin || "",
+      destination: leg.destination || "",
+      etd: leg.etd,
+      eta: leg.eta,
+      actual_departure_at: leg.actual_departure_at,
+      actual_arrival_at: leg.actual_arrival_at,
+      events: (legEventsById.get(String(leg.id)) ?? []).map(event => ({
+        event_code: event.event_code,
+        event_name: event.event_name || "Shipment update",
+        location: event.location || "",
+        event_at: event.event_at,
+        notes: event.notes || "",
+      })),
+    };
+    legsByJob.set(key, [...(legsByJob.get(key) ?? []), safeLeg]);
+  }
+
   const shipments = jobs.map(job => ({
     job_no: job.job_no,
     customer_reference: job.customer_reference,
@@ -438,6 +491,7 @@ Deno.serve(async (req: Request) => {
     delivered_at: job.delivered_at,
     updated_at: job.updated_at,
     hbls: hblsByJob.get(String(job.id)) ?? [],
+    legs: legsByJob.get(String(job.id)) ?? [],
     milestones: (milestonesByJob.get(String(job.id)) ?? []).filter(event => event.status !== "skipped").map(event => ({
       milestone_name: event.milestone_name || event.milestone_code || "Shipment update",
       location: event.location || "",
