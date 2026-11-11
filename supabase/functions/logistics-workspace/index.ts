@@ -1384,6 +1384,156 @@ Deno.serve(async (req: Request) => {
       return reply(200, { deleted:true }, origin);
     }
 
+    if (action === "listAirWaybills") {
+      roleCheck(profile.role, "filing");
+      const [waybills, events] = await Promise.all([
+        admin.from("air_waybills").select("*").order("created_at", { ascending: false }).limit(2500),
+        admin.from("air_waybill_events").select("*").order("event_at", { ascending: false }).limit(10000),
+      ]);
+      if (waybills.error || events.error) throw new Error("Air waybill records could not be loaded.");
+      return reply(200, { airWaybills: waybills.data ?? [], airWaybillEvents: events.data ?? [] }, origin);
+    }
+
+    if (action === "upsertAirWaybill") {
+      roleCheck(profile.role, "filing");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      let before: Record<string, any> | null = null;
+      if (id) {
+        const result = await admin.from("air_waybills").select("*").eq("id", id).maybeSingle();
+        if (result.error || !result.data) throw new Error("Air waybill not found.");
+        before = result.data;
+        if (before.hawb_status !== "draft") throw new Error("Issued HAWBs are locked. Create an amendment record for corrections.");
+      }
+      const jobId = uuid(d.job_id ?? before?.job_id);
+      const { data: job, error: jobError } = await admin.from("forwarding_jobs").select("*").eq("id", jobId).is("deleted_at", null).maybeSingle();
+      if (jobError || !job) throw new Error("Select an active forwarding job.");
+      if (job.service_type !== "AIR") throw new Error("House air waybills can only be created for Air forwarding jobs.");
+      const hawbNo = text(d.hawb_no ?? before?.hawb_no, 40).toUpperCase();
+      if (!/^[A-Z0-9][A-Z0-9/-]{2,39}$/.test(hawbNo)) throw new Error("Enter a valid HAWB number (4–40 letters, digits, / or -).");
+      const mawbNo = text(d.mawb_no ?? before?.mawb_no, 40).toUpperCase();
+      if (mawbNo && !/^[A-Z0-9][A-Z0-9/-]{2,39}$/.test(mawbNo)) throw new Error("Enter a valid MAWB number (4–40 letters, digits, / or -).");
+      const originAirport = text(d.origin_airport ?? before?.origin_airport, 3).toUpperCase();
+      const destinationAirport = text(d.destination_airport ?? before?.destination_airport, 3).toUpperCase();
+      if (!/^[A-Z]{3}$/.test(originAirport) || !/^[A-Z]{3}$/.test(destinationAirport)) throw new Error("Use three-letter IATA airport codes for origin and destination.");
+      const etd = date(d.etd ?? before?.etd), eta = date(d.eta ?? before?.eta);
+      if (etd && eta && eta < etd) throw new Error("ETA cannot be earlier than ETD.");
+      const pieces = number(d.pieces ?? before?.pieces ?? 1, "Pieces", 1);
+      if (!Number.isInteger(pieces)) throw new Error("Pieces must be a whole number.");
+      const grossWeight = number(d.gross_weight_kg ?? before?.gross_weight_kg ?? 0, "Gross weight", 0);
+      const volume = number(d.volume_cbm ?? before?.volume_cbm ?? 0, "Volume", 0);
+      const divisor = number(d.volumetric_divisor ?? before?.volumetric_divisor ?? 167, "Volumetric divisor", 0.001);
+      const chargeableWeight = Math.round(Math.max(grossWeight, volume * divisor) * 1000) / 1000;
+      const customerVisible = d.customer_visible === true || d.customer_visible === "true";
+      if (customerVisible && profile.role === "Operator") throw new Error("Only Admin or Editor roles can publish a customer-visible HAWB.");
+      const row = {
+        ...(id ? { id } : {}), job_id: jobId, hawb_no: hawbNo, mawb_no: mawbNo,
+        airline: text(d.airline ?? before?.airline, 120), flight_no: text(d.flight_no ?? before?.flight_no, 40).toUpperCase(),
+        origin_airport: originAirport, destination_airport: destinationAirport, etd, eta, pieces,
+        package_type: text(d.package_type ?? before?.package_type ?? "Packages", 80) || "Packages",
+        gross_weight_kg: grossWeight, volume_cbm: volume, volumetric_divisor: divisor,
+        chargeable_weight_kg: chargeableWeight,
+        commodity: text(d.commodity ?? before?.commodity, 240),
+        goods_description: text(d.goods_description ?? before?.goods_description, 3000),
+        shipper: text(d.shipper ?? before?.shipper ?? job.shipper, 500),
+        consignee: text(d.consignee ?? before?.consignee ?? job.consignee, 500),
+        notify_party: text(d.notify_party ?? before?.notify_party ?? job.notify_party, 500),
+        freight_terms: val(d.freight_terms ?? before?.freight_terms ?? "prepaid", ["prepaid","collect"], "freight terms"),
+        status: before?.status || "planned", hawb_status: "draft", hawb_snapshot: null, hawb_issued_at: null,
+        customer_visible: customerVisible, notes: text(d.notes ?? before?.notes, 3000),
+        updated_by: actorId, updated_at: new Date().toISOString(),
+        ...(!id ? { created_by: actorId } : {}),
+      };
+      const { data: saved, error } = await admin.from("air_waybills").upsert(row).select("*").single();
+      if (error || !saved) throw new Error(error?.message || "Air waybill draft could not be saved.");
+      await recordAudit(id ? "update_draft" : "create_draft", "air_waybill", saved.id, before, saved);
+      return reply(200, { record: saved }, origin);
+    }
+
+    if (action === "issueAirWaybill") {
+      roleCheck(profile.role, "filing");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("air_waybills").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Air waybill not found.");
+      if (before.hawb_status !== "draft") throw new Error("This HAWB has already been issued.");
+      const [{ data: job, error: jobError }, customerResult] = await Promise.all([
+        admin.from("forwarding_jobs").select("*").eq("id", before.job_id).is("deleted_at", null).maybeSingle(),
+        admin.from("customer_accounts").select("legal_name,display_name,gstin,billing_address,city,state,state_code,postal_code,country,email,phone").eq("id", (await admin.from("forwarding_jobs").select("customer_id").eq("id", before.job_id).maybeSingle()).data?.customer_id || "").maybeSingle(),
+      ]);
+      if (jobError || !job || job.service_type !== "AIR") throw new Error("The active Air forwarding job could not be loaded.");
+      if (customerResult.error) throw new Error("Customer details could not be added to the HAWB.");
+      const jobKeys = ["job_no","customer_reference","service_type","direction","status","booking_no","customer_name","shipper","consignee","notify_party","carrier","pol","pod","final_delivery_place","incoterm","commodity","package_count","package_type","gross_weight_kg","volume_cbm","cargo_ready_date","etd","eta","branch"];
+      const jobSnapshot = Object.fromEntries(jobKeys.map(key => [key, job[key] ?? null]));
+      const snapshot = {
+        document:{document_number:before.hawb_no,document_type:"house_air_waybill",issued_at:new Date().toISOString()},
+        waybill:before,job:jobSnapshot,customer:customerResult.data ?? null,
+      };
+      const { data, error } = await admin.rpc("issue_air_waybill", {
+        p_air_waybill_id:id,p_snapshot:snapshot,p_user_id:actorId,
+      });
+      if (error) throw new Error(error.message);
+      const result = Array.isArray(data) ? data[0] : data;
+      await recordAudit("issue", "air_waybill", id, before, result);
+      return reply(200, { record: result }, origin);
+    }
+
+    if (action === "deleteDraftAirWaybill") {
+      roleCheck(profile.role, "filing");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("air_waybills").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Air waybill not found.");
+      if (before.hawb_status !== "draft") throw new Error("Issued HAWBs cannot be deleted.");
+      const { count, error: eventError } = await admin.from("air_waybill_events").select("id", { count: "exact", head: true }).eq("air_waybill_id", id);
+      if (eventError || (count ?? 0) > 0) throw new Error("A draft with tracking events cannot be deleted.");
+      const { data: deleted, error } = await admin.from("air_waybills").delete().eq("id", id).eq("hawb_status", "draft").select("id").maybeSingle();
+      if (error || !deleted) throw new Error("Air waybill draft could not be deleted.");
+      await recordAudit("delete_draft", "air_waybill", id, before, null);
+      return reply(200, { deleted: true }, origin);
+    }
+
+    if (action === "addAirWaybillEvent") {
+      roleCheck(profile.role, "jobOps");
+      const d = payload.data ?? {};
+      const waybillId = uuid(d.air_waybill_id);
+      const { data: waybill, error: waybillError } = await admin.from("air_waybills").select("*").eq("id", waybillId).maybeSingle();
+      if (waybillError || !waybill) throw new Error("Air waybill not found.");
+      const { data: job, error: jobError } = await admin.from("forwarding_jobs").select("id,service_type,deleted_at").eq("id", waybill.job_id).maybeSingle();
+      if (jobError || !job || job.deleted_at || job.service_type !== "AIR") throw new Error("The active Air forwarding job could not be verified.");
+      const eventCode = val(d.event_code, ["booking_confirmed","cargo_received","flight_departed","flight_arrived","customs_cleared","delivered","exception","other"], "air shipment event");
+      const eventAt = timestamp(d.event_at);
+      if (!eventAt) throw new Error("Event date and time are required.");
+      const customerVisible = d.customer_visible === true || d.customer_visible === "true";
+      if (customerVisible && profile.role === "Operator") throw new Error("Only Admin or Editor roles can publish a customer-visible event.");
+      const eventNames: Record<string,string> = {
+        booking_confirmed:"Booking confirmed",cargo_received:"Cargo received",flight_departed:"Flight departed",
+        flight_arrived:"Flight arrived",customs_cleared:"Customs cleared",delivered:"Delivered",
+        exception:"Exception",other:text(d.event_name,120),
+      };
+      const eventName = text(d.event_name,120) || eventNames[eventCode];
+      if (!eventName || eventName.length < 2) throw new Error("Event name is required.");
+      const row = {
+        air_waybill_id:waybillId,event_code:eventCode,event_name:eventName,
+        location:text(d.location,160),event_at:eventAt,notes:text(d.notes,1000),
+        customer_visible:customerVisible,created_by:actorId,
+      };
+      const { data: saved, error } = await admin.from("air_waybill_events").insert(row).select("*").single();
+      if (error || !saved) throw new Error(error?.message || "Air shipment event could not be saved.");
+      const nextStatus: Record<string,string> = {
+        booking_confirmed:"booked",cargo_received:"cargo_received",flight_departed:"departed",
+        flight_arrived:"arrived",customs_cleared:"customs",delivered:"delivered",exception:"exception",
+      };
+      const mapped = nextStatus[eventCode];
+      const rank: Record<string,number> = {planned:0,booked:1,cargo_received:2,departed:3,in_transit:3,arrived:4,customs:5,delivered:6,closed:7};
+      if (mapped && (mapped === "exception" || (rank[mapped] ?? -1) >= (rank[waybill.status] ?? 0))) {
+        const { data: updated, error: updateError } = await admin.from("air_waybills").update({status:mapped,updated_by:actorId,updated_at:new Date().toISOString()}).eq("id",waybillId).select("*").single();
+        if (updateError || !updated) throw new Error("The event was saved, but the air waybill status could not be updated.");
+        await recordAudit("record_event", "air_waybill", waybillId, waybill, updated);
+        return reply(200, { record: saved, waybill: updated }, origin);
+      }
+      await recordAudit("record_event", "air_waybill", waybillId, waybill, waybill);
+      return reply(200, { record: saved, waybill }, origin);
+    }
+
     if (action === "listInvoices") {
       roleCheck(profile.role, "finance");
       const [invoiceResult, settingsResult, customerResult, creditResult, paymentResult, chargeLinkResult] = await Promise.all([
