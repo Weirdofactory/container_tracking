@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#243052">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://ykeucqritoexykqrggzz.supabase.co; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'self'">
+<title>Customer Portal | Freight Operations</title>
+<style>
+:root{font-family:Inter,"Segoe UI",Arial,sans-serif;color:#24354b;background:#f2f5f8;font-synthesis:none;--navy:#243052;--violet:#4934a0;--ink:#24354b;--muted:#718096;--line:#d9e1e9;--white:#fff;--green:#137856;--amber:#a66b08;--red:#b43c42}
+*{box-sizing:border-box}body{margin:0;background:#f2f5f8;color:var(--ink);font-size:14px}button,input{font:inherit}button{cursor:pointer}.top{height:66px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 max(24px,calc((100vw - 1400px)/2));position:sticky;top:0;z-index:5}.brand{display:flex;align-items:center;gap:12px;color:var(--navy);font-weight:800;letter-spacing:.03em}.mark{height:36px;width:36px;background:var(--violet);color:#fff;display:grid;place-items:center;border-radius:6px;font-size:20px}.brand small{display:block;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.16em;margin-top:2px}.top-actions{display:flex;gap:8px;align-items:center}.wrap{max-width:1400px;margin:0 auto;padding:28px 24px 64px}.intro{margin:0 0 20px}.eyebrow{font-size:11px;text-transform:uppercase;font-weight:800;letter-spacing:.12em;color:var(--violet)}h1{font-size:27px;letter-spacing:-.03em;margin:5px 0 6px;color:var(--navy)}.sub{color:var(--muted);margin:0;line-height:1.6}.panel{background:#fff;border:1px solid var(--line);border-radius:7px;box-shadow:0 2px 8px #24344b08;margin:0 0 14px}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}.panel-head strong{font-size:12px;letter-spacing:.06em}.panel-body{padding:16px}.grid{display:grid;gap:12px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:14px}.stat{background:#fff;border:1px solid var(--line);border-top:3px solid var(--violet);padding:14px;border-radius:5px}.stat span{display:block;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}.stat b{display:block;margin-top:7px;font-size:22px;color:var(--navy)}.columns{grid-template-columns:minmax(0,1.45fr) minmax(320px,.8fr);align-items:start}.stack{display:grid;gap:14px}.shipment{border:1px solid var(--line);padding:14px;border-radius:5px;margin-bottom:10px}.shipment:last-child{margin-bottom:0}.route{font-weight:700;color:var(--navy);font-size:16px;margin:7px 0}.meta{display:flex;gap:6px 16px;flex-wrap:wrap;color:var(--muted);font-size:12px}.tag{display:inline-block;padding:4px 8px;border-radius:4px;background:#efedfb;color:var(--violet);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}.timeline{border-left:2px solid #ddd9f2;margin:14px 0 0 5px;padding-left:14px}.event{position:relative;padding:0 0 13px}.event:last-child{padding-bottom:0}.event:before{content:"";position:absolute;left:-20px;top:4px;width:8px;height:8px;background:#6253bd;border:2px solid white;border-radius:50%;box-shadow:0 0 0 1px #6253bd}.event b{font-size:12px}.event span{display:block;color:var(--muted);font-size:11px;margin-top:2px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:680px}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #e6ebf0;font-size:12px;vertical-align:top}th{background:#f5f7fa;color:#637384;text-transform:uppercase;letter-spacing:.05em;font-size:10px;white-space:nowrap}td b{color:#26384e}.pill{display:inline-block;border-radius:20px;padding:4px 9px;background:#eef1f5;color:#526174;font-size:10px;font-weight:800;text-transform:uppercase}.pill.green{background:#e7f5ef;color:var(--green)}.pill.amber{background:#fff4df;color:var(--amber)}.pill.red{background:#fff0f0;color:var(--red)}.pill.blue{background:#e8f3fb;color:#176c9f}.btn{border:1px solid #cad4de;background:white;color:#34495d;padding:8px 11px;border-radius:4px;font-weight:700;font-size:12px}.btn:hover{border-color:#7d70ca;color:var(--violet)}.btn.primary{background:var(--violet);border-color:var(--violet);color:white}.btn.danger{color:var(--red)}.btn:disabled{opacity:.5;cursor:not-allowed}.quote{padding:15px;border:1px solid var(--line);border-radius:5px;margin-bottom:10px}.quote:last-child{margin:0}.quote-title{display:flex;justify-content:space-between;align-items:center;gap:8px}.quote h3{font-size:15px;margin:0;color:var(--navy)}.quote p{color:var(--muted);font-size:12px;line-height:1.5}.quote-total{font-size:19px;font-weight:800;color:var(--navy);margin:12px 0}.quote-actions{display:flex;gap:8px;margin-top:12px}.invoice{border:1px solid var(--line);border-radius:5px;margin:0 0 10px;background:white;overflow:hidden}.invoice:last-child{margin:0}.invoice summary{list-style:none;cursor:pointer;padding:13px 15px;display:grid;grid-template-columns:1.2fr 1fr .8fr .8fr auto;gap:12px;align-items:center}.invoice summary::-webkit-details-marker{display:none}.invoice summary:hover{background:#fafbfc}.invoice summary b{color:var(--navy)}.invoice small{display:block;color:var(--muted);margin-top:3px}.invoice-body{padding:0 15px 15px}.mini-table{min-width:540px}.mini-table th,.mini-table td{padding:8px}.totals{margin-left:auto;max-width:360px;padding-top:10px}.total-line{display:flex;justify-content:space-between;padding:4px 0;color:#607181}.total-line.grand{font-size:16px;font-weight:800;color:var(--navy);border-top:1px solid var(--line);margin-top:5px;padding-top:9px}.quiet{color:var(--muted);font-size:11px;line-height:1.6}.alert{padding:12px 14px;border-radius:5px;background:#fff8e8;border:1px solid #f1d89e;color:#745210;line-height:1.5;margin-bottom:14px}.error{background:#fff0f0;border:1px solid #edc1c1;color:#8f292e}.login{max-width:500px;margin:10vh auto;padding:28px}.login h2{margin:0 0 6px;color:var(--navy)}.login .sub{margin-bottom:18px}.login-form{display:flex;gap:8px}.login-form input{flex:1;min-width:0;border:1px solid #cad4de;border-radius:4px;padding:10px}.note{font-size:11px;color:var(--muted);line-height:1.6;margin-top:14px}.toast{position:fixed;right:22px;bottom:22px;background:#243052;color:#fff;padding:12px 16px;border-radius:5px;box-shadow:0 6px 20px #18243b30;z-index:20;max-width:min(440px,calc(100vw - 44px))}.loading{text-align:center;padding:32px;color:var(--muted)}.invoice-party{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:12px 0}.invoice-party b{display:block;margin-bottom:5px}.section-title{font-size:11px;font-weight:800;color:#647486;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 7px}
+[hidden]{display:none!important}
+@media(max-width:850px){.columns{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.invoice summary{grid-template-columns:1fr 1fr}.top{padding:0 16px}.wrap{padding:22px 16px 50px}}
+@media(max-width:520px){.login{margin:30px 12px;padding:20px}.login-form{flex-direction:column}.stats{grid-template-columns:1fr 1fr}.stat{padding:11px}.stat b{font-size:18px}.top-actions .btn{padding:7px}.brand{font-size:12px}.invoice summary{grid-template-columns:1fr}.quote-title{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><div class="mark">F</div><div>FREIGHT OPERATIONS<small>CUSTOMER PORTAL</small></div></div>
+  <div class="top-actions"><span id="accountName" class="quiet"></span><button id="logout" class="btn" hidden>Close portal</button></div>
+</header>
+<main class="wrap">
+  <section id="login" class="panel login">
+    <div class="eyebrow">Secure customer access</div><h2>Open your shipment workspace</h2>
+    <p class="sub">Use the private portal link sent by your freight operations team.</p>
+    <form id="tokenForm" class="login-form"><input id="tokenInput" type="password" autocomplete="off" placeholder="Paste your customer portal link or access token" aria-label="Customer portal link or token" required><button class="btn primary" type="submit">Continue</button></form>
+    <p id="loginError" class="note" role="alert"></p>
+    <p class="note">This private link gives access to your account’s published shipments, quotes, invoices, receipts, credit notes, and outstanding balance. Do not forward it to others. Contact your freight operations team if your link has expired.</p>
+  </section>
+  <div id="loading" class="panel loading" hidden>Loading your customer workspace…</div>
+  <div id="errorPanel" class="panel alert error" hidden><b>Workspace unavailable.</b> <span id="errorText"></span><button id="retry" class="btn" style="margin-left:10px">Retry</button></div>
+  <section id="workspace" hidden>
+    <div class="intro"><div class="eyebrow">Your account</div><h1 id="welcome">Customer workspace</h1><p class="sub">Shipment visibility, accepted quotations, invoice documents, and account balances in one place.</p></div>
+    <div class="alert">This link is private to your customer account. It can expire or be revoked by your freight operations team.</div>
+    <div id="stats" class="grid stats"></div>
+    <div class="grid columns">
+      <div class="stack">
+        <section class="panel"><div class="panel-head"><strong>SHIPMENT TRACKING</strong><span id="shipmentCount" class="quiet"></span></div><div class="panel-body" id="shipments"></div></section>
+        <section class="panel"><div class="panel-head"><strong>QUOTES & BOOKINGS</strong><span id="quoteCount" class="quiet"></span></div><div class="panel-body" id="quotes"></div></section>
+      </div>
+      <div class="stack">
+        <section class="panel"><div class="panel-head"><strong>INVOICES & RECEIVABLES</strong><span id="invoiceCount" class="quiet"></span></div><div class="panel-body" id="invoices"></div></section>
+        <section class="panel"><div class="panel-head"><strong>ACCOUNT ACTIVITY</strong><span class="quiet">Receipts and issued credit notes</span></div><div class="panel-body" id="activity"></div></section>
+      </div>
+    </div>
+    <p class="note">Invoice print opens your browser’s print dialog. Choose “Save as PDF” to keep a copy. For invoice corrections, payment allocation, or account questions, contact your freight operations team.</p>
+  </section>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+<script>
+"use strict";
+const SUPABASE_URL="https://ykeucqritoexykqrggzz.supabase.co";
+const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2w";
+const ENDPOINT=SUPABASE_URL+"/functions/v1/customer-portal-public";
+const el=id=>document.getElementById(id);
+const state={token:"",data:null,loading:false};
+function esc(v){return String(v===null||v===undefined?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function date(v){if(!v)return"—";const d=new Date(v);return Number.isNaN(+d)?"—":d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}
+function currency(value,code){const c=String(code||"INR").toUpperCase();try{return new Intl.NumberFormat("en-IN",{style:"currency",currency:c,maximumFractionDigits:2}).format(Number(value||0))}catch{return c+" "+Number(value||0).toLocaleString("en-IN",{maximumFractionDigits:2})}}
+function pill(value){const s=String(value||"Pending"),low=s.toLowerCase();const cls=["issued","paid","settled","delivered","completed","accepted","converted","active","arrived"].includes(low)?"green":["draft","sent","booked","in transit","origin handling"].includes(low)?"blue":["rejected","expired","overdue","cancelled"].includes(low)?"red":"amber";return'<span class="pill '+cls+'">'+esc(s.replaceAll("_"," "))+"</span>"}
+function toast(text){el("toast").textContent=text;el("toast").hidden=false;setTimeout(()=>el("toast").hidden=true,3500)}
+function tokenFromInput(value){const raw=String(value||"").trim();if(raw.length===43&&/^[A-Za-z0-9_-]+$/.test(raw))return raw;try{const u=new URL(raw);const t=u.hash.replace(/^#/,"");if(/^[A-Za-z0-9_-]{43}$/.test(t))return t}catch{}return""}
+function takeToken(){const hash=location.hash.slice(1);if(hash){history.replaceState(null,"",location.pathname+location.search);if(/^[A-Za-z0-9_-]{43}$/.test(hash)){sessionStorage.setItem("freight_customer_portal_token",hash);return hash}}return sessionStorage.getItem("freight_customer_portal_token")||""}
+async function api(payload){
+  const response=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY},body:JSON.stringify(Object.assign({token:state.token},payload||{}))});
+  let data={};try{data=await response.json()}catch{}
+  if(!response.ok)throw new Error(data.error||"The portal service could not be reached.");
+  return data;
+}
+function showLogin(message){
+  el("login").hidden=false;el("workspace").hidden=true;el("loading").hidden=true;el("errorPanel").hidden=true;el("logout").hidden=true;
+  if(message)el("loginError").textContent=message;
+}
+function showFailure(message){
+  el("login").hidden=true;el("workspace").hidden=true;el("loading").hidden=true;el("errorPanel").hidden=false;el("errorText").textContent=message;el("logout").hidden=false;
+}
+async function loadWorkspace(){
+  if(!state.token)return showLogin("");
+  state.loading=true;el("login").hidden=true;el("workspace").hidden=true;el("errorPanel").hidden=true;el("loading").hidden=false;el("logout").hidden=false;
+  try{
+    state.data=await api({});
+    renderWorkspace();
+    el("loading").hidden=true;el("workspace").hidden=false;el("accountName").textContent=state.data.customer?.name||"";
+  }catch(error){showFailure(error.message||"Please check your private link and try again.")}
+  finally{state.loading=false}
+}
+function renderWorkspace(){
+  const d=state.data||{},shipments=d.shipments||[],quotes=d.quotes||[],invoices=d.invoices||[];
+  el("welcome").textContent="Welcome, "+(d.customer?.name||"customer");
+  el("shipmentCount").textContent=shipments.length+" shipment"+(shipments.length===1?"":"s");
+  el("quoteCount").textContent=quotes.length+" quote"+(quotes.length===1?"":"s");
+  el("invoiceCount").textContent=invoices.length+" invoice"+(invoices.length===1?"":"s");
+  el("stats").innerHTML=[
+    '<div class="stat"><span>Active shipments</span><b>'+Number(d.active_shipments||0)+'</b></div>',
+    '<div class="stat"><span>Open quotes</span><b>'+quotes.filter(q=>q.status==="sent").length+'</b></div>',
+    '<div class="stat"><span>Issued invoices</span><b>'+invoices.length+'</b></div>',
+    '<div class="stat"><span>Outstanding · INR</span><b>'+currency(d.outstanding_inr,"INR")+'</b></div>'
+  ].join("");
+  el("shipments").innerHTML=shipments.length?shipments.map(renderShipment).join(""):'<p class="quiet">No shipments have been published to your account yet.</p>';
+  el("quotes").innerHTML=quotes.length?quotes.map(renderQuote).join(""):'<p class="quiet">No quotes are available for this account.</p>';
+  el("invoices").innerHTML=invoices.length?invoices.map(renderInvoice).join(""):'<p class="quiet">No issued invoices are available for this account.</p>';
+  renderActivity(invoices,d.as_of);
+}
+function renderShipment(s){
+  const hbl=(s.hbls||[]).map(h=>'<span class="tag">'+esc(h.hbl_no||"HBL")+'</span>').join(" ");
+  const air=(s.air_waybills||[]).map(w=>'<span class="tag">'+esc(w.hawb_no||w.mawb_no||"Air waybill")+'</span>').join(" ");
+  const events=(s.milestones||[]).slice().sort((a,b)=>String(b.actual_at||b.planned_at||"").localeCompare(String(a.actual_at||a.planned_at||""))).map(e=>'<div class="event"><b>'+esc(e.milestone_name||"Shipment update")+'</b><span>'+esc(e.location||"")+(e.actual_at?" · "+date(e.actual_at):e.planned_at?" · Planned "+date(e.planned_at):"")+(e.container_no?" · "+esc(e.container_no):"")+'</span>'+(e.notes?'<span>'+esc(e.notes)+'</span>':"")+'</div>').join("");
+  return '<article class="shipment"><div class="meta"><b>'+esc(s.job_no||"Shipment")+'</b>'+pill(s.status||"In progress")+'<span>'+esc(s.service_type||"")+'</span><span>'+esc(s.direction||"")+'</span></div><div class="route">'+esc(s.pol||"Origin")+' → '+esc(s.pod||"Destination")+(s.final_delivery_place?" · "+esc(s.final_delivery_place):"")+'</div><div class="meta"><span>Vessel / voyage: '+esc([s.vessel_name,s.voyage_no].filter(Boolean).join(" / ")||"—")+'</span><span>ETD '+date(s.etd)+'</span><span>ETA '+date(s.eta)+'</span><span>Updated '+date(s.updated_at)+'</span></div><div style="margin-top:9px">'+hbl+" "+air+'</div>'+(events?'<div class="timeline">'+events+'</div>':'<p class="quiet">Shipment events will appear here when published by your operations team.</p>')+'</article>';
+}
+function renderQuote(q){
+  const open=q.status==="sent"&&(!q.valid_until||String(q.valid_until).slice(0,10)>=new Date().toISOString().slice(0,10));
+  const lines=(q.lines||[]).map(l=>'<tr><td>'+esc(l.description||l.charge_code||"Charge")+'</td><td>'+Number(l.quantity||0).toLocaleString("en-IN")+' '+esc(l.unit||"")+'</td><td>'+currency(l.unit_price,q.currency)+'</td><td>'+currency(l.total_amount,q.currency)+'</td></tr>').join("");
+  const status=q.status==="converted"?"Booked":q.status;
+  return '<article class="quote"><div class="quote-title"><h3>'+esc(q.quote_no||"Freight quote")+'</h3>'+pill(status)+'</div><p>'+esc(q.enquiry?.service_type||"Freight service")+' · '+esc(q.enquiry?.origin||"—")+' → '+esc(q.enquiry?.destination||"—")+'<br>Valid until '+date(q.valid_until)+' · '+esc(q.terms||"")+'</p><div class="table-wrap"><table class="mini-table"><thead><tr><th>CHARGE</th><th>QTY</th><th>UNIT RATE</th><th>TOTAL</th></tr></thead><tbody>'+lines+'</tbody></table></div><div class="quote-total">'+currency(q.total_amount,q.currency)+' <span class="quiet">· INR '+Number(q.total_inr||0).toLocaleString("en-IN")+' reference</span></div>'+(q.status==="converted"&&q.has_booking?'<p class="quiet">This quote has been converted into a forwarding booking.</p>':"")+(open?'<div class="quote-actions"><button class="btn primary" data-decision="accepted" data-quote="'+esc(q.id)+'">Accept & book</button><button class="btn danger" data-decision="rejected" data-quote="'+esc(q.id)+'">Decline quote</button></div>':"")+'</article>';
+}
+function renderInvoice(inv){
+  const balance=Number(inv.balance||0),status=balance<=.005?"Settled":balance<Number(inv.total||0)?"Part paid":"Issued";
+  const lines=(inv.lines||[]).map(l=>'<tr><td>'+esc(l.description||"Freight service")+'</td><td>'+esc(l.hsn_sac||"—")+'</td><td>'+Number(l.quantity||0).toLocaleString("en-IN")+' '+esc(l.unit||"")+'</td><td>'+currency(l.unit_price,inv.currency)+'</td><td>'+currency(l.taxable_value,inv.currency)+'</td><td>'+Number(l.gst_rate||0)+'%</td><td>'+currency(l.line_total,inv.currency)+'</td></tr>').join("");
+  const credits=(inv.credit_notes||[]).map(c=>'<tr><td>'+esc(c.credit_note_number||"Credit note")+'</td><td>'+date(c.credit_date)+'</td><td>'+esc(c.reason||"")+'</td><td>'+currency(c.total,inv.currency)+'</td></tr>').join("");
+  const receipts=(inv.receipts||[]).map(r=>'<tr><td>'+esc(r.receipt_number||"Receipt")+'</td><td>'+date(r.received_at)+'</td><td>'+esc(r.payment_method||"")+'</td><td>'+currency(r.amount,r.currency||inv.currency)+'</td></tr>').join("");
+  return '<details class="invoice"><summary><span><b>'+esc(inv.invoice_number||"Invoice")+'</b><small>'+date(inv.invoice_date)+' · due '+date(inv.due_date)+'</small></span><span>'+esc(inv.job_no||"General invoice")+'<small>'+esc(inv.container_no||"")+'</small></span><span>'+currency(inv.total,inv.currency)+'<small>Total</small></span><span>'+currency(balance,inv.currency)+'<small>Outstanding</small></span>'+pill(status)+'</summary><div class="invoice-body"><div class="meta"><span>PO: '+esc(inv.po_number||"—")+'</span><span>Terms: '+esc(inv.payment_terms||"—")+'</span><span>FX to INR: '+Number(inv.exchange_rate_to_inr||1)+' · '+esc(inv.fx_source||"")+'</span><span>Tax: '+esc(inv.supply_type||"")+'</span></div><div class="invoice-party"><div><b>From</b>'+partyText(inv.seller)+'</div><div><b>Bill to</b>'+partyText(inv.buyer)+'</div></div><div class="table-wrap"><table class="mini-table"><thead><tr><th>DESCRIPTION</th><th>HSN/SAC</th><th>QTY</th><th>RATE</th><th>TAXABLE</th><th>GST</th><th>AMOUNT</th></tr></thead><tbody>'+lines+'</tbody></table></div><div class="totals"><div class="total-line"><span>Taxable value</span><b>'+currency(inv.taxable_value,inv.currency)+'</b></div><div class="total-line"><span>CGST</span><b>'+currency(inv.cgst_total,inv.currency)+'</b></div><div class="total-line"><span>SGST</span><b>'+currency(inv.sgst_total,inv.currency)+'</b></div><div class="total-line"><span>IGST</span><b>'+currency(inv.igst_total,inv.currency)+'</b></div><div class="total-line"><span>Adjustment</span><b>'+currency(inv.adjustment,inv.currency)+'</b></div><div class="total-line grand"><span>Invoice total</span><b>'+currency(inv.total,inv.currency)+'</b></div><div class="total-line"><span>Received / credits</span><b>'+currency(Number(inv.total||0)-balance,inv.currency)+'</b></div><div class="total-line grand"><span>Outstanding</span><b>'+currency(balance,inv.currency)+'</b></div></div><div class="quote-actions"><button class="btn primary" data-print-invoice="'+esc(inv.invoice_number)+'">Print / save PDF</button></div>'+(credits?'<div class="section-title">Issued credit notes</div><div class="table-wrap"><table class="mini-table"><thead><tr><th>NUMBER</th><th>DATE</th><th>REASON</th><th>AMOUNT</th></tr></thead><tbody>'+credits+'</tbody></table></div>':"")+(receipts?'<div class="section-title">Receipts</div><div class="table-wrap"><table class="mini-table"><thead><tr><th>RECEIPT</th><th>DATE</th><th>METHOD</th><th>AMOUNT</th></tr></thead><tbody>'+receipts+'</tbody></table></div>':"")+'</div></details>';
+}
+function partyText(p){
+  p=p||{};return '<span>'+esc(p.name||"")+'</span>'+(p.contact_name?'<br>'+esc(p.contact_name):"")+(p.address?'<br>'+esc(p.address):"")+(p.city?'<br>'+esc(p.city):"")+(p.state?'<br>'+esc(p.state):"")+(p.postal_code?'<br>'+esc(p.postal_code):"")+(p.country?'<br>'+esc(p.country):"")+(p.gstin?'<br>GSTIN: '+esc(p.gstin):"")+(p.email?'<br>'+esc(p.email):"");
+}
+function renderActivity(invoices,asOf){
+  const credits=[],receipts=[];
+  invoices.forEach(i=>(i.credit_notes||[]).forEach(c=>credits.push({invoice:i,note:c})));
+  invoices.forEach(i=>(i.receipts||[]).forEach(r=>receipts.push({invoice:i,receipt:r})));
+  credits.sort((a,b)=>String(b.note.credit_date||"").localeCompare(String(a.note.credit_date||"")));
+  receipts.sort((a,b)=>String(b.receipt.received_at||"").localeCompare(String(a.receipt.received_at||"")));
+  const rows=receipts.slice(0,20).map(x=>'<tr><td>Receipt</td><td>'+esc(x.receipt.receipt_number||"—")+'</td><td>'+esc(x.invoice.invoice_number||"")+'</td><td>'+date(x.receipt.received_at)+'</td><td>'+currency(x.receipt.amount,x.receipt.currency||x.invoice.currency)+'</td></tr>').concat(credits.slice(0,20).map(x=>'<tr><td>Credit note</td><td>'+esc(x.note.credit_note_number||"—")+'</td><td>'+esc(x.invoice.invoice_number||"")+'</td><td>'+date(x.note.credit_date)+'</td><td>− '+currency(x.note.total,x.invoice.currency)+'</td></tr>')).join("");
+  el("activity").innerHTML=rows?'<div class="table-wrap"><table><thead><tr><th>TYPE</th><th>REFERENCE</th><th>INVOICE</th><th>DATE</th><th>AMOUNT</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p class="quiet">Receipts and issued credit notes will appear here.</p>';
+}
+function printInvoice(number){
+  const inv=(state.data?.invoices||[]).find(i=>i.invoice_number===number);if(!inv)return;
+  const lines=(inv.lines||[]).map(l=>'<tr><td>'+esc(l.description)+'</td><td>'+esc(l.hsn_sac||"")+'</td><td>'+Number(l.quantity||0)+'</td><td>'+currency(l.unit_price,inv.currency)+'</td><td>'+Number(l.gst_rate||0)+'%</td><td>'+currency(l.line_total,inv.currency)+'</td></tr>').join("");
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>Invoice '+esc(inv.invoice_number)+'</title><style>body{font:12px Arial;color:#24354b;margin:35px}h1{font-size:24px;color:#243052}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{text-align:left;padding:9px;border:1px solid #d9e1e9}th{background:#f2f5f8;text-transform:uppercase;font-size:10px}.parties{display:grid;grid-template-columns:1fr 1fr;gap:30px;line-height:1.6}.total{margin:20px 0 0 auto;width:300px}.total div{display:flex;justify-content:space-between;padding:5px 0}.grand{font-size:16px;font-weight:bold;border-top:2px solid #243052;padding-top:9px!important}.muted{color:#718096}</style></head><body><h1>Tax invoice</h1><p><b>'+esc(inv.invoice_number)+'</b> · '+date(inv.invoice_date)+' · Due '+date(inv.due_date)+'</p><div class="parties"><div><b>Seller</b><br>'+partyText(inv.seller)+'</div><div><b>Bill to</b><br>'+partyText(inv.buyer)+'</div></div><table><thead><tr><th>Description</th><th>HSN/SAC</th><th>Qty</th><th>Rate</th><th>GST</th><th>Amount</th></tr></thead><tbody>'+lines+'</tbody></table><div class="total"><div><span>Taxable value</span><b>'+currency(inv.taxable_value,inv.currency)+'</b></div><div><span>Total tax</span><b>'+currency(inv.total_tax,inv.currency)+'</b></div><div><span>Adjustment</span><b>'+currency(inv.adjustment,inv.currency)+'</b></div><div class="grand"><span>Total</span><b>'+currency(inv.total,inv.currency)+'</b></div><div><span>Paid / credited</span><b>'+currency(Number(inv.total||0)-Number(inv.balance||0),inv.currency)+'</b></div><div class="grand"><span>Balance due</span><b>'+currency(inv.balance,inv.currency)+'</b></div></div><p class="muted">FX rate '+Number(inv.exchange_rate_to_inr||1)+' to INR · '+esc(inv.fx_source||"")+'</p><script>window.onload=()=>window.print()<\/script></body></html>';
+  const w=window.open("","_blank");if(!w){toast("Allow pop-ups to print the invoice.");return}w.document.open();w.document.write(html);w.document.close();
+}
+el("tokenForm").addEventListener("submit",async event=>{
+  event.preventDefault();const token=tokenFromInput(el("tokenInput").value);if(!token){el("loginError").textContent="Paste the full private portal link or its 43-character access token.";return}
+  state.token=token;sessionStorage.setItem("freight_customer_portal_token",token);el("loginError").textContent="";await loadWorkspace();
+});
+el("logout").addEventListener("click",()=>{state.token="";state.data=null;sessionStorage.removeItem("freight_customer_portal_token");el("accountName").textContent="";showLogin("You have closed this portal session.")});
+el("retry").addEventListener("click",loadWorkspace);
+document.addEventListener("click",async event=>{
+  const decision=event.target.closest("[data-decision]");
+  if(decision){
+    const quoteId=decision.dataset.quote,outcome=decision.dataset.decision;
+    const label=outcome==="accepted"?"Accept this quote and create a forwarding booking?":"Decline this quote?";
+    if(!confirm(label))return;
+    decision.disabled=true;
+    try{const result=await api({action:"quote_decision",quote_id:quoteId,outcome:outcome});toast(result.job?.job_no?"Quote accepted and booking "+result.job.job_no+" created.":"Quote "+(outcome==="accepted"?"accepted":"declined")+".");await loadWorkspace()}
+    catch(error){toast(error.message||"Quote could not be updated.");decision.disabled=false}
+    return;
+  }
+  const print=event.target.closest("[data-print-invoice]");if(print)printInvoice(print.dataset.printInvoice);
+});
+state.token=takeToken();
+if(state.token)loadWorkspace();
+</script>
+</body>
+</html>
