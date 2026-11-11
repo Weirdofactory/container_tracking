@@ -1409,7 +1409,7 @@ function newCustomer(customerId=""){
     {name:"contact_name",label:"Primary contact name",value:c.contact_name||""},{name:"email",label:"Accounts email",type:"email",value:c.email||""},{name:"phone",label:"Phone",value:c.phone||""},
     {name:"default_currency",label:"Default invoice currency",value:c.default_currency||"INR",required:true},
     {name:"payment_terms",label:"Payment terms",value:c.payment_terms||"Due within 30 days"},
-    {name:"credit_limit_inr",label:"Credit limit (INR)",type:"number",step:"0.01",value:c.credit_limit_inr||"0"},
+    {name:"credit_limit_inr",label:"Credit limit (INR · 0 = no limit)",type:"number",step:"0.01",value:c.credit_limit_inr||"0"},
     {name:"notes",label:"Internal account notes",type:"textarea",value:c.notes||"",span2:true}
   ];
   openForm(customerId?"Edit customer account":"Create customer account",defs,async fd=>{
@@ -1540,9 +1540,11 @@ function renderReceivables(){
     const jobs=state.ops.jobs.filter(j=>j.customer_id===c.id).length;
     const invoices=state.ops.invoices.filter(i=>i.customer_id===c.id&&i.status==="issued"&&String(i.invoice_date||"").slice(0,10)<=asOf);
     const openInr=invoices.reduce((sum,i)=>sum+invoiceLedgerAt(i,asOf).balanceInr,0);
+    const creditLimit=Number(c.credit_limit_inr||0);
+    const creditStatus=creditLimit<=0?'<span class="pill">No limit</span>':openInr>creditLimit?'<span class="pill red">Over limit</span>':openInr>=creditLimit*.8?'<span class="pill amber">Near limit</span>':'<span class="pill green">Within limit</span>';
     const action=actionBtn("edit-customer","Edit",'data-id="'+esc(c.id)+'"')+
       '<button class="btn small" data-action="toggle-customer" data-id="'+esc(c.id)+'" data-active="'+String(!c.is_active)+'">'+(c.is_active?"Deactivate":"Reactivate")+'</button>';
-    return '<tr><td><b>'+esc(c.customer_code)+'</b><span class="cell-sub">'+esc(c.display_name||"")+'</span></td><td>'+esc(c.legal_name)+'</td><td>'+esc(c.gstin||"—")+'</td><td><b>'+esc(c.contact_name||"—")+'</b><span class="cell-sub">'+esc(c.email||"—")+'</span><span class="cell-sub">'+esc(c.phone||"")+'</span></td><td>'+jobs+'</td><td>'+invoices.length+'</td><td>INR '+num(openInr)+'</td><td>'+pill(c.is_active?"Active":"Inactive")+'</td><td>'+action+'</td></tr>';
+    return '<tr><td><b>'+esc(c.customer_code)+'</b><span class="cell-sub">'+esc(c.display_name||"")+'</span></td><td>'+esc(c.legal_name)+'</td><td>'+esc(c.gstin||"—")+'</td><td><b>'+esc(c.contact_name||"—")+'</b><span class="cell-sub">'+esc(c.email||"—")+'</span><span class="cell-sub">'+esc(c.phone||"")+'</span></td><td>'+jobs+'</td><td>'+invoices.length+'</td><td><b>INR '+num(openInr)+'</b><span class="cell-sub">'+(creditLimit>0?'Limit INR '+num(creditLimit):'No limit set')+'</span>'+creditStatus+'</td><td>'+pill(c.is_active?"Active":"Inactive")+'</td><td>'+action+'</td></tr>';
   });
   const report=(state.ops.invoices||[]).filter(inv=>inv.status==="issued"&&(!state.arCustomerFilter||inv.customer_id===state.arCustomerFilter)).map(inv=>{
     if(String(inv.invoice_date||"").slice(0,10)>asOf)return null;
@@ -1571,7 +1573,7 @@ function renderReceivables(){
   return pageHead("receivables",'<button class="btn" data-nav="finance">Accounting & charges</button><button class="btn" data-create="customer">＋ New customer</button><button class="btn" data-action="export-ar">Export outstanding CSV</button><button class="btn primary" data-action="print-ar">Generate outstanding report</button>')+
     '<div class="stats">'+stat("Receivables · INR","INR "+num(filteredOpen),"As of "+fmt(asOf))+stat("Not due","INR "+num(kpis["Not due"]),"Within payment terms")+stat("1–30 days","INR "+num(kpis["1–30 days"]),"Past due")+stat("31–60 days","INR "+num(kpis["31–60 days"]),"Past due")+stat("60+ days","INR "+num(kpis["61–90 days"]+kpis["90+ days"]),"Collection follow-up")+'</div>'+
     '<div class="pane ar-pane"><div class="pane-head"><span class="pane-title">ACCOUNTS RECEIVABLE · AGEING</span><span class="pane-sub">Open invoice balances net of receipts and issued credit notes</span></div>'+controls+reportTable+'</div><div style="height:9px"></div>'+
-    pane("CUSTOMER ACCOUNTS",'<div class="ar-toolbar"><input id="customerSearch" type="search" placeholder="Find account, GSTIN or contact" value="'+esc(state.customerSearch||"")+'"><span class="desc">'+state.ops.customers.length+' accounts</span></div>'+table(["ACCOUNT CODE","CUSTOMER","GSTIN","CONTACT","JOBS","ISSUED INVOICES","OPEN INR","STATUS","ACTIONS"],customerRows,"No customer accounts yet. Add a customer to reuse its bill-to and tax details on jobs and invoices."))+
+    pane("CUSTOMER ACCOUNTS",'<div class="ar-toolbar"><input id="customerSearch" type="search" placeholder="Find account, GSTIN or contact" value="'+esc(state.customerSearch||"")+'"><span class="desc">'+state.ops.customers.length+' accounts</span></div>'+table(["ACCOUNT CODE","CUSTOMER","GSTIN","CONTACT","JOBS","ISSUED INVOICES","OPEN / LIMIT · INR","STATUS","ACTIONS"],customerRows,"No customer accounts yet. Add a customer to reuse its bill-to and tax details on jobs and invoices."))+
     '<div style="height:9px"></div>'+
     pane("CREDIT NOTE REGISTER",table(["CREDIT NOTE","AGAINST INVOICE","CUSTOMER","DATE","AMOUNT","STATUS","ACTIONS"],creditRows,"No credit notes issued or drafted."))+
     '<div style="height:9px"></div>'+
