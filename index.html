@@ -369,7 +369,7 @@ const SUPABASE_KEY="sb_publishable_olbFhK5Wu6hGiaGGDdXMeA_6szko2wZ";
 const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 const COLUMNS=["CONTAINER NO.","TYPE","MBL NO","LINER","GATEWAY PORT","CFS NAME","POL","TRANSSHIPMENT PORT","ETD","FREE DAYS","SEAL NO.","VESSEL & VOY","IMO","MMSI","ETA","SPLIT DATE","INWARD DATE","PORT IN","PORT OUT","CFS IN","TRUCK NO.","DRIVER CONTACT","PLANNING","DESTUFFING DATE","EMPTY RETURN VALIDITY","CONTAINER RETURN DATE","REMARKS"];
-const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],jobLegs:[],jobLegEvents:[],jobLegsLoadedFor:"",jobLegsLoading:false,jobLegsError:"",milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],ledgerAccounts:[],ledgerSummary:[],ledgerEntries:[],ledgerLines:[],ledgerLoaded:false,ledgerLoading:false,ledgerError:"",invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],refunds:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankRefunds:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],shipmentDocuments:[],shipmentDocumentsLoaded:false,shipmentDocumentsLoading:false,shipmentDocumentsError:"",airWaybills:[],airWaybillEvents:[],airWaybillsLoaded:false,airWaybillsLoading:false,airWaybillsError:"",bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",customerContacts:[],customerAddresses:[],customerDirectoryLoadedFor:"",customerDirectoryLoading:false,customerDirectoryError:"",customerPortalTokens:[],customerPortalTokensLoaded:false,customerPortalTokensLoading:false,customerPortalTokensError:"",oneTimePortalLink:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",ledgerFrom:"",ledgerAsOf:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",gstFrom:"",gstTo:"",customerSearch:"",selectedJob:null,selectedCustomer:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
+const state={session:null,profile:null,rows:[],updatedAt:null,searchTimer:null,ops:{loaded:false,jobs:[],jobHbls:[],jobContainers:[],jobLegs:[],jobLegEvents:[],jobLegsLoadedFor:"",jobLegsLoading:false,jobLegsError:"",milestones:[],transportDispatches:[],sailings:[],sailingShipments:[],consolidations:[],consolidationItems:[],charges:[],invoices:[],ledgerAccounts:[],ledgerSummary:[],ledgerEntries:[],ledgerLines:[],ledgerLoaded:false,ledgerLoading:false,ledgerError:"",invoiceChargeLinks:[],invoiceSettings:{},customers:[],creditNotes:[],payments:[],refunds:[],bankAccounts:[],bankTransactions:[],bankReceipts:[],bankRefunds:[],bankInvoices:[],bankVendorPayments:[],bankBills:[],bankVendors:[],shipmentDocuments:[],shipmentDocumentsLoaded:false,shipmentDocumentsLoading:false,shipmentDocumentsError:"",airWaybills:[],airWaybillEvents:[],airWaybillsLoaded:false,airWaybillsLoading:false,airWaybillsError:"",bankLoaded:false,bankLoading:false,bankError:"",enquiries:[],quotes:[],quoteLines:[],rateCards:[],rateLines:[],vendors:[],transportVendors:[],transportVendorsLoaded:false,transportVendorsLoading:false,vendorBills:[],vendorBillLines:[],vendorBillPayments:[],payablesLoaded:false,payablesLoading:false,salesLoaded:false,salesLoading:false,invoicesLoaded:false,invoicesLoading:false,invoiceLoadError:"",customerContacts:[],customerAddresses:[],customerActivities:[],customerDirectoryLoadedFor:"",customerDirectoryLoading:false,customerDirectoryError:"",customerPortalTokens:[],customerPortalTokensLoaded:false,customerPortalTokensLoading:false,customerPortalTokensError:"",oneTimePortalLink:"",filings:[],documents:[],alertActions:[]},page:"dashboard",query:"",workbenchMode:"forwarding",dashboardFilter:"all",containerStageFilter:"",jobFilters:{service:"",status:""},financeAsOf:"",financeFrom:"",ledgerFrom:"",ledgerAsOf:"",payablesAsOf:"",arCustomerFilter:"",bankAccountFilter:"",gstFrom:"",gstTo:"",customerSearch:"",selectedJob:null,selectedCustomer:null,selectedConsolidation:null,modalSave:null,toastTimer:null};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=v=>String(v??"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const val=(r,keys)=>{for(const k of keys){const f=Object.keys(r||{}).find(x=>norm(x)===norm(k));if(f&&r[f]!==null&&r[f]!==undefined)return r[f]}return""};
@@ -475,6 +475,7 @@ async function loadCustomerDirectory(customerId,force=false){
     const d=await call("logistics-workspace",{action:"listCustomerDirectory",customer_id:customerId});
     state.ops.customerContacts=Array.isArray(d.contacts)?d.contacts:[];
     state.ops.customerAddresses=Array.isArray(d.addresses)?d.addresses:[];
+    state.ops.customerActivities=Array.isArray(d.activities)?d.activities:[];
     state.ops.customerDirectoryLoadedFor=customerId;
   }catch(e){state.ops.customerDirectoryError=e.message||"Customer details could not be loaded.";state.ops.customerDirectoryLoadedFor=customerId}
   finally{state.ops.customerDirectoryLoading=false;if(state.page==="customerdetail")render()}
@@ -1550,7 +1551,7 @@ async function reopenSalesEnquiry(enquiryId){
 }
 function openCustomerDirectory(customerId){
   if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can manage customer details.","error");
-  state.selectedCustomer=customerId;state.page="customerdetail";state.ops.customerContacts=[];state.ops.customerAddresses=[];state.ops.customerDirectoryLoadedFor="";render();
+  state.selectedCustomer=customerId;state.page="customerdetail";state.ops.customerContacts=[];state.ops.customerAddresses=[];state.ops.customerActivities=[];state.ops.customerDirectoryLoadedFor="";render();
 }
 function newCustomerContact(customerId,contactId=""){
   if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can manage customer details.","error");
@@ -1599,19 +1600,62 @@ async function setCustomerDirectoryStatus(kind,id,active){
   try{await call("logistics-workspace",{action:endpoint,id,is_active:active});await loadCustomerDirectory(row.customer_id,true);render();notify((kind==="contact"?"Contact":"Address")+" "+(active?"reactivated":"deactivated"),"success")}
   catch(e){notify(e.message||"Customer detail status could not be updated.","error")}
 }
+function newCustomerActivity(customerId,activityId=""){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can log customer interactions.","error");
+  const customer=(state.ops.customers||[]).find(x=>x.id===customerId);if(!customer)return;
+  const prior=(state.ops.customerActivities||[]).find(x=>x.id===activityId)||{};
+  const jobs=(state.ops.jobs||[]).filter(j=>j.customer_id===customerId);
+  const defs=[
+    {name:"activity_type",label:"Interaction type",options:[["call","Customer call"],["meeting","Meeting"],["email","Email"],["visit","Site visit"],["note","Account note"],["task","Follow-up task"]],value:prior.activity_type||"call"},
+    {name:"subject",label:"Subject",value:prior.subject||"",required:true},
+    {name:"activity_at",label:"Interaction date",type:"date",value:prior.activity_at||new Date().toISOString().slice(0,10),required:true},
+    {name:"contact_id",label:"Contact",options:[["","Primary account contact / not specified"],...(state.ops.customerContacts||[]).map(c=>[c.id,c.contact_name+" · "+c.contact_type])],value:prior.contact_id||""},
+    {name:"job_id",label:"Related forwarding job",options:[["","No job link"],...jobs.map(j=>[j.id,j.job_no+" · "+j.origin+" → "+j.destination])],value:prior.job_id||""},
+    {name:"follow_up_at",label:"Follow-up due date",type:"date",value:prior.follow_up_at||""},
+    {name:"details",label:"Notes / outcome",type:"textarea",value:prior.details||"",span2:true}
+  ];
+  openForm(activityId?"Edit customer interaction":"Log customer interaction · "+customer.legal_name,defs,async fd=>{
+    const followUpAt=String(fd.get("follow_up_at")||"");
+    const followUpStatus=!followUpAt?"none":prior.follow_up_status==="completed"&&followUpAt===prior.follow_up_at?"completed":"open";
+    await call("logistics-workspace",{action:"upsertCustomerActivity",data:{
+      ...(activityId?{id:activityId}:{}),customer_id:customerId,activity_type:fd.get("activity_type"),
+      subject:fd.get("subject"),activity_at:fd.get("activity_at"),contact_id:fd.get("contact_id")||null,
+      job_id:fd.get("job_id")||null,follow_up_at:followUpAt||null,follow_up_status:followUpStatus,details:fd.get("details")
+    }});
+    await loadCustomerDirectory(customerId,true);closeForm();render();notify(activityId?"Customer interaction updated":"Customer interaction recorded","success");
+  });
+}
+async function completeCustomerActivity(customerId,activityId){
+  if(!access(["Admin","Editor"]))return notify("Only Admin / Editor can update customer follow-ups.","error");
+  try{
+    await call("logistics-workspace",{action:"completeCustomerActivity",id:activityId});
+    await loadCustomerDirectory(customerId,true);render();notify("Customer follow-up marked complete","success");
+  }catch(e){notify(e.message||"Could not complete the customer follow-up.","error")}
+}
 function renderCustomerDetail(){
   const customer=(state.ops.customers||[]).find(x=>x.id===state.selectedCustomer);
   if(!customer)return pageHead("customerdetail",'<button class="btn" data-nav="receivables">Back to customers</button>')+'<div class="pane"><div class="pane-body">Customer account was not found. '+actionBtn("retry-invoices","Reload accounts")+'</div></div>';
   const contacts=(state.ops.customerContacts||[]).filter(x=>x.is_active);
   const addresses=(state.ops.customerAddresses||[]).filter(x=>x.is_active);
+  const activities=(state.ops.customerActivities||[]).filter(x=>x.customer_id===customer.id).slice().sort((a,b)=>String(b.activity_at||"").localeCompare(String(a.activity_at||"")));
+  const openFollowUps=activities.filter(x=>x.follow_up_status==="open");
+  const activityRows=activities.map(a=>{
+    const contact=(state.ops.customerContacts||[]).find(x=>x.id===a.contact_id);
+    const job=(state.ops.jobs||[]).find(x=>x.id===a.job_id);
+    const overdue=a.follow_up_status==="open"&&a.follow_up_at&&a.follow_up_at<new Date().toISOString().slice(0,10);
+    const followUp=a.follow_up_at?fmt(a.follow_up_at)+" · "+pill(a.follow_up_status||"open"):"—";
+    return '<tr><td>'+fmt(a.activity_at)+'</td><td><b>'+esc(a.subject)+'</b><span class="cell-sub">'+esc((a.activity_type||"").replace(/_/g," "))+'</span></td><td>'+esc(contact?.contact_name||customer.contact_name||"—")+(job?'<span class="cell-sub">'+esc(job.job_no)+'</span>':"")+'</td><td>'+(overdue?'<b class="danger">OVERDUE · </b>':"")+followUp+'</td><td>'+esc(a.details||"—")+'</td><td>'+actionBtn("edit-customer-activity","Edit",'data-id="'+esc(a.id)+'" data-customer-id="'+esc(customer.id)+'"')+(a.follow_up_status==="open"?actionBtn("complete-customer-activity","Complete",'data-id="'+esc(a.id)+'" data-customer-id="'+esc(customer.id)+'"'):"")+'</td></tr>';
+  });
   const contactRows=(state.ops.customerContacts||[]).map(c=>'<tr><td><b>'+esc(c.contact_name)+'</b><span class="cell-sub">'+esc(c.department||"")+'</span></td><td>'+esc((c.contact_type||"").replace(/_/g," "))+'</td><td>'+esc(c.email||"—")+'</td><td>'+esc(c.phone||"—")+'</td><td>'+pill(c.is_active?"Active":"Inactive")+'</td><td>'+actionBtn("edit-customer-contact","Edit",'data-id="'+esc(c.id)+'" data-customer-id="'+esc(customer.id)+'"')+'<button class="btn small" data-action="customer-contact-status" data-id="'+esc(c.id)+'" data-active="'+String(!c.is_active)+'">'+(c.is_active?"Deactivate":"Reactivate")+'</button></td></tr>');
   const addressRows=(state.ops.customerAddresses||[]).map(a=>'<tr><td><b>'+esc(a.label||a.address_type)+'</b><span class="cell-sub">'+esc(a.address)+'</span></td><td>'+esc((a.address_type||"").replace(/_/g," "))+'</td><td>'+esc([a.city,a.state,a.postal_code,a.country].filter(Boolean).join(", "))+'</td><td>'+esc(a.gstin||"—")+'</td><td>'+pill(a.is_active?"Active":"Inactive")+'</td><td>'+actionBtn("edit-customer-address","Edit",'data-id="'+esc(a.id)+'" data-customer-id="'+esc(customer.id)+'"')+'<button class="btn small" data-action="customer-address-status" data-id="'+esc(a.id)+'" data-active="'+String(!a.is_active)+'">'+(a.is_active?"Deactivate":"Reactivate")+'</button></td></tr>');
-  const error=state.ops.customerDirectoryLoading?'<div class="empty">Loading customer contacts and addresses…</div>':state.ops.customerDirectoryError?'<div class="empty">'+esc(state.ops.customerDirectoryError)+' '+actionBtn("refresh-customer-directory","Retry",'data-id="'+esc(customer.id)+'"')+'</div>':"";
-  return pageHead("customerdetail",'<button class="btn" data-nav="receivables">Back to customers</button><button class="btn" data-action="edit-customer" data-id="'+esc(customer.id)+'">Edit account</button><button class="btn" data-action="new-customer-contact" data-id="'+esc(customer.id)+'">＋ Add contact</button><button class="btn primary" data-action="new-customer-address" data-id="'+esc(customer.id)+'">＋ Add address</button>')+
-    '<div class="stats">'+stat("Account",esc(customer.customer_code),"Customer code")+stat("Contact records",contacts.length,"Active additional contacts")+stat("Operating addresses",addresses.length,"Active registered / billing / cargo sites")+stat("Credit limit","INR "+num(customer.credit_limit_inr||0),customer.payment_terms||"Payment terms not set")+'</div>'+
+  const error=state.ops.customerDirectoryLoading?'<div class="empty">Loading customer contacts, addresses and interaction history…</div>':state.ops.customerDirectoryError?'<div class="empty">'+esc(state.ops.customerDirectoryError)+' '+actionBtn("refresh-customer-directory","Retry",'data-id="'+esc(customer.id)+'"')+'</div>':"";
+  return pageHead("customerdetail",'<button class="btn" data-nav="receivables">Back to customers</button><button class="btn" data-action="edit-customer" data-id="'+esc(customer.id)+'">Edit account</button><button class="btn" data-action="new-customer-contact" data-id="'+esc(customer.id)+'">＋ Add contact</button><button class="btn" data-action="new-customer-activity" data-id="'+esc(customer.id)+'">＋ Log interaction</button><button class="btn primary" data-action="new-customer-address" data-id="'+esc(customer.id)+'">＋ Add address</button>')+
+    '<div class="stats">'+stat("Account",esc(customer.customer_code),"Customer code")+stat("Contact records",contacts.length,"Active additional contacts")+stat("Operating addresses",addresses.length,"Active registered / billing / cargo sites")+stat("Credit limit","INR "+num(customer.credit_limit_inr||0),customer.payment_terms||"Payment terms not set")+stat("Open follow-ups",openFollowUps.length,"Calls, meetings and account tasks")+'</div>'+
     '<div class="pane" style="margin-bottom:9px"><div class="pane-body"><b>'+esc(customer.legal_name)+'</b> · '+esc(customer.display_name||"")+'<span class="cell-sub">Primary contact: '+esc(customer.contact_name||"—")+' · '+esc(customer.email||"")+' · '+esc(customer.phone||"")+'</span><span class="cell-sub">Default billing address: '+esc(customer.billing_address||"—")+', '+esc([customer.city,customer.state,customer.postal_code,customer.country].filter(Boolean).join(", "))+'</span></div></div>'+
     error+
     pane("ADDITIONAL CUSTOMER CONTACTS",table(["CONTACT / ROLE","TEAM","EMAIL","PHONE","STATUS","ACTIONS"],contactRows,"No additional contacts saved yet. Add accounts, operations, customs, or sales contacts."),actionBtn("new-customer-contact","＋ Add contact",'data-id="'+esc(customer.id)+'"'))+
+    '<div style="height:9px"></div>'+
+    pane("CUSTOMER INTERACTIONS & FOLLOW-UPS",table(["DATE","SUBJECT / TYPE","CONTACT / JOB","FOLLOW-UP","NOTES / OUTCOME","ACTIONS"],activityRows,"No customer calls, meetings, emails or follow-ups recorded yet. Log the first interaction to start the account history."),actionBtn("new-customer-activity","＋ Log interaction",'data-id="'+esc(customer.id)+'"'),openFollowUps.length+" open follow-up(s) · calls, meetings, email, visits and tasks")+
     '<div style="height:9px"></div>'+
     pane("REGISTERED, BILLING & CARGO ADDRESSES",table(["ADDRESS","PURPOSE","CITY / COUNTRY","GSTIN","STATUS","ACTIONS"],addressRows,"No additional operating addresses saved yet."),actionBtn("new-customer-address","＋ Add address",'data-id="'+esc(customer.id)+'"'));
 }
@@ -3406,6 +3450,9 @@ function bindPage(){document.querySelectorAll("[data-workbench-mode]").forEach(b
       if(act==="edit-customer-address")newCustomerAddress(button.dataset.customerId||"",id);
       if(act==="customer-address-status")setCustomerDirectoryStatus("address",id,button.dataset.active==="true");
       if(act==="refresh-customer-directory")loadCustomerDirectory(id,true);
+      if(act==="new-customer-activity")newCustomerActivity(button.dataset.customerId||id);
+      if(act==="edit-customer-activity")newCustomerActivity(button.dataset.customerId||state.selectedCustomer,id);
+      if(act==="complete-customer-activity")completeCustomerActivity(button.dataset.customerId||state.selectedCustomer,id);
       if(act==="edit-customer")newCustomer(id);
       if(act==="toggle-customer")setCustomerActive(id,button.dataset.active==="true");
       if(act==="record-payment")recordInvoicePayment(id);

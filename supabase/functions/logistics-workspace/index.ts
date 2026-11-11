@@ -1722,12 +1722,67 @@ Deno.serve(async (req: Request) => {
     if (action === "listCustomerDirectory") {
       roleCheck(profile.role, "finance");
       const customerId = uuid(payload.customer_id);
-      const [contactResult, addressResult] = await Promise.all([
+      const [contactResult, addressResult, activityResult] = await Promise.all([
         admin.from("customer_account_contacts").select("*").eq("customer_id", customerId).order("contact_name", { ascending: true }).limit(5000),
         admin.from("customer_account_addresses").select("*").eq("customer_id", customerId).order("address_type", { ascending: true }).order("label", { ascending: true }).limit(5000),
+        admin.from("customer_activities").select("*").eq("customer_id", customerId).order("activity_at", { ascending: false }).order("created_at", { ascending: false }).limit(2500),
       ]);
-      if (contactResult.error || addressResult.error) throw new Error("Customer contacts and addresses could not be loaded.");
-      return reply(200, { contacts: contactResult.data ?? [], addresses: addressResult.data ?? [] }, origin);
+      if (contactResult.error || addressResult.error || activityResult.error) throw new Error("Customer contacts, addresses and interaction history could not be loaded.");
+      return reply(200, { contacts: contactResult.data ?? [], addresses: addressResult.data ?? [], activities: activityResult.data ?? [] }, origin);
+    }
+
+    if (action === "upsertCustomerActivity") {
+      roleCheck(profile.role, "finance");
+      const d = payload.data ?? {};
+      const id = d.id ? uuid(d.id) : undefined;
+      const customerId = uuid(d.customer_id);
+      const { data: customer, error: customerError } = await admin.from("customer_accounts").select("id,is_active").eq("id", customerId).maybeSingle();
+      if (customerError || !customer || !customer.is_active) throw new Error("Select an active customer account.");
+      const before = id ? (await admin.from("customer_activities").select("*").eq("id", id).maybeSingle()).data : null;
+      if (id && (!before || before.customer_id !== customerId)) throw new Error("Customer interaction not found for this account.");
+      const activityType = val(d.activity_type || "call", ["call","meeting","email","visit","note","task"], "interaction type");
+      const subject = text(d.subject, 180);
+      if (!subject) throw new Error("Enter a subject for this interaction.");
+      const activityDate = date(d.activity_at);
+      if (!activityDate) throw new Error("Interaction date is required.");
+      const contactId = d.contact_id ? uuid(d.contact_id) : null;
+      if (contactId) {
+        const { data: contact, error } = await admin.from("customer_account_contacts").select("id").eq("id", contactId).eq("customer_id", customerId).maybeSingle();
+        if (error || !contact) throw new Error("Select a contact from this customer account.");
+      }
+      const jobId = d.job_id ? uuid(d.job_id) : null;
+      if (jobId) {
+        const { data: job, error } = await admin.from("forwarding_jobs").select("id,customer_id,deleted_at").eq("id", jobId).maybeSingle();
+        if (error || !job || job.deleted_at || job.customer_id !== customerId) throw new Error("Select an active forwarding job for this customer.");
+      }
+      const followUpDate = d.follow_up_at ? date(d.follow_up_at) : null;
+      if (d.follow_up_at && !followUpDate) throw new Error("Follow-up due date is invalid.");
+      const followUpStatus = followUpDate ? val(d.follow_up_status || "open", ["open","completed","cancelled"], "follow-up status") : "none";
+      const row = {
+        ...(id ? { id } : {}),
+        customer_id: customerId, contact_id: contactId, job_id: jobId,
+        activity_type: activityType, subject, details: text(d.details, 4000),
+        activity_at: activityDate, follow_up_at: followUpDate, follow_up_status: followUpStatus,
+        ...(before ? { updated_by: actorId, updated_at: new Date().toISOString() } : { created_by: actorId, updated_by: actorId }),
+      };
+      const { data, error } = await admin.from("customer_activities").upsert(row).select("*").single();
+      if (error || !data) throw new Error(error?.message || "Customer interaction could not be saved.");
+      await recordAudit(id ? "update" : "create", "customer_activity", data.id, before, data);
+      return reply(200, { record: data }, origin);
+    }
+
+    if (action === "completeCustomerActivity") {
+      roleCheck(profile.role, "finance");
+      const id = uuid(payload.id);
+      const { data: before, error: readError } = await admin.from("customer_activities").select("*").eq("id", id).maybeSingle();
+      if (readError || !before) throw new Error("Customer interaction not found.");
+      if (before.follow_up_status !== "open" || !before.follow_up_at) throw new Error("Only an open customer follow-up can be completed.");
+      const { data, error } = await admin.from("customer_activities").update({
+        follow_up_status: "completed", updated_by: actorId, updated_at: new Date().toISOString(),
+      }).eq("id", id).eq("follow_up_status", "open").select("*").maybeSingle();
+      if (error || !data) throw new Error(error?.message || "Customer follow-up could not be completed.");
+      await recordAudit("complete_follow_up", "customer_activity", id, before, data);
+      return reply(200, { record: data }, origin);
     }
 
     if (action === "upsertCustomerContact") {
